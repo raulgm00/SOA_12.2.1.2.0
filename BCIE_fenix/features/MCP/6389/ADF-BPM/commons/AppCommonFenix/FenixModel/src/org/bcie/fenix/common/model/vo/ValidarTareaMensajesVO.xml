@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="windows-1252" ?>
+<!DOCTYPE ViewObject SYSTEM "jbo_03_01.dtd">
+<!---->
+<ViewObject
+  xmlns="http://xmlns.oracle.com/bc4j"
+  Name="ValidarTareaMensajesVO"
+  Version="12.1.3.10.8"
+  InheritPersonalization="merge"
+  BindingStyle="OracleName"
+  CustomQuery="true"
+  ComponentClass="org.bcie.fenix.common.model.vo.ValidarTareaMensajesVOImpl"
+  PageIterMode="Full"
+  ComponentInterface="org.bcie.fenix.common.model.vo.common.ValidarTareaMensajesVO"
+  ClientProxyName="org.bcie.fenix.common.model.vo.client.ValidarTareaMensajesVOClient">
+  <DesignTime>
+    <Attr Name="_codeGenFlag2" Value="Coll|Prog|VarAccess"/>
+    <Attr Name="_isExpertMode" Value="true"/>
+  </DesignTime>
+  <Properties>
+    <SchemaBasedProperties>
+      <LABEL
+        ResId="org.bcie.fenix.common.model.vo.ValidarTareaMensajesVO_LABEL"/>
+    </SchemaBasedProperties>
+  </Properties>
+  <Variable
+    Name="accionFinalizarTarea"
+    Kind="where"
+    Type="java.lang.String"/>
+  <Variable
+    Name="idProducto"
+    Kind="where"
+    Type="java.lang.Long"/>
+  <Variable
+    Name="idTarea"
+    Kind="where"
+    Type="java.lang.Long"/>
+  <Variable
+    Name="idOperacion"
+    Kind="where"
+    Type="java.lang.Integer"/>
+  <Variable
+    Name="idCliente"
+    Kind="where"
+    Type="java.lang.Integer"/>
+  <Variable
+    Name="idProceso"
+    Kind="where"
+    Type="java.lang.Integer"/>
+  <SQLQuery><![CDATA[WITH TCA_TIPO_MENSAJE AS  
+(  
+    select ROWNUM ID, regexp_substr('Alerta,Error,Confirmacion,Informacion,Cintilla','[^,]+', 1, level) DESCRIPCION_CORTA from dual  
+    connect by regexp_substr('Alerta,Error,Confirmacion,Informacion,Cintilla', '[^,]+', 1, level) is not null  
+), 
+TCA_APP_URI AS 
+( 
+    select  ID, 
+            REPLACE( 
+            REPLACE( 
+            REPLACE( 
+            REPLACE(DESCRIPCION || CASE WHEN ID = 3 THEN '&pnProceso=ID_PROCESO&pnTarea=ID_TAREA' ELSE '' END 
+            ,'ID_OPERACION', NVL(TO_CHAR(:idOperacion), 'ID_OPERACION') 
+                   ) 
+            ,'ID_CLIENTE', NVL(TO_CHAR(:idCliente), 'ID_CLIENTE') 
+                   ) 
+            ,'ID_TAREA', NVL(TO_CHAR(:idTarea), 'ID_TAREA') 
+                   ) 
+            ,'ID_PROCESO', NVL(TO_CHAR(:idProceso), 'ID_PROCESO') 
+                   ) 
+            DESCRIPCION, 
+            DESCRIPCION_CORTA 
+    FROM FENIX.TCA_APP_EXTERNA 
+    WHERE BAN_ESTATUS = 1 
+)  
+SELECT  DISTINCT TTBM.ID_TAREA_BPM_MENSAJE  ID_TAREA_BPM_MENSAJE,  --Se usa distinct para cuando exista mas de un producto parametrizado y no se envie id producto no los duplique  
+        TTBM.ID_TCA_TAREA_BPM               ID_TCA_TAREA_BPM,  
+        TTB.ID_PROCESO_BPM                  ID_PROCESO_BPM,  
+        TTB.DESCRIPCION                     DESCRIPCION_TAREA,  
+        TTBM.ID_TCA_ACCION_BPM              ID_TCA_ACCION_BPM,  
+        TAB.DESCRIPCION_CORTA               ACCION_TAREA,  
+        TTBM.ID_TIPO_MENSAJE                ID_TIPO_MENSAJE,  
+        TTM.DESCRIPCION_CORTA               TIPO_MENSAJE,  
+        TTBM.ID_TCA_APP_EXTERNA             ID_TCA_APP_EXTERNA,  
+        REPLACE(TAE.DESCRIPCION, 
+                'ID_PROCESO',  
+                TO_CHAR(TTB.ID_PROCESO_BPM)) URI,  
+        TAE.DESCRIPCION_CORTA               TITULO,  
+        TTBM.ID_TCA_PLANTILLA_CORREO        ID_TCA_PLANTILLA_CORREO,  
+        TPC.MENSAJE                         MENSAJE  
+FROM FENIX.TCO_TAREA_BPM_MENSAJE TTBM  
+INNER JOIN FENIX.TCA_TAREA_BPM TTB  
+ON TTBM.ID_TCA_TAREA_BPM = TTB.ID  
+LEFT JOIN FENIX.TCA_ACCION_BPM TAB  
+ON TTBM.ID_TCA_ACCION_BPM = TAB.ID  
+INNER JOIN TCA_TIPO_MENSAJE TTM  
+ON TTBM.ID_TIPO_MENSAJE = TTM.ID  
+LEFT JOIN FENIX.TCA_APP_URI TAE  
+ON TTBM.ID_TCA_APP_EXTERNA = TAE.ID  
+LEFT JOIN FENIX.TCA_PLANTILLA_CORREO TPC  
+ON TTBM.ID_TCA_PLANTILLA_CORREO = TPC.ID  
+LEFT JOIN FENIX.TRE_TAREA_BPM_MENSAJE_PRODUCTO TTBMP  
+ON TTBM.ID_TAREA_BPM_MENSAJE = TTBMP.ID_TAREA_BPM_MENSAJE AND TTBMP.BAN_ESTATUS = 1  
+WHERE TTBM.ID_TCA_TAREA_BPM = :idTarea  
+  AND TTBM.BAN_ESTATUS = 1  
+  AND (TTBMP.ID_PRODUCTO = :idProducto --1.Si manda id y existe solo trae esos datos en especifico  
+        OR :idProducto IS NULL --2.Si no se manda id producto los trae todos  
+        OR NOT EXISTS(SELECT 1   
+                      FROM FENIX.TRE_TAREA_BPM_MENSAJE_PRODUCTO TTBMP_B   
+                      WHERE TTBMP.ID_TAREA_BPM_MENSAJE = TTBMP_B.ID_TAREA_BPM_MENSAJE  
+                     ) --3.Si manda id y no existe ningun producto parametrizado para esa tarea_bpm_mensaje los trae todos, caso contrario aplican los dos casos anteriores  
+      )    
+  AND (TAB.DESCRIPCION_CORTA = :accionFinalizarTarea  
+        OR :accionFinalizarTarea IS NULL  
+      )]]></SQLQuery>
+  <ViewAttribute
+    Name="IdTareaBpmMensaje"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Type="java.lang.Long"
+    ColumnType="LONGINT"
+    AliasName="ID_TAREA_BPM_MENSAJE"
+    Expression="ID_TAREA_BPM_MENSAJE"
+    SQLType="NUMERIC"/>
+  <ViewAttribute
+    Name="IdTcaTareaBpm"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="5"
+    Scale="0"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="ID_TCA_TAREA_BPM"
+    Expression="ID_TCA_TAREA_BPM"
+    SQLType="INTEGER"/>
+  <ViewAttribute
+    Name="IdProcesoBpm"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="5"
+    Scale="0"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="ID_PROCESO_BPM"
+    Expression="ID_PROCESO_BPM"
+    SQLType="INTEGER"/>
+  <ViewAttribute
+    Name="DescripcionTarea"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="256"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="DESCRIPCION_TAREA"
+    Expression="DESCRIPCION_TAREA"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="256"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="IdTcaAccionBpm"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="5"
+    Scale="0"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="ID_TCA_ACCION_BPM"
+    Expression="ID_TCA_ACCION_BPM"
+    SQLType="INTEGER"/>
+  <ViewAttribute
+    Name="AccionTarea"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="64"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="ACCION_TAREA"
+    Expression="ACCION_TAREA"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="64"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="IdTipoMensaje"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="5"
+    Scale="0"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="ID_TIPO_MENSAJE"
+    Expression="ID_TIPO_MENSAJE"
+    SQLType="INTEGER"/>
+  <ViewAttribute
+    Name="TipoMensaje"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="46"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="TIPO_MENSAJE"
+    Expression="TIPO_MENSAJE"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="46"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="IdTcaAppExterna"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="5"
+    Scale="0"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="ID_TCA_APP_EXTERNA"
+    Expression="ID_TCA_APP_EXTERNA"
+    SQLType="INTEGER"/>
+  <ViewAttribute
+    Name="Uri"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="256"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="URI"
+    Expression="URI"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="256"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="Titulo"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="64"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="TITULO"
+    Expression="TITULO"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="64"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="IdTcaPlantillaCorreo"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="5"
+    Scale="0"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="ID_TCA_PLANTILLA_CORREO"
+    Expression="ID_TCA_PLANTILLA_CORREO"
+    SQLType="INTEGER"/>
+  <ViewAttribute
+    Name="Mensaje"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="4000"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="MENSAJE"
+    Expression="MENSAJE"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="4000"/>
+    </DesignTime>
+  </ViewAttribute>
+  <AttrArray Name="KeyAttributes">
+    <Item Value="IdTareaBpmMensaje"/>
+  </AttrArray>
+  <ClientInterface
+    Name="__clientInterface">
+    <Method
+      Name="filtrarMensajes1"
+      MethodName="filtrarMensajes">
+      <Return
+        Name="_return_type_"
+        Type="void"/>
+      <Parameter
+        Name="idTarea"
+        Type="java.lang.Long"/>
+    </Method>
+    <Method
+      Name="filtrarMensajes2"
+      MethodName="filtrarMensajes">
+      <Return
+        Name="_return_type_"
+        Type="void"/>
+      <Parameter
+        Name="idTarea"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="idProducto"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="accionFinalizarTarea"
+        Type="java.lang.String"/>
+    </Method>
+    <Method
+      Name="filtrarMensajes"
+      MethodName="filtrarMensajes">
+      <Return
+        Name="_return_type_"
+        Type="void"/>
+      <Parameter
+        Name="idTarea"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="accionFinalizarTarea"
+        Type="java.lang.String"/>
+    </Method>
+    <Method
+      Name="filtrarMensajes3"
+      MethodName="filtrarMensajes">
+      <Return
+        Name="_return_type_"
+        Type="void"/>
+      <Parameter
+        Name="idTarea"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="idProducto"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="idOperacion"
+        Type="java.lang.Integer"/>
+      <Parameter
+        Name="idCliente"
+        Type="java.lang.Integer"/>
+      <Parameter
+        Name="idProceso"
+        Type="java.lang.Integer"/>
+      <Parameter
+        Name="accionFinalizarTarea"
+        Type="java.lang.String"/>
+    </Method>
+  </ClientInterface>
+  <ResourceBundle>
+    <PropertiesBundle
+      PropertiesFile="org.bcie.fenix.common.model.FenixModelBundle"/>
+  </ResourceBundle>
+</ViewObject>

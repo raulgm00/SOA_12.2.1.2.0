@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/Wsdl/ADAPTER/ConsultarEnmiendasTCCSAD"/>
+            <con:binding>
+                <con:name>ConsultarEnmiendasTCCPT12Bnd</con:name>
+                <con:namespace>http://www.bcie.org/MatrizTCCService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <oper:operations xmlns:oper="http://xmlns.oracle.com/servicebus/pipeline/operations">
+            <oper:tracingEnabled>true</oper:tracingEnabled>
+            <oper:monitoring enabled="true" level="service" aggregationInterval="10"/>
+        </oper:operations>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="error" name="error-a050a50.361c59ce.0.1530b518339.N7f10">
+            <con:stage id="_StageId-a050a50.361c59ce.0.1530b518339.N7f0f" name="StageError" xmlns:con4="http://www.bea.com/wli/sb/typesystem/config">
+                <con:context/>
+                <con:actions>
+                    <con3:ifThenElse xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a050a50.361c59ce.0.1530b518339.N7f0e</con2:id>
+                        <con3:case id="_BranchId-a050a50.361c59ce.0.1530b518339.N7f0d">
+                            <con3:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError) = 0</con2:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:assign varName="codigoError">
+                                    <con2:id>_ActionId-a050a50.361c59ce.0.1530b518339.N7f0c</con2:id>
+                                    <con3:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con3:expr>
+                                </con3:assign>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default/>
+                    </con3:ifThenElse>
+                    <con3:assign varName="inMapError" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a050a50.361c59ce.0.1530b518339.N7f0b</con2:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(data($codigoError))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a050a50.361c59ce.0.1530b518339.N7f0a</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a050a50.361c59ce.0.1530b518339.N7f09</con2:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ConsultarEnmiendasTCC/XQUERY/Error_TO_ConsultarEnmiendasTCC_PS_Response"/>
+                                <con2:param name="message">
+                                    <con2:path>xs:string(fn:data($fault/ctx:reason))</con2:path>
+                                </con2:param>
+                                <con2:param name="responseMapeoErrorMessage">
+                                    <con2:path>$outMapeoError</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-a050a50.361c59ce.0.1530b518339.N7f08</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteNodeConsultarEnmiendas" error-handler="error-a050a50.361c59ce.0.1530b518339.N7f10">
+                <con:context>
+                    <con2:userNsDecl prefix="mat" namespace="http://www.bcie.org/MatrizTCCMO"/>
+                </con:context>
+                <con:actions>
+                    <con1:route>
+                        <con2:id>_ActionId-a050a50.109788d9.0.1530b3ce408.N7ffd</con2:id>
+                        <con1:service ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ConsultarEnmiendasTCC/BS/ConsultarEnmiendas_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>ConsultarEnmiendas</con1:operation>
+                        <con1:outboundTransform>
+                            <con4:log>
+                                <con2:id>_ActionId-N3f579bc0.N5b956be1.0.1533d5b7f2a.N7f76</con2:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con4:expr>
+                                <con4:message>ConsultarEnmiendasTCC-Request</con4:message>
+                            </con4:log>
+                            <con3:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-a050a50.361c59ce.0.1530b518339.N7ffe</con2:id>
+                                <con3:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con2:xqueryTransform>
+                                        <con2:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ConsultarEnmiendasTCC/XQUERY/ConsultarEnmiendasTCC_PS_TO_ConsultarEnmiendasTCC_BS_Request"/>
+                                        <con2:param name="ConsultarEnmiendasTCCRequest">
+                                            <con2:path>$body/mat:ConsultarEnmiendasTCCRequest</con2:path>
+                                        </con2:param>
+                                    </con2:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con1:outboundTransform>
+                        <con1:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-a050a50.361c59ce.0.1530b518339.N7ffb</con2:id>
+                                <con3:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con:xqueryTransform xmlns:con="http://www.bea.com/wli/sb/stages/config">
+                                        <con:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ConsultarEnmiendasTCC/XQUERY/ConsultarEnmiendasTCC_BS_TO_ConsultarEnmiendasTCC_PS_Response"/>
+                                        <con:param name="ConsultarEnmiendasOutputCollection">
+                                            <con:path>$body/*[1]</con:path>
+                                        </con:param>
+                                    </con:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con4:log>
+                                <con2:id>_ActionId-N3f579bc0.N5b956be1.0.1533d5b7f2a.N7f73</con2:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con4:expr>
+                                <con4:message>ConsultarEnmiendasTCC-Response</con4:message>
+                            </con4:log>
+                        </con1:responseTransform>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

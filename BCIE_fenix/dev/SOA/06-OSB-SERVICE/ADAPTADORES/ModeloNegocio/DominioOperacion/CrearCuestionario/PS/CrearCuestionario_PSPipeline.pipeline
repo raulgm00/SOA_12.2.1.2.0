@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioOperacion/Operacion/V1/Wsdl/ADAPTER/CrearCuestionarioSAD"/>
+            <con:binding>
+                <con:name>CrearCuestionario12Bnd</con:name>
+                <con:namespace>http://xmlns.bcie.org/OperacionService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="error" name="error-N3f579bc1.2d1497a9.0.1501b26354b.N7f76" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+            <con:stage id="_StageId-N3f579bc1.2d1497a9.0.1501b26354b.N7f75" name="StageError">
+                <con:context/>
+                <con:actions>
+                    <con2:ifThenElse>
+                        <con1:id>_ActionId-N3f579bc1.2d1497a9.0.1501b26354b.N7f74</con1:id>
+                        <con2:case id="_BranchId-N3f579bc1.2d1497a9.0.1501b26354b.N7f73">
+                            <con2:condition>
+                                <con1:xqueryText>fn:count($codigoError) = 0</con1:xqueryText>
+                            </con2:condition>
+                            <con2:actions>
+                                <con2:assign varName="codigoError">
+                                    <con1:id>_ActionId-N3f579bc1.2d1497a9.0.1501b26354b.N7f72</con1:id>
+                                    <con2:expr>
+                                        <con1:xqueryText>$fault/ctx:errorCode</con1:xqueryText>
+                                    </con2:expr>
+                                </con2:assign>
+                            </con2:actions>
+                        </con2:case>
+                        <con2:default/>
+                    </con2:ifThenElse>
+                    <con2:assign varName="inMapeoError">
+                        <con1:id>_ActionId-N3f579bc1.2d1497a9.0.1501b26354b.N7f71</con1:id>
+                        <con2:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con1:param name="codigoError">
+                                    <con1:path>xs:string(fn:data($codigoError))</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con2:expr>
+                    </con2:assign>
+                    <con2:wsCallout>
+                        <con1:id>_ActionId-N3f579bc1.2d1497a9.0.1501b26354b.N7f70</con1:id>
+                        <con2:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:operation>MapearError</con2:operation>
+                        <con2:request>
+                            <con2:body wrapped="false">inMapeoError</con2:body>
+                        </con2:request>
+                        <con2:response>
+                            <con2:body wrapped="false">outMapeoError</con2:body>
+                        </con2:response>
+                        <con2:requestTransform/>
+                        <con2:responseTransform/>
+                    </con2:wsCallout>
+                    <con2:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-N3f579bc1.2d1497a9.0.1501b26354b.N7f6f</con1:id>
+                        <con2:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con2:location>
+                        <con2:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/CrearCuestionario/XQUERY/Error_TO_CrearCuestionario_PS_Response"/>
+                                <con1:param name="message">
+                                    <con1:path>fn:string(fn:data($fault/ctx:reason))</con1:path>
+                                </con1:param>
+                                <con1:param name="responseMapeoErrorMessage">
+                                    <con1:path>$outMapeoError</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con2:expr>
+                    </con2:replace>
+                    <con1:reply>
+                        <con1:id>_ActionId-N3f579bc1.2d1497a9.0.1501b26354b.N7f6e</con1:id>
+                    </con1:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteNodeCrearCuestionario" error-handler="error-N3f579bc1.2d1497a9.0.1501b26354b.N7f76">
+                <con:context>
+                    <con1:userNsDecl prefix="eval" namespace="http://www.bcie.org/OperacionMO"/>
+                </con:context>
+                <con:actions>
+                    <con2:route>
+                        <con1:id>_ActionId-N3f579bc1.2d1497a9.0.1501b26354b.N7ffd</con1:id>
+                        <con2:service ref="ADAPTADORES/ModeloNegocio/DominioOperacion/CrearCuestionario/BS/CrearCuestionarioSP_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:operation>SP_GENERA_CUESTIONARIO</con2:operation>
+                        <con2:outboundTransform>
+                            <con4:log>
+                                <con1:id>_ActionId-a050acd.N48d9084.0.153668b6a49.N7f80</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>CrearCuestionario-Request</con4:message>
+                            </con4:log>
+                            <con3:ifThenElse>
+                                <con1:id>_ActionId-N3f579bc1.3ee47b3.0.1501f0bbeff.N7ff4</con1:id>
+                                <con3:case id="_BranchId-N3f579bc1.3ee47b3.0.1501f0bbeff.N7ff3">
+                                    <con3:condition>
+                                        <con1:xqueryText>$body/eval:CrearCuestionarioRequest/eval:idOperacion = "" and $body/eval:CrearCuestionarioRequest/eval:idProducto = "" or $body/eval:CrearCuestionarioRequest/eval:idOperacion = ""
+or $body/eval:CrearCuestionarioRequest/eval:idProducto = ""</con1:xqueryText>
+                                    </con3:condition>
+                                    <con3:actions>
+                                        <con3:Error>
+                                            <con1:id>_ActionId-N3f579bc1.3ee47b3.0.1501f0bbeff.N7fbf</con1:id>
+                                            <con3:errCode>OSB-997</con3:errCode>
+                                            <con3:message>Error en el formato del mensaje</con3:message>
+                                        </con3:Error>
+                                    </con3:actions>
+                                </con3:case>
+                                <con3:default/>
+                            </con3:ifThenElse>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-N3f579bc1.2d1497a9.0.1501b26354b.N7ffa</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/CrearCuestionario/XQUERY/CrearCuestionario_BS_TO_CrearCuestionario_PS_Request"/>
+                                        <con1:param name="CrearCuestionarioRequest">
+                                            <con1:path>$body/eval:CrearCuestionarioRequest</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con2:outboundTransform>
+                        <con2:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-N3f579bc1.2d1497a9.0.1501b26354b.N7ff7</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/CrearCuestionario/XQUERY/CrearCuestionario_PS_TO_CrearCuestionario_BS_Response"/>
+                                        <con1:param name="CrearCuestionarioResponse">
+                                            <con1:path>$body/*[1]</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con4:log>
+                                <con1:id>_ActionId-a050acd.N48d9084.0.153668b6a49.N7f7d</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>CrearCuestionario-Response</con4:message>
+                            </con4:log>
+                        </con2:responseTransform>
+                    </con2:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

@@ -1,0 +1,83 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Aug 15 18:00:55 CDT 2019
+  Author:  Sol4IT México
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ModifyBuyerProcessBPEL"
+               targetNamespace="http://xmlns.oracle.com/ModifyBuyerProcess/ModifyBuyerProcess/ModifyBuyerProcessBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ModifyBuyerProcess/ModifyBuyerProcess/ModifyBuyerProcessBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://mx.agarcia.ea/Applications/JDA/Buyer/CreateBuyer/v1.0"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Buyer/JDAModifyBuyerProcess">
+
+    <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/ModifyBuyerProcess/ModifyBuyerProcess/ModifyBuyerProcessBPEL" location="../WSDLs/ModifyBuyerProcessBPEL.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="modifybuyerprocessbpel_client" partnerLinkType="client:ModifyBuyerProcessBPEL" myRole="ModifyBuyerProcessBPELProvider"/>
+    <partnerLink name="JDAModifyBuyerProcessPXY" partnerLinkType="ns2:JDAModifyBuyerProcessPXY"
+                 partnerRole="ModifyBuyerPType"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:ModifyBuyerProcessBPELRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:ModifyBuyerProcessBPELResponseMessage"/>
+    <variable name="Inv_JDAModifyBuyerProcess_InVar" messageType="ns2:modifyRequest"/>
+    <variable name="Inv_JDAModifyBuyerProcess_OutVar" messageType="ns2:modifyResponse"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ModifyBuyerProcessBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="modifybuyerprocessbpel_client" portType="client:ModifyBuyerProcessBPEL" operation="process" variable="inputVariable" createInstance="yes"/>
+    <assign name="TransformBuyer">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../TransformJDAModifyBuyer.xsl", $inputVariable.payload)</from>
+        <to variable="Inv_JDAModifyBuyerProcess_InVar" part="part1"/>
+      </copy>
+    </assign>
+    <invoke name="Inv_JDAModifyBuyerProcess" bpelx:invokeAsDetail="no" partnerLink="JDAModifyBuyerProcessPXY"
+            portType="ns2:ModifyBuyerPType" operation="modifyBuyerPType"
+            inputVariable="Inv_JDAModifyBuyerProcess_InVar" outputVariable="Inv_JDAModifyBuyerProcess_OutVar"/>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="modifybuyerprocessbpel_client" portType="client:ModifyBuyerProcessBPEL" operation="process" variable="outputVariable"/>
+  </sequence>
+</process>

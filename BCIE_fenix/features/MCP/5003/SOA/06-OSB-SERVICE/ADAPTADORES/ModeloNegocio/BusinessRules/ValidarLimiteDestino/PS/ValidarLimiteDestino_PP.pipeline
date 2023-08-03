@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/Wsdl/BPEL/ValidarLimiteDestinoSOR"/>
+            <con:binding>
+                <con:name>ValidarLimiteDestinoPT12Bnd</con:name>
+                <con:namespace>http://www.bcie.org/ValidarLimiteDestinoSOR</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="error" name="error-a050ace.aed805b.0.15b4ed84f56.N7ff6">
+            <con:stage id="_StageId-a050ae5.fa43706.0.16027947174.N7f43" name="StageEnviarNotificacion">
+                <con:context/>
+                <con:actions>
+                    <con4:assign varName="varEnviarCorreoElectronicoRq">
+                        <con2:id>_ActionId-a050ae5.fa43706.0.16027947174.N7f3f</con2:id>
+                        <con4:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                                <con2:param name="Accion">
+                                    <con2:path>'Validar Limite Destino'</con2:path>
+                                </con2:param>
+                                <con2:param name="MensajeDeError">
+                                    <con2:path>concat('Error en ValidarLimiteDestino_PP ',fn:data($body/soap12-env:Fault/soap12-env:Reason),' ',fn:data($fault/ctx:details))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con4:expr>
+                    </con4:assign>
+                    <con4:wsCallout>
+                        <con2:id>_ActionId-a050ae5.fa43706.0.16027947174.N7f39</con2:id>
+                        <con4:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con4:operation>enviarCorreoElectronico</con4:operation>
+                        <con4:request>
+                            <con4:body wrapped="false">varEnviarCorreoElectronicoRq</con4:body>
+                        </con4:request>
+                        <con4:response>
+                            <con4:body wrapped="false">varEnviarCorreoElectronicoRs</con4:body>
+                        </con4:response>
+                        <con4:requestTransform>
+                            <con1:log>
+                                <con2:id>_ActionId-a050ae5.fa43706.0.16027947174.N7f2d</con2:id>
+                                <con1:logLevel>info</con1:logLevel>
+                                <con1:expr>
+                                    <con2:xqueryText>$varEnviarCorreoElectronicoRq</con2:xqueryText>
+                                </con1:expr>
+                                <con1:message>EH varEnviarCorreoElectronicoRq-ValidarLimiteDestino_PP</con1:message>
+                            </con1:log>
+                        </con4:requestTransform>
+                        <con4:responseTransform>
+                            <con1:log>
+                                <con2:id>_ActionId-a050ae5.fa43706.0.16027947174.N7f2a</con2:id>
+                                <con1:logLevel>info</con1:logLevel>
+                                <con1:expr>
+                                    <con2:xqueryText>$varEnviarCorreoElectronicoRs</con2:xqueryText>
+                                </con1:expr>
+                                <con1:message>EH varEnviarCorreoElectronicoRs-ValidarLimiteDestino_PP</con1:message>
+                            </con1:log>
+                        </con4:responseTransform>
+                    </con4:wsCallout>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a050ace.aed805b.0.15b4ed84f56.N7ff5" name="Error">
+                <con:context/>
+                <con:actions>
+                    <con1:log>
+                        <con2:id>_ActionId-a050ace.aed805b.0.15b4ed84f56.N7ff2</con2:id>
+                        <con1:logLevel>error</con1:logLevel>
+                        <con1:expr>
+                            <con2:xqueryText><![CDATA[<ERROR>
+  <OPERATION>{$operation}</OPERATION>
+  <BODY>{$body}</BODY>
+  <FAULT>{$fault}</FAULT>
+  <INBOUND>{$inbound}</INBOUND>
+</ERROR>]]></con2:xqueryText>
+                        </con1:expr>
+                        <con1:message>ValidarLimiteDestino_BS_ERROR</con1:message>
+                    </con1:log>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="request" name="request-a050ae5.fa43706.0.16027947174.N7f52">
+            <con:stage id="_StageId-a050ae5.fa43706.0.16027947174.N7f50" name="StageRequest">
+                <con:context/>
+                <con:actions/>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-a050ae5.fa43706.0.16027947174.N7f51">
+            <con:stage id="_StageId-a050ae5.fa43706.0.16027947174.N7f4f" name="StageResponse">
+                <con:context>
+                    <con2:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO"/>
+                    <con2:userNsDecl prefix="des" namespace="http://www.bcie.org/DesembolsoMO"/>
+                    <con2:userNsDecl prefix="err" namespace="http://www.bcie.org/ErrorBO"/>
+                </con:context>
+                <con:actions>
+                    <con4:ifThenElse>
+                        <con2:id>_ActionId-a050ae5.fa43706.0.16027947174.N7f48</con2:id>
+                        <con4:case id="_BranchId-a050ae5.fa43706.0.16027947174.N7f47">
+                            <con4:condition>
+                                <con2:xqueryConditionExpr>
+                                    <con2:compExpr operator="!=">
+                                        <con2:leftPath>$body/des:ValidarLimiteDestinoResponse/des:Resultado/res:result</con2:leftPath>
+                                        <con2:rightPath>'OK'</con2:rightPath>
+                                    </con2:compExpr>
+                                </con2:xqueryConditionExpr>
+                            </con4:condition>
+                            <con4:actions>
+                                <con4:assign varName="varEnviarCorreoElectronicoRq">
+                                    <con2:id>_ActionId-a050ae5.fa43706.0.16027947174.N7f3c</con2:id>
+                                    <con4:expr>
+                                        <con2:xqueryTransform>
+                                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                                            <con2:param name="Accion">
+                                                <con2:path>'Validar Limite Destino'</con2:path>
+                                            </con2:param>
+                                            <con2:param name="MensajeDeError">
+                                                <con2:path>concat('Error en ValidarLimiteDestino_PP ',$body/des:ValidarLimiteDestinoResponse/des:Resultado/res:message,' ',$body/des:ValidarLimiteDestinoResponse/des:Resultado/res:error/err:errorDescription)</con2:path>
+                                            </con2:param>
+                                        </con2:xqueryTransform>
+                                    </con4:expr>
+                                </con4:assign>
+                                <con4:wsCallout>
+                                    <con2:id>_ActionId-a050ae5.fa43706.0.16027947174.N7f36</con2:id>
+                                    <con4:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con4:operation>enviarCorreoElectronico</con4:operation>
+                                    <con4:request>
+                                        <con4:body wrapped="false">varEnviarCorreoElectronicoRq</con4:body>
+                                    </con4:request>
+                                    <con4:response>
+                                        <con4:body wrapped="false">varEnviarCorreoElectronicoRs</con4:body>
+                                    </con4:response>
+                                    <con4:requestTransform>
+                                        <con1:log>
+                                            <con2:id>_ActionId-a050ae5.fa43706.0.16027947174.N7f33</con2:id>
+                                            <con1:logLevel>info</con1:logLevel>
+                                            <con1:expr>
+                                                <con2:xqueryText>$varEnviarCorreoElectronicoRq</con2:xqueryText>
+                                            </con1:expr>
+                                            <con1:message>varEnviarCorreoElectronicoRq-ValidarLimiteDestino_PP</con1:message>
+                                        </con1:log>
+                                    </con4:requestTransform>
+                                    <con4:responseTransform>
+                                        <con1:log>
+                                            <con2:id>_ActionId-a050ae5.fa43706.0.16027947174.N7f30</con2:id>
+                                            <con1:logLevel>info</con1:logLevel>
+                                            <con1:expr>
+                                                <con2:xqueryText>$varEnviarCorreoElectronicoRs</con2:xqueryText>
+                                            </con1:expr>
+                                            <con1:message>varEnviarCorreoElectronicoRs-ValidarLimiteDestino_PP</con1:message>
+                                        </con1:log>
+                                    </con4:responseTransform>
+                                </con4:wsCallout>
+                            </con4:actions>
+                        </con4:case>
+                        <con4:default/>
+                    </con4:ifThenElse>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PipelinePairNode1">
+                <con:request>request-a050ae5.fa43706.0.16027947174.N7f52</con:request>
+                <con:response>response-a050ae5.fa43706.0.16027947174.N7f51</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteNode1" error-handler="error-a050ace.aed805b.0.15b4ed84f56.N7ff6">
+                <con:context/>
+                <con:actions>
+                    <con3:route>
+                        <con2:id>_ActionId-a050ace.aed805b.0.15b4ed84f56.N7ffe</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/BusinessRules/ValidarLimiteDestino/BS/ValidarLimiteDestino_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>validarLimiteDestino</con3:operation>
+                        <con3:outboundTransform>
+                            <con1:log>
+                                <con2:id>_ActionId-a050ace.aed805b.0.15b4ed84f56.N7ffb</con2:id>
+                                <con1:logLevel>info</con1:logLevel>
+                                <con1:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con1:expr>
+                                <con1:message>ValidarLimiteDestino_BS_REQUEST</con1:message>
+                            </con1:log>
+                        </con3:outboundTransform>
+                        <con3:responseTransform>
+                            <con1:log>
+                                <con2:id>_ActionId-a050ace.aed805b.0.15b4ed84f56.N7ff7</con2:id>
+                                <con1:logLevel>info</con1:logLevel>
+                                <con1:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con1:expr>
+                                <con1:message>ValiudarLimiteDestino_BS_RESPONSE</con1:message>
+                            </con1:log>
+                        </con3:responseTransform>
+                    </con3:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

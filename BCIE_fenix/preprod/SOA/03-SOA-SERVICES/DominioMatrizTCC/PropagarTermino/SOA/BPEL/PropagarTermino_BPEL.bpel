@@ -1,0 +1,652 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Mar 02 16:31:04 CST 2016
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="PropagarTermino_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioMatrizTCC/PropagarTermino/PropagarTermino_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioMatrizTCC/PropagarTermino/PropagarTermino_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/PropagarTerminoService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/OperacionService"
+         xmlns:ns3="http://www.bcie.org/TerminoService" xmlns:ns7="http://www.bcie.org/CatalogoBO"
+         xmlns:ns5="http://www.bcie.org/MatrizTCCMO" xmlns:ns6="http://www.bcie.org/TerminoBO"
+         xmlns:ns8="http://www.bcie.org/AtributoBO" xmlns:ns4="http://www.bcie.org/TerminoMO"
+         xmlns:ns9="http://www.bcie.org/ResultBO" xmlns:ns10="http://www.bcie.org/ErrorBO"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns12="http://www.bcie.org/OperacionBO"
+         xmlns:ns11="http://www.bcie.org/OperacionMO" xmlns:ns14="http://www.bcie.org/ProductoBO"
+         xmlns:ns15="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns13="http://www.bcie.org/ClienteBO"
+         xmlns:ns16="http://xmlns.bcie.com/AprobacionService" xmlns:ns17="http://www.bcie.org/AprobacionMO"
+         xmlns:ns18="http://www.bcie.org/AprobacionBO" xmlns:ns19="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns20="http://www.bcie.org/CondicionBO" xmlns:ns21="http://www.bcie.org/DocumentoBO"
+         xmlns:ns22="http://www.bcie.org/ComisionBO" xmlns:ns23="urn:ConsultarAprobacionByIdOperacion"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns24="urn:ConsultarContratoByInstanciaProcesoSAD"
+         xmlns:ns25="http://www.bcie.org/ActualizarContratoService" xmlns:ns26="http://www.bcie.org/ContratoMO"
+         xmlns:ns27="http://www.bcie.org/ContratoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/PropagarTerminoService" location="../WSDLs/PropagarTerminoSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="propagarTermino" partnerLinkType="ns1:PropagarTermino_BPEL" myRole="PropagarTerminoPT"/>
+    <partnerLink name="ActualizarOperacion" partnerLinkType="ns2:ActualizarOperacion" partnerRole="Operacion12Port"/>
+    <partnerLink name="ConsultarTermino" partnerLinkType="ns3:ConsultarTermino" partnerRole="ConsultarTerminoPT"/>
+    <partnerLink name="ActualizarAprobacion" partnerLinkType="ns16:ActualizarAprobacion" partnerRole="AprobacionPT"/>
+    <partnerLink name="ConsultarAprobacionByIdOperacion" partnerLinkType="ns23:ConsultarAprobacionByIdOperacion"
+                 partnerRole="ConsultarAprobacionByIdOperacionPT"/>
+    <partnerLink name="ConsultarContratoByInstancia" partnerLinkType="ns24:ConsultarContratoByInstancia"
+                 partnerRole="ConsultarContratoByInstanciaProcesoPT"/>
+    <partnerLink name="ActualizarContrato" partnerLinkType="ns25:ActualizarContrato"
+                 partnerRole="ActualizarContratoPT"/>
+    <partnerLink name="CalcularFechaVencimiento" partnerLinkType="ns3:CalcularFechaVencimiento"
+                 partnerRole="CalcularFechaVencimientoPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:propagarTerminoRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:propagarTerminoResponseMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="faultVariable" messageType="bpelx:RuntimeFaultMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <reply name="Reply" variable="outputVariable" partnerLink="propagarTermino" portType="ns1:PropagarTerminoPT"
+             operation="propagarTermino"/>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in PropagarTermino_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="propagarTermino" portType="ns1:PropagarTerminoPT" operation="propagarTermino" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignTitulo" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>oraext:setFlowInstanceTitle(concat('idOperacion ',$inputVariable.request/ns5:ListaTerminos/ns6:Termino[1]/ns6:operacion))</from>
+         <to>$setTitleVar</to>
+      </copy>
+      <copy>
+         <from>'OK'</from>
+         <to>$outputVariable.response/ns5:Resultado/ns9:result</to>
+      </copy>
+      <copy>
+         <from>'La operación se ha realizado exitosamente'</from>
+         <to>$outputVariable.response/ns5:Resultado/ns9:message</to>
+      </copy>
+   </assign>
+    <forEach parallel="no" counterName="terminoCount" name="ForEachTermino">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($inputVariable.request/ns5:ListaTerminos/ns6:Termino)</finalCounterValue>
+      <scope name="ScopeForEachTermino">
+        <sequence name="Sequence2">
+          <scope name="ConsultarTermino">
+            <variables>
+              <variable name="consultarTermino_InputVariable" messageType="ns3:ConsultarTerminoRequestMessage"/>
+              <variable name="consultarTermino_OutputVariable" messageType="ns3:ConsultarTerminoResponseMessage"/>
+            </variables>
+            <sequence name="Sequence1">
+              <assign name="Assign_ConsultarTerminoInput">
+                <copy>
+                  <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:idTermino</from>
+                  <to>$consultarTermino_InputVariable.request/ns4:idTermino</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeConsultarTermino" partnerLink="ConsultarTermino" portType="ns3:ConsultarTerminoPT"
+                      operation="consultarTermino" inputVariable="consultarTermino_InputVariable"
+                      outputVariable="consultarTermino_OutputVariable" bpelx:invokeAsDetail="no"/>
+              <if name="IfError">
+                <documentation>
+                  <![CDATA[Error]]>
+                </documentation>
+                <condition>$consultarTermino_OutputVariable.response/ns4:Resultado/ns9:result = 'ERROR'</condition>
+                <empty name="ErrorConsultar"/>
+                <else>
+                  <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                  <assign name="AssignTipo">
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>$consultarTermino_OutputVariable.response/ns4:Termino[1]/ns6:tipoTermino/ns6:descripcionCorta</from>
+                      <to>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:descripcionCorta</to>
+                    </copy>
+                  </assign>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+          <if name="IfTerminoX">
+            <documentation>
+              <![CDATA[TerminoOperacion]]>
+            </documentation>
+            <condition>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:descripcionCorta = 'T201' or $inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:descripcionCorta = 'T304' or $inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:descripcionCorta = 'T601'</condition>
+            <scope name="ScopeOperacion">
+              <variables>
+                <variable name="actualizarOperacion_InputVariable" messageType="ns2:requestActualizarOperacionMessage"/>
+                <variable name="actualizarOperacion_OutputVariable"
+                          messageType="ns2:responseActualizarOperacionMessage"/>
+              </variables>
+              <faultHandlers>
+                <catchAll>
+                  <sequence name="SequenceCatchAll">
+                    <assign name="AssignErrorOperacion">
+                      <copy>
+                        <from>'ERROR'</from>
+                        <to>$outputVariable.response/ns5:Resultado/ns9:result</to>
+                      </copy>
+                      <copy>
+                        <from>$faultVariable.code</from>
+                        <to>$outputVariable.response/ns5:Resultado/ns9:error/ns10:errorCode</to>
+                      </copy>
+                      <copy>
+                        <from>$faultVariable.summary</from>
+                        <to>$outputVariable.response/ns5:Resultado/ns9:message</to>
+                      </copy>
+                    </assign>
+                    <reply name="ReplyActualizarOperacion" variable="outputVariable" partnerLink="propagarTermino"
+                           portType="ns1:PropagarTerminoPT" operation="propagarTermino"/>
+                    <exit name="ExitOperacion"/>
+                  </sequence>
+                </catchAll>
+              </faultHandlers>
+              <sequence name="SequenceActualizarOperacion">
+                <if name="IfTipoTermino">
+                  <documentation>
+                    <![CDATA[T201]]>
+                  </documentation>
+                  <condition>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:descripcionCorta = 'T201'</condition>
+                  <assign name="AssignActualizarOperacionMonto">
+                    <copy>
+                      <from>false()</from>
+                      <to>$actualizarOperacion_InputVariable.request/ns11:actualizarTermino</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:monto</from>
+                      <to>$actualizarOperacion_InputVariable.request/ns11:Operacion/ns12:montoOperacion/ns12:montoOperacion/ns12:monto</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[1]/ns6:operacion</from>
+                      <to>$actualizarOperacion_InputVariable.request/ns11:Operacion/ns12:idOperacion</to>
+                    </copy>
+                    <copy>
+                      <from>2</from>
+                      <to>$actualizarOperacion_InputVariable.request/ns11:Operacion/ns12:montoOperacion/ns12:montoOperacion/ns12:IdTcaTipoMonto</to>
+                    </copy>
+                  </assign>
+                  <elseif>
+                    <documentation>
+                      <![CDATA[T304]]>
+                    </documentation>
+                    <condition>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:descripcionCorta = 'T304'</condition>
+                    <assign name="AssignActualizarOperacion"
+                                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                      <copy>
+                        <from>false()</from>
+                        <to>$actualizarOperacion_InputVariable.request/ns11:actualizarTermino</to>
+                      </copy>
+                      <copy>
+                        <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[1]/ns6:operacion</from>
+                        <to>$actualizarOperacion_InputVariable.request/ns11:Operacion/ns12:idOperacion</to>
+                      </copy>
+                      <copy ignoreMissingFromData="no">
+                        <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:seAplicanRecursosConcesion</from>
+                        <to>$actualizarOperacion_InputVariable.request/ns11:Operacion/ns12:componenteConcesionalidad</to>
+                      </copy>
+                    </assign></elseif>
+                  <elseif>
+                    <documentation>
+                      <![CDATA[T203]]>
+                    </documentation>
+                    <condition>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:descripcionCorta = 'T203'</condition><assign name="AssignActualizarOperacionMontoF"
+                                                                                                                                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+      
+      
+   <copy>
+         <from>false()</from>
+         <to>$actualizarOperacion_InputVariable.request/ns11:actualizarTermino</to>
+      </copy><copy>
+         <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:monto</from>
+         <to>$actualizarOperacion_InputVariable.request/ns11:Operacion/ns12:montoOperacion/ns12:montoOperacion/ns12:monto</to>
+      </copy><copy>
+         <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[1]/ns6:operacion</from>
+         <to>$actualizarOperacion_InputVariable.request/ns11:Operacion/ns12:idOperacion</to>
+      </copy><copy>
+         <from>2</from>
+         <to>$actualizarOperacion_InputVariable.request/ns11:Operacion/ns12:montoOperacion/ns12:montoOperacion/ns12:IdTcaTipoMonto</to>
+      </copy></assign>
+                  </elseif>
+                  <else>
+                    <documentation>
+                      <![CDATA[T601]]>
+                    </documentation><assign name="AssignActualizarOperacionFecha"
+                                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+      
+      
+      
+   <copy>
+         <from>false()</from>
+         <to>$actualizarOperacion_InputVariable.request/ns11:actualizarTermino</to>
+      </copy><copy>
+         <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[1]/ns6:operacion</from>
+         <to>$actualizarOperacion_InputVariable.request/ns11:Operacion/ns12:idOperacion</to>
+      </copy><copy>
+         <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:fecha</from>
+         <to>$actualizarOperacion_InputVariable.request/ns11:Operacion/ns12:fechaInicio</to>
+      </copy></assign></else>
+                </if>
+                <invoke name="InvokeActualizarOperacion" bpelx:invokeAsDetail="no" partnerLink="ActualizarOperacion"
+                        portType="ns2:Operacion12Port" operation="actualizarOperacion"
+                        inputVariable="actualizarOperacion_InputVariable"
+                        outputVariable="actualizarOperacion_OutputVariable"/>
+                <if name="IfResultadoActualizar">
+                  <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                  <condition>$actualizarOperacion_OutputVariable.response/ns11:Resultado/ns9:result = 'OK'</condition>
+                  <empty name="OK"/>
+                  <else>
+                    <documentation>
+                      <![CDATA[ERROR]]>
+                    </documentation>
+                    <sequence name="SequenceError">
+                      <assign name="AssignFault">
+                        <copy>
+                          <from>'-1'</from>
+                          <to>$faultVariable.code</to>
+                        </copy>
+                        <copy>
+                          <from>'Error al actualizar la operación'</from>
+                          <to>$faultVariable.summary</to>
+                        </copy>
+                        <copy>
+                          <from>$actualizarOperacion_OutputVariable.response/ns11:Resultado/ns9:message</from>
+                          <to>$faultVariable.detail</to>
+                        </copy>
+                      </assign>
+                      <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                    </sequence>
+                  </else>
+                </if>
+              </sequence>
+            </scope>
+            <elseif>
+              <documentation>
+                <![CDATA[TerminoAprobacion]]>
+              </documentation>
+              <condition>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:descripcionCorta = 'T202' or $inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:descripcionCorta = 'T602'</condition><sequence name="SequenceTerminosAprobacion"><sequence name="SequenceAprobacion"><scope name="ScopeAprobacion"><variables><variable name="inInvokeConsultarAprobacionByIdOperacion"
+                                                                                                                                                                                                                                                                                                                                                                                             messageType="ns23:ConsultarAprobacionByIdOperacionRequestMessage"/><variable name="outInvokeConsultarAprobacionByIdOperacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                          messageType="ns23:ConsultarAprobacionByIdOperacionResponseMessage"/><variable name="inInvokeActualizarAprobacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        messageType="ns16:ActualizarAprobacionRequestMessage"/><variable name="outInvokeActualizarAprobacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         messageType="ns16:ActualizarAprobacionResponseMessage"/>
+                      <variable name="inInvokeCalcularFecha" messageType="ns3:CalcularFechaVencimientoRequestMessage"/>
+                      <variable name="outInvokeCalcularFecha"
+                                messageType="ns3:CalcularFechaVencimientoResponseMessage"/>
+                    </variables><faultHandlers><catchAll><sequence name="SequenceCatchAll"><assign name="AssignErrorAprobacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"><copy><from>'ERROR'</from><to>$outputVariable.response/ns5:Resultado/ns9:result</to></copy><copy><from>$faultVariable.code</from><to>$outputVariable.response/ns5:Resultado/ns9:error/ns10:errorCode</to></copy><copy><from>$faultVariable.summary</from><to>$outputVariable.response/ns5:Resultado/ns9:message</to></copy></assign><reply name="ReplyActualizarAprobacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            variable="outputVariable"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            partnerLink="propagarTermino"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            portType="ns1:PropagarTerminoPT"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            operation="propagarTermino"/><exit name="ExitAprobacion"/></sequence></catchAll></faultHandlers><sequence name="SequenceAprobacion"><assign name="AssignConsultarAprobacionByIdOperacion"><copy><from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:operacion</from><to>$inInvokeConsultarAprobacionByIdOperacion.ConsultarAprobacionByIdOperacionRequest/ns17:idOperacion</to></copy></assign><invoke name="InvokeConsultarAprobacionByIdOperacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             partnerLink="ConsultarAprobacionByIdOperacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             portType="ns23:ConsultarAprobacionByIdOperacionPT"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             operation="consultarAprobacionByIdOperacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             inputVariable="inInvokeConsultarAprobacionByIdOperacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             outputVariable="outInvokeConsultarAprobacionByIdOperacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             bpelx:invokeAsDetail="no"/><if name="IfAprobacionExiste"><documentation><![CDATA[Existe]]></documentation><condition>$outInvokeConsultarAprobacionByIdOperacion.ConsultarAprobacionByIdOperacionResponse/ns17:Aprobacion/ns18:idAprobacion != ''</condition><sequence name="SequenceActualizarAprobacion">
+                          <if name="IfterminoAprobacion">
+                            <documentation>
+                              <![CDATA[monto]]>
+                            </documentation>
+                            <condition>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:idCatTermino=11</condition>
+                            <assign name="AssignActualizarAprobacion">
+                              <copy>
+                                <from>false()</from>
+                                <to>$inInvokeActualizarAprobacion.request/ns17:actualizarTermino</to>
+                              </copy>
+                              <copy>
+                                <from>$outInvokeConsultarAprobacionByIdOperacion.ConsultarAprobacionByIdOperacionResponse/ns17:Aprobacion/ns18:idAprobacion</from>
+                                <to>$inInvokeActualizarAprobacion.request/ns17:Aprobacion/ns18:idAprobacion</to>
+                              </copy>
+                              <copy>
+                                <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:operacion</from>
+                                <to>$inInvokeActualizarAprobacion.request/ns17:Aprobacion/ns18:idOperacion</to>
+                              </copy>
+                              <copy>
+                                <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:fecha</from>
+                                <to>$inInvokeActualizarAprobacion.request/ns17:Aprobacion/ns18:fechaAprobacion</to>
+                              </copy>
+                              <copy>
+                                <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:monto</from>
+                                <to>$inInvokeActualizarAprobacion.request/ns17:Aprobacion/ns18:MontoAprobacion</to>
+                              </copy>
+                              <extensionAssignOperation>
+                                <bpelx:remove>
+                                  <bpelx:target>$inInvokeActualizarAprobacion.request/ns17:Aprobacion/ns18:LineaCredito</bpelx:target>
+                                </bpelx:remove>
+                              </extensionAssignOperation>
+                            </assign>
+                            <else>
+                              <documentation>
+                                <![CDATA[fecha]]>
+                              </documentation>
+                              <assign name="AssignActualizarAprobacion"
+                                          xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+      
+      
+      
+      
+   <copy>
+         <from>false()</from>
+         <to>$inInvokeActualizarAprobacion.request/ns17:actualizarTermino</to>
+      </copy><copy>
+         <from>$outInvokeConsultarAprobacionByIdOperacion.ConsultarAprobacionByIdOperacionResponse/ns17:Aprobacion/ns18:idAprobacion</from>
+         <to>$inInvokeActualizarAprobacion.request/ns17:Aprobacion/ns18:idAprobacion</to>
+      </copy><copy>
+         <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:operacion</from>
+         <to>$inInvokeActualizarAprobacion.request/ns17:Aprobacion/ns18:idOperacion</to>
+      </copy><copy>
+         <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:fecha</from>
+         <to>$inInvokeActualizarAprobacion.request/ns17:Aprobacion/ns18:fechaAprobacion</to>
+      </copy><extensionAssignOperation>
+                                  <bpelx:remove xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <bpelx:target>$inInvokeActualizarAprobacion.request/ns17:Aprobacion/ns18:LineaCredito</bpelx:target>
+         </bpelx:remove>
+                                </extensionAssignOperation></assign></else>
+                          </if><invoke name="InvokeActualizarAprobacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           partnerLink="ActualizarAprobacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           portType="ns16:AprobacionPT"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           operation="actualizarAprobacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           inputVariable="inInvokeActualizarAprobacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           outputVariable="outInvokeActualizarAprobacion"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           bpelx:invokeAsDetail="no"/><if name="IfResultadoActualizar"><documentation><![CDATA[OK]]></documentation><condition>$outInvokeActualizarAprobacion.response/ns17:Resultado/ns9:result ='OK'</condition>
+                            <sequence>
+                              <assign name="AssignCalcularFecha">
+                                <copy>
+                                  <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[1]/ns6:operacion</from>
+                                  <to>$inInvokeCalcularFecha.request/ns4:idOperacion</to>
+                                </copy>
+                                <copy>
+                                  <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:idCatTermino</from>
+                                  <to>$inInvokeCalcularFecha.request/ns4:idTcaTermino</to>
+                                </copy>
+                                <copy>
+                                  <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:fecha</from>
+                                  <to>$inInvokeCalcularFecha.request/ns4:FechaInicio</to>
+                                </copy>
+                              </assign>
+                              <invoke name="InvokeCalcularFecha"
+                                      partnerLink="CalcularFechaVencimiento" portType="ns3:CalcularFechaVencimientoPT"
+                                      operation="calcularFechaVencimiento" inputVariable="inInvokeCalcularFecha"
+                                      outputVariable="outInvokeCalcularFecha"
+                                      xmlns:bpelx="http://schemas.oracle.com/bpel/extension" bpelx:invokeAsDetail="no"/>
+                            </sequence>
+                            <else><documentation><![CDATA[ERROR]]></documentation><sequence name="SequenceError"><assign name="AssignFault"><copy><from>'-1'</from><to>$faultVariable.code</to></copy><copy><from>'Error al actualizar la aprobación'</from><to>$faultVariable.summary</to></copy><copy><from>$outInvokeActualizarAprobacion.response/ns17:Resultado/ns9:message</from><to>$faultVariable.detail</to></copy></assign><throw name="ThrowFault"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    faultName="bpelx:remoteFault"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    faultVariable="faultVariable"/></sequence></else></if></sequence><else><documentation><![CDATA[NoExiste]]></documentation><assign name="AssignAprobacionNoExiste"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                  xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                              <from>'ERROR'</from>
+                              <to>$outputVariable.response/ns5:Resultado/ns9:result</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                  xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                              <from>'No Existe la Aprobación'</from>
+                              <to>$outputVariable.response/ns5:Resultado/ns9:message</to>
+                            </copy>
+                          </assign></else></if></sequence></scope></sequence></sequence></elseif>
+            <elseif>
+              <documentation>
+                <![CDATA[TerminoContrato]]>
+              </documentation>
+              <condition>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:descripcionCorta = 'T603' or $inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:descripcionCorta = 'T604'</condition>
+              <sequence name="SequenceTerminosContrato">
+                <scope name="ScopeContrato">
+                  <variables>
+                    <variable name="inInvokeConsultarContrato"
+                              messageType="ns24:ConsultarContratoByInstanciaProcesoRequestMessage"/>
+                    <variable name="outInvokeConsultarContrato"
+                              messageType="ns24:ConsultarContratoByInstanciaProcesoResponseMessage"/>
+                    <variable name="inInvokeActualizarContrato" messageType="ns25:ActualizarContratoRequestMessage"/>
+                    <variable name="outInvokeActualizarContrato" messageType="ns25:ActualizarContratoResponseMessage"/>
+                    <variable name="inInvokeCalcularFecha" messageType="ns3:CalcularFechaVencimientoRequestMessage"/>
+                    <variable name="outInvokeCalcularFecha" messageType="ns3:CalcularFechaVencimientoResponseMessage"/>
+                  </variables>
+                  <faultHandlers>
+                    <catchAll>
+                      <sequence name="SequenceCatchAll"
+                                xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                        <assign name="AssignErrorContrato"
+                                xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                          <copy>
+                            <from>'ERROR'</from>
+                            <to>$outputVariable.response/ns5:Resultado/ns9:result</to>
+                          </copy>
+                          <copy>
+                            <from>$faultVariable.code</from>
+                            <to>$outputVariable.response/ns5:Resultado/ns9:error/ns10:errorCode</to>
+                          </copy>
+                          <copy>
+                            <from>$faultVariable.summary</from>
+                            <to>$outputVariable.response/ns5:Resultado/ns9:message</to>
+                          </copy>
+                        </assign>
+                        <reply name="ReplyActualizarContrato" variable="outputVariable" partnerLink="propagarTermino"
+                               portType="ns1:PropagarTerminoPT" operation="propagarTermino"/>
+                        <exit name="Exitontrato"/>
+                      </sequence>
+                    </catchAll>
+                  </faultHandlers>
+                  <sequence name="SequenceContrato">
+                    <if name="IfValidarInstancia">
+                      <documentation>
+                        <![CDATA[ConValor]]>
+                      </documentation>
+                      <condition>$inputVariable.request/ns5:Instancia_proceso !=''</condition>
+                      <sequence>
+                        <assign name="AssignConsultarContrato">
+                          <copy>
+                            <from>$inputVariable.request/ns5:Instancia_proceso</from>
+                            <to>$inInvokeConsultarContrato.ConsultarContratoByInstanciaProcesoRequest/ns26:Instancia_proceso</to>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeConsultarContrato" bpelx:invokeAsDetail="no"
+                                partnerLink="ConsultarContratoByInstancia"
+                                portType="ns24:ConsultarContratoByInstanciaProcesoPT"
+                                operation="consultarContratoByInstanciaProceso"
+                                inputVariable="inInvokeConsultarContrato" outputVariable="outInvokeConsultarContrato"/>
+                        <if name="IfContratoExiste">
+                          <documentation>
+                            <![CDATA[Existe]]>
+                          </documentation>
+                          <condition>string($outInvokeConsultarContrato.ConsultarContratoByInstanciaProcesoResponse/ns26:Contrato/ns27:idContrato) != ''</condition>
+                          <sequence name="Sequence7">
+                            <if name="IfTerminos">
+                              <documentation>
+                                <![CDATA[T603]]>
+                              </documentation>
+                              <condition>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:descripcionCorta = 'T603'</condition>
+                              <assign name="AssignActualizarContratoFirma">
+                                <copy>
+                                  <from>$outInvokeConsultarContrato.ConsultarContratoByInstanciaProcesoResponse/ns26:Contrato/ns27:idContrato</from>
+                                  <to>$inInvokeActualizarContrato.request/ns26:Contrato/ns27:idContrato</to>
+                                </copy>
+                                <copy>
+                                  <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:fecha</from>
+                                  <to>$inInvokeActualizarContrato.request/ns26:Contrato/ns27:fechaFirma</to>
+                                </copy>
+                              </assign>
+                              <else>
+                                <documentation>
+                                  <![CDATA[T604]]>
+                                </documentation>
+                                <assign name="AssignActualizarContratoVigencia">
+                                  <copy>
+                                    <from>$outInvokeConsultarContrato.ConsultarContratoByInstanciaProcesoResponse/ns26:Contrato/ns27:idContrato</from>
+                                    <to>$inInvokeActualizarContrato.request/ns26:Contrato/ns27:idContrato</to>
+                                  </copy>
+                                  <copy>
+                                    <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:fecha</from>
+                                    <to>$inInvokeActualizarContrato.request/ns26:Contrato/ns27:fechaVigencia</to>
+                                  </copy>
+                                </assign>
+                              </else>
+                            </if>
+                            <invoke name="InvokeActualizarContrato" bpelx:invokeAsDetail="no"
+                                    partnerLink="ActualizarContrato" portType="ns25:ActualizarContratoPT"
+                                    operation="actualizarContrato" inputVariable="inInvokeActualizarContrato"
+                                    outputVariable="outInvokeActualizarContrato"/>
+                            <if name="IfResultadoActualizar">
+                              <documentation>
+                                <![CDATA[OK]]>
+                              </documentation>
+                              <condition>$outInvokeActualizarContrato.response/ns26:Resultado/ns9:result ='OK'</condition>
+                              <sequence>
+                                <assign name="AssignCalcularFecha">
+                                  <copy>
+                                    <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[1]/ns6:operacion</from>
+                                    <to>$inInvokeCalcularFecha.request/ns4:idOperacion</to>
+                                  </copy>
+                                  <copy>
+                                    <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:tipoTermino/ns6:idCatTermino</from>
+                                    <to>$inInvokeCalcularFecha.request/ns4:idTcaTermino</to>
+                                  </copy>
+                                  <copy>
+                                    <from>$inputVariable.request/ns5:ListaTerminos/ns6:Termino[$terminoCount]/ns6:fecha</from>
+                                    <to>$inInvokeCalcularFecha.request/ns4:FechaInicio</to>
+                                  </copy>
+                                </assign>
+                                <invoke name="InvokeCalcularFecha"
+                                        partnerLink="CalcularFechaVencimiento" portType="ns3:CalcularFechaVencimientoPT"
+                                        operation="calcularFechaVencimiento" inputVariable="inInvokeCalcularFecha"
+                                        outputVariable="outInvokeCalcularFecha" bpelx:invokeAsDetail="no"/>
+                              </sequence>
+                              <else>
+                                <documentation>
+                                  <![CDATA[ERROR]]>
+                                </documentation>
+                                <sequence name="SequenceError"
+                                          xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                  <assign name="AssignFault">
+                                    <copy>
+                                      <from>'-1'</from>
+                                      <to>$faultVariable.code</to>
+                                    </copy>
+                                    <copy>
+                                      <from>$outInvokeActualizarContrato.response/ns26:Resultado/ns9:message</from>
+                                      <to>$faultVariable.detail</to>
+                                    </copy>
+                                    <copy>
+                                      <from>'Error al actualizar el contrato'</from>
+                                      <to>$faultVariable.summary</to>
+                                    </copy>
+                                  </assign>
+                                  <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                                </sequence>
+                              </else>
+                            </if>
+                          </sequence>
+                          <else>
+                            <documentation>
+                              <![CDATA[NoExiste]]>
+                            </documentation>
+                            <assign name="AssignContratoNoExiste"
+                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                <from>'ERROR'</from>
+                                <to>$outputVariable.response/ns5:Resultado/ns9:result</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                <from>'No Existe el Contrato'</from>
+                                <to>$outputVariable.response/ns5:Resultado/ns9:message</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                      </sequence>
+                      <else>
+                        <documentation>
+                          <![CDATA[SinValor]]>
+                        </documentation>
+                        <empty name="SinValor"/>
+                      </else>
+                    </if>
+                  </sequence>
+                </scope>
+              </sequence>
+            </elseif>
+            <else>
+              <documentation>
+                <![CDATA[Desconocido]]>
+              </documentation>
+              <assign name="AssignDesconocido">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns5:Resultado/ns9:result</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>'Tipo Termino Desconocido'</from>
+                  <to>$outputVariable.response/ns5:Resultado/ns9:message</to>
+                </copy>
+              </assign>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+    </forEach>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="propagarTermino" portType="ns1:PropagarTerminoPT" operation="propagarTermino" variable="outputVariable"/>
+  </sequence>
+</process>

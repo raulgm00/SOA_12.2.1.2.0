@@ -1,0 +1,34 @@
+<adapter-config name="ObtenerCuestionario" adapter="db" wsdlLocation="../WSDL/ObtenerCuestionario.wsdl" xmlns="http://platform.integration.oracle/blocks/adapter/fw/metadata">
+  
+  <connection-factory UIConnectionName="BCIEDEV" location="eis/DB/BCIEDEV"/>
+  <endpoint-interaction portType="ObtenerCuestionario_ptt" operation="ObtenerCuestionario">
+    <interaction-spec className="oracle.tip.adapter.db.DBPureSQLInteractionSpec">
+      <property name="SqlString" value="SELECT pregunta.id_pregunta, pregunta.pregunta, pregunta.respuesta, pregunta.justificacion, pregunta.fecha_registro,
+catPrincipio.descripcion AS DESCRIPCION_PRINCIPIO, catPrincipio.id AS ID_PRINCIPIO
+,catCriterio.descripcion AS DESCRIPCION_CRITERIO, catCriterio.id AS ID_CRITERIO
+,tca_rol_bpm.descripcion AS RESPONSABLE,
+adjunto.id_documento AS ID_DOCUMENTO,
+adjunto.filename AS NOMBRE_DOCUMENTO,
+CATPREGUNTA.OPCION AS OPCION,
+cat_preguntas.ID_TIPO_PREGUNTA TIPO_PREGUNTA
+FROM CUESTIONARIO cuestionario
+JOIN PREGUNTA pregunta ON (pregunta.id_cuestionario = cuestionario.id_cuestionario)
+JOIN CAT_PREGUNTAS cat_preguntas ON (cat_preguntas.id = pregunta.id_cat_pregunta)
+JOIN CAT_PRINCIPIO catPrincipio ON (catPrincipio.id = cat_preguntas.id_principio)
+JOIN CAT_CRITERIO catCriterio ON (catCriterio.id = cat_preguntas.id_criterio)
+JOIN TCA_ROL_BPM tca_rol_bpm ON (tca_rol_bpm.id = cat_preguntas.id_responsable)
+LEFT JOIN ADJUNTO adjunto ON adjunto.id_documento=pregunta.id_documento
+LEFT JOIN (SELECT CATPRE.ID,LISTAGG(TREOP.DESC_OPCION, ',') WITHIN GROUP (ORDER BY TREOP.ID) AS OPCION FROM CAT_PREGUNTAS CATPRE
+            INNER JOIN TRE_PREGUNTA_OPCION TREOP ON TREOP.ID_PREGUNTA=CATPRE.ID
+            INNER JOIN PREGUNTA PRE ON PRE.ID_CAT_PREGUNTA=CATPRE.ID
+            INNER JOIN CUESTIONARIO CUEST ON CUEST.ID_CUESTIONARIO=PRE.ID_CUESTIONARIO
+            JOIN TCA_ROL_BPM TCAROL ON TCAROL.ID = CATPRE.ID_RESPONSABLE
+            WHERE CUEST.ID_OPERACION=#idOperacion AND CUEST.BAN_ESTATUS=1 AND TCAROL.ID=#idResponsable
+            GROUP BY CATPRE.ID) CATPREGUNTA  ON CATPREGUNTA.ID=cat_preguntas.ID
+WHERE cuestionario.id_operacion = #idOperacion AND cuestionario.ban_estatus = 1 AND tca_rol_bpm.ID = #idResponsable
+"/>
+      <property name="GetActiveUnitOfWork" value="false"/>
+    </interaction-spec>
+  </endpoint-interaction>
+
+</adapter-config>

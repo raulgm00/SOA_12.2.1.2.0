@@ -1,0 +1,197 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Oct 07 10:16:28 CDT 2016
+  Author:  ismael-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="EliminarDocumentosFenix"
+               targetNamespace="http://xmlns.oracle.com/DominioDocumento/DocumentoFenix/EliminarDocumentosFenix"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioDocumento/DocumentoFenix/EliminarDocumentosFenix"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.oracle.com/OSB_BCIE/MDS/ConvertirDocumentoFenixSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/DocumentoService"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns3="http://www.bcie.org/DocumentoMO"
+         xmlns:ns4="http://www.bcie.org/ResultBO" xmlns:ns5="http://www.bcie.org/ErrorBO"
+         xmlns:ns6="http://www.bcie.org/DocumentoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/DocumentoService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Wsdl/ADAPTER/EliminarDocumentoFenixSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/DocumentoService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Wsdl/ADAPTER/ConsultarDocumentosFenixSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.oracle.com/OSB_BCIE/MDS/ConvertirDocumentoFenixSOR"
+          location="../WSDLs/EliminarDocumentosFenixSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="eliminardocumentosfenix_client" partnerLinkType="ns1:EliminarDocumentosFenix" myRole="EliminarDocumentosFenixPT"/>
+    <partnerLink name="ConsultarDocumentosFenix" partnerLinkType="ns2:ConsultarDocumentosFenix"
+                 partnerRole="ConsultarDocumentosFenixPT"/>
+    <partnerLink name="EliminarDocumentoFenix" partnerLinkType="ns2:EliminarDocumentoFenix"
+                 partnerRole="EliminarDocumentoFenix"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:EliminarDocumentosFenixRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:EliminarDocumentosFenixResponseMessage"/>
+    <variable name="setTittleVar" type="xsd:string"/>
+    <variable name="outInvokeConsultarDocumentosFenix" messageType="ns2:ConsultarDocumentosFenixResponseMessage"/>
+    <variable name="outInvokeEliminarDocumentoFenix" messageType="ns2:EliminarDocumentoFenixResponseMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll bpelx:name="CatchAll">
+      <sequence name="SequenceCatchAll">
+        <assign name="assignError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:resultado/ns4:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns3:resultado/ns4:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyCatchAll" variable="outputVariable" partnerLink="eliminardocumentosfenix_client"
+               portType="ns1:EliminarDocumentosFenixPT" operation="EliminarDocumentosFenix"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in EliminarDocumentosFenix.wsdl) -->
+    <receive name="receiveInput" partnerLink="eliminardocumentosfenix_client" portType="ns1:EliminarDocumentosFenixPT" operation="EliminarDocumentosFenix" variable="inputVariable" createInstance="yes"/>
+    <assign name="astTittle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idCliente= ",$inputVariable.request/ns3:idCliente))</from>
+        <to>$setTittleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarDocumentosFenix">
+      <variables>
+        <variable name="inInvokeConsultarDocumentosFenix" messageType="ns2:ConsultarDocumentosFenixRequestMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarDocumentosFenix">
+        <assign name="assignIdCliente">
+          <copy>
+            <from>$inputVariable.request/ns3:idCliente</from>
+            <to>$inInvokeConsultarDocumentosFenix.request/ns3:idCliente</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarDocumentosFenix" bpelx:invokeAsDetail="no" partnerLink="ConsultarDocumentosFenix"
+                portType="ns2:ConsultarDocumentosFenixPT" operation="ConsultarDocumentosFenix"
+                inputVariable="inInvokeConsultarDocumentosFenix" outputVariable="outInvokeConsultarDocumentosFenix"/>
+        <if name="IfOkConsultarDocumentosFenix">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeConsultarDocumentosFenix.response/ns3:Resultado/ns4:message = 'Consulta Exitosa'</condition>
+          <scope name="ScopeEliminarDocumentoFenix">
+            <variables>
+              <variable name="inInvokeEliminarDocumentoFenix" messageType="ns2:EliminarDocumentoFenixRequestMessage"/>
+            </variables>
+            <sequence name="SequenceEliminarDocumentoFenix">
+              <assign name="XSL_IdAdjunto">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:doXSLTransformForDoc("../Transformations/EliminarDocumentosFenix_TO_EliminarDocumentoFenix_Request.xsl", $inputVariable.request, "outInvokeConsultarDocumentosFenix.response", $outInvokeConsultarDocumentosFenix.response)</from>
+                  <to variable="inInvokeEliminarDocumentoFenix" part="EliminarDocumentoFenixRequest"/>
+                </copy>
+              </assign>
+              <invoke name="InvokeEliminarDocumentoFenix" bpelx:invokeAsDetail="no" partnerLink="EliminarDocumentoFenix"
+                      portType="ns2:EliminarDocumentoFenix" operation="eliminarDocumentoFenix"
+                      inputVariable="inInvokeEliminarDocumentoFenix" outputVariable="outInvokeEliminarDocumentoFenix"/>
+              <if name="IfOKEliminarDocumentoFenix">
+                <condition>$outInvokeEliminarDocumentoFenix.EliminarDocumentoFenixResponse/ns3:Resultado/ns4:result =  'OK'</condition>
+                <assign name="assignResult">
+                  <copy>
+                    <from>$outInvokeEliminarDocumentoFenix.EliminarDocumentoFenixResponse/ns3:Resultado/ns4:result</from>
+                    <to>$outputVariable.response/ns3:resultado/ns4:result</to>
+                  </copy>
+                  <copy>
+                    <from>$outInvokeEliminarDocumentoFenix.EliminarDocumentoFenixResponse/ns3:Resultado/ns4:message</from>
+                    <to>$outputVariable.response/ns3:resultado/ns4:message</to>
+                  </copy>
+                </assign>
+                <else>
+                  <assign name="assignError">
+                    <copy>
+                      <from>$outInvokeEliminarDocumentoFenix.EliminarDocumentoFenixResponse/ns3:Resultado/ns4:result</from>
+                      <to>$outputVariable.response/ns3:resultado/ns4:result</to>
+                    </copy>
+                    <copy>
+                      <from>$outInvokeEliminarDocumentoFenix.EliminarDocumentoFenixResponse/ns3:Resultado/ns4:message</from>
+                      <to>$outputVariable.response/ns3:resultado/ns4:message</to>
+                    </copy>
+                  </assign>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+          <else>
+            <documentation>
+              <![CDATA[Error]]>
+            </documentation>
+            <assign name="assignError">
+              <copy>
+                <from>$outInvokeConsultarDocumentosFenix.response/ns3:Resultado/ns4:result</from>
+                <to>$outputVariable.response/ns3:resultado/ns4:result</to>
+              </copy>
+              <copy>
+                <from>$outInvokeConsultarDocumentosFenix.response/ns3:Resultado/ns4:message</from>
+                <to>$outputVariable.response/ns3:resultado/ns4:message</to>
+              </copy>
+            </assign>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="eliminardocumentosfenix_client" portType="ns1:EliminarDocumentosFenixPT" operation="EliminarDocumentosFenix" variable="outputVariable"/>
+  </sequence>
+</process>

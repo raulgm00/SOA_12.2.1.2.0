@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <con:wsdl ref="Capabilities/Support/Commons/MerchandiseHierarchyEntitySvc/Resource/MerchandiseHierarchyEntitySvc"/>
+            <con:binding>
+                <con:name>MerchandiseHierarchyEntityBinding</con:name>
+                <con:namespace>http://mx.agarcia.ea/Capabilities/Support/Commons/MerchandiseHierarchyEntitySvc/v1.0</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:flow>
+            <con:route-node name="RouteNode1">
+                <con:context>
+                    <con1:varNsDecl prefix="mer" namespace="http://mx.agarcia.ea/Capabilities/Support/Commons/MerchandiseHierarchyEntity" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+                <con:actions>
+                    <con1:route xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.214fce79.c.16b290ba7dd.N8000</con2:id>
+                        <con1:service ref="Capabilities/Support/Commons/MerchandiseHierarchyEntitySvc/PS/MerchandiseHierarchyFindByIdProcessPXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+                        <con1:operation>findById</con1:operation>
+                        <con1:outboundTransform>
+                            <con2:assign varName="body" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.214fce79.e.16b290c9072.N8000</con3:id>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<soapenv:Body xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+<onec:oneCaseDbSelect_IdC1_appCodeC1_CatIdC1_targetAppCodeC1InputParameters xmlns:onec="http://xmlns.oracle.com/pcbpel/adapter/db/top/oneCaseDb">
+    <onec:IdC1>{$body/mer:findByIdRequest/mer:id/text()}</onec:IdC1>
+
+    <onec:appCodeC1>{dvm:lookup('Capabilities/Support/Commons/ItemCatalogEntitySvc/Resource/MDM_APPLICATIONS.dvm','NAME',($body/mer:findByIdRequest/mer:application),'CODE','')}
+</onec:appCodeC1>
+
+    <onec:CatIdC1>{dvm:lookup('Capabilities/Support/Commons/MerchandiseHierarchyEntitySvc/Resource/MDA_MERCHAND_HIEREARCHIES_DEF.dvm','NAME',($body/mer:findByIdRequest/mer:Catalog),'ID','')}
+</onec:CatIdC1>
+
+    <onec:targetAppCodeC1>{dvm:lookup('Capabilities/Support/Commons/ItemCatalogEntitySvc/Resource/MDM_APPLICATIONS.dvm','NAME',($body/mer:findByIdRequest/mer:targetApplication),'CODE','')}</onec:targetAppCodeC1>
+
+</onec:oneCaseDbSelect_IdC1_appCodeC1_CatIdC1_targetAppCodeC1InputParameters>
+</soapenv:Body>]]></con:xqueryText>
+                                </con2:expr>
+                            </con2:assign>
+                        </con1:outboundTransform>
+                        <con1:responseTransform>
+                            <con2:replace varName="body" contents-only="true" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.214fce79.9.16b28fc3e01.N7fff</con3:id>
+                                <con2:location>
+                                    <con:xpathText xmlns:con="http://www.bea.com/wli/sb/stages/config">./*</con:xpathText>
+                                </con2:location>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<mer:findByIdResponse xmlns:mer="	http://mx.agarcia.ea/Capabilities/Support/Commons/MerchandiseHierarchyEntity">		
+	
+{
+ let $catItemsCursor := $body//*:MdmMerchandHierarchies
+return 
+ for $item in $catItemsCursor 
+return 
+<mer:itemHierarchyInfo xmlns:v1="http://mx.agarcia.ea/Canonical/Commons/Items/v1">
+{
+
+
+<v1:hierarchy type= "{dvm:lookup('Capabilities/Support/Commons/MerchandiseHierarchyEntitySvc/Resource/MDA_MERCHAND_HIEREARCHIES_DEF.dvm','ID',($item//*:catalogId),'NAME','')}" AppCode="{dvm:lookup('Capabilities/Support/Commons/ItemCatalogEntitySvc/Resource/MDM_APPLICATIONS.dvm','CODE',($item//*:appCode/text()),'NAME','')}">
+
+				<v1:id>{$item//*:id/text()}</v1:id>
+				<v1:name>{$item//*:name/text()}</v1:name>
+				<v1:description>{$item//*:description/text()}</v1:description>
+	</v1:hierarchy>
+ 
+}
+</mer:itemHierarchyInfo>
+
+	  }
+
+	</mer:findByIdResponse>]]></con:xqueryText>
+                                </con2:expr>
+                            </con2:replace>
+                        </con1:responseTransform>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

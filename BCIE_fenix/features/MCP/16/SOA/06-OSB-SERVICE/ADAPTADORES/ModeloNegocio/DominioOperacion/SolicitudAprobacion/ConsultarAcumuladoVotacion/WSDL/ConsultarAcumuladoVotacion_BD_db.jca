@@ -1,0 +1,32 @@
+<adapter-config name="ConsultarVotacion_BD" adapter="db" wsdlLocation="ConsultarAcumuladoVotacion_BD.wsdl" xmlns="http://platform.integration.oracle/blocks/adapter/fw/metadata">
+  
+  <connection-factory UIConnectionName="DEVFENIX2" location="eis/DB/OperacionesDB"/>
+  <endpoint-interaction portType="ConsultarVotacion_BD_ptt" operation="ConsultarVotacion_BD">
+    <interaction-spec className="oracle.tip.adapter.db.DBPureSQLInteractionSpec">
+      <property name="SqlString" value="SELECT NVL(SUB.CANTIDAD_VOTOS, 0) CANTIDAD_VOTOS, TTDA.DESCRIPCION,   TTDA.ID TIPO_DECISION FROM TCA_TIPO_DECISION_APROBACION TTDA,
+( SELECT COUNT (VA.ID_TCA_TIPO_DECISION) AS CANTIDAD_VOTOS,
+         TDA.DESCRIPCION AS DESCRIPCION,
+         VA.ID_TCA_TIPO_DECISION AS TIPO_DECISION
+    FROM VOTO_APROBACION VA INNER JOIN TCA_TIPO_DECISION_APROBACION TDA
+            ON TDA.ID = VA.ID_TCA_TIPO_DECISION
+   WHERE VA.ID IN (SELECT VOTO
+                     FROM (  SELECT MAX (VAI.ID) AS VOTO, VAI.ID_USUARIO_REUNION
+                               FROM VOTO_APROBACION VAI
+                              WHERE VAI.ID_USUARIO_REUNION IN
+                                          (SELECT UR.ID
+                                             FROM    SOLICITUD_APROBACION SA
+                                                  INNER JOIN
+                                                     USUARIO_REUNION_APROBACION UR
+                                                  ON (UR.ID_SOLICITUD_APROBACION =
+                                                         SA.ID)
+                                            WHERE SA.ID = #idVotacion)
+                           GROUP BY VAI.ID_USUARIO_REUNION))
+                          AND TDA.ID_TCA_NIVEL_APROBACION = (SELECT ID_TCA_NIVEL_APROBACION   FROM SOLICITUD_APROBACION SA WHERE SA.ID=#idVotacion)
+GROUP BY TDA.DESCRIPCION, VA.ID_TCA_TIPO_DECISION) SUB
+WHERE TTDA.ID= SUB.TIPO_DECISION (+)
+AND  TTDA.ID_TCA_NIVEL_APROBACION = (SELECT ID_TCA_NIVEL_APROBACION   FROM SOLICITUD_APROBACION SA WHERE SA.ID=#idVotacion)"/>
+      <property name="GetActiveUnitOfWork" value="false"/>
+    </interaction-spec>
+  </endpoint-interaction>
+
+</adapter-config>

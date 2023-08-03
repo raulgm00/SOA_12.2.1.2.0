@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+    <con:coreEntry>
+        <con:binding type="Any SOAP" isSoap12="false" xsi:type="con:AnySoapBindingType"/>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-a011837.N2b3a3191.0.165ce93f02c.N7d57">
+        <con:pipeline type="request" name="request-a011837.N2b3a3191.0.165ce93f02c.N7f01" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+            <con:stage id="_StageId-a011837.N2b3a3191.0.165ce93f02c.N7f00" name="stg_LoadDT">
+                <con:context/>
+                <con:actions>
+                    <con1:assign varName="var_DRR">
+                        <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7eff</con2:id>
+                        <con1:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="CardSvc/resources/xslt/DynamicTable"/>
+                                <con2:input>$body</con2:input>
+                            </con2:xsltTransform>
+                        </con1:expr>
+                    </con1:assign>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a011837.N2b3a3191.0.165ce93f02c.N7efe" name="stg_Assing">
+                <con:context/>
+                <con:actions>
+                    <con1:assign varName="var_bckBody">
+                        <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7efd</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7efc</con2:id>
+                        <con1:case id="_BranchId-a011837.N2b3a3191.0.165ce93f02c.N7efb">
+                            <con1:condition>
+                                <con2:xqueryText>fn:empty($varHeader)</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:assign varName="varHeader">
+                                    <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7efa</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryText>$header/*:MsgHdrRq</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:assign>
+                            </con1:actions>
+                        </con1:case>
+                    </con1:ifThenElse>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7ef9</con2:id>
+                        <con1:case id="_BranchId-a011837.N2b3a3191.0.165ce93f02c.N7ef8">
+                            <con1:condition>
+                                <con2:xqueryText>fn:empty($varOperation)</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:assign varName="svc_operation">
+                                    <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7ef7</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryText>$varHeader/*:RqdOper/text()</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:assign>
+                                <con2:assign varName="varOperation" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                    <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7c61</con4:id>
+                                    <con2:expr>
+                                        <con1:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$svc_operation</con1:xqueryText>
+                                    </con2:expr>
+                                </con2:assign>
+                            </con1:actions>
+                        </con1:case>
+                    </con1:ifThenElse>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a011837.N2b3a3191.0.165ce93f02c.N7ef6" name="stg_ValidateIn">
+                <con:context/>
+                <con:actions>
+                    <con1:validate>
+                        <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7ef5</con2:id>
+                        <con1:resourceExpr>
+                            <con2:xqueryText><![CDATA[<ctx:validate>
+  <ctx:schema>{data($var_DRR/rule[@id=$varOperation]/route_schema)}</ctx:schema>
+  <ctx:schemaElement>
+    <ctx:namespaceURI>{data($var_DRR/rule[@id=$varOperation]/schema)}</ctx:namespaceURI>
+    <ctx:localname>{concat(data($var_DRR/rule[@id=$varOperation]/backend_operation),"Rq")}</ctx:localname>
+  </ctx:schemaElement>
+</ctx:validate>]]></con2:xqueryText>
+                        </con1:resourceExpr>
+                        <con1:varName>body</con1:varName>
+                        <con1:location>
+                            <con2:xpathText>./*</con2:xpathText>
+                        </con1:location>
+                        <con1:resultVarName/>
+                    </con1:validate>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-a011837.N2b3a3191.0.165ce93f02c.N7ef4" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+            <con:stage id="_StageId-a011837.N2b3a3191.0.165ce93f02c.N7ef3" name="stg_ValidateOut">
+                <con:context/>
+                <con:actions>
+                    <con1:validate>
+                        <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7ef2</con2:id>
+                        <con1:resourceExpr>
+                            <con2:xqueryText><![CDATA[<ctx:validate>
+  <ctx:schema>{data($var_DRR/rule[@id=$varOperation]/route_schema)}</ctx:schema>
+  <ctx:schemaElement>
+    <ctx:namespaceURI>{data($var_DRR/rule[@id=$varOperation]/schema)}</ctx:namespaceURI>
+    <ctx:localname>{concat(data($var_DRR/rule[@id=$varOperation]/backend_operation),"Rs")}</ctx:localname>
+  </ctx:schemaElement>
+</ctx:validate>]]></con2:xqueryText>
+                        </con1:resourceExpr>
+                        <con1:varName>body</con1:varName>
+                        <con1:location>
+                            <con2:xpathText>./*</con2:xpathText>
+                        </con1:location>
+                    </con1:validate>
+                    <con1:assign varName="varOperation">
+                        <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7ef1</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$svc_operation</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-a011837.N2b3a3191.0.165ce93f02c.N7d57">
+            <con:stage id="_StageId-a011837.N2b3a3191.0.165ce93f02c.N7ccf" name="stg_ErrorHandler" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                <con:context/>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7cce</con2:id>
+                        <con1:case id="_BranchId-a011837.N2b3a3191.0.165ce93f02c.N7ccd">
+                            <con1:condition>
+                                <con2:xqueryText>not(fn:empty($body/*:Fault))</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions/>
+                        </con1:case>
+                        <con1:case id="_BranchId-a011837.N2b3a3191.0.165ce93f02c.N7ccc">
+                            <con1:condition>
+                                <con2:xqueryText>not(fn:empty($fault/*:details/*:ValidationFailureDetail))</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:replace contents-only="true" varName="body">
+                                    <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7ccb</con2:id>
+                                    <con1:location>
+                                        <con2:xpathText>.</con2:xpathText>
+                                    </con1:location>
+                                    <con1:expr>
+                                        <con2:xqueryText><![CDATA[<soap-env:Fault>
+      <faultcode>{data($fault/*:errorCode)}</faultcode>
+      <faultstring>{data($fault/*:reason)}</faultstring>
+<detail>
+  <eoStatus:SystemFault xmlns:eoStatus="http://xmlns.banesco.com/eo/Status_V1.0">
+      <eoStatus:StatusCode>M0003</eoStatus:StatusCode>
+      <eoStatus:StatusDesc>ERROR TECNICO</eoStatus:StatusDesc>
+          <eoStatus:AdditionalStatus>
+              <eoStatus:StatusCode>{data($fault/*:errorCode)}</eoStatus:StatusCode>
+              <eoStatus:StatusDesc>{data($fault/*:details/*:ValidationFailureDetail/*:message)}</eoStatus:StatusDesc>
+          </eoStatus:AdditionalStatus>
+  </eoStatus:SystemFault>
+  <location>
+    <node>{data($fault/*:location/*:node)}</node>
+    <pipeline>{data($fault/*:location/*:pipeline)}</pipeline>
+    <stage>{data($fault/*:location/*:stage)}</stage>
+    <path>{data($fault/*:location/*:path)}</path>
+  </location>
+</detail>
+</soap-env:Fault>]]></con2:xqueryText>
+                                    </con1:expr>
+                                </con1:replace>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:case id="_BranchId-a011837.N2b3a3191.0.165ce93f02c.N7cca">
+                            <con1:condition>
+                                <con2:xqueryText>not(fn:empty($fault/*:details/*:ReceivedFaultDetail))</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:replace contents-only="true" varName="body">
+                                    <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7cc9</con2:id>
+                                    <con1:location>
+                                        <con2:xpathText>.</con2:xpathText>
+                                    </con1:location>
+                                    <con1:expr>
+                                        <con2:xqueryText><![CDATA[<soap-env:Fault>
+      <faultcode>{data($fault/*:errorCode)}</faultcode>
+      <faultstring>{data($fault/*:reason)}</faultstring>
+<detail>
+  <eoStatus:SystemFault xmlns:eoStatus="http://xmlns.banesco.com/eo/Status_V1.0">
+      <eoStatus:StatusCode>M0003</eoStatus:StatusCode>
+      <eoStatus:StatusDesc>ERROR TECNICO</eoStatus:StatusDesc>
+          <eoStatus:AdditionalStatus>
+              <eoStatus:StatusCode>{data($fault/*:details/*:ReceivedFaultDetail/*:faultcode)}</eoStatus:StatusCode>
+              <eoStatus:StatusDesc>{data($fault/*:details/*:ReceivedFaultDetail/*:faultstring)}</eoStatus:StatusDesc>
+          </eoStatus:AdditionalStatus>
+  </eoStatus:SystemFault>
+  <location>
+    <node>{data($fault/*:location/*:node)}</node>
+    <pipeline>{data($fault/*:location/*:pipeline)}</pipeline>
+    <stage>{data($fault/*:location/*:stage)}</stage>
+    <path>{data($fault/*:location/*:path)}</path>
+  </location>
+</detail>
+</soap-env:Fault>]]></con2:xqueryText>
+                                    </con1:expr>
+                                </con1:replace>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con1:replace contents-only="true" varName="body">
+                                <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7cc8</con2:id>
+                                <con1:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con1:location>
+                                <con1:expr>
+                                    <con2:xqueryText><![CDATA[<soap-env:Fault>
+      <faultcode>{data($fault/*:errorCode)}</faultcode>
+      <faultstring>{data($fault/*:reason)}</faultstring>
+<detail>
+  <eoStatus:SystemFault xmlns:eoStatus="http://xmlns.banesco.com/eo/Status_V1.0">
+      <eoStatus:StatusCode>M0003</eoStatus:StatusCode>
+      <eoStatus:StatusDesc>ERROR TECNICO</eoStatus:StatusDesc>
+          <eoStatus:AdditionalStatus>
+              <eoStatus:StatusCode>{data($fault/*:details/*:ReceivedFaultDetail/*:faultcode)}</eoStatus:StatusCode>
+              <eoStatus:StatusDesc>{data($fault/*:details/*:ReceivedFaultDetail/*:faultstring)}</eoStatus:StatusDesc>
+          </eoStatus:AdditionalStatus>
+  </eoStatus:SystemFault>
+  <location>
+    <node>{data($fault/*:location/*:node)}</node>
+    <pipeline>{data($fault/*:location/*:pipeline)}</pipeline>
+    <stage>{data($fault/*:location/*:stage)}</stage>
+    <path>{data($fault/*:location/*:path)}</path>
+  </location>
+</detail>
+</soap-env:Fault>]]></con2:xqueryText>
+                                </con1:expr>
+                            </con1:replace>
+                        </con1:default>
+                    </con1:ifThenElse>
+                    <con1:assign varName="varOperation">
+                        <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7cc7</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$svc_operation</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con2:reply isError="true">
+                        <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7cc6</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PP_CardCrInfoInq" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                <con:request>request-a011837.N2b3a3191.0.165ce93f02c.N7f01</con:request>
+                <con:response>response-a011837.N2b3a3191.0.165ce93f02c.N7ef4</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RD_CardCrInfoInq">
+                <con:context/>
+                <con:actions>
+                    <con3:dynamic-route xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7d8b</con2:id>
+                        <con3:service>
+                            <con2:xqueryText><![CDATA[<ctx:route>
+    <ctx:service isProxy='true'>{data($var_DRR/rule[@id=$varOperation]/component_target_backend)}</ctx:service>
+    <ctx:operation>{data($varOperation)}</ctx:operation>
+</ctx:route>]]></con2:xqueryText>
+                        </con3:service>
+                        <con3:outboundTransform>
+                            <con1:replace varName="body">
+                                <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7d8a</con2:id>
+                                <con1:location>
+                                    <con2:xpathText>./*</con2:xpathText>
+                                </con1:location>
+                                <con1:expr>
+                                    <con2:dynamicXsltTransform>
+                                        <con2:resourceExpr>data($var_DRR/rule[@id=$varOperation]/transformation_biz_to_tech)</con2:resourceExpr>
+                                        <con2:input>$body/*</con2:input>
+                                    </con2:dynamicXsltTransform>
+                                </con1:expr>
+                            </con1:replace>
+                        </con3:outboundTransform>
+                        <con3:responseTransform>
+                            <con1:replace varName="body">
+                                <con2:id>_ActionId-a011837.N2b3a3191.0.165ce93f02c.N7d89</con2:id>
+                                <con1:location>
+                                    <con2:xpathText>./*</con2:xpathText>
+                                </con1:location>
+                                <con1:expr>
+                                    <con2:dynamicXsltTransform>
+                                        <con2:resourceExpr>data($var_DRR/rule[@id=$varOperation]/transformation_tech_to_biz)</con2:resourceExpr>
+                                        <con2:input>$body/*</con2:input>
+                                    </con2:dynamicXsltTransform>
+                                </con1:expr>
+                            </con1:replace>
+                        </con3:responseTransform>
+                    </con3:dynamic-route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+        <con:shared-variables>
+            <con:variable>varOperation</con:variable>
+            <con:variable>varHeader</con:variable>
+        </con:shared-variables>
+    </con:router>
+</con:pipelineEntry>

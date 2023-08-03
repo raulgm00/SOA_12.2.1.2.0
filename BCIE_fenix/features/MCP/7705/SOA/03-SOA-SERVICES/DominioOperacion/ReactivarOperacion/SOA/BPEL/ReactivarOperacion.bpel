@@ -1,0 +1,1222 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sun Oct 25 14:46:40 CST 2015
+  Author:  francisco-taboada
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ReactivarOperacion"
+         targetNamespace="http://xmlns.oracle.com/DominioOperacion/ReactivarOperacion/ReactivarOperacion"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:client="http://xmlns.oracle.com/DominioOperacion/ReactivarOperacion/ReactivarOperacion"
+         xmlns:ora="http://schemas.oracle.com/xpath/extension" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:ns1="http://xmlns.bcie.com/OperacionService"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/OperacionMO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns6="http://www.bcie.org/ProductoBO"
+         xmlns:ns7="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns3="http://www.bcie.org/OperacionBO"
+         xmlns:ns8="http://www.bcie.org/ResultBO" xmlns:ns5="http://www.bcie.org/CatalogoBO"
+         xmlns:ns4="http://www.bcie.org/ClienteBO" xmlns:ns9="http://www.bcie.org/ErrorBO"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns10="http://xmlns.oracle.com/bpmn/bpmnProcess/ProcesosPrincipales"
+         xmlns:ns11="http://xmlns.oracle.com/bpmn/bpmnProcess/ElegibilidadProcess"
+         xmlns:ns15="http://xmlns.bcie.org/ObjetoProceso/Comun/Parameter/V1"
+         xmlns:ns13="http://xmlns.bcie.org/ObjetoProceso/Comun/Operacion/V1"
+         xmlns:ns12="http://xmlns.bcie.org/ObjetoProceso/Comun/Header/V1"
+         xmlns:ns14="http://xmlns.bcie.org/ObjetoProceso/Comun/Tarea/V1"
+         xmlns:ns16="http://xmlns.oracle.com/bpmn/bpmnProcess/PreparacionProcess"
+         xmlns:ns17="http://xmlns.oracle.com/bpmn/bpmnProcess/AnalisisProcess"
+         xmlns:ns18="http://www.bcie.org/ConsultarReactivarOperacionSAD"
+         xmlns:ns19="http://www.bcie.org/ActivarOperacionProceso"
+         xmlns:ns20="http://www.bcie.org/ActivarOperacionProcesoMO"
+         xmlns:ns21="http://www.bcie.org/ActivarOperacionProcesoBO"
+         xmlns:ns22="http://xmlns.oracle.com/bpmn/bpmnProcess/AprobacionProcess"
+         xmlns:ns23="http://xmlns.oracle.com/bpmn/bpmnProcess/FormalizacionProcess"
+         xmlns:ns24="http://xmlns.oracle.com/bpmn/bpmnProcess/EvaluacionProcess"
+         xmlns:ns25="http://xmlns.oracle.com/bpmn/bpmnProcess/ProcesosAlternos"
+         xmlns:ns26="http://xmlns.oracle.com/bpmn/bpmnProcess/LavadoActivosProcess"
+         xmlns:ns27="http://xmlns.oracle.com/bpmn/bpmnProcess/ComisionesProcess"
+         xmlns:ns28="http://xmlns.oracle.com/bpmn/bpmnProcess/CondicionesProcess"
+         xmlns:ns29="http://xmlns.oracle.com/bpmn/bpmnProcess/EnmiendasProcess"
+         xmlns:ns30="http://www.bcie.org/ActualizarReactivarOperacionSAD"
+         xmlns:ns31="http://www.bcie.org/ConsultarParametersEnBitacoraProceso"
+         xmlns:ns32="http://www.bcie.org/ConsultarParametersEnBitacoraProcesoMO"
+         xmlns:ns33="http://www.bcie.org/ConsultarParametersEnBitacoraProcesoBO"
+         xmlns:ns34="http://www.bcie.org/ConsultarParametrosEnBitacoraProceso"
+         xmlns:ns35="http://www.bcie.org/ConsultarParametrosEnBitacoraProcesoMO"
+         xmlns:ns36="http://xmlns.bcie.com/ComisionService" xmlns:ns37="http://www.bcie.org/ComisionMO">
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/OperacionService" location="../WSDLs/ReactivarOperacionSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="reactivaroperacion_client" partnerLinkType="ns1:ReactivarOperacion"
+                 myRole="ReactivarOperacionPT"/>
+    <partnerLink name="ConsultarOperacion" partnerLinkType="ns1:ConsultarOperacion"
+                 partnerRole="ConsultarOperacionById12Port"/>
+    <partnerLink name="ActualizarOperacion" partnerLinkType="ns1:ActualizarOperacion" partnerRole="OperacionPT"/>
+    <partnerLink name="ProcesosPrincipales" partnerLinkType="ns10:ProcesosPrincipales"
+                 partnerRole="ProcesosPrincipalesPortType"/>
+    <partnerLink name="ConsultarReactivarOperacion_SB" partnerLinkType="ns18:ConsultarReactivarOperacion_SB"
+                 partnerRole="ConsultarReactivarOperacion_PT"/>
+    <partnerLink name="ActivarProcesoOperacion_SB" partnerLinkType="ns19:ActivarProcesoOperacion"
+                 partnerRole="ActivarOperacionProceso_PT"/>
+    <partnerLink name="ProcesosAlternos" partnerLinkType="ns25:ProcesosAlternos"
+                 partnerRole="ProcesosAlternosPortType"/>
+    <partnerLink name="ActualizarReactivarOperacion_SB" partnerLinkType="ns30:ActualizarReactivarOperacion_SB"
+                 partnerRole="ActualizarReactivarOperacion_PT"/>
+    <partnerLink name="ConsultarParametrosEnBitacoraProceso_SB" partnerLinkType="ns34:ConsultarParametrosEnBitacoraProceso"
+                 partnerRole="ConsultarParametrosEnBitacoraProceso_PT"/>
+    <partnerLink name="ActualizarComision_SB" partnerLinkType="ns36:ActualizarComision_SB"
+                 partnerRole="ActualizarComisionPT"/>
+  </partnerLinks>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestReactivarOperacionMessage"/>
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseReactivarOperacionMessage"/>
+    <variable name="InConsultar" messageType="ns1:requestConsultarOperacionMessage"/>
+    <variable name="OutConsultar" messageType="ns1:responseConsultarOperacionMessage"/>
+    <variable name="Estado" type="xsd:int"/>
+    <variable name="Etapa" type="xsd:int"/>
+    <variable name="InActualizar" messageType="ns1:requestActualizarOperacionMessage"/>
+    <variable name="OutActualizar" messageType="ns1:responseActualizarOperacionMessage"/>
+    <variable name="InElegibilidad" messageType="ns10:InicioElegibilidad"/>
+    <variable name="OutElegibilidad" messageType="ns10:InicioProcesoResponse"/>
+    <variable name="InPreparacion" messageType="ns10:InicioPreparacion"/>
+    <variable name="OutPreparacion" messageType="ns10:InicioProcesoResponse"/>
+    <variable name="InAnalisis" messageType="ns10:InicioAnalisis"/>
+    <variable name="OutAnalisis" messageType="ns10:InicioProcesoResponse"/>
+    <variable name="inConsultarReactivarOperacion" messageType="ns18:requestConsultarReactivarOperacionMessage"/>
+    <variable name="outConsultarReactivarOperacion" messageType="ns18:responseConsultarReactivarOperacionMessage"/>
+    <variable name="inActivarOperacionProcesos" messageType="ns19:requestActivarOperacionProcesoMessage"/>
+    <variable name="outActivarOperacionProcesos" messageType="ns19:responseActivarOperacionProcesoMessage"/>
+    <variable name="codigoProceso" type="xsd:string"/>
+    <variable name="InAprobacion" messageType="ns10:InicioAprobacion"/>
+    <variable name="OutAprobacion" messageType="ns10:InicioProcesoResponse"/>
+    <variable name="InFormalizacion" messageType="ns10:InicioFormalizacion"/>
+    <variable name="OutFormalizacion" messageType="ns10:InicioProcesoResponse"/>
+    <variable name="InEvaluacion" messageType="ns10:InicioEvaluacion"/>
+    <variable name="OutEvaluacion" messageType="ns10:InicioProcesoResponse"/>
+    <variable name="InLAFT" messageType="ns25:InicioLAFT"/>
+    <variable name="OutLAFT" messageType="ns25:InicioProcesoResponse"/>
+    <variable name="InComisiones" messageType="ns25:InicioComisiones"/>
+    <variable name="OutComision" messageType="ns25:InicioProcesoResponse"/>
+    <variable name="InCondicion" messageType="ns25:InicioCondiciones"/>
+    <variable name="OutCondicion" messageType="ns25:InicioProcesoResponse"/>
+    <variable name="InEnmiendas" messageType="ns25:InicioEnmiendas"/>
+    <variable name="OutEnmiendas" messageType="ns25:InicioProcesoResponse"/>
+    <variable name="flagReactivarOK" type="xsd:boolean"/>
+    <variable name="inActualizarReactivarOperacion" messageType="ns30:requestActualizarReactivarOperacionMessage"/>
+    <variable name="outActualizarReactivarOperacion" messageType="ns30:responseActualizarReactivarOperacionMessage"/>
+    <variable name="inConsultarParametrosEnBitacora" messageType="ns34:requesConsultarParametrosProcesoMessage"/>
+    <variable name="outConsultarParametrosEnBitacora" messageType="ns34:responseConsultarParametrosProcesoMessage"/>
+    <variable name="inActualizarComision"
+              messageType="ns36:requestActualizarComisionMessage"/>
+    <variable name="outActualizarComision" messageType="ns36:responseActualizarComisionMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catch bpelx:name="bindingFault" faultName="bpelx:bindingFault" faultVariable="faultVar"
+           faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="Sequence2">
+        <assign name="BindingFault" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:result</to>
+          </copy>
+          <copy>
+            <from>$faultVar.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:message</to>
+          </copy>
+          <copy>
+            <from>$faultVar.code</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:error/ns9:errorCode</to>
+          </copy>
+          <copy>
+            <from>$faultVar.detail</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:error/ns9:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyBindingFault" variable="outputVariable" partnerLink="reactivaroperacion_client"
+               portType="ns1:ReactivarOperacionPT" operation="reactivarOperacion"/>
+      </sequence>
+    </catch>
+    <catch bpelx:name="remoteFault" faultName="bpelx:remoteFault" faultVariable="faultVar"
+           faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="Sequence1">
+        <assign name="RemoteFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:result</to>
+          </copy>
+          <copy>
+            <from>$faultVar.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:message</to>
+          </copy>
+          <copy>
+            <from>$faultVar.code</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:error/ns9:errorCode</to>
+          </copy>
+          <copy>
+            <from>$faultVar.detail</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:error/ns9:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyRemoteFault" variable="outputVariable" partnerLink="reactivaroperacion_client"
+               portType="ns1:ReactivarOperacionPT" operation="reactivarOperacion"/>
+      </sequence>
+    </catch>
+    <catchAll>
+      <sequence name="CatchAll">
+        <assign name="CatchAll">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:message</to>
+          </copy>
+        </assign>
+        <reply name="ErrorAll" variable="outputVariable" partnerLink="reactivaroperacion_client"
+               portType="ns1:ReactivarOperacionPT" operation="reactivarOperacion"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ReactivarOperacion.wsdl) -->
+    <receive name="receiveInput" partnerLink="reactivaroperacion_client" portType="ns1:ReactivarOperacionPT"
+             operation="reactivarOperacion" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleVar">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion: ",string($inputVariable.request/ns2:idOperacion)))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <assign name="AssignConsultar">
+      <copy>
+        <from>$inputVariable.request/ns2:idOperacion</from>
+        <to>$InConsultar.request/ns2:idOperacion</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultar" partnerLink="ConsultarOperacion" portType="ns1:ConsultarOperacionById12Port"
+            operation="ConsultarOperacionById" inputVariable="InConsultar" outputVariable="OutConsultar"
+            bpelx:invokeAsDetail="no"/>
+    <if name="ValidarEstado">
+      <documentation>
+        <![CDATA[Suspendido]]>
+      </documentation>
+      <condition> $OutConsultar.response/ns2:Operacion/ns3:estado/ns5:Id = 2</condition>
+      <sequence name="ValidaEstadoOperacion">
+        <assign name="AssignActualizar">
+          <copy>
+            <from>$inputVariable.request/ns2:idOperacion</from>
+            <to>$InActualizar.request/ns2:Operacion/ns3:idOperacion</to>
+          </copy>
+          <copy>
+            <from>1</from>
+            <to>$InActualizar.request/ns2:Operacion/ns3:estado/ns5:Id</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeActualizar" partnerLink="ActualizarOperacion" portType="ns1:OperacionPT"
+                operation="actualizarOperacion" inputVariable="InActualizar" outputVariable="OutActualizar"
+                bpelx:invokeAsDetail="no"/>
+        <assign name="AssignConsultarReactivarOperacion">
+          <copy>
+            <from>$inputVariable.request/ns2:idOperacion</from>
+            <to>$inConsultarReactivarOperacion.request/ns2:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarReactivarOperacion" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarReactivarOperacion_SB" portType="ns18:ConsultarReactivarOperacion_PT"
+                operation="ConsultarReactivarOperacion" inputVariable="inConsultarReactivarOperacion"
+                outputVariable="outConsultarReactivarOperacion"/>
+        <if name="IfValidaProcesosBitacoraReactivar">
+          <documentation>
+            <![CDATA[ExistenRegistros]]>
+          </documentation>
+          <condition>count($outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora) &gt; 0</condition>
+          <sequence name="ExistenRegistrosReactivar">
+            <assign name="AssignActivarOperacionProceso">
+              <copy>
+                <from>$inputVariable.request/ns2:idOperacion</from>
+                <to>$inActivarOperacionProcesos.request/ns20:OperacionProceso/ns21:idOperacion</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.request/ns2:idOperacion</from>
+                <to>$outputVariable.response/ns2:Operacion</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeActivarOperacionProcesos" bpelx:invokeAsDetail="no"
+                    partnerLink="ActivarProcesoOperacion_SB" portType="ns19:ActivarOperacionProceso_PT"
+                    operation="ActivarOperacionProceso" inputVariable="inActivarOperacionProcesos"
+                    outputVariable="outActivarOperacionProcesos"/>
+            <forEach parallel="no" counterName="contador" name="ForEachListaReactivarProcesos">
+              <startCounterValue>1</startCounterValue>
+              <finalCounterValue>count($outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora)</finalCounterValue>
+              <scope name="ForListaReactivarProcesos">
+                <sequence name="ForEachReactivarProcesos">
+                  <assign name="AssignCodigoProceso">
+                    <copy>
+                      <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                      <to>$codigoProceso</to>
+                    </copy>
+                  </assign>
+                  <assign name="requestConsultarParametersEnBitacora">
+                    <copy>
+                      <from>$inputVariable.request/ns2:idOperacion</from>
+                      <to>$inConsultarParametrosEnBitacora.request/ns35:idOperacionProceso</to>
+                    </copy>
+                    <copy>
+                      <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                      <to>$inConsultarParametrosEnBitacora.request/ns35:idProceso</to>
+                    </copy>
+                  </assign>
+                  <invoke name="InvokeConsultarParametrosEnBitacora_SB" bpelx:invokeAsDetail="no"
+                          partnerLink="ConsultarParametrosEnBitacoraProceso_SB"
+                          portType="ns34:ConsultarParametrosEnBitacoraProceso_PT"
+                          operation="ConsultarParametrosEnBitacoraProceso"
+                          inputVariable="inConsultarParametrosEnBitacora"
+                          outputVariable="outConsultarParametrosEnBitacora"/>
+                  <if name="IfValidaProceso">
+                    <documentation>
+                      <![CDATA[LFAT]]>
+                    </documentation>
+                    <condition>$codigoProceso = 'PA01'</condition>
+                    <sequence name="LAFT">
+                      <assign name="InicioLAFT_Request">
+                        <bpelx:annotation>
+                          <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                        </bpelx:annotation>
+                        <copy>
+                          <from>ora:processXQuery10('../Transformations/InicioLAFT_Request.xqy', 'inputVariable.request', $inputVariable.request, 'OutConsultar.response', $OutConsultar.response, 'outConsultarParametrosEnBitacora.response', $outConsultarParametrosEnBitacora.response)</from>
+                          <to variable="InLAFT" part="parameters"/>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeLAFT" bpelx:invokeAsDetail="no" partnerLink="ProcesosAlternos"
+                              portType="ns25:ProcesosAlternosPortType" operation="InicioLAFT" inputVariable="InLAFT"
+                              outputVariable="OutLAFT"/>
+                      <if name="IfValidaErrorLAFT">
+                        <documentation>
+                          <![CDATA[ERROR]]>
+                        </documentation>
+                        <condition>$OutLAFT.resultado/ns25:resultado/ns8:result = 'ERROR'</condition>
+                        <assign name="ErrorLAFT">
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                            <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                            <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$OutLAFT.resultado/ns25:resultado/ns8:result</from>
+                            <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$OutLAFT.resultado/ns25:resultado/ns8:message</from>
+                            <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                          </copy>
+                          <copy>
+                            <from>false()</from>
+                            <to>$flagReactivarOK</to>
+                          </copy>
+                        </assign>
+                        <else>
+                          <documentation>
+                            <![CDATA[OK]]>
+                          </documentation>
+                          <assign name="OkLAFT">
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutLAFT.resultado/ns25:resultado/ns8:result</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutLAFT.resultado/ns25:resultado/ns8:message</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                            </copy>
+                            <copy>
+                              <from>true()</from>
+                              <to>$flagReactivarOK</to>
+                            </copy>
+                          </assign>
+                        </else>
+                      </if>
+                    </sequence>
+                    <elseif>
+                      <documentation>
+                        <![CDATA[Comision]]>
+                      </documentation>
+                      <condition>$codigoProceso = 'PA02'</condition>
+                      <sequence name="Comision">
+                        <assign name="InicioComision_Request">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/InicioComision_Request.xqy', 'inputVariable.request', $inputVariable.request, 'OutConsultar.response', $OutConsultar.response, 'outConsultarParametrosEnBitacora.response', $outConsultarParametrosEnBitacora.response)</from>
+                            <to variable="InComisiones" part="parameters"/>
+                          </copy>
+                        </assign>
+                        <assign name="ActualizarComision_Request">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/ActualizarComision_Request.xqy', 'InComisiones.parameters', $InComisiones.parameters)</from>
+                            <to variable="inActualizarComision" part="request"/>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeActualizarComision_SB" bpelx:invokeAsDetail="no"
+                                partnerLink="ActualizarComision_SB" portType="ns36:ActualizarComisionPT"
+                                operation="ActualizarComision"
+                                inputVariable="inActualizarComision"
+                                outputVariable="outActualizarComision"/>
+                        <if name="ValidaErrorActualizarComision">
+                          <documentation>
+                            <![CDATA[OK]]>
+                          </documentation>
+                          <condition>$outActualizarComision.response/ns37:Resultado/ns8:result != 'ERROR'</condition><sequence name="Sequence3"><invoke name="InvokeComision"
+                                                                                                                                                        bpelx:invokeAsDetail="no"
+                                                                                                                                                        partnerLink="ProcesosAlternos"
+                                                                                                                                                        portType="ns25:ProcesosAlternosPortType"
+                                                                                                                                                        operation="InicioComisiones"
+                                                                                                                                                        inputVariable="InComisiones"
+                                                                                                                                                        outputVariable="OutComision"/><if name="IfValidaErrorComision"
+                                                                                                                                                                                          xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         <![CDATA[ERROR]]>
+      </documentation>
+      <condition>$OutComision.resultado/ns25:resultado/ns8:result = 'ERROR'</condition>
+      <assign name="ErrorComision">
+         <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+            <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+         </copy>
+         <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+            <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+         </copy>
+         <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>$OutComision.resultado/ns25:resultado/ns8:result</from>
+            <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+         </copy>
+         <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>$OutComision.resultado/ns25:resultado/ns8:message</from>
+            <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+         </copy>
+         <copy>
+            <from>false()</from>
+            <to>$flagReactivarOK</to>
+         </copy>
+      </assign>
+      <else>
+         <documentation>
+            <![CDATA[OK]]>
+         </documentation>
+         <assign name="OkComision">
+            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+               <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+            </copy>
+            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+               <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+            </copy>
+            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>$OutComision.resultado/ns25:resultado/ns8:result</from>
+               <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+            </copy>
+            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>$OutComision.resultado/ns25:resultado/ns8:message</from>
+               <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+            </copy>
+            <copy>
+               <from>true()</from>
+               <to>$flagReactivarOK</to>
+            </copy>
+         </assign>
+      </else>
+   </if></sequence><else>
+                            <documentation>
+                              <![CDATA[ERROR]]>
+                            </documentation><assign name="ErrorComision"
+                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+         
+         
+         
+         
+         
+      <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+            <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+            <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>'Fallo al actualizar sub estado de Comision'</from>
+            <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+         </copy><copy>
+            <from>false()</from>
+            <to>$flagReactivarOK</to>
+         </copy></assign></else>
+                        </if>
+                      </sequence>
+                    </elseif>
+                    <elseif>
+                      <documentation>
+                        <![CDATA[Condicion]]>
+                      </documentation>
+                      <condition>$codigoProceso = 'PA03'</condition>
+                      <sequence name="Condicion">
+                        <assign name="InicioCondicion_Request">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/InicioCondicion_Request.xqy', 'OutConsultar.response', $OutConsultar.response, 'outConsultarParametrosEnBitacora.response', $outConsultarParametrosEnBitacora.response)</from>
+                            <to variable="InCondicion" part="parameters"/>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeCondicion" bpelx:invokeAsDetail="no" partnerLink="ProcesosAlternos"
+                                portType="ns25:ProcesosAlternosPortType" operation="InicioCondiciones"
+                                inputVariable="InCondicion" outputVariable="OutCondicion"/>
+                        <if name="IfValidaErrorCondicion"
+                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <condition>$OutCondicion.resultado/ns25:resultado/ns8:result = 'ERROR'</condition>
+                          <assign name="ErrorCondicion">
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutCondicion.resultado/ns25:resultado/ns8:result</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutCondicion.resultado/ns25:resultado/ns8:message</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                            </copy>
+                            <copy>
+                              <from>false()</from>
+                              <to>$flagReactivarOK</to>
+                            </copy>
+                          </assign>
+                          <else>
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <assign name="OkCondicion">
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutComision.resultado/ns25:resultado/ns8:result</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutComision.resultado/ns25:resultado/ns8:message</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                              </copy>
+                              <copy>
+                                <from>true()</from>
+                                <to>$flagReactivarOK</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                      </sequence>
+                    </elseif>
+                    <elseif>
+                      <documentation>
+                        <![CDATA[Enmiendas]]>
+                      </documentation>
+                      <condition>$codigoProceso = 'PA04'</condition>
+                      <sequence name="Enmiendas">
+                        <assign name="InicioEnmiendas_Request">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/InicioEnmiendas_Request.xqy', 'OutConsultar.response', $OutConsultar.response, 'outConsultarParametrosEnBitacora.response', $outConsultarParametrosEnBitacora.response)</from>
+                            <to variable="InEnmiendas" part="parameters"/>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeEnmiendas" bpelx:invokeAsDetail="no" partnerLink="ProcesosAlternos"
+                                portType="ns25:ProcesosAlternosPortType" operation="InicioEnmiendas"
+                                inputVariable="InEnmiendas" outputVariable="OutEnmiendas"/>
+                        <if name="IfValidaErrorEnmiendas"
+                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <condition>$OutEnmiendas.resultado/ns25:resultado/ns8:result = 'ERROR'</condition>
+                          <assign name="ErrorEnmiendas">
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutEnmiendas.resultado/ns25:resultado/ns8:result</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutEnmiendas.resultado/ns25:resultado/ns8:message</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                            </copy>
+                            <copy>
+                              <from>false()</from>
+                              <to>$flagReactivarOK</to>
+                            </copy>
+                          </assign>
+                          <else>
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <assign name="OkEnmiendas">
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutEnmiendas.resultado/ns25:resultado/ns8:result</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutEnmiendas.resultado/ns25:resultado/ns8:message</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                              </copy>
+                              <copy>
+                                <from>true()</from>
+                                <to>$flagReactivarOK</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                      </sequence>
+                    </elseif>
+                    <elseif>
+                      <documentation>
+                        <![CDATA[Elegibilidad]]>
+                      </documentation>
+                      <condition>$codigoProceso = 'PC01'</condition>
+                      <sequence name="Elegibilidad">
+                        <assign name="InicioEligibilidad_Request">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/InicioEligibilidad_Request.xqy', 'OutConsultar.response', $OutConsultar.response, 'outConsultarParametrosEnBitacora.response', $outConsultarParametrosEnBitacora.response)</from>
+                            <to variable="InElegibilidad" part="parameters"/>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeElegibilidad" bpelx:invokeAsDetail="no" partnerLink="ProcesosPrincipales"
+                                portType="ns10:ProcesosPrincipalesPortType" operation="InicioElegibilidad"
+                                inputVariable="InElegibilidad" outputVariable="OutElegibilidad"/>
+                        <if name="IfValidaErrorEligibilidad"
+                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <condition>$OutElegibilidad.resultado/ns10:resultado/ns8:result = 'ERROR'</condition>
+                          <assign name="ErrorEleigibilidad">
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutElegibilidad.resultado/ns10:resultado/ns8:result</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutElegibilidad.resultado/ns10:resultado/ns8:message</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                            </copy>
+                            <copy>
+                              <from>false()</from>
+                              <to>$flagReactivarOK</to>
+                            </copy>
+                          </assign>
+                          <else>
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <assign name="OkElegibilidad">
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutElegibilidad.resultado/ns10:resultado/ns8:result</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutElegibilidad.resultado/ns10:resultado/ns8:message</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                              </copy>
+                              <copy>
+                                <from>true()</from>
+                                <to>$flagReactivarOK</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                      </sequence>
+                    </elseif>
+                    <elseif>
+                      <documentation>
+                        <![CDATA[Preparacion]]>
+                      </documentation>
+                      <condition>$codigoProceso = 'PC02'</condition>
+                      <sequence name="Preparacion">
+                        <assign name="InicioPreparacion_Request">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/InicioPreparacion_Request.xqy', 'OutConsultar.response', $OutConsultar.response, 'outConsultarParametrosEnBitacora.response', $outConsultarParametrosEnBitacora.response)</from>
+                            <to variable="InElegibilidad" part="parameters"/>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokePreparacion" bpelx:invokeAsDetail="no" partnerLink="ProcesosPrincipales"
+                                portType="ns10:ProcesosPrincipalesPortType" operation="InicioPreparacion"
+                                inputVariable="InPreparacion" outputVariable="OutPreparacion"/>
+                        <if name="IfValidaErrorPreparacion"
+                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <condition>$OutPreparacion.resultado/ns10:resultado/ns8:result = 'ERROR'</condition>
+                          <assign name="ErrorPreparacion">
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutPreparacion.resultado/ns10:resultado/ns8:result</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutPreparacion.resultado/ns10:resultado/ns8:message</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                            </copy>
+                            <copy>
+                              <from>false()</from>
+                              <to>$flagReactivarOK</to>
+                            </copy>
+                          </assign>
+                          <else>
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <assign name="OkPreparacion">
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutPreparacion.resultado/ns10:resultado/ns8:result</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutPreparacion.resultado/ns10:resultado/ns8:message</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                              </copy>
+                              <copy>
+                                <from>true()</from>
+                                <to>$flagReactivarOK</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                      </sequence>
+                    </elseif>
+                    <elseif>
+                      <documentation>
+                        <![CDATA[Analisis]]>
+                      </documentation>
+                      <condition>$codigoProceso = 'PC03'</condition>
+                      <sequence name="Analisis">
+                        <assign name="InicioAnalisis_Request">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/InicioAnalisis_Request.xqy', 'OutConsultar.response', $OutConsultar.response, 'outConsultarParametrosEnBitacora.response', $outConsultarParametrosEnBitacora.response)</from>
+                            <to variable="InAnalisis" part="parameters"/>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeAnalisis" bpelx:invokeAsDetail="no" partnerLink="ProcesosPrincipales"
+                                portType="ns10:ProcesosPrincipalesPortType" operation="InicioAnalisis"
+                                inputVariable="InAnalisis" outputVariable="OutAnalisis"/>
+                        <if name="IfValidaErrorAnalisis"
+                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <condition>$OutAnalisis.resultado/ns10:resultado/ns8:result = 'ERROR'</condition>
+                          <assign name="ErrorAnalisis">
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutAnalisis.resultado/ns10:resultado/ns8:result</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutAnalisis.resultado/ns10:resultado/ns8:message</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                            </copy>
+                            <copy>
+                              <from>false()</from>
+                              <to>$flagReactivarOK</to>
+                            </copy>
+                          </assign>
+                          <else>
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <assign name="OkAnalisis">
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutAnalisis.resultado/ns10:resultado/ns8:result</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutAnalisis.resultado/ns10:resultado/ns8:message</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                              </copy>
+                              <copy>
+                                <from>true()</from>
+                                <to>$flagReactivarOK</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                      </sequence>
+                    </elseif>
+                    <elseif>
+                      <documentation>
+                        <![CDATA[Aprobacion]]>
+                      </documentation>
+                      <condition>$codigoProceso = 'PC04'</condition>
+                      <sequence name="Aprobacion">
+                        <assign name="InicioAprobacion_Request">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/InicioAprobacion_Request.xqy', 'OutConsultar.response', $OutConsultar.response, 'outConsultarParametrosEnBitacora.response', $outConsultarParametrosEnBitacora.response)</from>
+                            <to variable="InAprobacion" part="parameters"/>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeAprobacion" partnerLink="ProcesosPrincipales"
+                                portType="ns10:ProcesosPrincipalesPortType" operation="InicioAprobacion"
+                                bpelx:invokeAsDetail="no" inputVariable="InAprobacion" outputVariable="OutAprobacion"/>
+                        <if name="IfValidaErrorAprobacion"
+                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <condition>$OutAprobacion.resultado/ns10:resultado/ns8:result = 'ERROR'</condition>
+                          <assign name="ErrorAprobacion">
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutAprobacion.resultado/ns10:resultado/ns8:result</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutAprobacion.resultado/ns10:resultado/ns8:message</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                            </copy>
+                            <copy>
+                              <from>false()</from>
+                              <to>$flagReactivarOK</to>
+                            </copy>
+                          </assign>
+                          <else>
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <assign name="OkAprobacion">
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutAprobacion.resultado/ns10:resultado/ns8:result</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutAprobacion.resultado/ns10:resultado/ns8:message</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                              </copy>
+                              <copy>
+                                <from>true()</from>
+                                <to>$flagReactivarOK</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                      </sequence>
+                    </elseif>
+                    <elseif>
+                      <documentation>
+                        <![CDATA[Evaluacion]]>
+                      </documentation>
+                      <condition>$codigoProceso = 'PC06'</condition>
+                      <sequence name="Evaluacion">
+                        <assign name="InicioEvaluacion_Request">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/InicioEvaluacion_Request.xqy', 'OutConsultar.response', $OutConsultar.response, 'outConsultarParametrosEnBitacora.response', $outConsultarParametrosEnBitacora.response)</from>
+                            <to variable="InEvaluacion" part="parameters"/>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeEvaluacion" bpelx:invokeAsDetail="no" partnerLink="ProcesosPrincipales"
+                                portType="ns10:ProcesosPrincipalesPortType" operation="InicioEvaluacion"
+                                inputVariable="InEvaluacion" outputVariable="OutEvaluacion"/>
+                        <if name="IfValidaErrorEvaluacion"
+                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <condition>$OutEvaluacion.resultado/ns10:resultado/ns8:result = 'ERROR'</condition>
+                          <sequence>
+                            <assign name="ErrorEvaluacion">
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutEvaluacion.resultado/ns10:resultado/ns8:result</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutEvaluacion.resultado/ns10:resultado/ns8:message</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                              </copy>
+                              <copy>
+                                <from>false()</from>
+                                <to>$flagReactivarOK</to>
+                              </copy>
+                            </assign>
+                          </sequence>
+                          <else>
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <assign name="OkEvaluacion">
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutEvaluacion.resultado/ns10:resultado/ns8:result</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutEvaluacion.resultado/ns10:resultado/ns8:message</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                              </copy>
+                              <copy>
+                                <from>true()</from>
+                                <to>$flagReactivarOK</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                      </sequence>
+                    </elseif>
+                    <elseif>
+                      <documentation>
+                        <![CDATA[Formalizacion]]>
+                      </documentation>
+                      <condition>$codigoProceso = 'PC05'</condition>
+                      <sequence name="Formalizacion">
+                        <assign name="InicioFormalizacion_Request">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/InicioFormalizacion_Request.xqy', 'OutConsultar.response', $OutConsultar.response, 'outConsultarParametrosEnBitacora.response', $outConsultarParametrosEnBitacora.response)</from>
+                            <to variable="InFormalizacion" part="parameters"/>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeFormalizacion" bpelx:invokeAsDetail="no" partnerLink="ProcesosPrincipales"
+                                portType="ns10:ProcesosPrincipalesPortType" operation="InicioFormalizacion"
+                                inputVariable="InFormalizacion" outputVariable="OutFormalizacion"/>
+                        <if name="IfValidaErrorFormalizacion"
+                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <condition>$OutFormalizacion.resultado/ns10:resultado/ns8:result = 'ERROR'</condition>
+                          <assign name="ErrorFormalizacion">
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutFormalizacion.resultado/ns10:resultado/ns8:result</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$OutFormalizacion.resultado/ns10:resultado/ns8:message</from>
+                              <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                            </copy>
+                            <copy>
+                              <from>false()</from>
+                              <to>$flagReactivarOK</to>
+                            </copy>
+                          </assign>
+                          <else>
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <assign name="OkFormalizacion">
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:idProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:codigoProceso</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:nombreProceso</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutFormalizacion.resultado/ns10:resultado/ns8:result</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:estatus</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$OutFormalizacion.resultado/ns10:resultado/ns8:message</from>
+                                <to>$outputVariable.response/ns2:ListaEstatus[$contador]/ns2:mensajeEstatus</to>
+                              </copy>
+                              <copy>
+                                <from>true()</from>
+                                <to>$flagReactivarOK</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                      </sequence>
+                    </elseif>
+                    <else>
+                      <empty name="Empty"/>
+                    </else>
+                  </if>
+                  <if name="IfValidaReactivacionOK">
+                    <documentation>
+                      <![CDATA[OK]]>
+                    </documentation>
+                    <condition>$flagReactivarOK = true()</condition>
+                    <sequence name="ValidarReactivacionOK">
+                      <assign name="AssignActualizarReactivarOperacion">
+                        <copy>
+                          <from>$inputVariable.request/ns2:idOperacion</from>
+                          <to>$inActualizarReactivarOperacion.request/ns2:idOperacion</to>
+                        </copy>
+                        <copy>
+                          <from>$outConsultarReactivarOperacion.response/ns2:ListaProcesosBitacora[$contador]/ns2:idProceso</from>
+                          <to>$inActualizarReactivarOperacion.request/ns2:idProceso</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeActualizarReactivarOperacion_SB" bpelx:invokeAsDetail="no"
+                              partnerLink="ActualizarReactivarOperacion_SB"
+                              portType="ns30:ActualizarReactivarOperacion_PT" operation="ActualizarReactivarOperacion"
+                              inputVariable="inActualizarReactivarOperacion"
+                              outputVariable="outActualizarReactivarOperacion"/>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[ERROR]]>
+                      </documentation>
+                      <empty name="Empty"/>
+                    </else>
+                  </if>
+                </sequence>
+              </scope>
+            </forEach>
+          </sequence>
+          <else>
+            <assign name="AssignNoExistenRegistros">
+              <copy>
+                <from>$inputVariable.request/ns2:idOperacion</from>
+                <to>$outputVariable.response/ns2:Operacion</to>
+              </copy>
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns8:result</to>
+              </copy>
+              <copy>
+                <from>'No existen procesos para reactivar'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns8:message</to>
+              </copy>
+            </assign>
+          </else>
+        </if>
+        <assign name="AssignResponse">
+          <copy>
+            <from>'OK'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:result</to>
+          </copy>
+          <copy>
+            <from>'Reactivación exitosa'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:message</to>
+          </copy>
+        </assign>
+        <assign name="Response">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:processXQuery10('../Transformations/Response.xqy', 'outputVariable.response', $outputVariable.response)</from>
+            <to variable="outputVariable" part="response"/>
+          </copy>
+        </assign>
+      </sequence>
+      <else>
+        <bpelx:annotation>
+          <bpelx:documentation>
+            <![CDATA[Error]]>
+          </bpelx:documentation>
+        </bpelx:annotation>
+        <assign name="SinRegistros">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:result</to>
+          </copy>
+          <copy>
+            <from>'Error Estado Incorrecto para Reactivar Operacion'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:message</to>
+          </copy>
+        </assign>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="reactivaroperacion_client" portType="ns1:ReactivarOperacionPT"
+           operation="reactivarOperacion" variable="outputVariable"/>
+  </sequence>
+</process>

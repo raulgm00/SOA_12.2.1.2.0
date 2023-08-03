@@ -1,0 +1,93 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Jun 07 12:51:05 CDT 2019
+  Author:  Sol4IT
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ModifyRetailStoreProcess"
+               targetNamespace="http://xmlns.oracle.com/AGSOA/ModifyRetailStoreProcess/ModifyRetailStoreProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/AGSOA/ModifyRetailStoreProcess/ModifyRetailStoreProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/RetailStore/WSDL/ModifyRetailStoreProcess"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/RetailStore/RetailStoreEntitySvc/Schema"
+         xmlns:ns3="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:ns4="http://mx.agarcia.ea/Commons/Schemas/AGStandardHeader"
+         xmlns:ns6="http://mx.agarcia.ea/Canonical/Commons/LocationsCommon/v1"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/RetailStore/v1">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/RetailStore/WSDL/ModifyRetailStoreProcess"
+          location="../WSDLs/ModifyRetailStoreProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/RetailStore/WSDL/ModifyRetailStoreProcess"
+          location="../WSDLs/ModifyRetailStoreProcessWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="modifyretailstoreprocess_client" partnerLinkType="ns1:ModifyRetailStoreProcess" myRole="ModifyRetailStorePType"/>
+    <partnerLink name="JDAModifyRetailStore" partnerLinkType="ns1:JDAModifyRetailStore"
+                 partnerRole="ModifyRetailStorePType"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ModifyRetailStoreRequest"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ModifyRetailStoreResponse"/>
+    <variable name="InvokeJDAModifyRetailStore_InputVariable" messageType="ns1:ModifyRetailStoreRequest"/>
+    <variable name="InvokeJDAModifyRetailStore_OutputVariable" messageType="ns1:ModifyRetailStoreResponse"/>
+    <variable name="header" messageType="ns1:StandarHeaderMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ModifyRetailStoreProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="modifyretailstoreprocess_client" portType="ns1:ModifyRetailStorePType" operation="modify" variable="inputVariable" createInstance="yes"/>
+    <invoke name="InvokeJDAModifyRetailStore" partnerLink="JDAModifyRetailStore"
+            portType="ns1:ModifyRetailStorePType" operation="modify"
+            inputVariable="inputVariable"
+            outputVariable="InvokeJDAModifyRetailStore_OutputVariable" bpelx:invokeAsDetail="no"/>
+    <assign name="ResponseJDA">
+      <copy ignoreMissingFromData="no">
+        <from>$InvokeJDAModifyRetailStore_OutputVariable.ModifyRetailStoreResponse/ns3:result</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.ModifyRetailStoreResponse/ns3:result</to>
+      </copy>
+      <copy ignoreMissingFromData="no">
+        <from>$InvokeJDAModifyRetailStore_OutputVariable.ModifyRetailStoreResponse/ns3:description</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.ModifyRetailStoreResponse/ns3:description</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="modifyretailstoreprocess_client" portType="ns1:ModifyRetailStorePType" operation="modify" variable="outputVariable"/>
+  </sequence>
+</process>

@@ -1,0 +1,657 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Jul 05 12:15:20 CDT 2016
+  Author:  Perla Osorio
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="PropagarAnalisisRiesgo"
+               targetNamespace="http://xmlns.oracle.com/DominioCliente/PropagarAnalisisRiesgo/PropagarAnalisisRiesgo"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioCliente/PropagarAnalisisRiesgo/PropagarAnalisisRiesgo"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/PropagarAnalisisRiesgoSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/ClienteService"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns3="http://www.bcie.org/ClienteMO"
+         xmlns:ns4="http://www.bcie.org/ClienteBO" xmlns:ns5="http://www.bcie.org/ResultBO"
+         xmlns:ns7="http://www.bcie.org/CatalogoBO" xmlns:ns6="http://www.bcie.org/ErrorBO"
+         xmlns:ns8="http://www.bcie.org/ConsultarSeguimientoCrediticioByIdCliente"
+         xmlns:ns9="http://www.bcie.org/RegistrarSCRREPSAD" xmlns:ns10="http://www.bcie.org/ConsultarUsuarioTareas"
+         xmlns:ns11="http://www.bicie.org/ConsultarUsuarioTareasMO"
+         xmlns:ns12="http://www.bcie.org/ConsultarUsuarioTareasBO"
+         xmlns:ns13="http://www.bcie.org/CrearActualizarSeguimientoCrediticio">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/PropagarAnalisisRiesgoSOR"
+          location="../WSDLs/PropagarAnalisisRiesgoSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="propagaranalisisriesgo_client" partnerLinkType="ns1:PropagarAnalisisRiesgo" myRole="PropagarAnalisisRiesgo"/>
+    <partnerLink name="ConsultarClienteById_SB" partnerLinkType="ns2:ConsultarClienteById_SB" partnerRole="ClientePT"/>
+    <partnerLink name="ConsultarSeguimientoCrediticio_SB" partnerLinkType="ns8:ConsultarSeguimientoCrediticio_SB"
+                 partnerRole="ConsultarSeguimientoCrediticioByIdCliente_PT"/>
+    <partnerLink name="RegistrarSCRREP_SB" partnerLinkType="ns9:RegistrarSCRREP_SB" partnerRole="RegistrarSCRREP_PT"/>
+    <partnerLink name="ConsultarUsuarioTareas_SB" partnerLinkType="ns10:ConsultarUsuarioTareas_SB"
+                 partnerRole="ConsultarUsuarioTareas_PT"/>
+    <partnerLink name="ActualizarCliente_SB" partnerLinkType="ns2:ActualizarCliente_SB"
+                 partnerRole="ActualizarClientePT"/>
+    <partnerLink name="CrearActualizarSeguimientoCrediticio_SB"
+                 partnerLinkType="ns13:CrearActualizarSeguimientoCrediticio_SB"
+                 partnerRole="CrearActualizarSeguimientoCrediticio_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestPropagarAnalisisRiesgoMessage"/>
+    <variable name="outConsultarSeguimientoCrediticio"
+              messageType="ns8:responseConsultarSeguimientoCrediticioByIdClienteMessage"/>
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responsePropagarAnalisisRiesgoMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="idFacturador" type="xsd:string"/>
+    <variable name="scr" type="xsd:string"/>
+   
+    <variable name="outRegistrarSCRREP" messageType="ns9:responseRegistrarSCRREPMessage"/>
+     
+    <variable name="scrSeguimiento" type="xsd:boolean"/>
+    <variable name="outActualizarCliente" messageType="ns2:responseActualizarClienteMessage"/>
+    <variable name="idSCr" type="xsd:long"/>
+    <variable name="outCrearActualizarSeguimientoCrediticio"
+              messageType="ns13:responseCrearActualizarSeguimientoCrediticioMessage"/>
+    <variable name="idPerspectiva" type="xsd:long"/>
+    <variable name="inRegistrarSCRREP" messageType="ns9:requestRegistrarSCRREPMessage"/>
+  </variables>
+  <faultHandlers>
+    <catch bpelx:name="BindingFault" faultName="bpelx:bindingFault" faultVariable="FaultVariable"
+           faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="Sequence15">
+        <assign name="bindingFault">
+          <copy>
+            <from>"ERROR"</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+          </copy>
+          <copy>
+            <from>$FaultVariable.code</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:error/ns6:errorCode</to>
+          </copy>
+          <copy>
+            <from>$FaultVariable.summary</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+          </copy>
+          <copy>
+            <from>$FaultVariable.detail</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:error/ns6:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyBindingFault" variable="outputVariable" partnerLink="propagaranalisisriesgo_client"
+               portType="ns1:PropagarAnalisisRiesgo" operation="PropagarAnalisisRiesgo"/>
+      </sequence>
+    </catch>
+    <catch bpelx:name="RemoteFault" faultName="bpelx:remoteFault" faultVariable="FaultVariable"
+           faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="Sequence14">
+        <assign name="remoteFault">
+          <copy>
+            <from>"ERROR"</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+          </copy>
+          <copy>
+            <from>$FaultVariable.code</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:error/ns6:errorCode</to>
+          </copy>
+          <copy>
+            <from>$FaultVariable.summary</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+          </copy>
+          <copy>
+            <from>$FaultVariable.detail</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:error/ns6:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyRemoteFault" variable="outputVariable" partnerLink="propagaranalisisriesgo_client"
+               portType="ns1:PropagarAnalisisRiesgo" operation="PropagarAnalisisRiesgo"/>
+      </sequence>
+    </catch>
+    <catchAll>
+      <sequence name="Sequence16">
+        <assign name="catchAll">
+          <copy>
+            <from>"ERROR"</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyCatchAll" variable="outputVariable" partnerLink="propagaranalisisriesgo_client"
+               portType="ns1:PropagarAnalisisRiesgo" operation="PropagarAnalisisRiesgo"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in PropagarAnalisisRiesgo.wsdl) -->
+    <receive name="receiveInput" partnerLink="propagaranalisisriesgo_client" portType="ns1:PropagarAnalisisRiesgo" operation="PropagarAnalisisRiesgo" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("Cliente: ",string($inputVariable.request/ns3:Cliente/ns4:idCliente)))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign><if name="IfValidaIdCliente" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+        <![CDATA[isNull]]>
+      </documentation>
+      <condition>string($inputVariable.request/ns3:Cliente/ns4:idCliente) = '' or $inputVariable.request/ns3:Cliente/ns4:idCliente = 0</condition>
+      <sequence name="IfValidaIdClienteAndSCR">
+         <assign name="isNull">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+          </copy>
+          <copy>
+            <from>'IdCliente es requerido'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+          </copy>
+        </assign>
+         <reply name="ReplyErrorIsNull" variable="outputVariable" partnerLink="propagaranalisisriesgo_client"
+                portType="ns1:PropagarAnalisisRiesgo" operation="PropagarAnalisisRiesgo"/>
+         <exit name="ExitIsNull"/>
+      </sequence>
+      <else>
+         <empty name="Empty"/>
+      </else>
+   </if>
+    <scope name="ConsultarClienteById_SB">
+      <variables>
+        <variable name="inConsultarClienteById" messageType="ns2:requestConsultarClienteMessageByIdCliente"/>
+        <variable name="outConsultarClienteById" messageType="ns2:responseConsultarClienteMessageByIdCliente"/>
+      </variables>
+      <sequence name="ConsultarClienteById_Sequence">
+        <assign name="requestConsultarClienteById">
+          <copy>
+            <from>$inputVariable.request/ns3:Cliente/ns4:idCliente</from>
+            <to>$inConsultarClienteById.request/ns3:idCliente</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarClienteById_SB" bpelx:invokeAsDetail="no" partnerLink="ConsultarClienteById_SB"
+                portType="ns2:ClientePT" operation="consultarByIdCliente" inputVariable="inConsultarClienteById"
+                outputVariable="outConsultarClienteById"/>
+        <if name="IfValidaError">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$outConsultarClienteById.response/ns3:Resultado/ns5:result = 'ERROR'</condition>
+          <sequence name="Sequence2">
+            <assign name="ErrorConsultarClienteById">
+              <copy>
+                <from>$outConsultarClienteById.response/ns3:Resultado/ns5:result</from>
+                <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>concat("Error al Consultar Cliente, ",$outConsultarClienteById.response/ns3:Resultado/ns5:message)</from>
+                <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyErrorConsultarClienteById" variable="outputVariable"
+                   partnerLink="propagaranalisisriesgo_client" portType="ns1:PropagarAnalisisRiesgo"
+                   operation="PropagarAnalisisRiesgo"/>
+            <exit name="Error"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <sequence>
+              <assign name="AsignaComunes">
+                <copy>
+                  <from>$outConsultarClienteById.response/ns3:Cliente/ns4:idCliente</from>
+                  <to>$inRegistrarSCRREP.request/ns4:idCliente</to>
+                </copy>
+                <copy>
+                  <from>$outConsultarClienteById.response/ns3:Cliente/ns4:idFacturador</from>
+                  <to>$inRegistrarSCRREP.request/ns4:idFacturador</to>
+                </copy>
+                <copy>
+                  <from>1</from>
+                  <to>$inRegistrarSCRREP.request/ns4:estadoScr</to>
+                </copy>
+                <copy>
+                  <from>' '</from>
+                  <to>$inRegistrarSCRREP.request/ns4:observacion</to>
+                </copy>
+                <copy>
+                  <from>xp20:current-date()</from>
+                  <to>$inRegistrarSCRREP.request/ns4:fecha</to>
+                </copy>
+              </assign>
+              <if name="IfValidarIdFacturador">
+                <documentation>
+                  <![CDATA[SeguimientoCrediticio]]>
+                </documentation>
+                <condition>count($inputVariable.request/ns3:Cliente/ns4:SCR/ns7:DescripcionCorta) = 0 or $inputVariable.request/ns3:Cliente/ns4:SCR/ns7:DescripcionCorta = ''</condition>
+                <sequence>
+                  <scope name="ConsultarSeguimientoCrediticio_SB">
+                    <variables>
+                    
+    
+    <variable name="outConsultarUsuarioTareas" messageType="ns10:responseConsultarUsuarioTareasMessage"/>
+                      <variable name="inConsultarSeguimientoCrediticio"
+                                messageType="ns8:requestConsultarSeguimientoCrediticioByIdClienteMessage"/>
+                    </variables>
+                    <sequence name="ConsultarSeguimientoCrediticio_Sequence">
+                      <assign name="requestConsultarSeguimientoCrediticio_SB">
+                        <copy>
+                          <from>$inputVariable.request/ns3:Cliente/ns4:idCliente</from>
+                          <to>$inConsultarSeguimientoCrediticio.request/ns3:idCliente</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeConsultarSeguimientoCrediticio_SB" bpelx:invokeAsDetail="no"
+                              partnerLink="ConsultarSeguimientoCrediticio_SB"
+                              portType="ns8:ConsultarSeguimientoCrediticioByIdCliente_PT"
+                              operation="ConsultarSeguimientoCrediticioByIdCliente"
+                              inputVariable="inConsultarSeguimientoCrediticio"
+                              outputVariable="outConsultarSeguimientoCrediticio"/>
+                      <if name="IfValidaErrorConsultarSeguimientoCrediticio">
+                        <documentation>
+                          <![CDATA[ERROR]]>
+                        </documentation>
+                        <condition>$outConsultarSeguimientoCrediticio.response/ns3:Resultado/ns5:result ='ERROR'</condition>
+                        <sequence name="Sequence4">
+                          <assign name="errorConsultarSeguimientoCrediticio">
+                            <copy>
+                              <from>$outConsultarSeguimientoCrediticio.response/ns3:Resultado/ns5:result</from>
+                              <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+                            </copy>
+                            <copy>
+                              <from>concat("Error al Consultar Seguimiento Crediticio, ",$outConsultarSeguimientoCrediticio.response/ns3:Resultado/ns5:message)</from>
+                              <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+                            </copy>
+                          </assign>
+                          <reply name="ReplyErrorConsultarSeguimientoCrediticio" variable="outputVariable"
+                                 partnerLink="propagaranalisisriesgo_client" portType="ns1:PropagarAnalisisRiesgo"
+                                 operation="PropagarAnalisisRiesgo"/>
+                          <exit name="Exit"/>
+                        </sequence>
+                        <else>
+                          <documentation>
+                            <![CDATA[OK]]>
+                          </documentation>
+                          <sequence name="Sequence9">
+                            <assign name="AssignSCRSeguimiento">
+                              <copy>
+                                <from>$outConsultarClienteById.response/ns3:Cliente/ns4:idCliente</from>
+                                <to>$inRegistrarSCRREP.request/ns4:idCliente</to>
+                              </copy>
+                              <copy>
+                                <from>$outConsultarSeguimientoCrediticio.response/ns3:SeguimientoCrediticio/ns4:scr/ns7:Id</from>
+                                <to>$idSCr</to>
+                              </copy>
+                              <copy>
+                                <from>$outConsultarSeguimientoCrediticio.response/ns3:SeguimientoCrediticio/ns4:perspectiva/ns7:Id</from>
+                                <to>$idPerspectiva</to>
+                              </copy>
+                              <copy>
+                                <from>$outConsultarClienteById.response/ns3:Cliente/ns4:idFacturador</from>
+                                <to>$inRegistrarSCRREP.request/ns4:idFacturador</to>
+                              </copy>
+                              <copy>
+                                <from>$outConsultarSeguimientoCrediticio.response/ns3:SeguimientoCrediticio/ns4:scr/ns7:DescripcionCorta</from>
+                                <to>$inRegistrarSCRREP.request/ns4:scr</to>
+                              </copy>
+                              <copy>
+                                <from>true()</from>
+                                <to>$scrSeguimiento</to>
+                              </copy>
+                            </assign>
+                            <scope name="RegistrarSCRREP_SB">
+                              <variables>
+                                <variable name="inConsultarUsuarioTareas"
+                                          messageType="ns10:requestConsultarUsuarioTareasMessage"/>
+                              </variables>
+                              <sequence name="RegistrarSCRREP_SequenceUsuarioModifico">
+                                <assign name="requestConsultarUsuarioTareas">
+                                  <copy>
+                                    <from>$inputVariable.request/ns3:Cliente/ns4:idCliente</from>
+                                    <to>$inConsultarUsuarioTareas.request/ns11:idCliente</to>
+                                  </copy>
+                                  <copy>
+                                    <from>20</from>
+                                    <to>$inConsultarUsuarioTareas.request/ns11:idProceso</to>
+                                  </copy>
+                                  <copy>
+                                    <from>111</from>
+                                    <to>$inConsultarUsuarioTareas.request/ns11:Tareas/ns12:idTarea</to>
+                                  </copy>
+                                  <copy>
+                                    <from>'Realizar revisión de calificación de riesgo'</from>
+                                    <to>$inConsultarUsuarioTareas.request/ns11:Tareas/ns12:nombreTarea</to>
+                                  </copy>
+                                </assign>
+                                <invoke name="InvokeConsultarUsuarioTareas_SB" partnerLink="ConsultarUsuarioTareas_SB"
+                                        portType="ns10:ConsultarUsuarioTareas_PT" operation="ConsultarUsuarioTareas"
+                                        inputVariable="inConsultarUsuarioTareas"
+                                        outputVariable="outConsultarUsuarioTareas" bpelx:invokeAsDetail="no"/>
+                                <assign name="AssignUsuarioModifico">
+                                  <copy ignoreMissingFromData="yes">
+                                    <from>$outConsultarUsuarioTareas.response/ns11:UsuariosTareas[1]/ns12:usuario</from>
+                                    <to>$inRegistrarSCRREP.request/ns4:usuarioModifico</to>
+                                  </copy>
+                                </assign>
+                              </sequence>
+                            </scope>
+                            <scope name="RegistrarSCRREP_SBValidar">
+                              <variables>
+                                <variable name="inConsultarUsuarioTareas"
+                                          messageType="ns10:requestConsultarUsuarioTareasMessage"/>
+                              </variables>
+                              <sequence name="RegistrarSCRREP_SequenceUsuarioValido">
+                                <assign name="requestConsultarUsuarioTareas">
+                                  <copy>
+                                    <from>$inputVariable.request/ns3:Cliente/ns4:idCliente</from>
+                                    <to>$inConsultarUsuarioTareas.request/ns11:idCliente</to>
+                                  </copy>
+                                  <copy>
+                                    <from>20</from>
+                                    <to>$inConsultarUsuarioTareas.request/ns11:idProceso</to>
+                                  </copy>
+                                  <copy>
+                                    <from>87</from>
+                                    <to>$inConsultarUsuarioTareas.request/ns11:Tareas/ns12:idTarea</to>
+                                  </copy>
+                                  <copy>
+                                    <from>'Validar cambio SCR y (o) Perspectiva'</from>
+                                    <to>$inConsultarUsuarioTareas.request/ns11:Tareas/ns12:nombreTarea</to>
+                                  </copy>
+                                </assign>
+                                <invoke name="InvokeConsultarUsuarioTareas_SB" partnerLink="ConsultarUsuarioTareas_SB"
+                                        portType="ns10:ConsultarUsuarioTareas_PT" operation="ConsultarUsuarioTareas"
+                                        inputVariable="inConsultarUsuarioTareas"
+                                        outputVariable="outConsultarUsuarioTareas" bpelx:invokeAsDetail="no"/>
+                                <assign name="AssignUsuarioValido">
+                                  <copy ignoreMissingFromData="yes">
+                                    <from>$outConsultarUsuarioTareas.response/ns11:UsuariosTareas[1]/ns12:usuario</from>
+                                    <to>$inRegistrarSCRREP.request/ns4:usuarioValido</to>
+                                  </copy>
+                                </assign>
+                              </sequence>
+                            </scope>
+                          </sequence>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[Analisis]]>
+                  </documentation>
+                  <sequence>
+                    <assign name="inicializaVariables">
+                      <copy ignoreMissingFromData="yes">
+                        <from>$inputVariable.request/ns3:Cliente/ns4:idCliente</from>
+                        <to>$inRegistrarSCRREP.request/ns4:idCliente</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$inputVariable.request/ns3:Cliente/ns4:idFacturador</from>
+                        <to>$inRegistrarSCRREP.request/ns4:idFacturador</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$inputVariable.request/ns3:Cliente/ns4:SCR/ns7:DescripcionCorta</from>
+                        <to>$inRegistrarSCRREP.request/ns4:scr</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$inputVariable.request/ns3:observacion</from>
+                        <to>$inRegistrarSCRREP.request/ns4:observacion</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$inputVariable.request/ns3:usuarioModifico</from>
+                        <to>$inRegistrarSCRREP.request/ns4:usuarioModifico</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$inputVariable.request/ns3:usuarioValido</from>
+                        <to>$inRegistrarSCRREP.request/ns4:usuarioValido</to>
+                      </copy>
+                      <copy>
+                        <from>$inputVariable.request/ns3:Cliente/ns4:SCR/ns7:Id</from>
+                        <to>$idSCr</to>
+                      </copy>
+                      <copy>
+                        <from>$inputVariable.request/ns3:Cliente/ns4:perspectiva/ns7:Id</from>
+                        <to>$idPerspectiva</to>
+                      </copy>
+                    </assign>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <if name="IfValidaIdFacturadorSCR">
+      <documentation>
+        <![CDATA[idFacturador o SCR nulos]]>
+      </documentation>
+      <condition>string-length($inRegistrarSCRREP.request/ns4:idFacturador/text()) = 0 or string-length($inRegistrarSCRREP.request/ns4:scr) = 0</condition>
+      <sequence name="Sequence7">
+        <assign name="ErrorCamposRequeridos">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+          </copy>
+          <copy>
+            <from>'Faltan campos requeridos para el Registro de SCR en REP'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyErrorCamposRequeridos" variable="outputVariable" partnerLink="propagaranalisisriesgo_client"
+               portType="ns1:PropagarAnalisisRiesgo" operation="PropagarAnalisisRiesgo"/>
+        <exit name="Exit"/>
+      </sequence>
+      <else>
+        <sequence>
+          <invoke name="InvokeRegistrarSCRREP_SB" bpelx:invokeAsDetail="no" partnerLink="RegistrarSCRREP_SB"
+                  portType="ns9:RegistrarSCRREP_PT" operation="RegistrarSCRREP" inputVariable="inRegistrarSCRREP"
+                  outputVariable="outRegistrarSCRREP"/>
+          <if name="IfValidarErrorRegistrarSCRREP">
+            <documentation>
+              <![CDATA[Error]]>
+            </documentation>
+            <condition>$outRegistrarSCRREP.response/ns3:Resultado/ns5:result = 'ERROR'</condition>
+            <sequence name="Sequence5">
+              <assign name="errorRegistrarSCRREP">
+                <copy>
+                  <from>$outRegistrarSCRREP.response/ns3:Resultado/ns5:result</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+                </copy>
+                <copy>
+                  <from>concat("Error al Registrar SCR en REP, ",$outRegistrarSCRREP.response/ns3:Resultado/ns5:message)</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyErrorRegistrarSCRREP" variable="outputVariable"
+                     partnerLink="propagaranalisisriesgo_client" portType="ns1:PropagarAnalisisRiesgo"
+                     operation="PropagarAnalisisRiesgo"/>
+              <exit name="Error"/>
+            </sequence>
+            <else>
+              <documentation>
+                <![CDATA[OK]]>
+              </documentation>
+              <sequence>
+                <assign name="response">
+                  <copy>
+                    <from>'OK'</from>
+                    <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+                  </copy>
+                  <copy>
+                    <from>concat("Propagacion exitosa  de SCR: ",$scr)</from>
+                    <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+                  </copy>
+                </assign>
+              </sequence>
+            </else>
+          </if>
+          <scope name="ActualizarCliente">
+            <variables>
+              <variable name="inActualizarCliente" messageType="ns2:requestActualizarClienteMessage"/>
+            </variables>
+            <sequence name="ActualizarClienteSequence">
+              <assign name="requestActualizarCliente">
+                <copy>
+                  <from>$inputVariable.request/ns3:Cliente/ns4:idCliente</from>
+                  <to>$inActualizarCliente.request/ns3:Cliente/ns4:idCliente</to>
+                </copy>
+                <copy>
+                  <from>$idSCr</from>
+                  <to>$inActualizarCliente.request/ns3:Cliente/ns4:SCR/ns7:Id</to>
+                </copy>
+                <copy>
+                  <from>$idPerspectiva</from>
+                  <to>$inActualizarCliente.request/ns3:Cliente/ns4:perspectiva/ns7:Id</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeActualizarCliente" bpelx:invokeAsDetail="no" partnerLink="ActualizarCliente_SB"
+                      portType="ns2:ActualizarClientePT" operation="actualizarCliente"
+                      inputVariable="inActualizarCliente" outputVariable="outActualizarCliente"/>
+              <if name="IfValidaError">
+                <documentation>
+                  <![CDATA[ERROR]]>
+                </documentation>
+                <condition>$outActualizarCliente.response/ns3:Resultado/ns5:result = 'ERROR'</condition>
+                <sequence name="Sequence13">
+                  <assign name="errorActualizarCliente">
+                    <copy>
+                      <from>"ERROR"</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+                    </copy>
+                    <copy>
+                      <from>concat("Error al Actualizar Cliente, ",$outActualizarCliente.response/ns3:Resultado/ns5:message)</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplyErrorActualizarCliente" variable="outputVariable"
+                         partnerLink="propagaranalisisriesgo_client" portType="ns1:PropagarAnalisisRiesgo"
+                         operation="PropagarAnalisisRiesgo"/>
+                  <exit name="Error"/>
+                </sequence>
+                <else>
+                  <sequence>
+                    <scope name="ActualizarSeguimientoCrediticio">
+                      <variables>
+                        <variable name="inCrearActualizarSeguimientoCrediticio"
+                                  messageType="ns13:requestCrearActualizarSeguimientoCrediticioMessage"/>
+                      </variables>
+                      <if name="IfValidaSCRSeguimiento">
+                        <documentation>
+                          <![CDATA[SCRSeguimiento]]>
+                        </documentation>
+                        <condition>$scrSeguimiento = 'true'</condition>
+                        <sequence name="Sequence11">
+                          <assign name="requestActualizarSeguimientoCrediticio">
+                            <copy>
+                              <from>$outConsultarSeguimientoCrediticio.response/ns3:SeguimientoCrediticio</from>
+                              <to>$inCrearActualizarSeguimientoCrediticio.request/ns3:SeguimientoCrediticio</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>2</from>
+                              <to>$inCrearActualizarSeguimientoCrediticio.request/ns3:SeguimientoCrediticio/ns4:estadoSCR/ns7:Id</to>
+                            </copy>
+                          </assign>
+                          <invoke name="InvokeCrearActualizarSeguimientoCrediticio_SB" bpelx:invokeAsDetail="no"
+                                  partnerLink="CrearActualizarSeguimientoCrediticio_SB"
+                                  portType="ns13:CrearActualizarSeguimientoCrediticio_PT"
+                                  operation="CrearActualizarSeguimientoCrediticio"
+                                  inputVariable="inCrearActualizarSeguimientoCrediticio"
+                                  outputVariable="outCrearActualizarSeguimientoCrediticio"/>
+                          <if name="IfValidaError">
+                            <documentation>
+                              <![CDATA[ERROR]]>
+                            </documentation>
+                            <condition>$outCrearActualizarSeguimientoCrediticio.response/ns3:Resultado/ns5:result = 'ERROR'</condition>
+                            <sequence name="Sequence12">
+                              <assign name="errorCrearActualizarSeguimientoCrediticio">
+                                <copy>
+                                  <from>"ERROR"</from>
+                                  <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+                                </copy>
+                                <copy>
+                                  <from>concat("Error al Actualizar Seguimiento Crediticio, ",$outCrearActualizarSeguimientoCrediticio.response/ns3:Resultado/ns5:message)</from>
+                                  <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+                                </copy>
+                              </assign>
+                              <reply name="ReplyErrorCrearActualizarSeguimientoCrediticio" variable="outputVariable"
+                                     partnerLink="propagaranalisisriesgo_client" portType="ns1:PropagarAnalisisRiesgo"
+                                     operation="PropagarAnalisisRiesgo"/>
+                              <exit name="Error"/>
+                            </sequence>
+                          </if>
+                        </sequence>
+                        <else>
+                          <empty name="Empty"/>
+                        </else>
+                      </if>
+                    </scope>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+        </sequence>
+      </else>
+    </if>
+    <assign name="Response">
+      <copy>
+        <from>'OK'</from>
+        <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+      </copy>
+      <copy>
+        <from>concat(" SCR: ",$scr, "  propagado correctamente")</from>
+        <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="propagaranalisisriesgo_client" portType="ns1:PropagarAnalisisRiesgo" operation="PropagarAnalisisRiesgo" variable="outputVariable"/>
+  </sequence>
+</process>

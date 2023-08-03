@@ -1,0 +1,669 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Nov 04 12:53:40 CST 2016
+  Author:  david-fernandez
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ValidarLimiteProgramaBPEL"
+         targetNamespace="http://xmlns.oracle.com/BusinessRulesServices/LimitesUMIPYME/ValidarLimiteProgramaBPEL"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:client="http://xmlns.oracle.com/BusinessRulesServices/LimitesUMIPYME/ValidarLimiteProgramaBPEL"
+         xmlns:ora="http://schemas.oracle.com/xpath/extension" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:ns1="http://www.bcie.org/ValidarLimiteProgramaSOR"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/ConsultarInformacionReglaById"
+         xmlns:ns5="http://www.bcie.org/ProductoBO" xmlns:ns6="http://www.bcie.org/CommonBO"
+         xmlns:ns8="http://www.bcie.org/HerramientaCEBO" xmlns:ns11="http://www.bcie.org/ComisionBO"
+         xmlns:ns10="http://www.bcie.org/MatrizTCCBO" xmlns:ns9="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns7="http://www.bcie.org/CatalogoBO" xmlns:ns4="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns12="http://www.bcie.org/AtributoBO" xmlns:ns3="http://www.bcie.org/DesembolsoMO"
+         xmlns:ns13="http://www.bcie.org/ConsultarLimitesProgramaSAD"
+         xmlns:ns14="http://www.bcie.org/ConsultarDesembolsosByIdSAD" xmlns:ns15="http://www.bcie.org/ResultBO"
+         xmlns:ns16="http://www.bcie.org/ErrorBO" xmlns:ns17="http://www.bice.org/ActualizarLineaCreditoService"
+         xmlns:ns18="http://www.bcie.org/LineaCreditoMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns19="http://www.bcie.org/ReglaBO" xmlns:ns20="http://www.bcie.org/ConsultarSaldoCarteraSAD"
+         xmlns:ns21="http://www.bcie.org/ConsultarImporteTransitoSAD" xmlns:ns24="http://www.bcie.org/TerminoBO"
+         xmlns:ns22="http://www.bcie.org/CondicionBO" xmlns:ns23="http://www.bcie.org/DocumentoBO"
+         xmlns:ns25="http://www.bcie.org/OperacionBO" xmlns:ns29="http://www.bcie.org/AprobacionBO"
+         xmlns:ns27="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns28="http://www.bcie.org/ContratoBO"
+         xmlns:ns26="http://www.bcie.org/ClienteBO">
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ValidarLimiteProgramaSOR"
+          location="../WSDLs/ValidarLimiteProgramaSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="validarlimiteprogramabpel_client" partnerLinkType="ns1:ValidarLimiteProgramaBPEL"
+                 myRole="ValidarLimitePrograma_PT"/>
+    <partnerLink name="ConsultarInformacionReglaById_SB" partnerLinkType="ns2:ConsultarInformacionReglaById_SB"
+                 partnerRole="ConsultarInformacionReglaById_PT"/>
+    <partnerLink name="ConsultarLimitesPrograma_SB" partnerLinkType="ns13:ConsultarLimitesPrograma_SB"
+                 partnerRole="ConsultarLimitesPrograma_PT"/>
+    <partnerLink name="ConsultaDesembolsoById_SB" partnerLinkType="ns14:ConsultaDesembolsoById_SB"
+                 partnerRole="ConsultarDesembolsosById_PT"/>
+    <partnerLink name="ConsultarSaldoCartera_SB" partnerLinkType="ns20:ConsultarSaldoCartera_SB"
+                 partnerRole="ConsultarSaldoCartera_PT"/>
+    <partnerLink name="ConsultarImporteTransito_SB" partnerLinkType="ns21:ConsultarImporteTransito_SB"
+                 partnerRole="ConsultarImporteTransito_PT"/>
+  </partnerLinks>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestValidarLimiteProgramaBPELMessage"/>
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseValidarLimiteProgramaBPELMessage"/>
+    <variable name="inConsultarInformacionReglaById" messageType="ns2:requestConsultarInformacionReglaByIdMessage"/>
+    <variable name="outConsultarInformacionReglaById" messageType="ns2:responseConsultarInformacionReglaByIdMessage"/>
+    <variable name="inConsultarLimitesPrograma" messageType="ns13:requestConsultarLimitesProgramaMessage"/>
+    <variable name="outConsultarLimitesPrograma" messageType="ns13:responseConsultarLimitesProgramaMessage"/>
+    <variable name="inConsultarDesembolsoById" messageType="ns14:requestConsultarDesembolsosByIdMessage"/>
+    <variable name="outConsultarDesembolsoById" messageType="ns14:responseConsultarDesembolsosByIdMessage"/>
+    <variable name="validaInformacionLimitePrograma" type="xsd:int">
+      <from>0</from>
+    </variable>
+    <variable name="setTitleVar" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceFaultAll">
+        <assign name="AssignFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+          </copy>
+          <copy>
+            <from>concat('Error en BPEL ValidarLimitePrograma: ',ora:getFaultAsString())</from>
+            <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyFaultAll" variable="outputVariable" partnerLink="validarlimiteprogramabpel_client"
+               portType="ns1:ValidarLimitePrograma_PT" operation="ValidarLimitePrograma"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ValidarLimiteProgramaBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="validarlimiteprogramabpel_client" portType="ns1:ValidarLimitePrograma_PT"
+             operation="ValidarLimitePrograma" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idDesembolso: ",$inputVariable.request/ns3:ContratoDesembolso/ns4:idDesembolso))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <assign name="AssignRequestConsultarDesembolsoById">
+      <copy>
+        <from>$inputVariable.request/ns3:ContratoDesembolso/ns4:idDesembolso</from>
+        <to>$inConsultarDesembolsoById.request/ns3:idContratoDesembolso</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultarDesembolsoById" partnerLink="ConsultaDesembolsoById_SB"
+            portType="ns14:ConsultarDesembolsosById_PT" operation="ConsultarDesembolsosById"
+            inputVariable="inConsultarDesembolsoById" bpelx:invokeAsDetail="no"
+            outputVariable="outConsultarDesembolsoById"/>
+    <if name="IfValidaOK">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>$outConsultarDesembolsoById.response/ns3:Resultado/ns15:result = 'OK'</condition>
+      <if name="IfExistenRegistros">
+        <documentation>
+          <![CDATA[ExisteLinea]]>
+        </documentation>
+        <condition>string-length($outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns4:Programa/ns8:LineaFinanciera/ns7:codigoExterno) &gt; 0</condition>
+        <empty name="Empty"/>
+        <else>
+          <documentation>
+            <![CDATA[NoExisteLinea]]>
+          </documentation>
+          <sequence name="SequenceNoExisteLinea">
+            <assign name="AssignNoexisteLinea">
+              <copy>
+                <from>'NO_EVALUADA'</from>
+                <to>$outputVariable.response/ns3:Regla/ns19:Estado/ns7:DescripcionCorta</to>
+              </copy>
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+              </copy>
+              <copy>
+                <from>concat('No existe linea financiera para consultar los limites programados en este desembolso: ',$inputVariable.request/ns3:ContratoDesembolso/ns4:idDesembolso)</from>
+                <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyNoExisteLinea" variable="outputVariable" partnerLink="validarlimiteprogramabpel_client"
+                   portType="ns1:ValidarLimitePrograma_PT" operation="ValidarLimitePrograma"/>
+            <exit name="Exit"/>
+          </sequence>
+        </else>
+      </if>
+      <else>
+        <documentation>
+          <![CDATA[ERROR]]>
+        </documentation>
+        <sequence name="SequenceConsultaDesembolsoError">
+          <assign name="AssignConsultaDesembolsoError">
+            <copy>
+              <from>'ERROR'</from>
+              <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+            </copy>
+            <copy>
+              <from>concat('Error en ConsultarDesembolsoById:  ',$outConsultarDesembolsoById.response/ns3:Resultado/ns15:message)</from>
+              <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+            </copy>
+          </assign>
+          <reply name="ReplyConsultaDesembolsoError" variable="outputVariable"
+                 partnerLink="validarlimiteprogramabpel_client" portType="ns1:ValidarLimitePrograma_PT"
+                 operation="ValidarLimitePrograma"/>
+          <exit name="Exit"/>
+        </sequence>
+      </else>
+    </if>
+    <assign name="AssignRequestConsultarLimitesPrograma">
+      <copy>
+        <from>$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns4:Programa/ns8:LineaFinanciera/ns7:codigoExterno</from>
+        <to>$inConsultarLimitesPrograma.request/ns3:ContratoDesembolso/ns4:Programa/ns8:LineaFinanciera/ns7:codigoExterno</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultarLimitesPrograma" partnerLink="ConsultarLimitesPrograma_SB"
+            portType="ns13:ConsultarLimitesPrograma_PT" operation="ConsultarLimitesPrograma"
+            inputVariable="inConsultarLimitesPrograma" bpelx:invokeAsDetail="no"
+            outputVariable="outConsultarLimitesPrograma"/>
+    <if name="IfValidaOK">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>$outConsultarLimitesPrograma.response/ns3:Resultado/ns15:result = 'OK'</condition>
+      <if name="IfExistenRegistros">
+        <documentation>
+          <![CDATA[ExistenRegistros]]>
+        </documentation>
+        <condition>count($outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera) &gt; 0</condition>
+        <empty name="Empty"/>
+        <else>
+          <documentation>
+            <![CDATA[SinRegistros]]>
+          </documentation>
+          <sequence name="SequenceSinRegistrosConsultarLimistesPrograma">
+            <assign name="AssignSinRegistrosConsultarLimistesPrograma">
+              <copy>
+                <from>'CUMPLIDA'</from>
+                <to>$outputVariable.response/ns3:Regla/ns19:Estado/ns7:DescripcionCorta</to>
+              </copy>
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+              </copy>
+              <copy>
+                <from>concat('No se encontraron limites asociados a la linea financiera ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns4:Programa/ns8:LineaFinanciera/ns7:codigoExterno)</from>
+                <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplySinRegistrosConsultarLimistesPrograma" variable="outputVariable"
+                   partnerLink="validarlimiteprogramabpel_client" portType="ns1:ValidarLimitePrograma_PT"
+                   operation="ValidarLimitePrograma"/>
+            <exit name="Exit"/>
+          </sequence>
+        </else>
+      </if>
+      <else>
+        <documentation>
+          <![CDATA[ERROR]]>
+        </documentation>
+        <sequence name="SequenceErrorConsultarLimistesPrograma">
+          <assign name="AssignErrorConsultarLimistesPrograma">
+            <copy>
+              <from>'ERROR'</from>
+              <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+            </copy>
+            <copy>
+              <from>concat('Error en ConsultarLimitesPrograma',$outConsultarLimitesPrograma.response/ns3:Resultado/ns15:message)</from>
+              <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+            </copy>
+          </assign>
+          <reply name="ReplyErrorConsultarLimistesPrograma" variable="outputVariable"
+                 partnerLink="validarlimiteprogramabpel_client" portType="ns1:ValidarLimitePrograma_PT"
+                 operation="ValidarLimitePrograma"/>
+          <exit name="Exit"/>
+        </sequence>
+      </else>
+    </if>
+    <sequence name="SequenceConsultarInformacionReglaById">
+      <bpelx:skipCondition>string-length($outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera/ns4:ConcentradoPais) = 0</bpelx:skipCondition>
+      <assign name="AssignRequestConsultarInformacionReglaById">
+        <copy>
+          <from>$inputVariable.request/ns3:ContratoDesembolso/ns4:idDesembolso</from>
+          <to>$inConsultarInformacionReglaById.request/ns3:idDesembolso</to>
+        </copy>
+      </assign>
+      <invoke name="InvokeConsultarInformacionReglaById" partnerLink="ConsultarInformacionReglaById_SB"
+              portType="ns2:ConsultarInformacionReglaById_PT" operation="consultarInformacionReglaById"
+              inputVariable="inConsultarInformacionReglaById" bpelx:invokeAsDetail="no"
+              outputVariable="outConsultarInformacionReglaById"/>
+      <if name="IfValidaOK">
+        <documentation>
+          <![CDATA[OK]]>
+        </documentation>
+        <condition>$outConsultarInformacionReglaById.response/ns3:Resultado/ns15:result = 'OK'</condition>
+        <if name="IfExistenRegistros">
+          <documentation>
+            <![CDATA[ExisteInformacion]]>
+          </documentation>
+          <condition>$outConsultarInformacionReglaById.response/ns3:Resultado/ns15:message != 'No hay resultados'</condition>
+          <empty name="Empty"/>
+          <else>
+            <documentation>
+              <![CDATA[NoExisteInformacion]]>
+            </documentation>
+            <sequence name="SequenceSinRegistrosConsultarInformacionRegla">
+              <assign name="AssignSinRegistrosConsultarInformacionRegla">
+                <copy>
+                  <from>'NO_EVALUADA'</from>
+                  <to>$outputVariable.response/ns3:Regla/ns19:Estado/ns7:DescripcionCorta</to>
+                </copy>
+                <copy>
+                  <from>'OK'</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+                </copy>
+                <copy>
+                  <from>concat('No hay informacion disponible para el desembolso: ',$inputVariable.request/ns3:ContratoDesembolso/ns4:idDesembolso)</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyAssignSinRegistrosConsultarInformacionRegla" variable="outputVariable"
+                     partnerLink="validarlimiteprogramabpel_client" portType="ns1:ValidarLimitePrograma_PT"
+                     operation="ValidarLimitePrograma"/>
+              <exit name="Exit"/>
+            </sequence>
+          </else>
+        </if>
+        <else>
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <sequence name="SequenceConsultarInformacionReglasError">
+            <assign name="AssignConsultarInformacionReglasError">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+              </copy>
+              <copy>
+                <from>concat('Error en ConsultarInformacionReglasById:  ',$outConsultarInformacionReglaById.response/ns3:Resultado/ns15:message)</from>
+                <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyConsultarInformacionReglasError" variable="outputVariable"
+                   partnerLink="validarlimiteprogramabpel_client" portType="ns1:ValidarLimitePrograma_PT"
+                   operation="ValidarLimitePrograma"/>
+            <exit name="Exit"/>
+          </sequence>
+        </else>
+      </if>
+    </sequence>
+    <forEach parallel="yes" counterName="ForEachLimiteProgramaCounter" name="ForEachLimitePrograma">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera)</finalCounterValue>
+      <scope name="ScopeForEachLimitePrograma">
+        <variables>
+          <variable name="inConsultarSaldoCartera" messageType="ns20:requestConsultarSaldoCarteraMessage"/>
+          <variable name="outConsultarSaldoCartera" messageType="ns20:responseConsultarSaldoCarteraMessage"/>
+          <variable name="inConsultarImporteTransito" messageType="ns21:requestConsultarImporteTransitoMessage"/>
+          <variable name="outConsultarImporteTransito" messageType="ns21:responseConsultarImporteTransitoMessage"/>
+          <variable name="inConsultarSaldoCarteraConPais" messageType="ns20:requestConsultarSaldoCarteraMessage"/>
+          <variable name="outConsultarSaldoCarteraConPais" messageType="ns20:responseConsultarSaldoCarteraMessage"/>
+          <variable name="inConsultarImporteTransitoConPais" messageType="ns21:requestConsultarImporteTransitoMessage"/>
+          <variable name="outConsultarImporteTransitoConPais"
+                    messageType="ns21:responseConsultarImporteTransitoMessage"/>
+        </variables>
+        <if name="IfValidaInformacionLimitePrograma">
+          <documentation>
+            <![CDATA[InformacionIncompleta]]>
+          </documentation>
+          <condition>string-length($outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:Monto/ns6:importe) = 0 or string-length($outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:LineasGrupo) = 0</condition>
+          <sequence name="SequenceInformacionIncompleta">
+            <assign name="AssignInformacionIncompletaLimite">
+              <copy>
+                <from>'NO_EVALUADA'</from>
+                <to>$outputVariable.response/ns3:Regla/ns19:Estado/ns7:DescripcionCorta</to>
+              </copy>
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+              </copy>
+              <copy>
+                <from>concat('Informacion incompleta al consultar LimitePrograma con el idCodigo: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns4:Programa/ns8:LineaFinanciera/ns7:codigoExterno)</from>
+                <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyValidaInformacionLimiteIncompleta" variable="outputVariable"
+                   partnerLink="validarlimiteprogramabpel_client" portType="ns1:ValidarLimitePrograma_PT"
+                   operation="ValidarLimitePrograma"/>
+            <exit name="Exit"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[InformacionCompleta]]>
+            </documentation>
+            <sequence name="SequenceInformacionCompleta">
+              <sequence name="SequenceValidarPrimerBloque">
+                <assign name="AssignRequestConsultarSaldoCartera">
+                  <copy>
+                    <from>$outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:LineasGrupo</from>
+                    <to>$inConsultarSaldoCartera.request/ns3:SaldoCartera/ns4:ListaLineaFinanciera</to>
+                  </copy>
+                  <copy>
+                    <from>$outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:MonedasGrupo</from>
+                    <to>$inConsultarSaldoCartera.request/ns3:SaldoCartera/ns4:ListaMoneda</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeConsultarSaldoCartera" partnerLink="ConsultarSaldoCartera_SB"
+                        portType="ns20:ConsultarSaldoCartera_PT" operation="ConsultarSaldoCartera"
+                        inputVariable="inConsultarSaldoCartera" bpelx:invokeAsDetail="no"
+                        outputVariable="outConsultarSaldoCartera"/>
+                <assign name="AssignConsultarImporteTransito">
+                  <copy>
+                    <from>$outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:LineasGrupo</from>
+                    <to>$inConsultarImporteTransito.request/ns18:LineaCredito/ns9:ContratoDesembolso/ns4:Programa/ns8:LineaFinanciera/ns7:codigoExterno</to>
+                  </copy>
+                  <copy>
+                    <from>$outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:MonedasGrupo</from>
+                    <to>$inConsultarImporteTransito.request/ns18:LineaCredito/ns9:Monto/ns6:moneda/ns7:codigoExterno</to>
+                  </copy>
+                </assign>
+                <if name="IfValidaSaldoCartera">
+                  <documentation>
+                    <![CDATA[ConSaldo]]>
+                  </documentation>
+                  <condition>$outConsultarSaldoCartera.response/ns3:Resultado/ns15:result != 'ERROR'</condition>
+                  <sequence name="Sequence3">
+                    <empty name="Empty"/>
+                    <if name="IfSaldoNull">
+                      <documentation>
+                        <![CDATA[Null]]>
+                      </documentation>
+                      <condition>string($outConsultarSaldoCartera.response/ns3:Monto/ns6:importe) = ''</condition>
+                      <sequence name="Sequence4">
+                        <invoke name="InvokeConsultarSaldoCartera" partnerLink="ConsultarSaldoCartera_SB"
+                                portType="ns20:ConsultarSaldoCartera_PT" operation="ConsultarSaldoCartera"
+                                inputVariable="inConsultarSaldoCartera" outputVariable="outConsultarSaldoCartera"
+                                bpelx:invokeAsDetail="no"/>
+                        <if name="IfValidaSaldoCartera">
+                          <documentation>
+                            <![CDATA[ConSaldo]]>
+                          </documentation>
+                          <condition>$outConsultarSaldoCartera.response/ns3:Resultado/ns15:result != 'ERROR'</condition>
+                          <sequence name="Sequence3">
+                            <empty name="Empty"/>
+                          </sequence>
+                          <else>
+                            <documentation>
+                              <![CDATA[SinError]]>
+                            </documentation>
+                            <sequence name="Sequence1">
+                              <assign name="SinSaldoCartera">
+                                <copy>
+                                  <from>'NO_EVALUADA'</from>
+                                  <to>$outputVariable.response/ns3:Regla/ns19:Estado/ns7:DescripcionCorta</to>
+                                </copy>
+                                <copy>
+                                  <from>'OK'</from>
+                                  <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+                                </copy>
+                                <copy>
+                                  <from>concat('El saldo de cartera ha devuelto error ', $outConsultarSaldoCartera.response/ns3:Resultado/ns15:message)</from>
+                                  <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+                                </copy>
+                              </assign>
+                              <reply name="ReplySinSaldoCartera" variable="outputVariable"
+                                     partnerLink="validarlimiteprogramabpel_client"
+                                     portType="ns1:ValidarLimitePrograma_PT" operation="ValidarLimitePrograma"/>
+                              <exit name="Exit1"/>
+                            </sequence>
+                          </else>
+                        </if>
+                      </sequence>
+                      <else>
+                        <documentation>
+                          <![CDATA[NotNull]]>
+                        </documentation>
+                        <empty name="Continua"/>
+                      </else>
+                    </if>
+                  </sequence>
+                  <else>
+                    <documentation>
+                      <![CDATA[SinError]]>
+                    </documentation>
+                    <sequence name="Sequence1">
+                      <assign name="SinSaldoCartera">
+                        <copy>
+                          <from>'NO_EVALUADA'</from>
+                          <to>$outputVariable.response/ns3:Regla/ns19:Estado/ns7:DescripcionCorta</to>
+                        </copy>
+                        <copy>
+                          <from>'OK'</from>
+                          <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+                        </copy>
+                        <copy>
+                          <from>concat('El saldo de cartera ha devuelto error ', $outConsultarSaldoCartera.response/ns3:Resultado/ns15:message)</from>
+                          <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+                        </copy>
+                      </assign>
+                      <reply name="ReplySinSaldoCartera" variable="outputVariable"
+                             partnerLink="validarlimiteprogramabpel_client" portType="ns1:ValidarLimitePrograma_PT"
+                             operation="ValidarLimitePrograma"/>
+                      <exit name="Exit1"/>
+                    </sequence>
+                  </else>
+                </if>
+                <invoke name="InvokeConsultarImporteTransito" partnerLink="ConsultarImporteTransito_SB"
+                        portType="ns21:ConsultarImporteTransito_PT" operation="ConsultarImporteTransito"
+                        inputVariable="inConsultarImporteTransito" bpelx:invokeAsDetail="no"
+                        outputVariable="outConsultarImporteTransito"/>
+                <if name="IfValidarLimite">
+                  <documentation>
+                    <![CDATA[DentroLimite]]>
+                  </documentation>
+                  <condition>($outConsultarSaldoCartera.response/ns3:Monto/ns6:importe + $outConsultarImporteTransito.response/ns18:LineaCredito/ns9:Monto/ns6:importe) &lt;= $outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera/ns4:Monto/ns6:importe</condition>
+                  <empty name="Empty"/>
+                  <else>
+                    <documentation>
+                      <![CDATA[FueraLimite]]>
+                    </documentation>
+                    <sequence name="SequenceFueraLimite">
+                      <assign name="AssignFueraLimite">
+                        <copy>
+                          <from>'NO_EVALUADA'</from>
+                          <to>$outputVariable.response/ns3:Regla/ns19:Estado/ns7:DescripcionCorta</to>
+                        </copy>
+                        <copy>
+                          <from>'OK'</from>
+                          <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+                        </copy>
+                        <copy>
+                          <from>concat('Se excedio el limite para la Linea Financiera con codigo: ',$outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera/ns4:Codigo,' y descripcion: ',$outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera/ns4:Codigo/ns7:Descripcion)</from>
+                          <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+                        </copy>
+                      </assign>
+                      <reply name="ReplyFueraLimite" variable="outputVariable"
+                             partnerLink="validarlimiteprogramabpel_client" portType="ns1:ValidarLimitePrograma_PT"
+                             operation="ValidarLimitePrograma"/>
+                      <exit name="Exit"/>
+                    </sequence>
+                  </else>
+                </if>
+              </sequence>
+              <if name="IfValidaRealizarConsultaConPais">
+                <documentation>
+                  <![CDATA[SiRealizarConsulta]]>
+                </documentation>
+                <condition>string-length($outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:ConcentradoPais) &gt; 0</condition>
+                <sequence name="SequenceValidaSegundoBloque">
+                  <assign name="AssignConsultarSaldoCarteraConPais">
+                    <copy>
+                      <from>$outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:LineasGrupo</from>
+                      <to>$inConsultarSaldoCarteraConPais.request/ns3:SaldoCartera/ns4:ListaLineaFinanciera</to>
+                    </copy>
+                    <copy>
+                      <from>$outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:MonedasGrupo</from>
+                      <to>$inConsultarSaldoCarteraConPais.request/ns3:SaldoCartera/ns4:ListaMoneda</to>
+                    </copy>
+                    <copy>
+                      <from>$outConsultarInformacionReglaById.response/ns3:Cliente/ns26:pais/ns7:codigoExterno</from>
+                      <to>$inConsultarSaldoCarteraConPais.request/ns3:SaldoCartera/ns4:ListaPaises</to>
+                    </copy>
+                  </assign>
+                  <invoke name="InvokeConsultarSaldoCarteraConPais" partnerLink="ConsultarSaldoCartera_SB"
+                          portType="ns20:ConsultarSaldoCartera_PT" operation="ConsultarSaldoCartera"
+                          inputVariable="inConsultarSaldoCarteraConPais" bpelx:invokeAsDetail="no"
+                          outputVariable="outConsultarSaldoCarteraConPais"/>
+                  <if name="IfValidaSaldoCarteraPais">
+                    <documentation>
+                      <![CDATA[ConSaldoPais]]>
+                    </documentation>
+                    <condition>$outConsultarSaldoCarteraConPais.response/ns3:Resultado/ns15:result != 'ERROR'</condition>
+                    <empty name="Empty1"/>
+                    <else>
+                      <documentation>
+                        <![CDATA[ErrorSaldoPais]]>
+                      </documentation>
+                      <sequence name="Sequence2">
+                        <assign name="ErrorSaldoPais">
+                          <copy>
+                            <from>'NO_EVALUADA'</from>
+                            <to>$outputVariable.response/ns3:Regla/ns19:Estado/ns7:DescripcionCorta</to>
+                          </copy>
+                          <copy>
+                            <from>'OK'</from>
+                            <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+                          </copy>
+                          <copy>
+                            <from>$outConsultarSaldoCarteraConPais.response/ns3:Resultado/ns15:message</from>
+                            <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+                          </copy>
+                        </assign>
+                        <reply name="ReplySinSaldoCarteraPais" variable="outputVariable"
+                               partnerLink="validarlimiteprogramabpel_client" portType="ns1:ValidarLimitePrograma_PT"
+                               operation="ValidarLimitePrograma"/>
+                        <exit name="Exit2"/>
+                      </sequence>
+                    </else>
+                  </if>
+                  <assign name="AssignConsultarImporteTransitoConPais">
+                    <copy>
+                      <from>$outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:LineasGrupo</from>
+                      <to>$inConsultarImporteTransitoConPais.request/ns18:LineaCredito/ns9:ContratoDesembolso/ns4:Programa/ns8:LineaFinanciera/ns7:codigoExterno</to>
+                    </copy>
+                    <copy>
+                      <from>$outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:MonedasGrupo</from>
+                      <to>$inConsultarImporteTransitoConPais.request/ns18:LineaCredito/ns9:Monto/ns6:moneda/ns7:codigoExterno</to>
+                    </copy>
+                    <copy>
+                      <from>$outConsultarInformacionReglaById.response/ns3:Cliente/ns26:pais/ns7:codigoExterno</from>
+                      <to>$inConsultarImporteTransitoConPais.request/ns18:LineaCredito/ns9:atributos/ns6:value</to>
+                    </copy>
+                  </assign>
+                  <invoke name="InvokeConsultarImporteTransitoConPais" partnerLink="ConsultarImporteTransito_SB"
+                          portType="ns21:ConsultarImporteTransito_PT" operation="ConsultarImporteTransito"
+                          inputVariable="inConsultarImporteTransitoConPais" bpelx:invokeAsDetail="no"
+                          outputVariable="outConsultarImporteTransitoConPais"/>
+                  <if name="IfValidaConcentracionPorPais">
+                    <documentation>
+                      <![CDATA[DentroLimite]]>
+                    </documentation>
+                    <condition>($outConsultarSaldoCarteraConPais.response/ns3:Monto/ns6:importe + $outConsultarImporteTransitoConPais.response/ns18:LineaCredito/ns9:Monto/ns6:importe) &lt;= ($outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:Monto/ns6:importe * $outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera[$ForEachLimiteProgramaCounter]/ns4:ConcentradoPais)</condition>
+                    <empty name="Empty"/>
+                    <else>
+                      <documentation>
+                        <![CDATA[FueraLimite]]>
+                      </documentation>
+                      <sequence name="SequenceValidaConcentracionPorPais">
+                        <assign name="AssignConcentracionPorPais">
+                          <copy>
+                            <from>'NO_CUMPLIDA'</from>
+                            <to>$outputVariable.response/ns3:Regla/ns19:Estado/ns7:DescripcionCorta</to>
+                          </copy>
+                          <copy>
+                            <from>'OK'</from>
+                            <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+                          </copy>
+                          <copy>
+                            <from>concat('La validacion por concentracion por pais no se cumplio para el idCodigo: ',$inConsultarLimitesPrograma.request/ns3:ContratoDesembolso/ns4:Programa/ns8:LineaFinanciera/ns7:codigoExterno)</from>
+                            <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+                          </copy>
+                        </assign>
+                        <reply name="ReplyConcentracionPorPais" variable="outputVariable"
+                               partnerLink="validarlimiteprogramabpel_client" portType="ns1:ValidarLimitePrograma_PT"
+                               operation="ValidarLimitePrograma"/>
+                        <exit name="Exit"/>
+                      </sequence>
+                    </else>
+                  </if>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[NoRealizarConsulta]]>
+                  </documentation>
+                  <empty name="Empty"/>
+                </else>
+              </if>
+            </sequence>
+          </else>
+        </if>
+      </scope>
+    </forEach>
+    <assign name="AssignResponseOK">
+      <copy>
+        <from>'OK'</from>
+        <to>$outputVariable.response/ns3:Resultado/ns15:result</to>
+      </copy>
+      <copy>
+        <from>concat('El limite: ',$outConsultarLimitesPrograma.response/ns3:LimiteGlobalLineaFinanciera/ns4:Monto/ns6:importe, ' fue evaluado y cumple con las normas correspondientes')</from>
+        <to>$outputVariable.response/ns3:Resultado/ns15:message</to>
+      </copy>
+      <copy>
+        <from>'CUMPLIDA'</from>
+        <to>$outputVariable.response/ns3:Regla/ns19:Estado/ns7:DescripcionCorta</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="validarlimiteprogramabpel_client" portType="ns1:ValidarLimitePrograma_PT"
+           operation="ValidarLimitePrograma" variable="outputVariable"/>
+  </sequence>
+</process>

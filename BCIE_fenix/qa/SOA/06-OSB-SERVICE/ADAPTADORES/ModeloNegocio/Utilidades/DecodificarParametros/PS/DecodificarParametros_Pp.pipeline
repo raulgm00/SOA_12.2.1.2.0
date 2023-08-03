@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con3="http://www.bea.com/wli/sb/typesystem/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/Utilidades/DecodificarParametros/V1/Wsdl/DecodificarParametros"/>
+            <con:binding>
+                <con:name>DecodificarParametros_pttSOAP12Binding</con:name>
+                <con:namespace>http://www.bcie.com/DecodificarParametros</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="request" name="request-N3f57c7ff.760aac0.0.1622179909a.N7fcb">
+            <con:stage id="_StageId-N3f57c7ff.760aac0.0.1622179909a.N7fbf" name="StageDecodificar">
+                <con:context>
+                    <con1:userNsDecl prefix="dec" namespace="http://www.bcie.org/DecodificarParametrosMO"/>
+                    <con3:variable name="paramtros" path="$varParametros" asChild="false">
+                        <con3:schema ref="MDS/Resources/ComponentesComunes/Utilidades/DecodificarParametros/V1/Schema/DecodificarParametrosMO" element="DecodificarParametrosResponse"/>
+                    </con3:variable>
+                </con:context>
+                <con:actions>
+                    <con2:assign varName="varParametros">
+                        <con1:id>_ActionId-N3f57c7ff.760aac0.0.1622179909a.N7f7d</con1:id>
+                        <con2:expr>
+                            <con1:xqueryText>&lt;dec:DecodificarParametrosResponse xmlns:dec="http://www.bcie.org/DecodificarParametrosMO">
+    &lt;dec:Parametros>
+    &lt;/dec:Parametros>
+&lt;/dec:DecodificarParametrosResponse></con1:xqueryText>
+                        </con2:expr>
+                    </con2:assign>
+                    <con2:foreach>
+                        <con1:id>_ActionId-N3f57c7ff.760aac0.0.1622179909a.N7fc5</con1:id>
+                        <con2:variable>body</con2:variable>
+                        <con2:expression>
+                            <con1:xpathText>./dec:DecodificarParametrosRequest/dec:Parametros/dec:Parametro</con1:xpathText>
+                        </con2:expression>
+                        <con2:value-variable>parametro</con2:value-variable>
+                        <con2:index-variable>index</con2:index-variable>
+                        <con2:total-variable>counter</con2:total-variable>
+                        <con2:actions>
+                            <con2:javaCallout varName="parametroDecodificado">
+                                <con1:id>_ActionId-N3f57c7ff.760aac0.0.1622179909a.N7fc2</con1:id>
+                                <con2:archive ref="ADAPTADORES/ModeloNegocio/Utilidades/DecodificarParametros/JAR/DecodeParam"/>
+                                <con2:className>cliente.DecodeParam</con2:className>
+                                <con2:method>public static java.lang.String getDecode(java.lang.String)</con2:method>
+                                <con2:expr>
+                                    <con1:xqueryText>$body/dec:DecodificarParametrosRequest/dec:Parametros/dec:Parametro[$index]/dec:Valor/text()</con1:xqueryText>
+                                </con2:expr>
+                                <con2:return-param-as-ref>false</con2:return-param-as-ref>
+                            </con2:javaCallout>
+                            <con4:log>
+                                <con1:id>_ActionId-N3f57c7ff.6d46df89.0.16225776b3d.N7ffb</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>concat('valor de la variable index ', $index,'   ',$counter)</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>valor_delFor</con4:message>
+                            </con4:log>
+                            <con2:assign varName="varParametro1">
+                                <con1:id>_ActionId-N3f57c7ff.6d46df89.0.16225776b3d.N7ffe</con1:id>
+                                <con2:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/DecodificarParametros/XQUERY/Foreach_To_Parametro"/>
+                                        <con1:param name="valor">
+                                            <con1:path>$body/dec:DecodificarParametrosRequest/dec:Parametros/dec:Parametro[$index]/dec:Nombre/text()</con1:path>
+                                        </con1:param>
+                                        <con1:param name="clave">
+                                            <con1:path>$parametroDecodificado</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con2:expr>
+                            </con2:assign>
+                            <con2:insert varName="varParametros">
+                                <con1:id>_ActionId-N3f57c7ff.760aac0.0.1622179909a.N7f80</con1:id>
+                                <con2:location>
+                                    <con1:xpathText>./dec:Parametros</con1:xpathText>
+                                </con2:location>
+                                <con2:where>last-child</con2:where>
+                                <con2:expr>
+                                    <con1:xqueryText>$varParametro1/dec:Parametros/dec:Parametro</con1:xqueryText>
+                                </con2:expr>
+                            </con2:insert>
+                        </con2:actions>
+                    </con2:foreach>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-N3f57c7ff.760aac0.0.1622179909a.N7fca">
+            <con:stage id="_StageId-N3f57c7ff.760aac0.0.1622179909a.N7fc8" name="StageResponse">
+                <con:context/>
+                <con:actions>
+                    <con2:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-N3f57c7ff.760aac0.0.1622179909a.N7f7a</con1:id>
+                        <con2:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con2:location>
+                        <con2:expr>
+                            <con1:xqueryText>$varParametros</con1:xqueryText>
+                        </con2:expr>
+                    </con2:replace>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:branch-node type="operation" id="_FlowId-N3f57c7ff.760aac0.0.1622179909a.N7fcc" name="BranchNode1">
+                <con:context/>
+                <con:branch-table>
+                    <con:branch name="DecodificarParametros">
+                        <con:operator>equals</con:operator>
+                        <con:value/>
+                        <con:flow>
+                            <con:pipeline-node name="PipelinePairNode1">
+                                <con:request>request-N3f57c7ff.760aac0.0.1622179909a.N7fcb</con:request>
+                                <con:response>response-N3f57c7ff.760aac0.0.1622179909a.N7fca</con:response>
+                            </con:pipeline-node>
+                        </con:flow>
+                    </con:branch>
+                    <con:default-branch>
+                        <con:flow/>
+                    </con:default-branch>
+                </con:branch-table>
+            </con:branch-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

@@ -1,0 +1,497 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Oct 07 13:29:02 CDT 2016
+  Author:  dalia-reyes
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="SeguimientoCobro"
+               targetNamespace="http://xmlns.oracle.com/DominioCliente/Recuperacion/SeguimientoCobro"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioCliente/Recuperacion/SeguimientoCobro"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/GestionCobroMO"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/PublicarJMS"
+         xmlns:ns3="http://xmlns.bcie.com/ClienteService"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns11="http://www.bcie.org/ResultBO"
+         xmlns:ns8="http://www.bcie.org/CommonBO" xmlns:ns4="http://www.bcie.org/GestionCobroBO"
+         xmlns:ns10="http://www.bcie.org/LineaCreditoBO" xmlns:ns9="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns6="http://www.bcie.org/CatalogoBO" xmlns:ns7="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns5="http://www.bcie.org/ClienteBO" xmlns:ns12="http://www.bcie.org/ErrorBO"
+         xmlns:ns13="http://www.bcie.org/PublicarJMSMO" xmlns:ns14="http://www.bcie.org/GenerarArchivo"
+         xmlns:ns15="http://www.bcie.org/ConsultarListaLineasCredito" xmlns:ns22="http://www.bcie.org/TerminoBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns17="http://www.bcie.org/OperacionBO"
+         xmlns:ns26="http://www.bcie.org/AprobacionBO" xmlns:ns21="http://www.bcie.org/CondicionBO"
+         xmlns:ns18="http://www.bcie.org/ProductoBO" xmlns:ns19="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns25="http://www.bcie.org/DocumentoBO" xmlns:ns23="http://www.bcie.org/ComisionBO"
+         xmlns:ns20="http://www.bcie.org/ContratoBO" xmlns:ns24="http://www.bcie.org/AtributoBO"
+         xmlns:ns16="http://www.bcie.org/LineaCreditoMO" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns27="http://www.bcie.org/MatrizTCCBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/GenerarArchivo" location="../XSD/Recuperacion.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://www.bcie.org/GestionCobroMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/GestionCobro/V1/Schema/GestionCobroMO.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://www.bcie.org/GestionCobroMO" location="../WSDLs/SeguimientoCobroSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="seguimientocobro_client" partnerLinkType="ns1:SeguimientoCobro" myRole="SeguimientoCobroPT"/>
+    <partnerLink name="GenerarLoteReciboPago" partnerLinkType="ns1:GenerarLoteReciboPago"
+                 partnerRole="GenerarLoteReciboPagoPT"/>
+    <partnerLink name="InsertarGestionCobro" partnerLinkType="ns1:InsertarGestionCobro"
+                 partnerRole="UpSertGestionCobroPT"/>
+    <partnerLink name="InsertarDetalleGestionCobro" partnerLinkType="ns1:InsertarDetalleGestionCobro"
+                 partnerRole="InsertarGenerarDetalleGestionCobroPT"/>
+    <partnerLink name="PublicarJMS" partnerLinkType="ns2:PublicarJMS" partnerRole="PublicarJMSPT"/>
+    <partnerLink name="ConsultarListaLineas" partnerLinkType="ns15:ConsultarListaLineas"
+                 partnerRole="ConsultarListaLineasCreditoPT"/>
+    <partnerLink name="ConsultarDetalleGestionCobro" partnerLinkType="ns1:ConsultarDetalleGestionCobro"
+                 partnerRole="ConsultarDetalleAvisoCobroPT"/>
+    <partnerLink name="ObtenerPeriodoReciboPago" partnerLinkType="ns1:ObtenerPeriodoReciboPago"
+                 partnerRole="ObtenerPeriodoReciboPagoPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:SeguimientoCobroRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:SeguimientoCobroResponseMessage"/>
+    <variable name="outInvokeGenerarLoteReciboPago" messageType="ns1:GenerarLoteReciboPagoResponseMessage"/>
+    <variable name="Seguimiento" element="ns4:ReciboPago"/>
+    <variable name="ListaResultado" type="ns14:ListaResultadoType"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="idLote" type="xsd:long"/>
+    <variable name="inInvokeGenerarLoteReciboPago" messageType="ns1:GenerarLoteReciboPagoRequestMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in SeguimientoCobro.wsdl) -->
+    <receive name="receiveInput" partnerLink="seguimientocobro_client" portType="ns1:SeguimientoCobroPT" operation="seguimientoCobro" variable="inputVariable" createInstance="yes"/><assign name="SetTitle"
+                                                                                                                                                                                             xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+   <copy>
+         <from>oraext:setFlowInstanceTitle('SeguimientoCobro')</from>
+         <to>$setTitleVar</to>
+      </copy></assign>
+    <scope name="ScopeObtenerPeriodoReciboPago">
+      <variables>
+        <variable name="inInvokeObtenerPeriodoReciboPago" messageType="ns1:ObtenerPeriodoReciboPagoRequestMessage"/>
+        <variable name="outInvokeObtenerPeriodoReciboPago" messageType="ns1:ObtenerPeriodoReciboPagoResponseMessage"/>
+      </variables>
+      <sequence name="SequenceObtenerPeriodoReciboPago">
+        <assign name="AssignObtenerPeriodoReciboPago">
+          <copy>
+            <from>$inputVariable.SeguimientoCobroRequest/ns1:fecha</from>
+            <to>$inInvokeObtenerPeriodoReciboPago.ObtenerPeriodoReciboPagoRequest/ns1:fechaBase</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeObtenerPeriodoReciboPago" bpelx:invokeAsDetail="no" partnerLink="ObtenerPeriodoReciboPago"
+                portType="ns1:ObtenerPeriodoReciboPagoPT" operation="obtenerPeriodoReciboPago"
+                inputVariable="inInvokeObtenerPeriodoReciboPago" outputVariable="outInvokeObtenerPeriodoReciboPago"/>
+        <assign name="AssignFechas">
+          <copy>
+            <from>$outInvokeObtenerPeriodoReciboPago.ObtenerPeriodoReciboPagoResponse/ns1:fechaInicio</from>
+            <to>$inInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoRequest/ns1:fechaInicio</to>
+          </copy>
+          <copy>
+            <from>$outInvokeObtenerPeriodoReciboPago.ObtenerPeriodoReciboPagoResponse/ns1:fechaFin</from>
+            <to>$inInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoRequest/ns1:fechaFin</to>
+          </copy>
+        </assign>
+      </sequence>
+    </scope>
+    <scope name="ScopeGenerarLoteReciboPago">
+      <sequence name="SequenceGenerarLoteReciboPago">
+        <invoke name="InvokeGenerarLoteReciboPago" partnerLink="GenerarLoteReciboPago"
+                portType="ns1:GenerarLoteReciboPagoPT" operation="generarLoteReciboPago"
+                inputVariable="inInvokeGenerarLoteReciboPago" outputVariable="outInvokeGenerarLoteReciboPago"
+                bpelx:invokeAsDetail="no"/>
+        <if name="IfResultadoGenerarLotes">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoResponse/ns1:Resultado/ns11:result= 'OK' and count($outInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoResponse/ns1:ReciboPago/ns4:recibo)&gt;0</condition>
+          <sequence name="SequenceOK">
+            <scope name="ScopeConsultarListaLineas">
+              <variables>
+                <variable name="inInvokeConsultarListaLineas"
+                          messageType="ns15:ConsultarListaLineasCreditoRequestMessage"/>
+                <variable name="outInvokeConsultarListaLineas"
+                          messageType="ns15:ConsultarListaLineasCreditoResponseMessage"/>
+              </variables>
+              <sequence name="SequenceConsultarListaLineas">
+                <assign name="XQConsultarListaLineas">
+                  <bpelx:annotation>
+                    <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                  </bpelx:annotation>
+                  <copy>
+                    <from>ora:processXQuery10('../Transformations/GenerarLoteReciboPago_Response_TO_ConsultarListaLineas_Request.xqy', 'outInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoResponse', $outInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoResponse)</from>
+                    <to variable="inInvokeConsultarListaLineas" part="request"/>
+                  </copy>
+                </assign>
+                <invoke name="InvokeConsultarListaLineas" bpelx:invokeAsDetail="no" partnerLink="ConsultarListaLineas"
+                        portType="ns15:ConsultarListaLineasCreditoPT" operation="ConsultarListaLineasCredito"
+                        inputVariable="inInvokeConsultarListaLineas" outputVariable="outInvokeConsultarListaLineas"/>
+                <if name="IfResultadoConsultarLineas">
+                  <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                  <condition>$outInvokeConsultarListaLineas.response/ns16:Resultado/ns11:result = 'OK'</condition>
+                  <sequence name="SequenceOK">
+                    <if name="IfSinInformacion">
+                      <documentation>
+                        <![CDATA[Si]]>
+                      </documentation>
+                      <condition>count($outInvokeConsultarListaLineas.response/ns16:LineaCredito)=0</condition><assign name="AssignError"
+                                                                                                                       xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+      
+   <copy>
+         <from>'ERROR'</from>
+         <to>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:result</to>
+      </copy><copy>
+         <from>'Las líneas de crédito no retornan información.'</from>
+         <to>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:message</to>
+      </copy><copy>
+         <from>'13'</from>
+         <to>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:error/ns12:errorCode</to>
+      </copy></assign><else>
+                        <documentation>
+                          <![CDATA[No]]>
+                        </documentation>
+                        <sequence name="SequenceNo">
+                          <assign name="XQAgregarCliente">
+                            <bpelx:annotation>
+                              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                            </bpelx:annotation>
+                            <copy>
+                              <from>ora:processXQuery10('../Transformations/ConsultarListaLineas_Response_TO_GenerarLoteReciboPago_Response.xqy', 'outInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoResponse', $outInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoResponse, 'outInvokeConsultarListaLineas.response', $outInvokeConsultarListaLineas.response)</from>
+                              <to variable="outInvokeGenerarLoteReciboPago" part="GenerarLoteReciboPagoResponse"/>
+                            </copy>
+                          </assign>
+                          <assign name="AssignOK" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                            <copy>
+                              <from>'OK'</from>
+                              <to>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:result</to>
+                            </copy>
+                          </assign>
+                        </sequence>
+                      </else>
+                    </if>
+                  </sequence>
+                  <else>
+                    <documentation>
+                      <![CDATA[ERROR]]>
+                    </documentation><sequence name="SequenceERROR"><assign name="AssignError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                        <copy>
+                          <from>'ERROR'</from>
+                          <to>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:result</to>
+                        </copy>
+                        <copy>
+                          <from>'No se puede obtener la información del cliente'</from>
+                          <to>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:message</to>
+                        </copy>
+                        <copy>
+                          <from>'6'</from>
+                          <to>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:error/ns12:errorCode</to>
+                        </copy>
+                      </assign></sequence></else>
+                </if>
+              </sequence>
+            </scope>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceERROR">
+              <assign name="AssignError">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:result</to>
+                </copy>
+                <copy>
+                  <from>'11'</from>
+                  <to>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:error/ns12:errorCode</to>
+                </copy>
+                <copy>
+                  <from>'No se puede obtener el recibo'</from>
+                  <to>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:message</to>
+                </copy>
+              </assign>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeInsertarGestionCobro">
+      <variables>
+        <variable name="inInvokeInsertarGestionCobro" messageType="ns1:UpSertGestionCobroRequestMessage"/>
+        <variable name="outInvokeInsertarGestionCobro" messageType="ns1:UpSertGestionCobroResponseMessage"/>
+      </variables>
+      <sequence name="SequenceInsertarGestionCobro">
+        <assign name="AssignInsertarGestionCobro">
+          <copy>
+            <from>ora:getInstanceId()</from>
+            <to>$inInvokeInsertarGestionCobro.request/ns1:DetalleLote/ns4:idLote</to>
+          </copy>
+          <copy>
+            <from>xp20:current-date()</from>
+            <to>$inInvokeInsertarGestionCobro.request/ns1:DetalleLote/ns4:fechaRegistro</to>
+          </copy>
+          <copy>
+            <from>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:result</from>
+            <to>$inInvokeInsertarGestionCobro.request/ns1:DetalleLote/ns4:Estado</to>
+          </copy>
+          <copy>
+            <from>1</from>
+            <to>$inInvokeInsertarGestionCobro.request/ns1:DetalleLote/ns4:Estatus</to>
+          </copy>
+          <copy>
+            <from>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:error/ns12:errorCode</from>
+            <to>$inInvokeInsertarGestionCobro.request/ns1:DetalleLote/ns4:Mensaje_Error/ns6:Id</to>
+          </copy>
+          <copy>
+            <from>'SEGUIMIENTO'</from>
+            <to>$inInvokeInsertarGestionCobro.request/ns1:DetalleLote/ns4:tipoLote</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeInsertarGestionCobro" bpelx:invokeAsDetail="no" partnerLink="InsertarGestionCobro"
+                portType="ns1:UpSertGestionCobroPT" operation="UpSertGestionCobro"
+                inputVariable="inInvokeInsertarGestionCobro" outputVariable="outInvokeInsertarGestionCobro"/>
+        <if name="IfConstruccionXML">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:result = 'OK' and $outInvokeInsertarGestionCobro.response/ns1:Resultado/ns11:result = 'OK'</condition>
+          <sequence name="SequenceOK">
+            <assign name="AssignIdLote">
+              <copy>
+                <from>$outInvokeInsertarGestionCobro.response/ns1:idLote</from>
+                <to>$idLote</to>
+              </copy>
+            </assign>
+            <forEach parallel="no" counterName="ReciboCounter" name="ForEachRecibo">
+              <startCounterValue>1</startCounterValue>
+              <finalCounterValue>count($outInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoResponse/ns1:ReciboPago/ns4:recibo)</finalCounterValue>
+              <scope name="ScopeForRecibos">
+                <sequence name="SequenceForRecibos">
+                  <if name="IfExistenDatosCliente">
+                    <documentation>
+                      <![CDATA[Si]]>
+                    </documentation>
+                    <condition>string($outInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoResponse/ns1:ReciboPago/ns4:recibo[$ReciboCounter]/ns4:Cliente/ns5:idCliente)!= ''</condition>
+                    <scope name="ScopeConsultarDetalle">
+                      <variables>
+                        <variable name="inInvokeConsultarDetalle"
+                                  messageType="ns1:ConsultarDetalleAvisoCobroRequestMessage"/>
+                        <variable name="outInvokeConsultarDetalle"
+                                  messageType="ns1:ConsultarDetalleAvisoCobroResponseMessage"/>
+                        <variable name="VariablePrueba" type="xsd:int"/>
+                      </variables>
+                      <sequence name="SequenceConsultarDetalle">
+                        <assign name="AssignConsultarDetalle">
+                          <copy>
+                            <from>$outInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoResponse/ns1:ReciboPago/ns4:recibo[$ReciboCounter]/ns4:Recibo</from>
+                            <to>$inInvokeConsultarDetalle.ConsultarDetalleAvisoCobroRequest/ns1:Responsable</to>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeConsultarDetalle" bpelx:invokeAsDetail="no"
+                                partnerLink="ConsultarDetalleGestionCobro" portType="ns1:ConsultarDetalleAvisoCobroPT"
+                                operation="consultarDetalleAvisoCobro" inputVariable="inInvokeConsultarDetalle"
+                                outputVariable="outInvokeConsultarDetalle"/>
+                        <if name="IfExisteNumeroRecibo">
+                          <documentation>
+                            <![CDATA[NoExiste]]>
+                          </documentation>
+                          <condition>count($outInvokeConsultarDetalle.ConsultarDetalleAvisoCobroResponse/ns1:DetalleAviso[ns4:Estado = 'PROCESO']) = 0</condition>
+                          <sequence name="SequenceNoExiste">
+                            <scope name="ScopeInsertarDetalleLGestion">
+                              <variables>
+                                <variable name="inInvokeInsertarDetalleLGestion"
+                                          messageType="ns1:InsertarGenerarDetalleGestionCobroRequestMessage"/>
+                                <variable name="outInvokeInsertarDetalleLGestion"
+                                          messageType="ns1:InsertarGenerarDetalleGestionCobroResponse"/>
+                              </variables>
+                              <sequence name="SequenceInsertarDetalleLGestion">
+                                <assign name="AssignInsertarDetalleLGestion">
+                                  <copy>
+                                    <from>$idLote</from>
+                                    <to>$inInvokeInsertarDetalleLGestion.request/ns1:DetalleLote/ns4:idLote</to>
+                                  </copy>
+                                  <copy>
+                                    <from>$outInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoResponse/ns1:ReciboPago/ns4:recibo[$ReciboCounter]/ns4:Recibo</from>
+                                    <to>$inInvokeInsertarDetalleLGestion.request/ns1:DetalleLote/ns4:responsableCliente</to>
+                                  </copy>
+                                  <copy>
+                                    <from>$outInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoResponse/ns1:ReciboPago/ns4:recibo[$ReciboCounter]/ns4:Cliente/ns5:idCliente</from>
+                                    <to>$inInvokeInsertarDetalleLGestion.request/ns1:DetalleLote/ns4:idCliente</to>
+                                  </copy>
+                                  <copy>
+                                    <from>'PROCESO'</from>
+                                    <to>$inInvokeInsertarDetalleLGestion.request/ns1:DetalleLote/ns4:Estado</to>
+                                  </copy>
+                                </assign>
+                                <invoke name="InvokeInsertarDetalleLGestion" bpelx:invokeAsDetail="no"
+                                        partnerLink="InsertarDetalleGestionCobro"
+                                        portType="ns1:InsertarGenerarDetalleGestionCobroPT"
+                                        operation="InsertarGenerarDetalleGestionCobro"
+                                        inputVariable="inInvokeInsertarDetalleLGestion"
+                                        outputVariable="outInvokeInsertarDetalleLGestion"/>
+                                <assign name="AssignIdDetalle">
+                                  <copy bpelx:insertMissingToData="yes">
+                                    <from>$outInvokeInsertarDetalleLGestion.response/ns1:idDetalleLote</from>
+                                    <to>$ListaResultado/ns14:idDetalleLote[$ReciboCounter]</to>
+                                  </copy>
+                                </assign>
+                              </sequence>
+                            </scope>
+                            <scope name="ScopePublicarJMS">
+                              <variables>
+                                <variable name="inInvokePublicarJMS" messageType="ns2:PublicarJMSRequestMessage"/>
+                                <variable name="outInvokePublicarJMS" messageType="ns2:PublicarJMSResponseMessage"/>
+                              </variables>
+                              <sequence name="SequencePublicarJMS">
+                                <assign name="AssignPublicarJMS">
+                                  <copy>
+                                    <from>'Recibo.JMS.Message.Queue'</from>
+                                    <to>$inInvokePublicarJMS.PublicarJMSRequest/ns13:JMS/ns8:nombreJMS</to>
+                                  </copy>
+                                  <copy>
+                                    <from>$outInvokeGenerarLoteReciboPago.GenerarLoteReciboPagoResponse/ns1:ReciboPago/ns4:recibo[$ReciboCounter]</from>
+                                    <to>$Seguimiento/ns4:recibo</to>
+                                  </copy>
+                                  <extensionAssignOperation>
+                                    <bpelx:append>
+                                      <bpelx:from>$Seguimiento</bpelx:from>
+                                      <bpelx:to>$inInvokePublicarJMS.PublicarJMSRequest/ns13:JMS/ns8:mensaje</bpelx:to>
+                                    </bpelx:append>
+                                  </extensionAssignOperation>
+                                </assign>
+                                <invoke name="InvokePublicarJMS" bpelx:invokeAsDetail="no" partnerLink="PublicarJMS"
+                                        portType="ns2:PublicarJMSPT" operation="publicarJMS"
+                                        inputVariable="inInvokePublicarJMS" outputVariable="outInvokePublicarJMS"/>
+                                <if name="IfResultadoPublicar">
+                                  <documentation>
+                                    <![CDATA[OK]]>
+                                  </documentation>
+                                  <condition>$outInvokePublicarJMS.PublicarJMSResponse/ns13:Resultado/ns11:result = 'OK'</condition>
+                                  <empty name="EmptyOK"/>
+                                  <else>
+                                    <documentation>
+                                      <![CDATA[ERROR]]>
+                                    </documentation>
+                                    <scope name="ScopeActualizarDetalleGestion">
+                                      <variables>
+                                        <variable name="inInvokeActualizarDetalleGestion"
+                                                  messageType="ns1:InsertarGenerarDetalleGestionCobroRequestMessage"/>
+                                        <variable name="outInvokeActualizarDetalleGestion"
+                                                  messageType="ns1:InsertarGenerarDetalleGestionCobroResponse"/>
+                                      </variables>
+                                      <sequence name="SequenceActualizarDetalleGestion">
+                                        <assign name="AssignActualizarDetalleGestion">
+                                          <copy>
+                                            <from>$ListaResultado/ns14:idDetalleLote[$ReciboCounter]</from>
+                                            <to>$inInvokeActualizarDetalleGestion.request/ns1:DetalleLote/ns4:id</to>
+                                          </copy>
+                                          <copy>
+                                            <from>4</from>
+                                            <to>$inInvokeActualizarDetalleGestion.request/ns1:DetalleLote/ns4:Mensaje_Error/ns6:Id</to>
+                                          </copy>
+                                          <copy>
+                                            <from>'ERROR'</from>
+                                            <to>$inInvokeActualizarDetalleGestion.request/ns1:DetalleLote/ns4:Mensaje_Error/ns6:estatus</to>
+                                          </copy>
+                                        </assign>
+                                        <invoke name="InvokeActualizarDetalleGestion" bpelx:invokeAsDetail="no"
+                                                partnerLink="InsertarDetalleGestionCobro"
+                                                portType="ns1:InsertarGenerarDetalleGestionCobroPT"
+                                                operation="InsertarGenerarDetalleGestionCobro"
+                                                inputVariable="inInvokeActualizarDetalleGestion"
+                                                outputVariable="outInvokeActualizarDetalleGestion"/>
+                                      </sequence>
+                                    </scope>
+                                  </else>
+                                </if>
+                              </sequence>
+                            </scope>
+                          </sequence>
+                          <else>
+                            <documentation>
+                              <![CDATA[Existe]]>
+                            </documentation>
+                            <empty name="EmptyExiste"/>
+                          </else>
+                        </if>
+                      </sequence>
+                    </scope>
+                    <else>
+                      <documentation>
+                        <![CDATA[No]]>
+                      </documentation>
+                      <empty name="EmptySinCliente"/>
+                    </else>
+                  </if>
+                </sequence>
+              </scope>
+            </forEach>
+            <assign name="AssignResultado">
+              <copy>
+                <from>'Operación realizada correctamente'</from>
+                <to>$outputVariable.SeguimientoCobroResponse/ns1:Resultado/ns11:message</to>
+              </copy>
+            </assign>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation><empty name="EmptyError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/></else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="seguimientocobro_client" portType="ns1:SeguimientoCobroPT" operation="seguimientoCobro" variable="outputVariable"/>
+  </sequence>
+</process>

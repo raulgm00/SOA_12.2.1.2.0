@@ -1,0 +1,6 @@
+Prompt ./Datos/BCIE.UT_ATRIBUTO_VALOR.sql
+     @ ./Datos/BCIE.UT_ATRIBUTO_VALOR.sql
+Prompt ./Datos/FENIX.TCA_SECTOR_AMBIENTAL.sql
+     @ ./Datos/FENIX.TCA_SECTOR_AMBIENTAL.sql
+Prompt ./Datos/FENIX.TCA_APORTE_AMBIENTAL.sql
+     @ ./Datos/FENIX.TCA_APORTE_AMBIENTAL.sql

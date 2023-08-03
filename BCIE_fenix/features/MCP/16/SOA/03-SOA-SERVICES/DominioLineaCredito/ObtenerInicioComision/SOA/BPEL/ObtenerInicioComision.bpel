@@ -1,0 +1,461 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Jan 15 20:23:39 CST 2016
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ObtenerInicioComision"
+               targetNamespace="http://xmlns.oracle.com/DominioLineaCredito/ObtenerInicioComision/ObtenerInicioComision"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioLineaCredito/ObtenerInicioComision/ObtenerInicioComision"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ComisionService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/ComisionMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns8="http://www.bcie.org/ProductoBO"
+         xmlns:ns9="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns6="http://www.bcie.org/OperacionBO"
+         xmlns:ns10="http://www.bcie.org/ResultBO" xmlns:ns3="http://www.bcie.org/ComisionBO"
+         xmlns:ns4="http://www.bcie.org/CatalogoBO" xmlns:ns7="http://www.bcie.org/ClienteBO"
+         xmlns:ns5="http://www.bcie.org/AtributoBO" xmlns:ns11="http://www.bcie.org/ErrorBO"
+         xmlns:ns12="http://www.bcie.org/MatrizTCCService" xmlns:ns13="http://www.bcie.org/CrearComisionService"
+         xmlns:ns14="http://www.bcie.org/MatrizTCCMO" xmlns:ns15="http://www.bcie.org/MatrizTCCBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ComisionService" location="../WSDLs/ObtenerComisionInicioSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="ObtenerInicioComision" partnerLinkType="ns1:ObtenerInicioComision" myRole="ObtenerInicioComisionPT"/>
+    <partnerLink name="ConsultarComisionByIdComision" partnerLinkType="ns1:ConsultarComisionByIdComision"
+                 partnerRole="ConsultarComisionPT"/>
+    <partnerLink name="ConsultarTCCConfiguracion" partnerLinkType="ns12:ConsultarTCCConfiguracion"
+                 partnerRole="TCCConfiguracionPT"/>
+    <partnerLink name="CrearComision" partnerLinkType="ns13:CrearComision" partnerRole="CrearComisionPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestObtenerInicioComisionMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseObtenerInicioComisionMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence2">
+        <assign name="Assign_Error">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns10:result</to>
+          </copy>
+        </assign>
+        <reply name="ReplyOutput" variable="outputVariable" partnerLink="ObtenerInicioComision"
+               portType="ns1:ObtenerInicioComisionPT" operation="obtenerInicioComision"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ObtenerInicioComision.wsdl) -->
+    <receive name="receiveInput" partnerLink="ObtenerInicioComision" portType="ns1:ObtenerInicioComisionPT" operation="obtenerInicioComision" variable="inputVariable" createInstance="yes"/>
+    <scope name="ScopeConsultarComisionesPorOperacion">
+      <variables>
+        <variable name="consultarComision_InputVariable" messageType="ns1:requestConsultarComisionMessage"/>
+        <variable name="consultarComision_OutputVariable" messageType="ns1:responseConsultarComisionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence3">
+            <assign name="Assign_ErrorConsultar">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:result</to>
+              </copy>
+              <copy>
+                <from>'Error general al Consultar Comisiones de Operacion'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowErrorConsultar" faultName="bpelx:remoteFault"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence1">
+        <assign name="Assign_ConsultarComisionInput">
+          <copy>
+            <from>$inputVariable.request/ns2:idOperacion</from>
+            <to>$consultarComision_InputVariable.request/ns2:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarComisionesByIdOperacion" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarComisionByIdComision" portType="ns1:ConsultarComisionPT"
+                operation="ConsultarComision" inputVariable="consultarComision_InputVariable"
+                outputVariable="consultarComision_OutputVariable"/>
+        <if name="IfConsultarError">
+          <documentation>
+            <![CDATA[ERRORConsulta]]>
+          </documentation>
+          <condition>$consultarComision_OutputVariable.response/ns2:Resultado/ns10:result = 'ERROR' and $consultarComision_OutputVariable.response/ns2:Resultado/ns10:message != 'Consulta de Comisión sin resultados'</condition>
+          <sequence name="Sequence4">
+            <assign name="Assign_ErrorConsultar">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:result</to>
+              </copy>
+              <copy>
+                <from>'Error al Consultar Comisiones de Operación'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyOutput" variable="outputVariable" partnerLink="ObtenerInicioComision"
+                   portType="ns1:ObtenerInicioComisionPT" operation="obtenerInicioComision"/>
+            <exit name="Exit1"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[OKConsulta]]>
+            </documentation>
+            <if name="IfTieneComisiones">
+              <documentation>
+                <![CDATA[TieneComisiones]]>
+              </documentation>
+              <condition>string-length($consultarComision_OutputVariable.response/ns2:Comision[1]/ns3:idComision)&gt;0</condition>
+              <sequence name="Sequence5">
+                <assign name="Assign_ErrorConsultar">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:result</to>
+              </copy>
+              <copy>
+                <from>'La Operación ya cuenta con Comisiones'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:message</to>
+              </copy>
+            </assign>
+                <reply name="Reply1" variable="outputVariable" partnerLink="ObtenerInicioComision"
+                       portType="ns1:ObtenerInicioComisionPT" operation="obtenerInicioComision"/>
+                <exit name="Exit2"/>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[NoTieneComisiones]]>
+                </documentation>
+                <empty name="ContinuaBPEL"/>
+              </else>
+            </if>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarTccConfiguracion">
+      <variables>
+        <variable name="consultarTCCConfiguracion_InputVariable"
+                  messageType="ns12:ConsultarTCCConfiguracionRequestMessage"/>
+        <variable name="consultarTCCConfiguracion_OutputVariable"
+                  messageType="ns12:ConsultarTCCConfiguracionResponseMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence7">
+             <assign name="Assign_ErrorConsultarTCC">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:result</to>
+              </copy>
+              <copy>
+                <from>'Error general al Consultar TCC Configuracion'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowErrorConsultarTCC" faultName="bpelx:remoteFault"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence6">
+        <assign name="Assign_ConsultarTccConfiguracionInput">
+          <copy>
+            <from>$inputVariable.request/ns2:idOperacion</from>
+            <to>$consultarTCCConfiguracion_InputVariable.request/ns14:idOperacion</to>
+          </copy>
+          <copy>
+            <from>1</from>
+            <to>$consultarTCCConfiguracion_InputVariable.request/ns14:idTCATipo</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarTCCConfiguracion" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarTCCConfiguracion" portType="ns12:TCCConfiguracionPT"
+                operation="consultarTCCConfiguracion" inputVariable="consultarTCCConfiguracion_InputVariable"
+                outputVariable="consultarTCCConfiguracion_OutputVariable"/>
+        <if name="IfErrorConsultar">
+          <condition>$consultarTCCConfiguracion_OutputVariable.response/ns14:Resultado/ns10:result = 'ERROR'</condition>
+          <sequence name="Sequence8">
+            <assign name="Assign_ErrorConsultar">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:result</to>
+              </copy>
+              <copy>
+                <from>'Error general al Consultar TCC Configuracion'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:message</to>
+              </copy>
+            </assign>
+            <reply name="Reply2" variable="outputVariable" partnerLink="ObtenerInicioComision"
+                   portType="ns1:ObtenerInicioComisionPT" operation="obtenerInicioComision"/>
+            <exit name="Exit3"/>
+          </sequence>
+          <else>
+            <empty name="NingunaAccion"/>
+          </else>
+        </if>
+        <forEach parallel="no" counterName="comisionCounter" name="ForEachComisionPrecarga">
+          <bpelx:skipCondition>count($consultarTCCConfiguracion_OutputVariable.response/ns14:ListaTCCConfiguracion/ns15:TCCConfiguracion)&lt;= 0</bpelx:skipCondition>
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($consultarTCCConfiguracion_OutputVariable.response/ns14:ListaTCCConfiguracion/ns15:TCCConfiguracion)</finalCounterValue>
+          <scope name="ScopeForEachComision">
+           <variables>
+                  <variable name="crearComision_InputVariable" messageType="ns13:CrearComisionRequestMessage"/>
+                </variables>
+            <sequence name="Sequence9">
+              <if name="IfTieneComisionPrecarga">
+                <documentation>
+                  <![CDATA[IdComisionPrecarga]]>
+                </documentation>
+                <condition>string-length($consultarTCCConfiguracion_OutputVariable.response/ns14:ListaTCCConfiguracion/ns15:TCCConfiguracion[$comisionCounter]/ns15:idPrecarga)&gt;0</condition>
+                <sequence name="Sequence10">
+                  <scope name="ScopeConsultarComision">
+                    <variables>
+                      <variable name="consultarComision_InputVariable"
+                                messageType="ns1:requestConsultarComisionMessage"/>
+                      <variable name="consultarComision_OutputVariable"
+                                messageType="ns1:responseConsultarComisionMessage"/>
+                    </variables>
+                     <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence3">
+            <assign name="Assign_ErrorConsultar">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:result</to>
+              </copy>
+              <copy>
+                <from>'Error general al Consultar Comision by Id Comision'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowErrorConsultar" faultName="bpelx:remoteFault"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+                    <sequence name="Sequence11">
+                      <assign name="Assign_ConsultarComisionByIdComisionInput">
+                        <copy>
+                          <from>$consultarTCCConfiguracion_OutputVariable.response/ns14:ListaTCCConfiguracion/ns15:TCCConfiguracion/ns15:idPrecarga</from>
+                          <to>$consultarComision_InputVariable.request/ns2:idComision</to>
+                        </copy>
+                      </assign>
+                      <invoke name="Invoke_ConsultarComision" bpelx:invokeAsDetail="no"
+                              partnerLink="ConsultarComisionByIdComision" portType="ns1:ConsultarComisionPT"
+                              operation="ConsultarComision" inputVariable="consultarComision_InputVariable"
+                              outputVariable="consultarComision_OutputVariable"/>
+                      <assign name="Assign_CrearComisionPrecargaInput">
+                        <copy>
+                          <from>$consultarComision_OutputVariable.response/ns2:Comision</from>
+                          <to>$crearComision_InputVariable.request/ns2:Comision</to>
+                        </copy>
+                        <copy>
+                          <from>$inputVariable.request/ns2:idOperacion</from>
+                          <to>$crearComision_InputVariable.request/ns2:Comision/ns3:idOperacion</to>
+                        </copy>
+                        <copy>
+                          <from>''</from>
+                          <to>$crearComision_InputVariable.request/ns2:Comision/ns3:idComision</to>
+                        </copy>
+                      </assign>
+                         <if name="IfMandatoria">
+                        <documentation>
+                          <![CDATA[Mandatoria]]>
+                        </documentation>
+                        <condition>$consultarTCCConfiguracion_OutputVariable.response/ns14:ListaTCCConfiguracion/ns15:TCCConfiguracion[$comisionCounter]/ns15:esMandatorio = 1</condition>
+                        <assign name="Assign_Mandatoria">
+                          <copy>
+                            <from>8</from>
+                            <to>$crearComision_InputVariable.request/ns2:Comision/ns3:estadoTCC/ns5:id</to>
+                          </copy>
+                        </assign>
+                        <else>
+                          <documentation>
+                            <![CDATA[Sugerida]]>
+                          </documentation>
+                          <assign name="Assign_Sugerida">
+                            <copy>
+                              <from>1</from>
+                              <to>$crearComision_InputVariable.request/ns2:Comision/ns3:estadoTCC/ns5:id</to>
+                            </copy>
+                          </assign>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[NOIdComisionPrecarga]]>
+                  </documentation>
+                  <scope name="ScopeComisionVacía">
+                    <sequence name="Sequence14">
+                      <assign name="Assign_CrearComisionInput">
+                        <copy>
+                          <from>''</from>
+                          <to>$crearComision_InputVariable.request/ns2:Comision/ns3:idComision</to>
+                        </copy>
+                        <copy>
+                          <from>0</from>
+                          <to>$crearComision_InputVariable.request/ns2:Comision/ns3:banSugerida</to>
+                        </copy>
+                        <copy>
+                          <from>xp20:current-date()</from>
+                          <to>$crearComision_InputVariable.request/ns2:Comision/ns3:fechaRegistro</to>
+                        </copy>
+                        <copy>
+                          <from>true()</from>
+                          <to>$crearComision_InputVariable.request/ns2:Comision/ns3:estado</to>
+                        </copy>
+                        <copy>
+                          <from>$inputVariable.request/ns2:idOperacion</from>
+                          <to>$crearComision_InputVariable.request/ns2:Comision/ns3:idOperacion</to>
+                        </copy>
+                        <copy>
+                          <from>$consultarTCCConfiguracion_OutputVariable.response/ns14:ListaTCCConfiguracion/ns15:TCCConfiguracion/ns15:idTcaComision</from>
+                          <to>$crearComision_InputVariable.request/ns2:Comision/ns3:tipoComision/ns3:idCatComision</to>
+                        </copy>
+                      </assign>
+                      <if name="IfMandatoria">
+                        <documentation>
+                          <![CDATA[Mandatoria]]>
+                        </documentation>
+                        <condition>$consultarTCCConfiguracion_OutputVariable.response/ns14:ListaTCCConfiguracion/ns15:TCCConfiguracion[$comisionCounter]/ns15:esMandatorio = 1</condition>
+                        <assign name="Assign_Mandatoria">
+                          <copy>
+                            <from>8</from>
+                            <to>$crearComision_InputVariable.request/ns2:Comision/ns3:estadoTCC/ns5:id</to>
+                          </copy>
+                        </assign>
+                        <else>
+                          <documentation>
+                            <![CDATA[Sugerida]]>
+                          </documentation>
+                          <assign name="Assign_Sugerida">
+                            <copy>
+                              <from>1</from>
+                              <to>$crearComision_InputVariable.request/ns2:Comision/ns3:estadoTCC/ns5:id</to>
+                            </copy>
+                          </assign>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                </else>
+              </if>
+              <scope name="ScopeCrearComision">
+                <variables>
+                  <variable name="crearComision_OutputVariable" messageType="ns13:CrearComisionResponseMessage"/>
+                </variables>
+                   <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence3">
+            <assign name="Assign_ErrorConsultar">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:result</to>
+              </copy>
+              <copy>
+                <from>'Error general al Crear Comision'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns10:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowErrorConsultar" faultName="bpelx:remoteFault"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+                <sequence name="Sequence12">
+                  <invoke name="Invoke_CrearComision" bpelx:invokeAsDetail="no" partnerLink="CrearComision"
+                          portType="ns13:CrearComisionPT" operation="crearComision"
+                          inputVariable="crearComision_InputVariable" outputVariable="crearComision_OutputVariable"/>
+                  <if name="IfErrorCrear">
+                    <condition>$crearComision_OutputVariable.response/ns2:Resultado/ns10:result='ERROR'</condition>
+                    <sequence name="Sequence13">
+                        <assign name="Assign_ErrorConsultarTCC">
+                        <copy>
+                          <from>'ERROR'</from>
+                          <to>$outputVariable.response/ns2:Resultado/ns10:result</to>
+                        </copy>
+                        <copy>
+                          <from>concat('Error al Crear Comision', ' - ',$crearComision_OutputVariable.response/ns2:Resultado/ns10:message)</from>
+                          <to>$outputVariable.response/ns2:Resultado/ns10:message</to>
+                        </copy>
+                      </assign>
+                    </sequence>
+                    <else>
+                      <empty name="ComisionCreada"/>
+                    </else>
+                  </if>
+                </sequence>
+              </scope>
+            </sequence>
+          </scope>
+        </forEach>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="ObtenerInicioComision" portType="ns1:ObtenerInicioComisionPT" operation="obtenerInicioComision" variable="outputVariable"/>
+  </sequence>
+</process>

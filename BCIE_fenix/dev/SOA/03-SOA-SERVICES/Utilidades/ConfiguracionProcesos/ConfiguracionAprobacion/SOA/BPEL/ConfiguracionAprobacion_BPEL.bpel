@@ -1,0 +1,305 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Nov 24 11:13:32 CST 2015
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionAprobacion_BPEL"
+               targetNamespace="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionAprobacion/ConfiguracionAprobacion_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionAprobacion/ConfiguracionAprobacion_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/ProductoService"
+         xmlns:ns3="http://www.bcie.org/ConfiguracionProcesosMO" xmlns:ns4="http://www.bcie.org/ProductoMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns9="http://www.bcie.org/ProductoBO"
+         xmlns:ns5="http://www.bcie.org/ConfiguracionProcesosBO" xmlns:ns10="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns6="http://www.bcie.org/OperacionBO" xmlns:ns11="http://www.bcie.org/ResultBO"
+         xmlns:ns8="http://www.bcie.org/CatalogoBO" xmlns:ns7="http://www.bcie.org/ClienteBO"
+         xmlns:ns12="http://www.bcie.org/ErrorBO" xmlns:ns13="http://www.bcie.com/ConsultarRolesPorProceso"
+         xmlns:ns14="http://www.bcie.org/ConsultarRolesPorProcesoMO"
+         xmlns:ns15="http://www.bcie.org/ConsultarRolesPorProcesoBO" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns16="urn:ResponsableSolicitudMO" xmlns:ns17="http://www.bcie.org/ResponsableSolicitudMO"
+         xmlns:ns18="http://www.bcie.org/MatrizTCCService" xmlns:ns19="http://www.bcie.org/MatrizTCCMO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionAprobacionSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configuracionAprobacion" partnerLinkType="ns1:ConfiguracionAprobacion_BPEL" myRole="ConfiguracionAprobacionPT"/>
+    <partnerLink name="ProductoService" partnerLinkType="ns2:ProductoService" partnerRole="ProductoPT"/>
+    <partnerLink name="ConsultarRol" partnerLinkType="ns13:ConsultarRol" partnerRole="ConsultarRolesPorProceso_ptt"/>
+    <partnerLink name="ConsultarResponsableSolicitud" partnerLinkType="ns16:ConsultarResponsableSolicitud"
+                 partnerRole="ResponsableSolicitudPT"/>
+    <partnerLink name="ObtenerTCCInicio" partnerLinkType="ns18:ObtenerTCCInicio" partnerRole="MatrizTCCPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestconfiguracionAprobacionmessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseconfiguracionAprobacionmessage"/>
+    <variable name="faultVariable" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="InvokeObtenerTCCInicio_obtenerTCCInicio_InputVariable"
+              messageType="ns18:obtenerTCCInicioRequestMessage"/>
+    <variable name="InvokeObtenerTCCInicio_obtenerTCCInicio_OutputVariable"
+              messageType="ns18:obtenerTCCInicioResponseMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <reply name="ReplyError" variable="outputVariable" partnerLink="configuracionAprobacion"
+             portType="ns1:ConfiguracionAprobacionPT" operation="configuracionAprobacion"/>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionAprobacion_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="configuracionAprobacion" portType="ns1:ConfiguracionAprobacionPT" operation="configuracionAprobacion" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignFlowName">
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion= ",$inputVariable.request/ns3:idOperacion))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarProducto">
+      <variables>
+        <variable name="consultarByIdOperacion_InputVariable" messageType="ns2:requestConsultarByIdOperacionMessage"/>
+        <variable name="consultarByIdOperacion_OutputVariable" messageType="ns2:responseConsultarByIdOperacionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpel:selectionFailure" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence2">
+            <assign name="AssignError">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns11:result</to>
+              </copy>
+              <copy>
+                <from>'Error al asignar idOperacion a Servicio'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns11:message</to>
+              </copy>
+              <copy>
+                <from>$faultVar.summary</from>
+                <to>$outputVariable.response/ns3:Resultado/ns11:error/ns12:errorDescription</to>
+              </copy>
+              <copy>
+                <from>$faultVar.code</from>
+                <to>$outputVariable.response/ns3:Resultado/ns11:error/ns12:errorCode</to>
+              </copy>
+            </assign>
+            <rethrow name="Rethrow"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence4">
+            <assign name="AssignError">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns11:result</to>
+              </copy>
+              <extensionAssignOperation>
+                <bpelx:remove>
+                  <bpelx:target>$outputVariable.response/ns3:Resultado/ns11:error</bpelx:target>
+                </bpelx:remove>
+              </extensionAssignOperation>
+              <copy>
+                <from>'Error general al Consultar Producto'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns11:message</to>
+              </copy>
+            </assign>
+            <rethrow name="Rethrow"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence1">
+        <assign name="Assign_consultarProductoInputVariable">
+          <copy>
+            <from>$inputVariable.request/ns3:idOperacion</from>
+            <to>$consultarByIdOperacion_InputVariable.request/ns4:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarProducto" bpelx:invokeAsDetail="no" partnerLink="ProductoService"
+                portType="ns2:ProductoPT" operation="consultarByIdOperacion"
+                inputVariable="consultarByIdOperacion_InputVariable"
+                outputVariable="consultarByIdOperacion_OutputVariable"/>
+        <if name="IfRespuesta">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$consultarByIdOperacion_OutputVariable.response/ns4:Resultado/ns11:result='OK'</condition>
+          <assign name="Assign_RespuestaOutputVariable">
+            <copy>
+              <from>$consultarByIdOperacion_OutputVariable.response/ns4:Producto</from>
+              <to>$outputVariable.response/ns3:configuracionAprobacion/ns5:producto</to>
+            </copy>
+            <copy>
+              <from>$consultarByIdOperacion_OutputVariable.response/ns4:Operacion</from>
+              <to>$outputVariable.response/ns3:configuracionAprobacion/ns5:operacion</to>
+            </copy>
+            <copy>
+              <from>'OK'</from>
+              <to>$outputVariable.response/ns3:Resultado/ns11:result</to>
+            </copy>
+            <copy>
+              <from>'Ejecución realizada exitosamente'</from>
+              <to>$outputVariable.response/ns3:Resultado/ns11:message</to>
+            </copy>
+          </assign>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <assign name="Assign_ErrorConsultarPoducto">
+              <extensionAssignOperation>
+                <bpelx:remove>
+                  <bpelx:target>$outputVariable.response/ns3:configuracionAprobacion</bpelx:target>
+                </bpelx:remove>
+              </extensionAssignOperation>
+              <copy>
+                <from>$consultarByIdOperacion_OutputVariable.response/ns4:Resultado</from>
+                <to>$outputVariable.response/ns3:Resultado</to>
+              </copy>
+            </assign>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="Scope1">
+      <variables>
+        <variable name="InConsultarRol" messageType="ns13:requestMessage"/>
+        <variable name="OutConsultarRol" messageType="ns13:replyMessage"/>
+        <variable name="RolCount" type="xsd:unsignedInt"/>
+      </variables>
+      <sequence name="Sequence3">
+        <assign name="AssignConsultarRol">
+          <copy>
+            <from>4</from>
+            <to>$InConsultarRol.request/ns14:Proceso/ns15:idProceso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarRol" partnerLink="ConsultarRol"
+                portType="ns13:ConsultarRolesPorProceso_ptt" operation="ConsultarRolesPorProceso"
+                inputVariable="InConsultarRol" outputVariable="OutConsultarRol" bpelx:invokeAsDetail="no"/>
+        <assign name="AssignRolCount">
+          <copy>
+            <from>count($OutConsultarRol.response/ns14:ListadoRoles/ns15:listadoRoles)</from>
+            <to>$RolCount</to>
+          </copy>
+        </assign>
+        <forEach parallel="no" counterName="CounterRoles" name="ForEachRol">
+          <bpelx:skipCondition>$RolCount=0</bpelx:skipCondition>
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>$RolCount</finalCounterValue>
+          <scope name="Scope2">
+            <assign name="AssignOutConsultarRol">
+              <copy bpelx:insertMissingToData="yes">
+                <from>$OutConsultarRol.response/ns14:ListadoRoles/ns15:listadoRoles[$CounterRoles]/ns8:Id</from>
+                <to>$outputVariable.response/ns3:configuracionAprobacion/ns5:RolesEquipoTrabajo/ns5:Rol[$CounterRoles]/ns8:Id</to>
+              </copy>
+              <copy bpelx:insertMissingToData="yes">
+                <from>$OutConsultarRol.response/ns14:ListadoRoles/ns15:listadoRoles[$CounterRoles]/ns8:DescripcionCorta</from>
+                <to>$outputVariable.response/ns3:configuracionAprobacion/ns5:RolesEquipoTrabajo/ns5:Rol[$CounterRoles]/ns8:DescripcionCorta</to>
+              </copy>
+              <copy bpelx:insertMissingToData="yes">
+                <from>$OutConsultarRol.response/ns14:ListadoRoles/ns15:listadoRoles[$CounterRoles]/ns8:Descripcion</from>
+                <to>$outputVariable.response/ns3:configuracionAprobacion/ns5:RolesEquipoTrabajo/ns5:Rol[$CounterRoles]/ns8:Descripcion</to>
+              </copy>
+            </assign>
+          </scope>
+        </forEach>
+      </sequence>
+    </scope>
+    <scope name="Scope3">
+      <faultHandlers>
+        <catchAll>
+          <empty name="Error"/>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence5">
+        <assign name="AssignObtenerTCCInicio">
+          <copy>
+            <from>$inputVariable.request/ns3:idOperacion</from>
+            <to>$InvokeObtenerTCCInicio_obtenerTCCInicio_InputVariable.request/ns19:idOperacion</to>
+          </copy>
+          <copy>
+            <from>4</from>
+            <to>$InvokeObtenerTCCInicio_obtenerTCCInicio_InputVariable.request/ns19:idProceso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeObtenerTCCInicio" partnerLink="ObtenerTCCInicio"
+                portType="ns18:MatrizTCCPT" operation="obtenerTCCInicio" bpelx:invokeAsDetail="no"
+                inputVariable="InvokeObtenerTCCInicio_obtenerTCCInicio_InputVariable"
+                outputVariable="InvokeObtenerTCCInicio_obtenerTCCInicio_OutputVariable"/>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarResponsableSolicitud">
+      <variables>
+        <variable name="inInvokeConsultarResponsableSolicitud" messageType="ns16:ResponsableSolicitudRequestMessage"/>
+        <variable name="outInvokeConsultarResponsableSolicitud" messageType="ns16:ResponsableSolicitudResponseMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarResponsableSolicitud">
+        <assign name="AssignConsultarResponsableSolicitud">
+          <copy>
+            <from>$inputVariable.request/ns3:idOperacion</from>
+            <to>$inInvokeConsultarResponsableSolicitud.ResponsableSolicitudRequest/ns17:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarResponsableSolicitud" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarResponsableSolicitud" portType="ns16:ResponsableSolicitudPT"
+                operation="responsableSolicitud" inputVariable="inInvokeConsultarResponsableSolicitud"
+                outputVariable="outInvokeConsultarResponsableSolicitud"/>
+        <assign name="AssignResponsableSolicitud">
+          <copy>
+            <from>$outInvokeConsultarResponsableSolicitud.ResponsableSolicitudResponse/ns17:Usuario</from>
+            <to>$outputVariable.response/ns3:configuracionAprobacion/ns5:ResponsableSolicitud</to>
+          </copy>
+        </assign>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configuracionAprobacion" portType="ns1:ConfiguracionAprobacionPT" operation="configuracionAprobacion" variable="outputVariable"/>
+  </sequence>
+</process>

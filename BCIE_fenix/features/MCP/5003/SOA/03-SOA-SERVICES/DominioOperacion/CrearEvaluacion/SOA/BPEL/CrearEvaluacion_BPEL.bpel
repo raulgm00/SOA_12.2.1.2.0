@@ -1,0 +1,465 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Sep 04 19:26:13 CDT 2015
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CrearEvaluacion_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/CrearEvaluacion/CrearEvaluacion_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/CrearEvaluacion/CrearEvaluacion_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/EvaluacionService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/EvaluacionMO"
+         xmlns:ns3="http://www.bcie.org/EvaluacionBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns4="http://www.bcie.org/ResultBO"
+         xmlns:ns5="http://www.bcie.org/ErrorBO"
+         xmlns:sp1="http://xmlns.oracle.com/DominioOperacion/CrearEvaluacion/EliminarCuestionarios"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns6="http://www.bcie.org/CatalogoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/EvaluacionService" location="../WSDLs/CrearEvaluacionWrapper1.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="CrearEvaluacionEVALService" partnerLinkType="ns1:CrearEvaluacionEVALService"
+                 partnerRole="EvaluacionPT"/>
+    <partnerLink name="CrearEvaluacionDBService" partnerLinkType="ns1:CrearEvaluacionDBService"
+                 partnerRole="EvaluacionPT"/>
+    <partnerLink name="EliminarCuestionarioEVALService" partnerLinkType="ns1:EliminarCuestionarioEVALService"
+                 partnerRole="EliminarCuestionarioPT"/>
+    <partnerLink name="CrearEvaluacion" partnerLinkType="ns1:CrearEvaluacion" myRole="EvaluacionPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestCrearEvaluacionMessage"/>
+   <variable name="tempVariable" messageType="ns1:requestCrearEvaluacionMessage"/>
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseCrearEvaluacionMessage"/>
+    <variable name="runtimeFaultVariable" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="mensaje" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence5">
+        <assign name="Assign_catchall">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:result</to>
+          </copy>
+          <copy>
+            <from>$runtimeFaultVariable.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:message</to>
+          </copy>
+          <copy>
+            <from>$runtimeFaultVariable.detail</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorDescription</to>
+          </copy>
+          <copy>
+            <from>$runtimeFaultVariable.code</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorCode</to>
+          </copy>
+        </assign>
+        <compensate name="CompensateCreacionEvaluacion"/>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="CrearEvaluacion" portType="ns1:EvaluacionPT"
+               operation="crearEvaluacion"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CrearEvaluacion_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="CrearEvaluacion" portType="ns1:EvaluacionPT" operation="crearEvaluacion" variable="inputVariable" createInstance="yes"/>
+    <scope name="ScopeEstaticos">
+      <variables>
+        <variable name="setTitleVar" type="xsd:string"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpel:selectionFailure" faultVariable="selectionFault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence10">
+            <assign name="Assign_Error">
+              <copy>
+                <from variable="selectionFault"/>
+                <to variable="runtimeFaultVariable"/>
+              </copy>
+            </assign>
+            <throw name="Throw1" faultName="bpel:selectionFailure" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+      </faultHandlers>
+      <sequence name="Sequence11">
+        <assign name="setTitleVar">
+          <copy>
+            <from>oraext:setFlowInstanceTitle(concat("idOperacion: ",string($inputVariable.request/ns2:Evaluaciones/ns3:evaluacion/ns3:idOperacion)))</from>
+            <to>$setTitleVar</to>
+          </copy>
+        </assign>
+        <assign name="Assign_InputVariable">
+          <copy bpelx:insertMissingToData="yes">
+            <from>'1'</from>
+            <to>$inputVariable.request/ns2:Evaluaciones/ns3:evaluacion/ns3:tipoEvaluacion</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>'0'</from>
+            <to>$inputVariable.request/ns2:Evaluaciones/ns3:evaluacion/ns3:version</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>'1'</from>
+            <to>$inputVariable.request/ns2:Evaluaciones/ns3:evaluacion/ns3:banEstatus</to>
+          </copy>
+        </assign>
+        <if name="TipoEvaluacion">
+          <condition>string-length($inputVariable.request/ns2:Evaluaciones/ns3:evaluacion/ns3:catEvaluacion/ns6:Id/text()) = 0</condition>
+          <assign name="SetEx-ante">
+            <copy bpelx:insertMissingToData="yes">
+              <from>1</from>
+              <to>$inputVariable.request/ns2:Evaluaciones/ns3:evaluacion/ns3:catEvaluacion/ns6:Id</to>
+            </copy>
+          </assign>
+          
+        </if>
+      </sequence>
+    </scope>
+    <scope name="CrearEvaluacionEVAL">
+      <variables>
+        <variable name="crearEvaluacion_OutputVariable" messageType="ns1:responseCrearEvaluacionMessage"/>
+      </variables>
+     <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="remoteFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence7">
+            <assign name="AssignFault">
+              <copy>
+                <from variable="remoteFault"/>
+                <to variable="runtimeFaultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:bindingFault" faultVariable="bindingFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence6">
+            <assign name="AssignFault">
+              <copy>
+                <from variable="bindingFault"/>
+                <to variable="runtimeFaultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:bindingFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-1'</from>
+                <to>$runtimeFaultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error General al Crear Evaluación en EVAL'</from>
+                <to>$runtimeFaultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$runtimeFaultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <compensationHandler>
+         <scope name="ScopeEliminarCuestionario">
+      <sequence name="Sequence1">
+        <forEach parallel="no" counterName="cuestCounter" name="ForEachCuestionario">
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($inputVariable.request/ns2:Evaluaciones/ns3:evaluacion/ns3:cuestionarios/ns3:cuestionario)</finalCounterValue>
+          <scope name="ScopeForEach">
+                <variables>
+                  <variable name="eliminarModelo_InputVariable" messageType="ns1:requestEliminarCuestionarioMessage"/>
+                  <variable name="eliminarModelo_OutputVariable" messageType="ns1:responseEliminarCuestionarioMessage"/>
+                </variables>
+                <sequence name="Sequence2">
+              <assign name="Assign_InputVariable">
+                    <copy>
+                      <from>$inputVariable.request/ns2:Evaluaciones/ns3:evaluacion/ns3:idEvaluacion</from>
+                      <to>$eliminarModelo_InputVariable.request/ns2:idEvaluacion</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.request/ns2:Evaluaciones/ns3:evaluacion/ns3:nombreUsuario</from>
+                      <to>$eliminarModelo_InputVariable.request/ns2:nombreUsuario</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.request/ns2:Evaluaciones/ns3:evaluacion/ns3:cuestionarios/ns3:cuestionario[$cuestCounter]/ns3:idCuestionario</from>
+                      <to>$eliminarModelo_InputVariable.request/ns2:Cuestionario/ns6:Id</to>
+                    </copy>
+                  </assign>
+              <invoke name="Invoke_EliminarCuestionario" partnerLink="EliminarCuestionarioEVALService"
+                      portType="ns1:EliminarCuestionarioPT" operation="EliminarCuestionario"
+                      inputVariable="eliminarModelo_InputVariable" outputVariable="eliminarModelo_OutputVariable"
+                      bpelx:invokeAsDetail="no"/>
+                  <if name="IfERROR">
+          <condition>$eliminarModelo_OutputVariable.response/ns2:Resultado/ns4:result='ERROR'</condition>
+          <sequence name="Sequence4">
+            <assign name="Assign_Fault">
+                        <copy>
+                          <from>'-1'</from>
+                          <to>$runtimeFaultVariable.code</to>
+                        </copy>
+                        <copy>
+                          <from>'**Datos inconsistentes para compensar**'</from>
+                          <to>$runtimeFaultVariable.summary</to>
+                        </copy>
+                        <copy>
+                          <from>concat($eliminarModelo_OutputVariable.response/ns2:Resultado/ns4:message,' - ' ,$mensaje )</from>
+                          <to>$runtimeFaultVariable.detail</to>
+                        </copy>
+                      </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+          <else>
+            <sequence>
+              <assign name="Assign_CrearEvaluacionEVALOutputVariable">
+                <copy>
+                  <from>$crearEvaluacion_OutputVariable.response/ns2:Evaluaciones</from>
+                  <to>$tempVariable.request/ns2:Evaluaciones</to>
+                </copy>
+              </assign>
+            </sequence>
+          </else>
+        </if>
+                </sequence>
+          </scope>
+        </forEach>
+      </sequence>
+    </scope>
+      </compensationHandler>
+      <sequence name="Sequence1">
+        <invoke name="Invoke_CrearEvaluacionEVAL" partnerLink="CrearEvaluacionEVALService"
+                portType="ns1:EvaluacionPT" operation="crearEvaluacion" inputVariable="inputVariable"
+                outputVariable="crearEvaluacion_OutputVariable" bpelx:invokeAsDetail="no"/>
+        <if name="IfERROR">
+          <condition>$crearEvaluacion_OutputVariable.response/ns2:Resultado/ns4:result= 'ERROR'</condition>
+          <sequence name="Sequence4">
+            <assign name="Assign_Fault">
+              <copy>
+                <from>'-1'</from>
+                <to>$runtimeFaultVariable.code</to>
+              </copy>
+              <copy>
+                <from>$crearEvaluacion_OutputVariable.response/ns2:Resultado/ns4:message</from>
+                <to>$runtimeFaultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>$crearEvaluacion_OutputVariable.response/ns2:Resultado/ns4:error/ns5:errorDescription</from>
+                <to>$runtimeFaultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+          <else>
+            <sequence>
+              <assign name="Assign_CrearEvaluacionEVALOutputVariable">
+                <copy>
+                  <from>$crearEvaluacion_OutputVariable.response/ns2:Evaluaciones</from>
+                  <to>$tempVariable.request/ns2:Evaluaciones</to>
+                </copy>
+              </assign>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeCrearEvalDB">
+      <variables>
+        <variable name="crearEvaluacion_OutputVariable" messageType="ns1:responseCrearEvaluacionMessage"/>
+      </variables>
+       <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="remoteFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence7">
+            <assign name="AssignFault">
+              <copy>
+                <from variable="remoteFault"/>
+                <to variable="runtimeFaultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:bindingFault" faultVariable="bindingFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence6">
+            <assign name="AssignFault">
+              <copy>
+                <from variable="bindingFault"/>
+                <to variable="runtimeFaultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:bindingFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-1'</from>
+                <to>$runtimeFaultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error General al Crear Evaluación'</from>
+                <to>$runtimeFaultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$runtimeFaultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence2">
+        <assign name="Assign_CrearEvaluacionDBInputVariable">
+          <copy bpelx:insertMissingToData="yes">
+            <from>$tempVariable.request/ns2:Evaluaciones/ns3:evaluacion[1]/ns3:idEvaluacion</from>
+            <to>$inputVariable.request/ns2:Evaluaciones/ns3:evaluacion/ns3:idEvaluacion</to>
+          </copy>
+        </assign>
+        <scope name="ScopeCrearEvaluacionDB">
+        
+          <sequence name="Sequence3">
+            <invoke name="Invoke_CrearEvaluacionDB" partnerLink="CrearEvaluacionDBService"
+                    portType="ns1:EvaluacionPT" operation="crearEvaluacion"
+                    inputVariable="inputVariable" outputVariable="crearEvaluacion_OutputVariable"
+                    bpelx:invokeAsDetail="no"/>
+            <assign name="Assign_OutputVariable">
+              <copy>
+                <from>$inputVariable.request/ns2:Evaluaciones</from>
+                <to>$outputVariable.response/ns2:Evaluaciones</to>
+              </copy>
+            </assign>
+           <if name="IfERROR">
+          <condition>$crearEvaluacion_OutputVariable.response/ns2:Resultado/ns4:result= 'ERROR'</condition>
+          <sequence name="Sequence4">
+            <assign name="Assign_Fault">
+                  <copy>
+                    <from>'-1'</from>
+                    <to>$runtimeFaultVariable.code</to>
+                  </copy>
+                  <copy>
+                    <from>$crearEvaluacion_OutputVariable.response/ns2:Resultado/ns4:message</from>
+                    <to>$runtimeFaultVariable.summary</to>
+                  </copy>
+                  <copy>
+                    <from>$crearEvaluacion_OutputVariable.response/ns2:Resultado/ns4:message</from>
+                    <to>$mensaje</to>
+                  </copy>
+                  <copy>
+                    <from>$crearEvaluacion_OutputVariable.response/ns2:Resultado/ns4:error/ns5:errorDescription</from>
+                    <to>$runtimeFaultVariable.detail</to>
+                  </copy>
+                </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+          <else>
+            <sequence>
+              <assign name="Assign_CrearEvaluacionEVALOutputVariable">
+                <copy>
+                  <from>$crearEvaluacion_OutputVariable.response/ns2:Evaluaciones</from>
+                  <to>$tempVariable.request/ns2:Evaluaciones</to>
+                </copy>
+              </assign>
+            </sequence>
+          </else>
+        </if>
+          </sequence>
+        </scope>
+      </sequence>
+    </scope>
+    <scope name="ScopeOutputVariable">
+    <faultHandlers>
+        <catch faultName="bpel:selectionFailure" faultVariable="selectionFailure"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence9">
+            <assign name="AssignFault">
+              <copy>
+                <from>$selectionFailure.code</from>
+                <to>$runtimeFaultVariable.code</to>
+              </copy>
+              <copy>
+                <from>$selectionFailure.summary</from>
+                <to>$runtimeFaultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>$selectionFailure.detail</from>
+                <to>$runtimeFaultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpel:selectionFailure" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence4">
+            <rethrow name="RethrowFault"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <assign name="Assign_OutputVariable">
+        <copy>
+          <from>'OK'</from>
+          <to>$outputVariable.response/ns2:Resultado/ns4:result</to>
+        </copy>
+        <extensionAssignOperation>
+          <bpelx:remove>
+            <bpelx:target>$outputVariable.response/ns2:Resultado/ns4:error</bpelx:target>
+          </bpelx:remove>
+        </extensionAssignOperation>
+        <copy>
+          <from>'Creación Exitosa'</from>
+          <to>$outputVariable.response/ns2:Resultado/ns4:message</to>
+        </copy>
+      </assign>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="CrearEvaluacion" portType="ns1:EvaluacionPT" operation="crearEvaluacion" variable="outputVariable"/>
+  </sequence>
+</process>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/Utilidades/NotificarCancelarOperacion/V1/Wsdl/NotificarCancelarOperacion"/>
+            <con:binding>
+                <con:name>NotificarCancelarOperacion_PTSOAP12Binding</con:name>
+                <con:namespace>http://www.bcie.org/NotificarCancelarOperacion</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-N3f579bc0.N38784876.0.153a0743cc8.N7fd0">
+        <con:pipeline type="error" name="error-N3f579bc0.N38784876.0.153a0743cc8.N7fd0">
+            <con:stage id="_StageId-N3f579bc0.N38784876.0.153a0743cc8.N7d70" name="StageError" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con3:ifThenElse xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f579bc0.N38784876.0.153a0743cc8.N7d6f</con2:id>
+                        <con3:case id="_BranchId-N3f579bc0.N38784876.0.153a0743cc8.N7d6e">
+                            <con3:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError)=0</con2:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:assign varName="codigoError">
+                                    <con2:id>_ActionId-N3f579bc0.N38784876.0.153a0743cc8.N7d6d</con2:id>
+                                    <con3:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con3:expr>
+                                </con3:assign>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default/>
+                    </con3:ifThenElse>
+                    <con3:assign varName="inMapeoError" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f579bc0.N38784876.0.153a0743cc8.N7d6c</con2:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(data($codigoError))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f579bc0.N38784876.0.153a0743cc8.N7d6b</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS.proxyPipeline" xsi:type="con:PipelineRef"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapeoError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapeoError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f579bc0.N38784876.0.153a0743cc8.N7d6a</con2:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/NotificarCancelarOperacion/XQUERY/Error_TO_NotificarCancelarOperacion_PS_Response"/>
+                                <con2:param name="message">
+                                    <con2:path>xs:string(fn:data($fault/ctx:reason))</con2:path>
+                                </con2:param>
+                                <con2:param name="responseMapeoErrorMessage">
+                                    <con2:path>$outMapeoError</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-N3f579bc0.N38784876.0.153a0743cc8.N7d69</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="NotificarCancelarOperacion_RN">
+                <con:context/>
+                <con:actions>
+                    <con1:route>
+                        <con2:id>_ActionId-a050a52.61a152b1.0.15310885c95.N7ffa</con2:id>
+                        <con1:service ref="ADAPTADORES/ModeloNegocio/Utilidades/NotificarCancelarOperacion/BS/NotificarCancelarOperacion" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>NotificarCancelarOperacion</con1:operation>
+                        <con1:outboundTransform>
+                            <con3:log>
+                                <con2:id>_ActionId-N3f579bc0.N67ed3d7b.0.153578d5927.N7f21</con2:id>
+                                <con3:logLevel>info</con3:logLevel>
+                                <con3:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con3:expr>
+                                <con3:message>NotificarCancelarOperacion-Request</con3:message>
+                            </con3:log>
+                        </con1:outboundTransform>
+                        <con1:responseTransform>
+                            <con3:log>
+                                <con2:id>_ActionId-N3f579bc0.N67ed3d7b.0.153578d5927.N7f1e</con2:id>
+                                <con3:logLevel>info</con3:logLevel>
+                                <con3:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con3:expr>
+                                <con3:message>NotificarCancelarOperacion-Response</con3:message>
+                            </con3:log>
+                        </con1:responseTransform>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

@@ -1,0 +1,156 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sat Jun 15 15:36:22 GMT-06:00 2019
+  Author:  User
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="DistributeCostChangeRequestProcessBPEL"
+               targetNamespace="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/DistributeCostChangeRequestProcessBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/DistributeCostChangeRequestProcessBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/DistributeCostChangeRequestProcess/v1.0"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://mx.agarcia.ea/Applications/JDA/Items/CostChange/v1.0"
+         xmlns:ns3="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns6="http://mx.agarcia.ea/Canonical/Commons/RetailStore/v1"
+         xmlns:ns4="http://mx.agarcia.ea/Capabilities/Foundation/Party/CostChangeTask"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/ChangeCost/v1"
+         xmlns:ns7="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns8="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns9="http://mx.agarcia.ea/Applications/JDA/Items/CostChange"
+         xmlns:ns10="http://mx.agarcia.ea/Capabilities/Core/ItemCatalogEntitySvc/TranslateItemCatalogTaskAction"
+         xmlns:ns11="http://mx.agarcia.ea/Capabilities/Support/Commons/ItemCatalogEntitySvc/TranslateCatalogTaskAction"
+         xmlns:ns12="http://mx.agarcia.ea/Capabilities/Core/RetailStore/RetailStoreEntitySvc"
+         xmlns:ns13="http://mx.agarcia.ea/Capabilities/Core/RetailStore/RetailStoreEntitySvc/Schema"
+         xmlns:ns14="http://mx.agarcia.ea/Canonical/Commons/LocationsCommon/v1">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+          location="../Schemas/Commons/AGStandardMessageSchema.xsd" importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/DistributeCostChangeRequestProcess/v1.0"
+          location="../WSDLs/DistributeCostChangeRequestProcessWSDLWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="distributecostchangerequestprocessbpel_client" partnerLinkType="ns1:DistributeCostChangeRequestProcessBPEL" myRole="DistributeCostChangeRequestProcessPType"/>
+    <partnerLink name="JDACreateCostChangeEventPXY" partnerLinkType="ns2:JDACreateCostChangeEventPXY"
+                 partnerRole="createCostChangeEventPort"/>
+    <partnerLink name="TranslateRetailStoreEntityPXY" partnerLinkType="ns12:TranslateRetailStoreEntityPXY"
+                 partnerRole="RetailStorePType"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:distributeApprovedCostChangeRequest"/>
+    <variable name="Invoke_JDACreateCostChange_InVar" messageType="ns2:createCostChangeEventRequestMessage"/>
+    <variable name="Invoke_JDACreateCostChange_OutVar" messageType="ns2:createCostChangeEventResponseMessage"/>
+    <variable name="MessageErrorVar" element="ns3:messageError"/>
+    <variable name="Invoke_TranslateRetailStore_InVar" messageType="ns12:translateRetailStoreRequest"/>
+    <variable name="Invoke_TranslateRetailStore_OutVar" messageType="ns12:translateRetailStoreResponse"/>
+  </variables>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in DistributeCostChangeRequestProcessBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="distributecostchangerequestprocessbpel_client" portType="ns1:DistributeCostChangeRequestProcessPType" operation="distributeCostChange" variable="inputVariable" createInstance="yes"/>
+    <forEach parallel="no" counterName="JDACounter" name="ForEach1">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>ora:countNodes('inputVariable','distributeApprovedCostChangeRequest','ns4:event')</finalCounterValue>
+      <scope name="Scope1">
+        <sequence>
+          <assign name="AssignJDACreateChangeCost">
+            <copy ignoreMissingFromData="yes">
+              <from>xp20:format-dateTime($inputVariable.distributeApprovedCostChangeRequest/ns4:event[$JDACounter]/ns5:effectiveDate, "[D01][M01][Y01]")</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateCostChange_InVar.payload/ns9:event/ns5:effectiveDate</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.distributeApprovedCostChangeRequest/ns4:event[$JDACounter]/ns5:changes/ns5:change/ns5:item/ns7:id</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateCostChange_InVar.payload/ns9:event/ns5:changes/ns5:change/ns5:item/ns7:id</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.distributeApprovedCostChangeRequest/ns4:event[$JDACounter]/ns5:percentage</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateCostChange_InVar.payload/ns9:event/ns5:percentage</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.distributeApprovedCostChangeRequest/ns4:event[$JDACounter]/ns5:changes/ns5:change/ns5:retailStores/ns5:retailStore/ns6:storeID</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateCostChange_InVar.payload/ns9:event/ns5:changes/ns5:change/ns5:retailStores/ns5:retailStore/ns6:storeID/@Qualifier</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.distributeApprovedCostChangeRequest/ns4:event[$JDACounter]/ns5:changes/ns5:change/ns5:item/ns7:name</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateCostChange_InVar.payload/ns9:event/ns5:changes/ns5:change/ns5:item/ns7:name</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.distributeApprovedCostChangeRequest/ns4:event[$JDACounter]/ns5:changes/ns5:change/ns5:item/ns7:internalID</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateCostChange_InVar.payload/ns9:event/ns5:changes/ns5:change/ns5:item/ns7:internalID</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.distributeApprovedCostChangeRequest/ns4:event[$JDACounter]/ns5:changes/ns5:change/ns5:item/ns7:description</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateCostChange_InVar.payload/ns9:event/ns5:changes/ns5:change/ns5:item/ns7:description</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.distributeApprovedCostChangeRequest/ns4:event[$JDACounter]/ns5:scope</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateCostChange_InVar.payload/ns9:event/ns5:scope</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.distributeApprovedCostChangeRequest/ns4:event[$JDACounter]/ns5:changes/ns5:change/ns5:cost</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateCostChange_InVar.payload/ns9:event/ns5:changes/ns5:change/ns5:cost</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.distributeApprovedCostChangeRequest/ns4:event[$JDACounter]/ns5:businessStores/ns5:businessUnit</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateCostChange_InVar.payload/ns9:event/ns5:supplierID/ns8:supplierID</to>
+            </copy>
+          </assign>
+          <invoke name="Invoke_JDACreateCostChange" bpelx:invokeAsDetail="no" partnerLink="JDACreateCostChangeEventPXY"
+                  portType="ns2:createCostChangeEventPort" operation="create"
+                  inputVariable="Invoke_JDACreateCostChange_InVar" outputVariable="Invoke_JDACreateCostChange_OutVar"/>
+        </sequence>
+      </scope>
+    </forEach>
+    <assign name="newLogicalAssign">
+      <bpelx:skipCondition>1=1</bpelx:skipCondition>
+      <copy>
+        <from>$inputVariable.distributeApprovedCostChangeRequest/ns4:event</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateCostChange_InVar.payload/ns9:event</to>
+      </copy>
+    </assign>
+  </sequence>
+</process>

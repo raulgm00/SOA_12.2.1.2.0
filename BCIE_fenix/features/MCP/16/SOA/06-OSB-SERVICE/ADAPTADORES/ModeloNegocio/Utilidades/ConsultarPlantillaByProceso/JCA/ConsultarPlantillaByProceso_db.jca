@@ -1,0 +1,42 @@
+<adapter-config name="ConsultarPlantillaByProceso" adapter="db" wsdlLocation="../WSDL/ConsultarPlantillaByProceso.wsdl" xmlns="http://platform.integration.oracle/blocks/adapter/fw/metadata">
+  
+  <connection-factory UIConnectionName="BCIEDEV" location="eis/DB/OperacionesDB"/>
+  <endpoint-interaction portType="ConsultarPlantillaByProceso_ptt" operation="ConsultarPlantillaByProceso">
+    <interaction-spec className="oracle.tip.adapter.db.DBPureSQLInteractionSpec">
+      <property name="SqlString" value="
+        SELECT TPC.ID,
+               TPC.DESCRIPCION,
+               TPC.REMITENTE,
+               TPC.MENSAJE,
+               TPC.ASUNTO,
+               TPC.DESTINATARIOS,
+               TPC.FECHA_REGISTRO,
+               TPC.BAN_ESTATUS,
+               TPC.CC_DESTINATARIOS,
+               TPC.ID_TCA_CATEGORIA_EVENTO,
+               TPC.BAN_VALIDA_TAGS,
+               TPC.BAN_VALIDA_ET,
+	       TPC.BAN_VALIDA_MCC,
+	       TPC.BAN_VALIDA_VA,
+	       TPC.BAN_VALIDA_RA,
+               TPC.BAN_VALIDA_RO
+          FROM TCA_PLANTILLA_CORREO TPC
+          where tpc.id = nvl(#idPlantilla,(SELECT TPC.ID 
+                                            FROM TCA_PLANTILLA_CORREO TPC
+                                                JOIN TRE_PROCESO_EVENTO_PLANTILLA TPEP
+                                                    ON (TPC.ID = TPEP.ID_PLANTILLA_CORREO)
+                                                JOIN TCA_PROCESO_BPM TPB
+                                                    ON (TPB.ID = TPEP.ID_PROCESO_BPM)
+                                                JOIN TCA_EVENTO_PLANTILLA TEP
+                                                    ON (TEP.ID = TPEP.ID_EVENTO_PLANTILLA)
+                                                LEFT JOIN TRE_PROCESO_EVENTO_TAREA TPET
+                                                    ON (TPEP.ID = TPET.ID_TRE_PROCESO_EVTO_PLANTILLA)
+                                            WHERE     TPB.ID = #idProceso
+                                                AND TEP.DESCRIPCION_CORTA = #evento
+                                                AND NVL (TPET.ID_TAREA_BPM, 0) = NVL (#idTarea, 0)))
+          or tpc.descripcion = #pDescripcionTCAPlantilla
+      "/>
+      <property name="GetActiveUnitOfWork" value="false"/>
+    </interaction-spec>
+  </endpoint-interaction>
+</adapter-config>

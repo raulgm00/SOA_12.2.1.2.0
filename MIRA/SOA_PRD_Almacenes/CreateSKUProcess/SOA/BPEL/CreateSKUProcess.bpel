@@ -1,0 +1,217 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu May 09 14:25:36 CDT 2019
+  Author:  joseb
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CreateSKUProcess"
+               targetNamespace="http://xmlns.oracle.com/CreateSKUProcess/CreateSKUProcess/CreateSKUProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/CreateSKUProcess/CreateSKUProcess/CreateSKUProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSKUProcessSvc/v1.0"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns3="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Items/CreateItemEntity"
+         xmlns:ns4="http://mx.agarcia.ea/Capabilities/Core/Items/JDACreateItemProcessSvc/v1.0"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns6="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns7="http://xmlns.oracle.com/AGACreateSKUPrototipos/AGCreateSKUPrototipos/CreateSKURestPXY"
+         xmlns:ns8="http://mx.agarcia.ea/Applications/Prototipos/CreateSKU">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSKUProcessSvc/v1.0"
+          location="../WSDLs/CreateSKUProcessWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSKUProcessSvc/v1.0"
+          location="../WSDLs/CreateSKUProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="createskuprocess_client" partnerLinkType="ns1:CreateSKUProcess" myRole="createItemPType"/>
+    <partnerLink name="JDACreateItemProcessPXY" partnerLinkType="ns4:JDACreateItemProcessPXY"
+                 partnerRole="CreateItemJDAPTye"/>
+    <partnerLink name="PrototiposCreateSKU" partnerLinkType="ns7:CreateSKURestPXY"
+                 partnerRole="CreateSKURestPXYProvider"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:createItemRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:createItemResponseMessage"/>
+    <variable name="Inv_JDACreateItem_InVar" messageType="ns4:createItemJDARequestMessage"/>
+    <variable name="Inv_JDACreateItem_OutVar" messageType="ns4:createItemJDARequestMessage"/>
+    <variable name="header" messageType="ns1:standardMessageHeader"/>
+    <variable name="messageError" messageType="ns1:standardMessageFault"/>
+    <variable name="Inv_ProtoCreateSKU_In" messageType="ns7:create_inputMessage"/>
+    <variable name="Inv_ProtoCreateSKU_Out" messageType="ns7:create_outputMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CreateSKUProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="createskuprocess_client" portType="ns1:createItemPType" operation="create" variable="inputVariable" createInstance="yes"
+             bpelx:headerVariable="header"/>
+    <flow name="Flow1">
+      <sequence name="Sequence">
+        <scope name="Scope1">
+          <faultHandlers>
+            <catch bpelx:name="timeout" faultName="bpelx:timeout" faultVariable="Fault"
+                   faultMessageType="bpelx:RuntimeFaultMessage">
+              <assign name="AssignError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                <copy>
+                  <from>$Fault.detail</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorDescription</to>
+                </copy>
+                <copy>
+                  <from>'SKU-001'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorCode</to>
+                </copy>
+              </assign>
+            </catch>
+            <catch bpelx:name="remoteFault" faultName="bpelx:remoteFault" faultVariable="Fault"
+                   faultMessageType="bpelx:RuntimeFaultMessage">
+              <assign name="AssignError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                <copy>
+                  <from>$Fault.detail</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorDescription</to>
+                </copy>
+                <copy>
+                  <from>'SKU-001'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorCode</to>
+                </copy>
+              </assign>
+            </catch>
+            <catch bpelx:name="bindingFault" faultName="bpelx:bindingFault" faultVariable="Fault"
+                   faultMessageType="bpelx:RuntimeFaultMessage">
+              <assign name="AssignError">
+                <copy>
+                  <from>$Fault.detail</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorDescription</to>
+                </copy>
+                <copy>
+                  <from>'SKU-001'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorCode</to>
+                </copy>
+              </assign>
+            </catch>
+          </faultHandlers>
+          <sequence>
+            <assign name="AssignReqJDA">
+              <copy>
+                <from>$inputVariable.createItemRequestMessage</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Inv_JDACreateItem_InVar.createItemJDARequest</to>
+              </copy>
+            </assign>
+            <invoke name="Inv_JDACreateItem" partnerLink="JDACreateItemProcessPXY" portType="ns4:CreateItemJDAPTye"
+                    operation="create" inputVariable="Inv_JDACreateItem_InVar" outputVariable="Inv_JDACreateItem_OutVar"
+                    bpelx:invokeAsDetail="no"/>
+          </sequence>
+        </scope>
+      </sequence>
+      <sequence name="Sequence1">
+        <assign name="TrInv_ProtoCreateSKUReq">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:doXSLTransformForDoc("../Transformations/TrToPrototipos.xsl", $inputVariable.createItemRequestMessage)</from>
+            <to variable="Inv_ProtoCreateSKU_In" part="request"/>
+          </copy>
+        </assign>
+        <invoke name="Inv_ProtoCreateSKU" bpelx:invokeAsDetail="no" partnerLink="PrototiposCreateSKU"
+                portType="ns7:CreateSKURestPXY_ptt" operation="create" inputVariable="Inv_ProtoCreateSKU_In"
+                outputVariable="Inv_ProtoCreateSKU_Out"/>
+        <if name="If1">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$Inv_ProtoCreateSKU_Out.reply/ns8:code and $Inv_ProtoCreateSKU_Out.reply/ns8:code = 0</condition>
+          <empty name="Empty1"/>
+          <elseif>
+            <documentation>
+              <![CDATA[BusinessError]]>
+            </documentation>
+            <condition expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Inv_ProtoCreateSKU_Out.reply/ns8:code and $Inv_ProtoCreateSKU_Out.reply/ns8:code &gt; 0</condition>
+            <assign name="AssignError">
+              <copy>
+                <from>$Inv_ProtoCreateSKU_Out.reply/ns8:code</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorCode</to>
+              </copy>
+              <copy>
+                <from>$Inv_ProtoCreateSKU_Out.reply/ns8:msg</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorDescription</to>
+              </copy>
+              <copy>
+                <from>'BusinessError'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorType</to>
+              </copy>
+            </assign>
+          </elseif>
+          <else>
+            <documentation>
+              <![CDATA[GeneralError]]>
+            </documentation>
+            <sequence name="Sequence2">
+              <assign name="Assign1">
+                <copy>
+                  <from>string('CreateSKU-002')</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorCode</to>
+                </copy>
+                <copy>
+                  <from>string($Inv_ProtoCreateSKU_Out.reply)</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorDescription</to>
+                </copy>
+              </assign>
+              <throw name="Throw" faultName="ns1:fault" faultVariable="messageError"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </flow>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="createskuprocess_client" portType="ns1:createItemPType" operation="create" variable="outputVariable"/>
+  </sequence>
+</process>

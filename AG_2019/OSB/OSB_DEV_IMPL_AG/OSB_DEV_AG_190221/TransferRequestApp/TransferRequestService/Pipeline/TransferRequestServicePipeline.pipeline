@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="Mixed" xsi:type="con:MixedBindingType">
+            <con:request type="Text"/>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-afffa34.3b42f089.0.175299feb24.N7fcc">
+        <con:pipeline type="request" name="request-afffa34.62d41695.0.175293aab04.N7fce">
+            <con:stage id="_StageId-afffa34.62d41695.0.175293aab04.N7fcc" name="StageRequest">
+                <con:context>
+                    <con2:userNsDecl prefix="tns" namespace="http://www.oracle.com/retail/integration/base/bo/TsfDesc/v1"/>
+                </con:context>
+                <con:actions>
+                    <con1:log>
+                        <con2:id>_ActionId-afffad3.5a6f217e.0.17671e5417d.N7ff8</con2:id>
+                        <con1:logLevel>warning</con1:logLevel>
+                        <con1:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con1:expr>
+                    </con1:log>
+                    <con3:assign varName="TrackingID">
+                        <con2:id>_ActionId-afffa68.7b6683d3.0.17543145480.N7ffe</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText><![CDATA[if(fn:matches($body,'<(rib:id)>')) then
+<TrackingID>{fn:substring-after(fn:substring-before($body,'</rib:id>'),'<rib:id>')}</TrackingID>
+else(<TrackingID>{fn:substring-after(fn:substring-before($body,'</id>'),'<id>')}</TrackingID>)]]></con2:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con1:report>
+                        <con2:id>_ActionId-afffa34.62d41695.0.175293aab04.N7fb0</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con1:expr>
+                        <con1:labels>
+                            <con1:key>In.TrackindID</con1:key>
+                            <con1:varName>body</con1:varName>
+                            <con1:value>
+                                <con2:xpathText>$TrackingID</con2:xpathText>
+                            </con1:value>
+                        </con1:labels>
+                    </con1:report>
+                    <con3:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-afffa34.62d41695.0.175293aab04.N7fbf</con2:id>
+                        <con3:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryText>fn-bea:inlinedXML($body)</con2:xqueryText>
+                        </con3:expr>
+                    </con3:replace>
+                    <con3:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-afffa34.62d41695.0.175293aab04.N7fbc</con2:id>
+                        <con3:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryText>$body/*:RibMessages/*:ribMessage/*:messageData/text()</con2:xqueryText>
+                        </con3:expr>
+                    </con3:replace>
+                    <con3:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-afffa34.62d41695.0.175293aab04.N7fb9</con2:id>
+                        <con3:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryText>fn-bea:inlinedXML($body)</con2:xqueryText>
+                        </con3:expr>
+                    </con3:replace>
+                    <con3:assign varName="UUID">
+                        <con2:id>_ActionId-afffa34.62d41695.0.175293aab04.N7fb3</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>fn-bea:uuid()</con2:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-afffa34.62d41695.0.175293aab04.N7fb6</con2:id>
+                        <con3:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="TransferRequestApp/TransferRequestService/Resources/Transformations/XformABMToEBM"/>
+                                <con2:input>$body/*:TsfDesc</con2:input>
+                                <con2:param name="InstanceID">
+                                    <con2:path>$UUID</con2:path>
+                                </con2:param>
+                                <con2:param name="SourceID">
+                                    <con2:path>dvm:lookup("MetaData/dvm/TRANSFERREQUEST_CONFIGURATION_PROPERTIES.dvm","COMMON","SOURCEID","ATTRIBUTE_VALUE","No value found")</con2:path>
+                                </con2:param>
+                                <con2:param name="Target">
+                                    <con2:path>dvm:lookup("MetaData/dvm/TRANSFERREQUEST_CONFIGURATION_PROPERTIES.dvm","COMMON","TARGET","ATTRIBUTE_VALUE","No value found")</con2:path>
+                                </con2:param>
+                                <con2:param name="Operation">
+                                    <con2:path>dvm:lookup("MetaData/dvm/TRANSFERREQUEST_CONFIGURATION_PROPERTIES.dvm","COMMON","OPERATION","ATTRIBUTE_VALUE","No value found")</con2:path>
+                                </con2:param>
+                                <con2:param name="Interface">
+                                    <con2:path>dvm:lookup("MetaData/dvm/TRANSFERREQUEST_CONFIGURATION_PROPERTIES.dvm","COMMON","INTERFACE","ATTRIBUTE_VALUE","No value found")</con2:path>
+                                </con2:param>
+                                <con2:param name="TrackingID">
+                                    <con2:path>$TrackingID</con2:path>
+                                </con2:param>
+                            </con2:xsltTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con1:report>
+                        <con2:id>_ActionId-afffa34.62d41695.0.175293aab04.N7fad</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con1:expr>
+                        <con1:labels>
+                            <con1:key>Request.TrackingID</con1:key>
+                            <con1:varName>body</con1:varName>
+                            <con1:value>
+                                <con2:xpathText>$TrackingID</con2:xpathText>
+                            </con1:value>
+                        </con1:labels>
+                    </con1:report>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-afffa34.62d41695.0.175293aab04.N7fcd">
+            <con:stage id="_StageId-afffa34.62d41695.0.175293aab04.N7fcb" name="StageResponse">
+                <con:context/>
+                <con:actions>
+                    <con3:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-afffa34.3b42f089.0.175299feb24.N7ffe</con2:id>
+                        <con3:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="TransferRequestApp/TransferRequestService/Resources/Transformations/XformAcknowlegment"/>
+                                <con2:input>$body/*</con2:input>
+                                <con2:param name="Code">
+                                    <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0000", "ERROR_CODE", "NOT FOUND")</con2:path>
+                                </con2:param>
+                                <con2:param name="Message">
+                                    <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0000", "USER_MESSAGE", "NOT FOUND")</con2:path>
+                                </con2:param>
+                                <con2:param name="Detail">
+                                    <con2:path>"NO DETAIL"</con2:path>
+                                </con2:param>
+                                <con2:param name="InstanceID">
+                                    <con2:path>$UUID</con2:path>
+                                </con2:param>
+                                <con2:param name="TrackingID">
+                                    <con2:path>$body/*:ProcessInventoryTransactionEBM/*:Header/*:TrackingID</con2:path>
+                                </con2:param>
+                            </con2:xsltTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con1:report>
+                        <con2:id>_ActionId-afffaf1.N449b12b2.0.1752d30e9ce.N7ffd</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con1:expr>
+                        <con1:labels>
+                            <con1:key>Response.TrackingID</con1:key>
+                            <con1:varName>body</con1:varName>
+                            <con1:value>
+                                <con2:xpathText>$TrackingID</con2:xpathText>
+                            </con1:value>
+                        </con1:labels>
+                    </con1:report>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-afffa34.3b42f089.0.175299feb24.N7fcc">
+            <con:stage id="_StageId-afffa34.3b42f089.0.175299feb24.N7fcb" name="ErrorHandlerResponse">
+                <con:context/>
+                <con:actions>
+                    <con3:ifThenElse>
+                        <con2:id>_ActionId-afffa34.3b42f089.0.175299feb24.N7f96</con2:id>
+                        <con3:case id="_BranchId-afffa34.3b42f089.0.175299feb24.N7f95">
+                            <con3:condition>
+                                <con2:xqueryText>$fault/ctx:errorCode="OSB-382505"</con2:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:replace varName="body" contents-only="true">
+                                    <con2:id>_ActionId-afffaf1.N449b12b2.0.1752d30e9ce.N7ff5</con2:id>
+                                    <con3:location>
+                                        <con2:xpathText>.</con2:xpathText>
+                                    </con3:location>
+                                    <con3:expr>
+                                        <con2:xsltTransform>
+                                            <con2:resource ref="TransferRequestApp/TransferRequestService/Resources/Transformations/XformAcknowlegment"/>
+                                            <con2:input>$body/*</con2:input>
+                                            <con2:param name="Code">
+                                                <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm","CODE","GEN-0010","ERROR_CODE","No value found")</con2:path>
+                                            </con2:param>
+                                            <con2:param name="Message">
+                                                <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm","CODE","GEN-0010","USER_MESSAGE","No value found")</con2:path>
+                                            </con2:param>
+                                            <con2:param name="Detail">
+                                                <con2:path>fn-bea:serialize($fault/ctx:details)</con2:path>
+                                            </con2:param>
+                                            <con2:param name="InstanceID">
+                                                <con2:path>$UUID</con2:path>
+                                            </con2:param>
+                                            <con2:param name="TrackingID">
+                                                <con2:path>$body/*:ProcessInventoryTransactionEBM/*:Header/*:TrackingID</con2:path>
+                                            </con2:param>
+                                        </con2:xsltTransform>
+                                    </con3:expr>
+                                </con3:replace>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:case id="_BranchId-afffa34.3b42f089.0.175299feb24.N7f93">
+                            <con3:condition>
+                                <con2:xqueryText>not(fn:empty($body/soap-env:Fault))</con2:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:replace varName="body" contents-only="true">
+                                    <con2:id>_ActionId-afffaf1.N449b12b2.0.1752d30e9ce.N7ff9</con2:id>
+                                    <con3:location>
+                                        <con2:xpathText>.</con2:xpathText>
+                                    </con3:location>
+                                    <con3:expr>
+                                        <con2:xsltTransform>
+                                            <con2:resource ref="TransferRequestApp/TransferRequestService/Resources/Transformations/XformAcknowlegment"/>
+                                            <con2:input>$body/*</con2:input>
+                                            <con2:param name="Code">
+                                                <con2:path>$fault/ctx:errorCode/text()</con2:path>
+                                            </con2:param>
+                                            <con2:param name="Message">
+                                                <con2:path>$fault/ctx:reason/text()</con2:path>
+                                            </con2:param>
+                                            <con2:param name="Detail">
+                                                <con2:path>fn-bea:serialize($fault/ctx:details)</con2:path>
+                                            </con2:param>
+                                            <con2:param name="InstanceID">
+                                                <con2:path>$UUID</con2:path>
+                                            </con2:param>
+                                            <con2:param name="TrackingID">
+                                                <con2:path>$body/*:ProcessInventoryTransactionEBM/*:Header/*:TrackingID</con2:path>
+                                            </con2:param>
+                                        </con2:xsltTransform>
+                                    </con3:expr>
+                                </con3:replace>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default>
+                            <con3:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-afffaf1.N449b12b2.0.1752d30e9ce.N7ff7</con2:id>
+                                <con3:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con2:xsltTransform>
+                                        <con2:resource ref="TransferRequestApp/TransferRequestService/Resources/Transformations/XformAcknowlegment"/>
+                                        <con2:input>$body/*</con2:input>
+                                        <con2:param name="Code">
+                                            <con2:path>$fault/ctx:errorCode/text()</con2:path>
+                                        </con2:param>
+                                        <con2:param name="Message">
+                                            <con2:path>$fault/ctx:reason/text()</con2:path>
+                                        </con2:param>
+                                        <con2:param name="Detail">
+                                            <con2:path>$fault/ctx:details</con2:path>
+                                        </con2:param>
+                                        <con2:param name="InstanceID">
+                                            <con2:path>$UUID</con2:path>
+                                        </con2:param>
+                                        <con2:param name="TrackingID">
+                                            <con2:path>$body/*:ProcessInventoryTransactionEBM/*:Header/*:TrackingID</con2:path>
+                                        </con2:param>
+                                    </con2:xsltTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con3:default>
+                    </con3:ifThenElse>
+                    <con1:report>
+                        <con2:id>_ActionId-afffa34.3b42f089.0.175299feb24.N7f87</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con1:expr>
+                        <con1:labels>
+                            <con1:key>Error.TrackingID</con1:key>
+                            <con1:varName>body</con1:varName>
+                            <con1:value>
+                                <con2:xpathText>$TrackingID</con2:xpathText>
+                            </con1:value>
+                        </con1:labels>
+                    </con1:report>
+                    <con2:reply>
+                        <con2:id>_ActionId-afffa34.3b42f089.0.175299feb24.N7f84</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="Pipeline Pair Transfer Request Service">
+                <con:request>request-afffa34.62d41695.0.175293aab04.N7fce</con:request>
+                <con:response>response-afffa34.62d41695.0.175293aab04.N7fcd</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteNodeJMS" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                <con:context/>
+                <con:actions>
+                    <con1:route>
+                        <con2:id>_ActionId-afffa34.62d41695.0.175293aab04.N8000</con2:id>
+                        <con1:service ref="TransferRequestApp/TransferRequestService/BusinessService/TransferRequestJMSReference" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>Produce_Message</con1:operation>
+                        <con1:outboundTransform/>
+                        <con1:responseTransform/>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+        <con:shared-variables>
+            <con:variable>UUID</con:variable>
+            <con:variable>TrackingID</con:variable>
+        </con:shared-variables>
+    </con:router>
+</con:pipelineEntry>

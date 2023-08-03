@@ -1,0 +1,66 @@
+xquery version "1.0" encoding "utf-8";
+
+(:: OracleAnnotationVersion "1.0" ::)
+
+declare namespace con="http://www.bcie.org/CondicionMO";
+(:: import schema at "oramds:/apps/Resources/ComponentesComunes/DominioContrato/Condicion/V1/Schema/CondicionMO.xsd" ::)
+declare namespace des="http://www.bcie.org/DesembolsoMO";
+(:: import schema at "oramds:/apps/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/Schema/DesembolsoMO.xsd" ::)
+
+declare namespace des1 = "http://www.bcie.org/DesembolsoBO";
+
+declare namespace cat = "http://www.bcie.org/CatalogoBO";
+
+declare namespace com1 = "http://www.bcie.org/ComisionBO";
+
+declare namespace com = "http://www.bcie.org/CommonBO";
+
+declare namespace lin = "http://www.bcie.org/LineaCreditoBO";
+
+declare namespace mat = "http://www.bcie.org/MatrizTCCBO";
+
+declare namespace ope = "http://www.bcie.org/OperacionBO";
+
+declare namespace atr = "http://www.bcie.org/AtributoBO";
+
+declare namespace reg = "http://www.bcie.org/ReglaBO";
+
+declare namespace doc = "http://www.bcie.org/DocumentoBO";
+
+declare namespace pro = "http://www.bcie.org/ProductoBO";
+
+declare namespace her = "http://www.bcie.org/HerramientaCEBO";
+
+declare namespace con1 = "http://www.bcie.org/CondicionBO";
+
+declare variable $outConsultarCondicionesSolicitud1erD.response as element() (:: schema-element(con:ConsultarCondicionByIdEventoResponse) ::) external;
+declare variable $outConsultarCumplimientoCondiciones.response as element() (:: schema-element(des:ConsultarCumplimientoCondicionesResponse) ::) external;
+declare variable $outConsultarCondicionesSolicitudCD.response as element() (:: schema-element(con:ConsultarCondicionByIdEventoResponse) ::) external;
+
+declare function local:funcConsultarcondicionessolicitud_to_consultarcondicionessolicitud1erd($outConsultarCondicionesSolicitud1erD.response as element() (:: schema-element(con:ConsultarCondicionByIdEventoResponse) ::), 
+                                                                                              $outConsultarCumplimientoCondiciones.response as element() (:: schema-element(des:ConsultarCumplimientoCondicionesResponse) ::), 
+                                                                                              $outConsultarCondicionesSolicitudCD.response as element() (:: schema-element(con:ConsultarCondicionByIdEventoResponse) ::)) 
+                                                                                              as element() (:: schema-element(con:ConsultarCondicionByIdEventoResponse) ::) {
+    
+    <con:ConsultarCondicionByIdEventoResponse>
+    {
+    for $condicion in $outConsultarCondicionesSolicitud1erD.response/con:Condicion
+    let $cumplimiento := count($outConsultarCumplimientoCondiciones.response/des:Condicion[con1:idCondicion = $condicion/con1:idCondicion]/con1:Cumplimientos[con1:EstadoTCC/cat:Id = 26 ])
+    return 
+      if(not($cumplimiento > 0)) then
+        <con:Condicion>
+          <con1:idCondicion>{fn:data($condicion/con1:idCondicion)}</con1:idCondicion>
+        </con:Condicion>
+      else ()
+    }
+    {
+    for $condicion in $outConsultarCondicionesSolicitudCD.response/con:Condicion
+    return
+     <con:Condicion>
+       <con1:idCondicion>{fn:data($condicion/con1:idCondicion)}</con1:idCondicion>
+     </con:Condicion>
+    }
+    </con:ConsultarCondicionByIdEventoResponse>
+};
+
+local:funcConsultarcondicionessolicitud_to_consultarcondicionessolicitud1erd($outConsultarCondicionesSolicitud1erD.response, $outConsultarCumplimientoCondiciones.response, $outConsultarCondicionesSolicitudCD.response)

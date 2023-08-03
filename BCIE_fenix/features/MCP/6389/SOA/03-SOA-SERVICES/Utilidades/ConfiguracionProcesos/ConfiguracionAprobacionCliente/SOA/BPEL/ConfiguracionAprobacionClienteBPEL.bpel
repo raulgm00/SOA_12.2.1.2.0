@@ -1,0 +1,344 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sun Oct 30 19:07:33 CST 2016
+  Author:  dalia-reyes
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionAprobacionClienteBPEL"
+               targetNamespace="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionAprobacionCliente/ConfiguracionAprobacionClienteBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionAprobacionCliente/ConfiguracionAprobacionClienteBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="urn:ConfiguracionAprobacionClienteSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.com/ConsultarRolesPorProceso"
+         xmlns:ns3="http://xmlns.bcie.com/ClienteService" xmlns:ns4="http://xmlns.bcie.com/DocumentoService"
+         xmlns:ns5="http://xmlns.bcie.org/ClienteService"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns6="http://www.bcie.org/ConfiguracionProcesosMO"
+         xmlns:ns17="http://www.bcie.org/ConsultarRolesPorProcesoMO"
+         xmlns:ns7="http://www.bcie.org/ConfiguracionProcesosBO" xmlns:ns15="http://www.bcie.org/ResultBO"
+         xmlns:ns13="http://xmlns.bcie.org/ObjetoProceso/Comun/Parameter/V1"
+         xmlns:ns9="http://xmlns.bcie.org/ObjetoProceso/Comun/Operacion/V1"
+         xmlns:ns12="http://xmlns.bcie.org/ObjetoProceso/Comun/Proceso/V1"
+         xmlns:ns18="http://www.bcie.org/ConsultarRolesPorProcesoBO"
+         xmlns:ns8="http://xmlns.bcie.org/ObjetoProceso/Comun/Header/V1" xmlns:ns14="http://www.bcie.org/CatalogoBO"
+         xmlns:ns11="http://xmlns.bcie.org/ObjetoProceso/Comun/Tarea/V1"
+         xmlns:ns10="http://xmlns.bcie.org/ObjetoProceso/Comun/Cliente/V1" xmlns:ns16="http://www.bcie.org/ErrorBO"
+         xmlns:ns19="http://www.bcie.org/ClienteMO" xmlns:ns20="http://www.bcie.org/ClienteBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+   <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+           importType="http://schemas.xmlsoap.org/wsdl/"/>
+   <import namespace="urn:ConfiguracionAprobacionClienteSOR"
+          location="../WSDLs/ConfiguracionAprobacionClienteSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configuracionaprobacionclientebpel_client" partnerLinkType="ns1:ConfiguracionAprobacionClienteBPEL" myRole="ConfiguracionAprobacionClientePT"/>
+    <partnerLink name="ConsultarRolesPorProceso" partnerLinkType="ns2:ConsultarRolesPorProceso"
+                 partnerRole="ConsultarRolesPorProceso_ptt"/>
+    <partnerLink name="ConsultarClienteByID" partnerLinkType="ns3:ConsultarClienteByID" partnerRole="ClientePT"/>
+    <partnerLink name="ConsultarContactos" partnerLinkType="ns5:ConsultarContactos" partnerRole="ConsultarContactosPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ConfiguracionAprobacionClienteRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ConfiguracionAprobacionClienteResponseMessage"/>
+    <variable name="outConsultarRolesProceso" messageType="ns2:replyMessage"/>
+    <variable name="outConsultarClienteById" messageType="ns3:responseConsultarClienteMessageByIdCliente"/>
+    <variable name="outConsultarContactos" messageType="ns5:ConsultarContactosResponseMessage"/>
+      <variable name="setTittleVar" type="xsd:string"/>
+   </variables>
+  <faultHandlers>
+    <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage"
+           bpelx:name="remoteFault"><sequence name="SequenceRemoteFault" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="assignRemoteFault">
+         
+         
+         
+         
+      <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns15:result</to>
+               </copy><copy>
+                  <from>$faultVar.code</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns15:error/ns16:errorCode</to>
+               </copy><copy>
+                  <from>$faultVar.summary</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns15:message</to>
+               </copy><copy>
+                  <from>$faultVar.detail</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns15:error/ns16:errorDescription</to>
+               </copy></assign>
+      <reply name="ReplyRemoteFault" variable="outputVariable" partnerLink="configuracionaprobacionclientebpel_client"
+             portType="ns1:ConfiguracionAprobacionClientePT" operation="configuracionAprobacionCliente"/>
+   </sequence></catch>
+    <catch faultName="bpelx:bindingFault" faultVariable="faultVar"
+           faultMessageType="bpelx:RuntimeFaultMessage" bpelx:name="BindingFault"><sequence name="SequenceBindingFault"
+                                                                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="assignBindingFault" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+         
+         
+         
+         
+      <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns15:result</to>
+               </copy><copy>
+                  <from>$faultVar.code</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns15:error/ns16:errorCode</to>
+               </copy><copy>
+                  <from>$faultVar.summary</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns15:message</to>
+               </copy><copy>
+                  <from>$faultVar.detail</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns15:error/ns16:errorDescription</to>
+               </copy></assign>
+      <reply name="ReplyBindingFault" variable="outputVariable" partnerLink="configuracionaprobacionclientebpel_client"
+             portType="ns1:ConfiguracionAprobacionClientePT" operation="configuracionAprobacionCliente"/>
+   </sequence></catch>
+    <catchAll><sequence name="SequenceCatchAll" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="assignCatchAll">
+         
+         
+      <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns6:Resultado/ns15:result</to>
+          </copy><copy>
+            <from>concat("Error en ConfiguracionAprobacionCliente: ",ora:getFaultAsString())</from>
+            <to>$outputVariable.response/ns6:Resultado/ns15:message</to>
+          </copy></assign>
+      <reply name="ReplyCatchAll" variable="outputVariable" partnerLink="configuracionaprobacionclientebpel_client"
+             portType="ns1:ConfiguracionAprobacionClientePT" operation="configuracionAprobacionCliente"/>
+   </sequence></catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionAprobacionClienteBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="configuracionaprobacionclientebpel_client" portType="ns1:ConfiguracionAprobacionClientePT" operation="configuracionAprobacionCliente" variable="inputVariable" createInstance="yes"/><validate name="ValidateInput"
+                                                                                                                                                                                                                                             variables="inputVariable"
+                                                                                                                                                                                                                                             xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/><assign name="assignSetTittle"
+                                                                                                                                                                                                                                                                                                                       xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+   <copy>
+         <from>oraext:setFlowInstanceTitle(concat("idCliente = ", $inputVariable.request/ns6:idCliente))</from>
+         <to>$setTittleVar</to>
+      </copy></assign><if name="IfNullCero" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         
+      <![CDATA[idClienteIsNull]]></documentation>
+      <condition>$inputVariable.request/ns6:idCliente = 0 or string-length($inputVariable.request/ns6:idCliente) = 0</condition>
+      <sequence name="SequenceIfError">
+         <assign name="assignNull">
+               <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns15:result</to>
+               </copy>
+               <copy>
+                  <from>'EL idCliente no puede ser null o 0'</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns15:message</to>
+               </copy>
+            </assign>
+         <reply name="ReplyIsNull" variable="outputVariable" partnerLink="configuracionaprobacionclientebpel_client"
+                portType="ns1:ConfiguracionAprobacionClientePT" operation="configuracionAprobacionCliente"/>
+         <exit name="ExitNull"/>
+      </sequence>
+      <else>
+         <documentation>
+            <![CDATA[valorCorrecto]]>
+         </documentation>
+         <empty name="valorCorrecto"/>
+      </else>
+   </if><scope name="ScopeConsultarClienteById" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      <variables>
+        <variable name="inConsultarClienteById" messageType="ns3:requestConsultarClienteMessageByIdCliente"/>
+      </variables><sequence name="SequenceConsultarClienteById">
+         <assign name="assignIdCliente">
+            
+         <copy>
+            <from>$inputVariable.request/ns6:idCliente</from>
+            <to>$inConsultarClienteById.request/ns19:idCliente</to>
+          </copy></assign>
+         <invoke name="InvokeConsultarCliente" partnerLink="ConsultarClienteByID"
+                 portType="ns3:ClientePT" operation="consultarByIdCliente" inputVariable="inConsultarClienteById"
+                 outputVariable="outConsultarClienteById" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                 bpelx:invokeAsDetail="no"/>
+         <if name="IfError">
+            <documentation>
+               
+            <![CDATA[Error]]></documentation>
+            <condition>$outConsultarClienteById.response/ns19:Resultado/ns15:result = 'ERROR'</condition>
+            <sequence name="SequenceIfError">
+               <assign name="assignError">
+                  
+                  
+               <copy>
+                <from>$outConsultarClienteById.response/ns19:Resultado/ns15:result</from>
+                <to>$outputVariable.response/ns6:Resultado/ns15:result</to>
+              </copy><copy>
+                <from>$outConsultarClienteById.response/ns19:Resultado/ns15:message</from>
+                <to>$outputVariable.response/ns6:Resultado/ns15:message</to>
+              </copy></assign>
+               <reply name="ReplyError" variable="outputVariable"
+                      partnerLink="configuracionaprobacionclientebpel_client"
+                      portType="ns1:ConfiguracionAprobacionClientePT" operation="configuracionAprobacionCliente"/>
+               <exit name="ExitError"/>
+            </sequence>
+            <else>
+               <documentation>
+                  <![CDATA[consultaCorrecta]]>
+               </documentation>
+               <empty name="consultaCorrecta"/>
+            </else>
+         </if>
+      </sequence>
+   </scope><scope name="ScopeConsultarRolesProceso" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      <variables>
+        <variable name="inConsultarRolesProceso" messageType="ns2:requestMessage"/>
+      </variables><sequence name="SequenceConsultarRolesProceso">
+         <assign name="assignIdProceso">
+            
+         <copy>
+            <from>4</from>
+            <to>$inConsultarRolesProceso.request/ns17:Proceso/ns18:idProceso</to>
+          </copy></assign>
+         <invoke name="InvokeConsultarRolesProceso" partnerLink="ConsultarRolesPorProceso"
+                 portType="ns2:ConsultarRolesPorProceso_ptt" operation="ConsultarRolesPorProceso"
+                 inputVariable="inConsultarRolesProceso" outputVariable="outConsultarRolesProceso"
+                 xmlns:bpelx="http://schemas.oracle.com/bpel/extension" bpelx:invokeAsDetail="no"/>
+         <if name="IfError">
+            <documentation>
+                  <![CDATA[error]]>
+               </documentation>
+            <condition>$outConsultarRolesProceso.response/ns17:Result/ns15:result = 'ERROR'</condition>
+            <sequence name="SequenceIfError">
+               <assign name="assignError">
+                  
+                  
+               <copy>
+                <from>$outConsultarRolesProceso.response/ns17:Result/ns15:result</from>
+                <to>$outputVariable.response/ns6:Resultado/ns15:result</to>
+              </copy><copy>
+                <from>$outConsultarRolesProceso.response/ns17:Result/ns15:message</from>
+                <to>$outputVariable.response/ns6:Resultado/ns15:message</to>
+              </copy></assign>
+               <reply name="ReplyError" variable="outputVariable"
+                      partnerLink="configuracionaprobacionclientebpel_client"
+                      portType="ns1:ConfiguracionAprobacionClientePT" operation="configuracionAprobacionCliente"/>
+               <exit name="ExitError"/>
+            </sequence>
+            <else>
+               <documentation>
+                  <![CDATA[consultaCorrecta]]>
+               </documentation>
+               <empty name="consultaCorrecta"/>
+            </else>
+         </if>
+      </sequence>
+   </scope><scope name="ScopeConsultarContactos" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      <variables>
+        <variable name="inConsultarContactos" messageType="ns5:ConsultarContactosRequestMessage"/>
+      </variables><sequence name="SequenceConsultarContactos">
+         <assign name="assignIdCliente">
+            
+         <copy>
+            <from>$inputVariable.request/ns6:idCliente</from>
+            <to>$inConsultarContactos.request/ns19:idCliente</to>
+          </copy></assign>
+         <invoke name="InvokeConsultarContactos" partnerLink="ConsultarContactos"
+                 portType="ns5:ConsultarContactosPT" operation="ConsultarContactos"
+                 inputVariable="inConsultarContactos" outputVariable="outConsultarContactos"
+                 xmlns:bpelx="http://schemas.oracle.com/bpel/extension" bpelx:invokeAsDetail="no"/>
+         <if name="IfError">
+            <documentation>
+               
+            <![CDATA[error]]></documentation>
+            <condition>$outConsultarContactos.response/ns19:Resultado/ns15:result = 'ERROR'</condition>
+            <sequence name="SequenceIfError">
+               <assign name="assignError">
+                  
+                  
+               <copy>
+                <from>$outConsultarContactos.response/ns19:Resultado/ns15:result</from>
+                <to>$outputVariable.response/ns6:Resultado/ns15:result</to>
+              </copy><copy>
+                <from>$outConsultarContactos.response/ns19:Resultado/ns15:message</from>
+                <to>$outputVariable.response/ns6:Resultado/ns15:message</to>
+              </copy></assign>
+               <reply name="ReplyError" variable="outputVariable"
+                      partnerLink="configuracionaprobacionclientebpel_client"
+                      portType="ns1:ConfiguracionAprobacionClientePT" operation="configuracionAprobacionCliente"/>
+               <exit name="ExitError"/>
+            </sequence>
+            <else>
+               <documentation>
+                  <![CDATA[consultaCorrecta]]>
+               </documentation>
+               <sequence name="SequenceXQ_Response">
+                  <assign name="XQ_Response">
+                     <bpelx:annotation xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                     </bpelx:annotation>
+                     <copy>
+                        <from>ora:processXQuery10('../Transformations/ConfiguracionAprobacionCliente_Response.xqy', 'outConsultarClienteById.response', $outConsultarClienteById.response, 'outConsultarRolesProceso.response', $outConsultarRolesProceso.response, 'outConsultarContactos.response', $outConsultarContactos.response)</from>
+                        <to variable="outputVariable" part="response"/>
+                     </copy>
+                  </assign>
+                  <assign name="assignIdFlujo">
+                        <copy bpelx:insertMissingToData="yes">
+                           <from>$inputVariable.request/ns6:InstanciaProceso</from>
+                           <to>$outputVariable.response/ns6:configuracionAprobacionCliente/ns7:Header/ns8:Proceso/ns12:IdFlujo</to>
+                        </copy>
+                     </assign>
+               </sequence>
+            </else>
+         </if>
+      </sequence>
+   </scope><!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configuracionaprobacionclientebpel_client" portType="ns1:ConfiguracionAprobacionClientePT" operation="configuracionAprobacionCliente" variable="outputVariable"/>
+  </sequence>
+</process>

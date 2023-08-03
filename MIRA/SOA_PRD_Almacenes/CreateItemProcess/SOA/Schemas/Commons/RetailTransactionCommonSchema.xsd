@@ -1,0 +1,1786 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://mx.agarcia.ea/Commons/RetailTransaction/v1" xmlns:base="http://mx.agarcia.ea/Commons/RetailTransaction/v1" xmlns:enums="http://mx.agarcia.ea/Commons/Enums/v1" xmlns:citinv="http://mx.agarcia.ea/Commons/InventoryItem/v1" xmlns:ctyp="http://mx.agarcia.ea/Commons/Types/v1" elementFormDefault="qualified" attributeFormDefault="unqualified">
+   <xs:import schemaLocation="CommonEnums.xsd" namespace="http://mx.agarcia.ea/Commons/Enums/v1"/>
+   <xs:import schemaLocation="InventoryItemCommonSchema.xsd" namespace="http://mx.agarcia.ea/Commons/InventoryItem/v1"/>
+   <xs:import schemaLocation="CommonTypeSchema.xsd" namespace="http://mx.agarcia.ea/Commons/Types/v1"/>
+   <xs:complexType name="RetailTransactionRestrictionValidation">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="QuestionText" type="xs:string"/>
+         <xs:choice>
+            <xs:element form="qualified" name="QuestionAnswer" type="xs:string"/>
+            <xs:element form="qualified" name="Address" type="RetailTransactionAddress"/>
+         </xs:choice>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="OperatorBypassApproval" type="RetailTransactionApproval"/>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:attribute form="unqualified" name="OperatorByPassFlag" type="xs:boolean">
+         <xs:annotation>
+            <xs:documentation>Did the Operator Bypass this Restriction
+					Validation?
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute form="unqualified" name="CustomerQuestionID" type="base:RetailTransactionRestrictionValidationQuestion" use="required">
+         <xs:annotation>
+            <xs:documentation>An enumeration of possible questions types to ask
+					a customer for
+					validation
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute form="unqualified" name="EntryMethod" type="citinv:EntryMethodTypeCode">
+         <xs:annotation>
+            <xs:documentation>Denotes how the Answer to the question was
+					entered
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+   <xs:complexType name="OfficialBillType">
+      <xs:sequence>
+         <xs:element form="qualified" name="BillNumber" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>A unique reference number for this Official
+						Bill
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" name="AmountOfBill" type="ctyp:AmountCommonData">
+            <xs:annotation>
+               <xs:documentation>The amount of this Official Bill
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:simpleType name="RetailTransactionRestrictionValidationQuestion">
+      <xs:union memberTypes="base:RetailTransactionRestrictionValidationQuestionEnumeration             enums:TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionRestrictionValidationQuestionEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="CustomerIDType"/>
+         <xs:enumeration value="CustomerID"/>
+         <xs:enumeration value="CustomerBirthDate"/>
+         <xs:enumeration value="NumberOfVisits"/>
+         <xs:enumeration value="LastVisitDate"/>
+         <xs:enumeration value="LastAmountSpend"/>
+         <xs:enumeration value="CustomerAddress"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="CheckTypeCode">
+      <xs:union memberTypes="base:CheckTypeCodeEnumeration enums:TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="CheckTypeCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Personal"/>
+         <xs:enumeration value="Company"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailTransactionAddress">
+      <xs:complexContent>
+         <xs:extension base="AddressCommonData">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="Name" type="xs:string"/>
+               <xs:element form="qualified" minOccurs="0" name="State" type="xs:string"/>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionLineItem">
+      <xs:sequence>
+         <xs:element form="qualified" name="SequenceNumber" type="SequenceNumberType"/>
+         <xs:element form="qualified" minOccurs="0" name="BeginDateTime" type="xs:dateTime"/>
+         <xs:element form="qualified" minOccurs="0" name="EndDateTime" type="xs:dateTime"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="OperatorBypassApproval" type="RetailTransactionApproval"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="Modification" type="RetailTransactionModification">
+            <xs:annotation>
+               <xs:documentation>Identifies things that can be done to this item
+						prior to
+						delivery, i.e. cook the steak well done
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="Reason" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="CODVoucherNumber" type="xs:string"/>
+         <xs:choice maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>this is a compromise to allow either a line item
+						or additional
+						information at the line item level.
+					</xs:documentation>
+            </xs:annotation>
+            <xs:choice>
+               <xs:element form="qualified" name="Sale" type="RetailTransactionSale">
+                  <xs:annotation>
+                     <xs:documentation>A flavor of retail transaction line item
+								whereby a
+								customer is purchasing an item and they are taking it
+								with
+								them.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="SaleForDelivery" type="RetailTransactionSaleForDelivery">
+                  <xs:annotation>
+                     <xs:documentation>A flavor of retail transaction line item
+								whereby a
+								customer is purchasing an item and it will be delivered
+								to some
+								location at some future date and time.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="SaleForPickup" type="RetailTransactionSaleForPickup">
+                  <xs:annotation>
+                     <xs:documentation>A flavor of retail transaction line item
+								whereby a
+								customer is purchasing an item and they will pick it up
+								from some
+								location at some future date and time.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="Return" type="RetailTransactionReturn">
+                  <xs:annotation>
+                     <xs:documentation>A flavor of retail transaction line item
+								whereby the
+								customer is returning an item and they have bought it
+								with
+								them.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="ReturnForDelivery" type="RetailTransactionReturnForDelivery">
+                  <xs:annotation>
+                     <xs:documentation>A flavor of retail transaction line item
+								whereby the
+								customer is returning an item and it will be
+								delivered to some
+								location at some future date and time.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="ReturnForPickup" type="RetailTransactionReturnForPickup">
+                  <xs:annotation>
+                     <xs:documentation>A flavor of retail transaction line item
+								whereby the
+								customer is returning an item and the store will pick
+								it up from
+								some location at some future date and time.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="Layaway" type="RetailTransactionLayaway">
+                  <xs:annotation>
+                     <xs:documentation>A flavor of retail transaction line item
+								whereby the
+								customer is purchasing an item, but is not paying for
+								it now. The
+								store will put the item aside, and once the customer
+								has completed
+								payment they will take it with them.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="PreviousLayaway" type="RetailTransactionPreviousLayaway">
+                  <xs:annotation>
+                     <xs:documentation>recording previous layaway details
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="RainCheck" type="RetailTransactionRainCheck">
+                  <xs:annotation>
+                     <xs:documentation>A flavor of retail transaction line item
+								whereby the
+								customer wanted to purchase an item, but it is
+								unavailable, and the
+								store is issuing a special receipt
+								guaranteeing the price of the
+								item to the customer when it next
+								becomes
+								available.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="CustomerOrderForDelivery" type="RetailTransactionCustomerOrderForDelivery">
+                  <xs:annotation>
+                     <xs:documentation>A flavor of retail transaction line item
+								whereby the
+								customer wanted to purchase an item, but it is
+								unavailable. The
+								store is placing a special order on behalf of
+								the customer, and will
+								deliver the item when it becomes
+								available. The customer may or
+								may
+								not pay for the item at the
+								time of placing the
+								order.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="CustomerOrderForPickup" type="RetailTransactionCustomerOrderForPickup">
+                  <xs:annotation>
+                     <xs:documentation>A flavor of retail transaction line item
+								whereby the
+								customer wanted to purchase an item, but it is
+								unavailable. The
+								store is placing a special order on behalf of
+								the customer, and the
+								customer will pickup the item when it
+								becomes available. The
+								customer may or may not pay for the item
+								at the time of placing
+								the
+								order.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="PreviousCustomerOrder" type="RetailTransactionPreviousCustomerOrder"/>
+               <xs:element form="qualified" name="Discount" type="RetailTransactionDiscount"/>
+               <xs:element form="qualified" name="Rounding" type="AmountCommonData"/>
+               <xs:element form="qualified" name="Voids" type="RetailTransactionVoid"/>
+               <xs:element form="qualified" name="GiftCertificate" type="RetailTransactionGiftCertificate"/>
+               <xs:element form="qualified" name="PaymentOnAccount" type="RetailTransactionPaymentOnAccount"/>
+               <xs:element form="qualified" name="LoyaltyRedemption" type="RetailTransactionLoyaltyRedemption"/>
+               <xs:element form="qualified" name="LoyaltyReward" type="RetailTransactionLoyaltyReward">
+                  <xs:annotation>
+                     <xs:documentation>gifts &amp; other loyalty rewards given to the
+								Customer as a consequence of their purchase
+								history
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="Tax" type="RetailTransactionTax"/>
+               <xs:element form="qualified" name="Tender" type="RetailTransactionTender"/>
+               <xs:element form="qualified" name="SaleOfGiftCard" type="TenderGiftCard">
+                  <xs:annotation>
+                     <xs:documentation>line item that records the sale of a stored
+								value gift
+								card.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="GiftRegistry" type="RetailTransactionGiftRegistry">
+                  <xs:annotation>
+                     <xs:documentation>line item that records the items purchased in
+								this
+								transaction are purchased as part of the nominated Gift
+								Registry.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="FuelSale" type="RetailTransactionFuelSale">
+                  <xs:annotation>
+                     <xs:documentation>line item that records the sale of Gasoline,
+								Petrol,
+								Diesel via a pump on the Forecourt.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="RetrospectiveLoyalty" type="RetailTransactionRetrospectiveLoyaltyType">
+                  <xs:annotation>
+                     <xs:documentation>line item that records a loyalty reward that
+								stems
+								from a previously completed Retail Transaction
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="Points" type="RetailTransactionPointsType">
+                  <xs:annotation>
+                     <xs:documentation>The retail sellers give points to the customers
+								according to the attribute of item and the purchased amount. In
+								most cases, n% of the purchased amount is given to the customer.
+								In
+								some cases, for example, triple points are given when specific
+								items
+								are purchased, or double points are given in the specific
+								period,
+								which can be utilized for promotion. As point calculation
+								is
+								programmed into the business logic installed in the POS
+								terminal,
+								calculation method differs according to the company.
+								Only the
+								result of calculation is stored into the POSLog.
+								(Japan)
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="Deposit" type="RetailTransactionDepositType"/>
+               <xs:element form="qualified" name="StoredValueFundSale" type="StoredValueFundType">
+                  <xs:annotation>
+                     <xs:documentation>Used when things such as a car wash voucher is
+								sold
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" maxOccurs="unbounded" name="ScanData" type="RetailTransactionScanData">
+                  <xs:annotation>
+                     <xs:documentation>The scan data from the MSR, RFID or
+								Barcode
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+            </xs:choice>
+            <xs:any namespace="##other" processContents="lax">
+               <xs:annotation>
+                  <xs:documentation>This is a compromise to allow either a new line
+							item type
+							or to add additional information at the line item
+							level
+						</xs:documentation>
+               </xs:annotation>
+            </xs:any>
+         </xs:choice>
+      </xs:sequence>
+      <xs:attribute default="false" form="unqualified" name="VoidFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>This status designates a transaction line that was
+					reversed as
+					part of a tendered transaction, that is, it designates a
+					transaction
+					line that
+					was reversed after the transaction was
+					committed
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="CancelFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>Cancel is used to designate a transaction line or
+					entire
+					transaction that was reversed prior to the tender of a
+					transaction.
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="DeleteFlag" type="xs:boolean">
+         <xs:annotation>
+            <xs:documentation>Delete indicates a line item was sent to the
+					kitchen, the order
+					was recalled and the item was removed from the
+					order.
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="Scanned" form="unqualified" name="EntryMethod" type="EntryMethodTypeCode" use="optional"/>
+      <xs:attribute default="Normal" form="unqualified" name="ProcessMode" type="POSLogProcessMode" use="optional"/>
+      <xs:attribute default="Add" form="unqualified" name="Action" type="LineItemActionTypeCode" use="optional"/>
+      <xs:attribute default="false" form="unqualified" name="CODFlag" type="xs:boolean" use="optional"/>
+      <xs:anyAttribute namespace="##other" processContents="lax"/>
+   </xs:complexType>
+   <xs:simpleType name="LineItemActionTypeCode">
+      <xs:union memberTypes="base:LineItemActionTypeCodeEnumeration enums:TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="LineItemActionTypeCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Begin"/>
+         <xs:enumeration value="InProcess"/>
+         <xs:enumeration value="Cancel"/>
+         <xs:enumeration value="Complete"/>
+         <xs:enumeration value="Create"/>
+         <xs:enumeration value="Delete"/>
+         <xs:enumeration value="Dispatch"/>
+         <xs:enumeration value="Delivered"/>
+         <xs:enumeration value="Lookup"/>
+         <xs:enumeration value="Initiate"/>
+         <xs:enumeration value="Instruction"/>
+         <xs:enumeration value="PartialCancel"/>
+         <xs:enumeration value="PartialComplete"/>
+         <xs:enumeration value="Read"/>
+         <xs:enumeration value="Request"/>
+         <xs:enumeration value="Update"/>
+         <xs:enumeration value="Add"/>
+         <xs:enumeration value="Subtract"/>
+         <xs:enumeration value="Replace"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailTransactionItem">
+      <xs:annotation>
+         <xs:documentation>A line item component of a RetailTransaction that
+				records the exchange
+				in ownership of a merchandise item (i.e. a sale
+				or return) or the sale
+				or refund
+				related to a service
+			</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:choice maxOccurs="4">
+            <xs:choice>
+               <xs:element form="qualified" name="POSIdentity" type="RetailTransactionPOSIdentity"/>
+               <xs:element form="qualified" name="ItemID">
+                  <xs:complexType>
+                     <xs:simpleContent>
+                        <xs:extension base="ItemIDCommonData"/>
+                     </xs:simpleContent>
+                  </xs:complexType>
+               </xs:element>
+               <xs:element form="qualified" name="SpecialOrderNumber" type="xs:string"/>
+            </xs:choice>
+            <xs:element form="qualified" maxOccurs="unbounded" name="MerchandiseHierarchy" type="MerchandiseHierarchyCommonData"/>
+         </xs:choice>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="EPC" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>EPC will be used to identify individual items.
+						For example,
+						items that have different colors have same EAN/UPC but
+						EPCs are
+						different.
+						POS is not only required to use EAN/UPC for
+						price look-up but also is
+						needed
+						to store EPC in poslog to track
+						individual item.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="OrderItemStatus" type="OrderItemStatusType">
+            <xs:annotation>
+               <xs:documentation>Identifies the current status of this item in a
+						Customer
+						Order. Normally has no relevance in a Retail
+						Transaction.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="ItemNotOnFileFlag" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>A flag denoting that this LineItem is selling an
+						item that was
+						not found by the PLU process.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="Description" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="TaxIncludedInPriceFlag" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>A flag denoting that the selling prices of this
+						LineItem
+						include all applicable taxes
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="UnitCostPrice" type="UnitPriceCommonData">
+            <xs:annotation>
+               <xs:documentation>The unit cost of the Item to the retail
+						enterprise at the time
+						of the Transaction.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="UnitListPrice" type="UnitPriceCommonData">
+            <xs:annotation>
+               <xs:documentation>The unit MSRP of the Item at the time of the
+						Transaction
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="RegularSalesUnitPrice" type="UnitPriceCommonData">
+            <xs:annotation>
+               <xs:documentation>The regular or lookup per-unit price for the item
+						before any
+						discounts or surcharges have been applied.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="InventoryValuePrice" type="UnitPriceCommonData"/>
+         <xs:element form="qualified" minOccurs="0" name="ActualSalesUnitPrice" type="ActualSalesUnitPriceType">
+            <xs:annotation>
+               <xs:documentation>the amount a signle item sold for taking into
+						account
+						discounts and surcharges. The amount charged the customer
+						(ExtendedAmount)
+						takes into account this number times quantity.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="ExtendedAmount" type="ExtendedAmountType">
+            <xs:annotation>
+               <xs:documentation>The acutal amount this item sells for. It is the
+						ActualSalesUnitPrice times the quantity taking into account any
+						retail price
+						modifiers.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="DiscountAmount" type="AmountCommonData">
+            <xs:annotation>
+               <xs:documentation>The total discount applied to the UnitPrice of
+						this item being
+						sold
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="ExtendedDiscountAmount" type="AmountCommonData">
+            <xs:annotation>
+               <xs:documentation>The total discount applied to this item
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="Quantity" type="QuantityCommonData"/>
+         <xs:element form="qualified" minOccurs="0" name="SellingLocation" type="StoreStructure">
+            <xs:annotation>
+               <xs:documentation>Unique identifier for a SellingLocation,
+						(Department, Floor,
+						etc) which denotes a particular part of the
+						store from which the item
+						being
+						sold came.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="Associate" type="RetailTransactionAssociate"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="RetailPriceModifier" type="RetailPriceModifierType"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="Modification" type="RetailTransactionModification">
+            <xs:annotation>
+               <xs:documentation>Identifies things that can be done to this item
+						prior to
+						delivery, i.e. cook the steak well done
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="Tax" type="ItemTaxType"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="SerialNumber" type="RetailTransactionSerialNumber"/>
+         <xs:element form="qualified" minOccurs="0" name="TransactionLink" type="POSLogTransactionLink">
+            <xs:annotation>
+               <xs:documentation>link to a previous RetailTransaction
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="ItemLink" type="SequenceNumberType">
+            <xs:annotation>
+               <xs:documentation>SequenceNumber of another related
+						RetailTransactionLineItem in
+						the same transaction
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="Rounding" type="AmountCommonData">
+            <xs:annotation>
+               <xs:documentation>An amount denoting how the calculated price of
+						the LineItem
+						was rounded to make it match the available
+						denominations of the
+						currency.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="Item" type="ItemType">
+            <xs:annotation>
+               <xs:documentation>Allows easy management of components of items,
+						such as
+						onions, ketchup, etc. or replacing a large drink with a
+						small drink in a
+						combo.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="Kit" type="RetailTransactionKit">
+            <xs:annotation>
+               <xs:documentation>Identifies the components to the kit identified
+						by this line
+						item. For example, line item could be a stereo and the
+						kit components
+						would
+						be the speakers and amplifier, each having its
+						own identification
+						information
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="Combo" type="RetailTransactionKit">
+            <xs:annotation>
+               <xs:documentation>Replace term "Kit" because Kit isn't appropriate
+						for
+						foodservice equivalent (functionally equivalent to Kit) - A
+						collection of
+						items that is priced and sold as a single item, but
+						which is
+						exploded into
+						its constituent items for the purposes of
+						tracking
+						inventory.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="Division" type="DivisionType">
+            <xs:annotation>
+               <xs:documentation>Allows reporting ingredients on a particular
+						portion of a
+						pizza or a sandwich or etc. for example, one side of
+						the pizza with
+						pepporoni and sausage while the other side has
+						cheese.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="Hospitality" type="RetailTransactionFoodservice">
+            <xs:annotation>
+               <xs:documentation>Not used in Foodservice. Replaced by Foodservice
+						element.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="Foodservice" type="RetailTransactionFoodservice">
+            <xs:annotation>
+               <xs:documentation>Replaces term "Hospitality" to better reflect the
+						contents of
+						the complex type
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="RegistryID" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>The Gift Registry ID</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="GiftReceiptFlag" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>Records the fact that a GiftReceipt was printed
+						for this
+						Item
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="LoyaltyAccount">
+            <xs:complexType>
+               <xs:complexContent>
+                  <xs:extension base="LoyaltyAccountCommonData"/>
+               </xs:complexContent>
+            </xs:complexType>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="ServicePointID">
+            <xs:annotation>
+               <xs:documentation>Identifier of FuellingPoint. name and type are
+						attributes. In
+						a fuel sale case type is "FuelDispenser" and Name is
+						"Pump1". This
+						allows
+						for future where a customer operated POS with
+						car valet, lubricant or
+						other
+						vending machines
+					</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:simpleContent>
+                  <xs:extension base="xs:string">
+                     <xs:attribute form="unqualified" name="Name" type="xs:string" use="optional"/>
+                  </xs:extension>
+               </xs:simpleContent>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+      <xs:attribute default="Stock" form="unqualified" name="ItemType" type="RetailTransactionItemType" use="optional"/>
+      <xs:attribute form="unqualified" name="ItemSubType" type="RetailTransactionItemSubType" use="optional">
+         <xs:annotation>
+            <xs:documentation>A code denoting what kind of further processing is
+					required for
+					this particular item
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="EquivalentItemFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>Indicates this item is an equivalent item to the
+					primary item in
+					the kit/combo. Used to indicate a substitution was
+					made which did not
+					change
+					the price of the item in a kit. A flag
+					noting that this item is being
+					sold as
+					an equivalent to the item
+					being sold. For example, the item is soft
+					drink from
+					a dispenser;
+					coke, pepsi, ... are equivalents
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="FoodstampableFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>Identifies this item as qualifying for
+					foodstamps
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="SuggestedFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>Flag to indicate this item was suggested in this
+					sale, return,
+					...
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="None" form="unqualified" name="SuggestedSource" type="base:SuggestedSourceTypeCode" use="optional">
+         <xs:annotation>
+            <xs:documentation>A code denoting the origin of the suggestive
+					selling
+					suggestion
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="true" form="unqualified" name="TaxableFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>Identifies this item as a taxable item
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:anyAttribute namespace="##other" processContents="lax"/>
+   </xs:complexType>
+   <xs:complexType name="ItemType">
+      <xs:annotation>
+         <xs:documentation>Foodservice needs the ability to easily add onions,
+				ketchup, etc to
+				particular items and using a kit isn't appropriate
+			</xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:attribute form="unqualified" name="Action" type="RetailPriceModifierAmountAction"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="DivisionType">
+      <xs:annotation>
+         <xs:documentation>correlates multiple items which are used on part of
+				the item, i.e. a
+				pizza with half pepperoni and sausage with the other
+				half being
+				cheese.
+			</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element form="qualified" maxOccurs="unbounded" name="Item" type="ItemType"/>
+         <xs:element form="qualified" minOccurs="0" name="Description" type="DescriptionCommonData"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="ActualSalesUnitPriceType">
+      <xs:simpleContent>
+         <xs:extension base="AmountCommonData">
+            <xs:attribute default="Add" form="unqualified" name="Action" type="RetailPriceModifierAmountAction">
+               <xs:annotation>
+                  <xs:documentation>Allows for differential pricing as in "Super
+							Size Me" adds
+							.39 to the Combo Price or replace Large with Small
+							and reduce price
+							by
+							.20.
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
+   <xs:complexType name="ExtendedAmountType">
+      <xs:simpleContent>
+         <xs:extension base="AmountCommonData">
+            <xs:attribute default="Add" form="unqualified" name="Action" type="RetailPriceModifierAmountAction">
+               <xs:annotation>
+                  <xs:documentation>Allows for differential pricing as in "Super
+							Size Me" adds
+							.39 to the Combo Price or replace Large with Small
+							and reduce price
+							by
+							.20.
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
+   <xs:complexType name="ItemTaxType">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionTax">
+            <xs:attribute default="Add" form="unqualified" name="Action" type="RetailPriceModifierAmountAction">
+               <xs:annotation>
+                  <xs:documentation>Allows for differential pricing as in "Super
+							Size Me" adds
+							.39 to the Combo Price or replace Large with Small
+							and reduce price
+							by
+							.20.
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="RetailTransactionSerialNumber">
+      <xs:restriction base="xs:string"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionAccountCardNumber">
+      <xs:restriction base="xs:string"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionAccountNumber">
+      <xs:restriction base="xs:string"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionInventoryReservationID">
+      <xs:restriction base="xs:string"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionItemType">
+      <xs:union memberTypes="base:RetailTransactionItemTypeEnumeration enums:TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionItemTypeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Stock"/>
+         <xs:enumeration value="Grade"/>
+         <xs:enumeration value="Service"/>
+         <xs:enumeration value="Alteration"/>
+         <xs:enumeration value="Fee"/>
+         <xs:enumeration value="FeeRefund"/>
+         <xs:enumeration value="Deposit"/>
+         <xs:enumeration value="DepositRefund"/>
+         <xs:enumeration value="Tare"/>
+         <xs:enumeration value="ItemCollection"/>
+         <xs:enumeration value="Warranty"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionItemSubType">
+      <xs:union memberTypes="RetailTransactionItemSubTypeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionItemSubTypeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Normal"/>
+         <xs:enumeration value="TradeIn"/>
+         <xs:enumeration value="Rework"/>
+         <xs:enumeration value="Restock"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailTransactionSale">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:anyAttribute namespace="##other" processContents="lax"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionSaleForDelivery">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="Delivery" type="RetailTransactionDelivery"/>
+               <xs:element form="qualified" minOccurs="0" name="InventoryReservationID" type="RetailTransactionInventoryReservationID">
+                  <xs:annotation>
+                     <xs:documentation>A unique identifier for an inventory
+								reservation, that
+								was made as part of POS processing of the line
+								item.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" minOccurs="0" name="From" type="POSLogRetailStoreID">
+                  <xs:annotation>
+                     <xs:documentation>The retail store, from which the item being
+								sold will
+								be taken when delivered or picked up.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:attribute default="New" form="unqualified" name="OrderStatus" type="RetailTransactionOrderStatus" use="optional"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionSaleForPickup">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="Pickup" type="RetailTransactionPickup"/>
+               <xs:element form="qualified" minOccurs="0" name="InventoryReservationID" type="RetailTransactionInventoryReservationID"/>
+               <xs:element form="qualified" minOccurs="0" name="From" type="POSLogRetailStoreID"/>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:attribute default="New" form="unqualified" name="OrderStatus" type="RetailTransactionOrderStatus" use="optional"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionReturn">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="Disposal" type="RetailTransactionDisposal">
+                  <xs:annotation>
+                     <xs:documentation>Describes what to do with the returned
+								item
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="OperatorBypassApproval" type="RetailTransactionApproval"/>
+               <xs:element form="qualified" minOccurs="0" name="To" type="POSLogRetailStoreID">
+                  <xs:annotation>
+                     <xs:documentation>A unique identifier for the retail store, to
+								where the
+								item will be returned.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" minOccurs="0" name="Reason" type="POSLogReason"/>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:anyAttribute namespace="##other" processContents="lax"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionReturnForPickup">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="Disposal" type="RetailTransactionDisposal"/>
+               <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="OperatorBypassApproval" type="RetailTransactionApproval"/>
+               <xs:element form="qualified" minOccurs="0" name="To" type="POSLogRetailStoreID"/>
+               <xs:element form="qualified" minOccurs="0" name="Reason" type="POSLogReason"/>
+               <xs:element form="qualified" minOccurs="0" name="Pickup" type="RetailTransactionPickup"/>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:attribute default="Return" form="unqualified" name="OrderStatus" type="RetailTransactionOrderStatus" use="optional"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionReturnForDelivery">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="Disposal" type="RetailTransactionDisposal"/>
+               <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="OperatorBypassApproval" type="RetailTransactionApproval"/>
+               <xs:element form="qualified" minOccurs="0" name="To" type="POSLogRetailStoreID"/>
+               <xs:element form="qualified" minOccurs="0" name="Reason" type="POSLogReason"/>
+               <xs:element form="qualified" minOccurs="0" name="Delivery" type="RetailTransactionDelivery"/>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:attribute default="Return" form="unqualified" name="OrderStatus" type="RetailTransactionOrderStatus" use="optional"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionLayaway">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="InventoryReservationID" type="RetailTransactionInventoryReservationID"/>
+               <xs:element form="qualified" minOccurs="0" name="AccountNumber" type="RetailTransactionAccountNumber"/>
+               <xs:element form="qualified" minOccurs="0" name="Deposit" type="AmountCommonData"/>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:attribute default="false" form="unqualified" name="OverrideFlag" type="xs:boolean" use="optional"/>
+            <xs:attribute default="New" form="unqualified" name="Status" type="LayawayStatusType" use="optional"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="LayawayStatusType">
+      <xs:union memberTypes="LayawayStatusTypeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="LayawayStatusTypeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="New"/>
+         <xs:enumeration value="Expired"/>
+         <xs:enumeration value="Completed"/>
+         <xs:enumeration value="Deleted"/>
+         <xs:enumeration value="Void"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailTransactionPreviousLayaway">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="AccountNumber" type="RetailTransactionAccountNumber"/>
+               <xs:element form="qualified" minOccurs="0" name="AmountRemaining">
+                  <xs:complexType>
+                     <xs:simpleContent>
+                        <xs:extension base="AmountCommonData"/>
+                     </xs:simpleContent>
+                  </xs:complexType>
+               </xs:element>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:attribute default="InProgress" form="unqualified" name="Action" type="RetailTransactionPreviousLayawayAction" use="optional"/>
+            <xs:anyAttribute namespace="##other" processContents="lax"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="RetailTransactionPreviousLayawayAction">
+      <xs:union memberTypes="RetailTransactionPreviousLayawayActionEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionPreviousLayawayActionEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Completed"/>
+         <xs:enumeration value="InProgress"/>
+         <xs:enumeration value="Cancelled"/>
+         <xs:enumeration value="Returnable"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailTransactionRainCheck">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="Customer" type="RetailTransactionCustomer"/>
+               <xs:element form="qualified" minOccurs="0" name="InventoryReservationID" type="RetailTransactionInventoryReservationID"/>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:anyAttribute namespace="##other" processContents="lax"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionCustomerOrderForDelivery">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="Delivery" type="RetailTransactionDelivery"/>
+               <xs:element form="qualified" minOccurs="0" name="InventoryReservationID" type="RetailTransactionInventoryReservationID"/>
+               <xs:element form="qualified" minOccurs="0" name="From" type="POSLogRetailStoreID"/>
+               <xs:element form="qualified" minOccurs="0" name="AccountNumber" type="RetailTransactionAccountNumber"/>
+               <xs:element form="qualified" minOccurs="0" name="Deposit" type="xs:decimal"/>
+               <xs:element form="qualified" minOccurs="0" name="OrderQuantity" type="OrderQuantityType"/>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:attribute default="New" form="unqualified" name="OrderStatus" type="RetailTransactionOrderStatus" use="optional">
+               <xs:annotation>
+                  <xs:documentation>defines the status of this customer
+							order
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute form="unqualified" name="PreviousOrderStatus" type="RetailTransactionOrderStatus" use="optional">
+               <xs:annotation>
+                  <xs:documentation>A string denoting the state of the customer
+							order before
+							it was changed by this control transaction.
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute default="false" form="unqualified" name="StatusChangedFlag" type="xs:boolean" use="optional">
+               <xs:annotation>
+                  <xs:documentation>A flag denoting that the status of the line item
+							has been
+							changed
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:anyAttribute namespace="##other" processContents="lax"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionCustomerOrderForPickup">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="Pickup" type="RetailTransactionPickup"/>
+               <xs:element form="qualified" minOccurs="0" name="InventoryReservationID" type="RetailTransactionInventoryReservationID"/>
+               <xs:element form="qualified" minOccurs="0" name="From" type="POSLogRetailStoreID"/>
+               <xs:element form="qualified" minOccurs="0" name="AccountNumber" type="RetailTransactionAccountNumber"/>
+               <xs:element form="qualified" minOccurs="0" name="Deposit" type="xs:decimal"/>
+               <xs:element form="qualified" minOccurs="0" name="OrderQuantity" type="OrderQuantityType"/>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:attribute default="New" form="unqualified" name="OrderStatus" type="RetailTransactionOrderStatus" use="optional">
+               <xs:annotation>
+                  <xs:documentation>defines the status of this customer
+							order
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute default="New" form="unqualified" name="PreviousOrderStatus" type="RetailTransactionOrderStatus" use="optional">
+               <xs:annotation>
+                  <xs:documentation>A string denoting the state of the customer
+							order before
+							it was changed by this control transaction.
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute default="false" form="unqualified" name="StatusChangedFlag" type="xs:boolean" use="optional">
+               <xs:annotation>
+                  <xs:documentation>A flag denoting that the status of the line item
+							has been
+							changed
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:anyAttribute namespace="##other" processContents="lax"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="OrderQuantityType">
+      <xs:simpleContent>
+         <xs:extension base="QuantityCommonData">
+            <xs:attribute form="unqualified" name="TypeCode" type="OrderQuantityTypeCodes" use="optional">
+               <xs:annotation>
+                  <xs:documentation>The number of ordered items that have been
+							packed/shipped
+							in preparation for shipping
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
+   <xs:simpleType name="OrderQuantityTypeCodes">
+      <xs:union memberTypes="OrderQuantityTypeCodesEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="OrderQuantityTypeCodesEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Picked"/>
+         <xs:enumeration value="Shipped"/>
+         <xs:enumeration value="Changed"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailTransactionPreviousCustomerOrder">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="InventoryReservationID" type="RetailTransactionInventoryReservationID"/>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:attribute form="unqualified" name="Action" type="RetailTransactionPreviousCustomerOrderAction" use="required"/>
+            <xs:anyAttribute namespace="##other" processContents="lax"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="RetailTransactionPreviousCustomerOrderAction">
+      <xs:union memberTypes="RetailTransactionPreviousCustomerOrderActionEnumeration             TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionPreviousCustomerOrderActionEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Completed"/>
+         <xs:enumeration value="Cancelled"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailTransactionPaymentOnAccount">
+      <xs:sequence>
+         <xs:choice maxOccurs="2" minOccurs="0">
+            <xs:element form="qualified" name="AccountCardNumber" type="RetailTransactionAccountCardNumber"/>
+            <xs:element form="qualified" name="AccountNumber" type="RetailTransactionAccountNumber"/>
+         </xs:choice>
+         <xs:element form="qualified" name="Amount" type="xs:decimal"/>
+         <xs:element form="qualified" minOccurs="0" name="BalanceDue" type="xs:decimal">
+            <xs:annotation>
+               <xs:documentation>The new balance due on the Customer Account after
+						this payment
+						has been recognized
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:attribute default="true" form="unqualified" name="Refund" type="xs:boolean" use="optional"/>
+      <xs:attribute form="unqualified" name="AccountCode" type="RetailTransactionAccountCode">
+         <xs:annotation>
+            <xs:documentation>A code denoting the kind of account for which the
+					payment was
+					accepted
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:anyAttribute namespace="##other" processContents="lax"/>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionScanData">
+      <xs:simpleContent>
+         <xs:extension base="xs:string">
+            <xs:attribute form="unqualified" name="TypeCode" type="ScanDataTypeCode"/>
+         </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
+   <xs:simpleType name="ScanDataTypeCode">
+      <xs:union memberTypes="ScanDataTypeCodeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="ScanDataTypeCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Barcode"/>
+         <xs:enumeration value="Coupon"/>
+         <xs:enumeration value="MSR"/>
+         <xs:enumeration value="RFID"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailPriceModifierType">
+      <xs:sequence>
+         <xs:element form="qualified" name="SequenceNumber" type="SequenceNumberType"/>
+         <xs:choice minOccurs="0">
+            <xs:element form="qualified" name="Amount">
+               <xs:complexType>
+                  <xs:simpleContent>
+                     <xs:extension base="AmountCommonData">
+                        <xs:attribute form="unqualified" name="Action" type="RetailPriceModifierAmountAction" use="required"/>
+                     </xs:extension>
+                  </xs:simpleContent>
+               </xs:complexType>
+            </xs:element>
+            <xs:element form="qualified" name="Percent">
+               <xs:complexType>
+                  <xs:simpleContent>
+                     <xs:extension base="PercentageCommonData">
+                        <xs:attribute form="unqualified" name="Action" type="RetailPriceModifierPercentAction" use="required"/>
+                     </xs:extension>
+                  </xs:simpleContent>
+               </xs:complexType>
+            </xs:element>
+         </xs:choice>
+         <xs:element form="qualified" minOccurs="0" name="PreviousPrice">
+            <xs:complexType>
+               <xs:simpleContent>
+                  <xs:extension base="UnitPriceCommonData"/>
+               </xs:simpleContent>
+            </xs:complexType>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="NewPrice">
+            <xs:complexType>
+               <xs:simpleContent>
+                  <xs:extension base="UnitPriceCommonData"/>
+               </xs:simpleContent>
+            </xs:complexType>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="PromotionID" type="xs:string"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="PriceDerivationRule" type="RetailTransactionPriceDerivationRule"/>
+         <xs:element form="qualified" minOccurs="0" name="ReasonCode" type="xs:string"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="OperatorBypassApproval" type="RetailTransactionApproval"/>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:attribute default="Customer" form="unqualified" name="DiscountBenefit" type="DiscountBenefitTypeCode" use="optional"/>
+      <xs:attribute default="Promotion" form="unqualified" name="MethodCode" type="RetailPriceModifierMethodCode" use="optional"/>
+   </xs:complexType>
+   <xs:simpleType name="RetailTransactionAccountCode">
+      <xs:union memberTypes="RetailTransactionAccountCodeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionAccountCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Unspecified"/>
+         <xs:enumeration value="HouseAccount"/>
+         <xs:enumeration value="Layaway"/>
+         <xs:enumeration value="Order"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="RetailPriceModifierAmountAction">
+      <xs:union memberTypes="RetailPriceModifierAmountActionEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailPriceModifierAmountActionEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Add"/>
+         <xs:enumeration value="Subtract"/>
+         <xs:enumeration value="Replace"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="RetailPriceModifierPercentAction">
+      <xs:union memberTypes="RetailPriceModifierPercentActionEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailPriceModifierPercentActionEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Add"/>
+         <xs:enumeration value="Subtract"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="RetailPriceModifierMethodCode">
+      <xs:union memberTypes="RetailPriceModifierMethodCodeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailPriceModifierMethodCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="PriceOverride"/>
+         <xs:enumeration value="PriceRule"/>
+         <xs:enumeration value="Promotion"/>
+         <xs:enumeration value="Markdown"/>
+         <xs:enumeration value="Coupon"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailTransactionDisposal">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="NewItemID" type="ItemIDCommonData"/>
+         <xs:element form="qualified" minOccurs="0" name="EPC" type="xs:string"/>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:attribute form="unqualified" name="Method" type="DisposalMethodTypeCode" use="required">
+         <xs:annotation>
+            <xs:documentation>Describes what to do with the returned item
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:anyAttribute namespace="##other" processContents="lax"/>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionKit">
+      <xs:sequence>
+         <xs:element form="qualified" maxOccurs="unbounded" name="Member" type="RetailTransactionKitMember"/>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:anyAttribute namespace="##other" processContents="lax"/>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionKitMember">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="SequenceNumber" type="SequenceNumberType"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="DateTime" type="DateTimeCommonData"/>
+         <xs:choice>
+            <xs:element form="qualified" name="Sale" type="RetailTransactionSale"/>
+            <xs:element form="qualified" name="SaleForDelivery" type="RetailTransactionSaleForDelivery"/>
+            <xs:element form="qualified" name="SaleForPickup" type="RetailTransactionSaleForPickup"/>
+            <xs:element form="qualified" name="Return" type="RetailTransactionReturn"/>
+            <xs:element form="qualified" name="ReturnForDelivery" type="RetailTransactionReturnForDelivery"/>
+            <xs:element form="qualified" name="ReturnForPickup" type="RetailTransactionReturnForPickup"/>
+            <xs:element form="qualified" name="Layaway" type="RetailTransactionLayaway"/>
+            <xs:element form="qualified" name="CustomerOrderForDelivery" type="RetailTransactionCustomerOrderForDelivery"/>
+            <xs:element form="qualified" name="CustomerOrderForPickup" type="RetailTransactionCustomerOrderForPickup"/>
+            <xs:any namespace="##other" processContents="lax"/>
+         </xs:choice>
+      </xs:sequence>
+      <xs:attribute default="IsPartOf" form="unqualified" name="Action" type="RetailTransactionKitAction" use="optional"/>
+      <xs:attribute form="unqualified" name="Name" type="xs:string" use="optional"/>
+      <xs:anyAttribute namespace="##other" processContents="lax"/>
+   </xs:complexType>
+   <xs:simpleType name="RetailTransactionKitAction">
+      <xs:union memberTypes="RetailTransactionKitActionEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionKitActionEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="IsPartOf"/>
+         <xs:enumeration value="AddsTo"/>
+         <xs:enumeration value="IsRemovedFrom"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionOrderStatus">
+      <xs:union memberTypes="RetailTransactionOrderStatusEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="RetailTransactionOrderStatusEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Canceled"/>
+         <xs:enumeration value="Completed"/>
+         <xs:enumeration value="Filled"/>
+         <xs:enumeration value="New"/>
+         <xs:enumeration value="Printed"/>
+         <xs:enumeration value="Partial"/>
+         <xs:enumeration value="Return"/>
+         <xs:enumeration value="Voided"/>
+         <xs:enumeration value="Undefined"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailTransactionPriceDerivationRule">
+      <xs:sequence>
+         <xs:element form="qualified" name="PriceDerivationRuleID" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>A unique identifier of the price
+						derivation.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="Eligibility" type="PriceDerivationRuleEligibility"/>
+         <xs:choice minOccurs="0">
+            <xs:element form="qualified" name="Amount">
+               <xs:complexType>
+                  <xs:simpleContent>
+                     <xs:extension base="AmountCommonData">
+                        <xs:attribute form="unqualified" name="Action" type="RetailPriceModifierAmountAction" use="required"/>
+                     </xs:extension>
+                  </xs:simpleContent>
+               </xs:complexType>
+            </xs:element>
+            <xs:element form="qualified" name="Percent">
+               <xs:complexType>
+                  <xs:simpleContent>
+                     <xs:extension base="PercentageCommonData">
+                        <xs:attribute form="unqualified" name="Action" type="RetailPriceModifierPercentAction" use="required"/>
+                     </xs:extension>
+                  </xs:simpleContent>
+               </xs:complexType>
+            </xs:element>
+         </xs:choice>
+         <xs:element form="qualified" minOccurs="0" name="ReasonCode">
+            <xs:annotation>
+               <xs:documentation>A code detailing the reason for applying this
+						PriceDerivationRule.
+					</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:simpleContent>
+                  <xs:extension base="ReasonCodeCommonData"/>
+               </xs:simpleContent>
+            </xs:complexType>
+         </xs:element>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:attribute default="false" form="unqualified" name="IncludedInBestDealFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>the best deal pricing algorithm triggered the
+					discount for this
+					item or group of items. So when the 12 bottles are
+					purchased; the item
+					indicated
+					is included in the best pricing
+					algorithm based on whatever pricing
+					rules you
+					have in place.
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="AdvancePriceRuleFlag" type="xs:boolean" use="optional"/>
+      <xs:attribute form="unqualified" name="AssignmentBasis" type="AssignmentBasisTypeCode" use="optional">
+         <xs:annotation>
+            <xs:documentation>A code denoting the basis on which the
+					PriceDerivationRule is
+					assigned to a LineItem
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute form="unqualified" name="Method" type="PriceDerivationMethodCode" use="optional">
+         <xs:annotation>
+            <xs:documentation>A code denoting what sort of discount is to be
+					granted with this
+					Price Derivation Rule
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute form="unqualified" name="AccountingType" type="AccountingTypeCode" use="optional">
+         <xs:annotation>
+            <xs:documentation>A code denoting how the price derivation is to be
+					accounted for in
+					the store's general ledger
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute form="unqualified" name="ApplicationType" type="PriceDerivationApplicationTypeCode" use="optional">
+         <xs:annotation>
+            <xs:documentation>The discount type code from the
+					PriceDerivationRule
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute form="unqualified" name="Reference" type="PriceDerivationReferenceTypeCode" use="optional">
+         <xs:annotation>
+            <xs:documentation>The discount reference ID from the
+					PriceDerivationRule
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute form="unqualified" name="ComparisonBasis" type="PriceDerivationComparisonBasisTypeCode" use="optional">
+         <xs:annotation>
+            <xs:documentation>A code denoting the comparison basis that was used
+					when applying
+					this PriceDerivationRule
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:anyAttribute namespace="##other" processContents="lax"/>
+   </xs:complexType>
+   <xs:simpleType name="AssignmentBasisTypeCode">
+      <xs:union memberTypes="AssignmentBasisTypeCodeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="AssignmentBasisTypeCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Item"/>
+         <xs:enumeration value="Manual"/>
+         <xs:enumeration value="Customer"/>
+         <xs:enumeration value="StoreCoupon"/>
+         <xs:enumeration value="Employee"/>
+         <xs:enumeration value="Other"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="PriceDerivationMethodCode">
+      <xs:union memberTypes="PriceDerivationMethodCodeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="PriceDerivationMethodCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="NotInUse"/>
+         <xs:enumeration value="ByPercentage"/>
+         <xs:enumeration value="ByAmount"/>
+         <xs:enumeration value="FixedPrice"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="AccountingTypeCode">
+      <xs:union memberTypes="AccountingTypeCodeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="AccountingTypeCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Discount"/>
+         <xs:enumeration value="Markdown"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="PriceDerivationApplicationTypeCode">
+      <xs:union memberTypes="PriceDerivationApplicationTypeCodeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="PriceDerivationApplicationTypeCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Manual"/>
+         <xs:enumeration value="Item"/>
+         <xs:enumeration value="MixMatch"/>
+         <xs:enumeration value="FixedPrice"/>
+         <xs:enumeration value="PromotionalAward"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="PriceDerivationReferenceTypeCode">
+      <xs:union memberTypes="PriceDerivationReferenceTypeCodeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="PriceDerivationReferenceTypeCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Item"/>
+         <xs:enumeration value="Manual"/>
+         <xs:enumeration value="Customer"/>
+         <xs:enumeration value="StoreCoupon"/>
+         <xs:enumeration value="Employee"/>
+         <xs:enumeration value="Other"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="PriceDerivationComparisonBasisTypeCode">
+      <xs:union memberTypes="PriceDerivationComparisonBasisTypeCodeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="PriceDerivationComparisonBasisTypeCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="ItemID"/>
+         <xs:enumeration value="DepartmentID"/>
+         <xs:enumeration value="MerchandiseClass"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="PriceDerivationRuleEligibility">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="ReferenceID" type="xs:string"/>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:attribute form="unqualified" name="Type" type="DerivationRuleEligibilityType" use="required"/>
+   </xs:complexType>
+   <xs:simpleType name="DerivationRuleEligibilityType">
+      <xs:union memberTypes="DerivationRuleEligibilityTypeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="DerivationRuleEligibilityTypeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Item"/>
+         <xs:enumeration value="MerchandiseClass"/>
+         <xs:enumeration value="Customer"/>
+         <xs:enumeration value="CustomerGroup"/>
+         <xs:enumeration value="CustomerAccount"/>
+         <xs:enumeration value="Employee"/>
+         <xs:enumeration value="CalendarPeriod"/>
+         <xs:enumeration value="Brand"/>
+         <xs:enumeration value="PriceLine"/>
+         <xs:enumeration value="TotalBasket"/>
+         <xs:enumeration value="StoreCoupon"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailTransactionDiscount">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="DiscountID" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="Rounding" type="AmountCommonData"/>
+         <xs:element form="qualified" minOccurs="0" name="Amount" type="AmountCommonData"/>
+         <xs:element form="qualified" minOccurs="0" name="Percentage" type="xs:decimal">
+            <xs:annotation>
+               <xs:documentation>The percentage of the transaction total that is
+						being given as
+						a discount
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="PriceDerivationRule" type="RetailTransactionPriceDerivationRule"/>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:attribute default="Customer" form="unqualified" name="DiscountBenefit" type="DiscountBenefitTypeCode" use="optional">
+         <xs:annotation>
+            <xs:documentation>A code denoting who is benefiting from this
+					discount: Customer,
+					Employee, etc..
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="ProratedFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>A flag denoting that this discount was pro-rated
+					across all of the
+					items in the transaction
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="true" form="unqualified" name="EnabledFlag" type="xs:boolean" use="optional"/>
+      <xs:attribute default="Promotion" form="unqualified" name="TypeCode" type="RetailPriceModifierMethodCode" use="optional"/>
+      <xs:anyAttribute namespace="##other" processContents="lax"/>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionGiftRegistry">
+      <xs:sequence>
+         <xs:element form="qualified" name="ItemLink" type="POSLogTransactionLink"/>
+         <xs:element form="qualified" minOccurs="0" name="Quantity" type="QuantityCommonData"/>
+         <xs:element form="qualified" name="RegistryID" type="xs:string"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionFuelSale">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionItem">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="FuelingPointID" type="xs:string">
+                  <xs:annotation>
+                     <xs:documentation>The item of forecourt equipment which is
+								capable of
+								dispensing a single motor fuel product at one time.
+								The Fuelling
+								Point contains one or more Logical Nozzles. The
+								customer identifies
+								this Fuelling Point normally with “Pump
+								Number”. (IFSF
+								Definition)
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" minOccurs="0" name="NozzleID" type="xs:string">
+                  <xs:annotation>
+                     <xs:documentation>That part of the FUELING POINT that blends and
+								measures the volume of fuel dispensed during a FUELING
+								TRANSACTION
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="TankID">
+                  <xs:annotation>
+                     <xs:documentation>identifier of tank which stored the fuel grade
+								delivered - to enable sales by storage location (tank) Note if
+								the
+								ItemType=Blend; there are two or more TankID elements with
+								BlendRatio, e.g. by default BlendRatio=100
+							</xs:documentation>
+                  </xs:annotation>
+                  <xs:complexType>
+                     <xs:simpleContent>
+                        <xs:extension base="xs:string">
+                           <xs:attribute form="unqualified" name="BlendRatio" type="DecimalCommonData" use="optional">
+                              <xs:annotation>
+                                 <xs:documentation>Percentage of this fuel sale coming
+												from
+												this tank; 40 would say 40 % of the fuel pumped
+												in this
+												blended sale came from this
+												tank
+											</xs:documentation>
+                              </xs:annotation>
+                           </xs:attribute>
+                        </xs:extension>
+                     </xs:simpleContent>
+                  </xs:complexType>
+               </xs:element>
+               <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+            </xs:sequence>
+            <xs:attribute default="Sale" form="unqualified" name="TypeCode" type="FuelSaleTypeCode" use="optional"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="FuelSaleTypeCode">
+      <xs:union memberTypes="FuelSaleTypeCodeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="FuelSaleTypeCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Prepay"/>
+         <xs:enumeration value="Sale"/>
+         <xs:enumeration value="PrepayRefund"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailTransactionVoid">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="Quantity" type="QuantityCommonData"/>
+         <xs:element form="qualified" name="ItemLink" type="POSLogTransactionLink"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionModification">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="Name" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="Quantity" type="QuantityCommonData"/>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:attribute default="AddsTo" form="unqualified" name="Action" type="ModificationActionTypeCode" use="optional">
+         <xs:annotation>
+            <xs:documentation>Describes what is being done to the item with this
+					modification.
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+   <xs:simpleType name="SuggestedSourceTypeCode">
+      <xs:union memberTypes="SuggestedSourceEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="SuggestedSourceEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="None"/>
+         <xs:enumeration value="Worker"/>
+         <xs:enumeration value="Loyalty"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="ModificationActionTypeCode">
+      <xs:union memberTypes="ModificationActionEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="ModificationActionEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="IsPartOf"/>
+         <xs:enumeration value="AddsTo"/>
+         <xs:enumeration value="IsRemovedFrom"/>
+         <xs:enumeration value="Void"/>
+         <xs:enumeration value="PreparationInstructions"/>
+         <xs:enumeration value="ServingInstructions"/>
+         <xs:enumeration value="SpecialInstructions"/>
+         <xs:enumeration value="QualifyingPurchase"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="RetailTransactionTaxIncluded">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="Amount" type="AmountCommonData"/>
+         <xs:element form="qualified" minOccurs="0" name="TaxGroupID" type="xs:string"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionRetrospectiveLoyaltyType">
+      <xs:annotation>
+         <xs:documentation>Loyalty added after the transaction is finished
+				(customer forgot to
+				claim their points and get them the next time
+				they come to the
+				store)
+			</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element form="qualified" name="OriginalTransactionAmount" type="AmountCommonData">
+            <xs:annotation>
+               <xs:documentation>The amount of the original transaction for which
+						loyalty
+						points are being awarded retrospectively
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="TransactionLink">
+            <xs:complexType>
+               <xs:complexContent>
+                  <xs:extension base="TransactionLinkCommonData"/>
+               </xs:complexContent>
+            </xs:complexType>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="LoyaltyAccount" type="LoyaltyAccountCommonData"/>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionDepositType">
+      <xs:complexContent>
+         <xs:extension base="RetailTransactionPaymentOnAccount"/>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionPointsType">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="AmountForPoints" type="AmountCommonData">
+            <xs:annotation>
+               <xs:documentation>The amount used to qualify these points being
+						given
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="PointRate" type="DecimalCommonData">
+            <xs:annotation>
+               <xs:documentation>The rate at which pionts are given, i.e. one
+						point per dollar
+						spent
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="PointMagnification" type="DecimalCommonData">
+            <xs:annotation>
+               <xs:documentation>the number the point rate is modified to give the
+						total, i.e.
+						double points given on Tuesday
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="CorrectionPoints" type="DecimalCommonData">
+            <xs:annotation>
+               <xs:documentation>points given to correct a problem
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="Rounding" type="AmountCommonData"/>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+   </xs:complexType>
+</xs:schema>

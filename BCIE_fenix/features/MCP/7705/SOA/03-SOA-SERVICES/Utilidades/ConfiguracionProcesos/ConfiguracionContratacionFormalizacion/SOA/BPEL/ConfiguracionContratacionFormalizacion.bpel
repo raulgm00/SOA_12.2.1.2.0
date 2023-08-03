@@ -1,0 +1,251 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Nov 21 21:22:14 CST 2016
+  Author:  ismael-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionContratacionFormalizacion"
+               targetNamespace="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionContratacionFormalizacion/ConfiguracionContratacionFormalizacion"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionContratacionFormalizacion/ConfiguracionContratacionFormalizacion"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.org/ProductoService"
+         xmlns:ns3="http://www.bcie.com/ConsultarRolesPorProceso" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns4="http://www.bcie.org/ConfiguracionProcesosMO"
+         xmlns:ns5="http://www.bcie.org/ConfiguracionProcesosBO" xmlns:ns13="http://www.bcie.org/ResultBO"
+         xmlns:ns11="http://xmlns.bcie.org/ObjetoProceso/Comun/Parameter/V1"
+         xmlns:ns7="http://xmlns.bcie.org/ObjetoProceso/Comun/Operacion/V1"
+         xmlns:ns10="http://xmlns.bcie.org/ObjetoProceso/Comun/Proceso/V1"
+         xmlns:ns6="http://xmlns.bcie.org/ObjetoProceso/Comun/Header/V1" xmlns:ns12="http://www.bcie.org/CatalogoBO"
+         xmlns:ns9="http://xmlns.bcie.org/ObjetoProceso/Comun/Tarea/V1"
+         xmlns:ns8="http://xmlns.bcie.org/ObjetoProceso/Comun/Cliente/V1" xmlns:ns14="http://www.bcie.org/ErrorBO"
+         xmlns:ns15="http://www.bcie.org/ProductoMO" xmlns:ns26="http://www.bcie.org/TerminoBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns17="http://www.bcie.org/OperacionBO"
+         xmlns:ns22="http://www.bcie.org/CommonBO" xmlns:ns21="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns23="http://www.bcie.org/CondicionBO" xmlns:ns16="http://www.bcie.org/ProductoBO"
+         xmlns:ns19="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns25="http://www.bcie.org/DocumentoBO"
+         xmlns:ns29="http://www.bcie.org/HerramientaCEBO" xmlns:ns27="http://www.bcie.org/ComisionBO"
+         xmlns:ns28="http://www.bcie.org/DesembolsoBO" xmlns:ns20="http://www.bcie.org/ContratoBO"
+         xmlns:ns18="http://www.bcie.org/ClienteBO" xmlns:ns24="http://www.bcie.org/AtributoBO"
+         xmlns:ns30="http://www.bcie.org/ConsultarRolesPorProcesoMO"
+         xmlns:ns31="http://www.bcie.org/ConsultarRolesPorProcesoBO"
+         xmlns:ns32="http://www.bcie.org/ActualizarContratoService" xmlns:ns34="http://www.bcie.org/ReglaBO"
+         xmlns:ns33="http://www.bcie.org/ContratoMO" xmlns:ns35="http://www.bcie.org/MatrizTCCBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionContratacionFormalizacionSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configuracioncontratacionformalizacion_client" partnerLinkType="ns1:ConfiguracionContratacionFormalizacion" myRole="ConfiguracionContratacionFormalizacionPT"/>
+    <partnerLink name="ConsultarProductoByIdOperacion_PS" partnerLinkType="ns2:ConsultarProductoByIdOperacion_PS"
+                 partnerRole="ConsultarProductoByIdOperacionPT"/>
+    <partnerLink name="ConsultarRolesPorProceso_PS" partnerLinkType="ns3:ConsultarRolesPorProceso_PS"
+                 partnerRole="ConsultarRolesPorProceso_ptt"/>
+    <partnerLink name="ActualizarContrato" partnerLinkType="ns32:ActualizarContrato"
+                 partnerRole="ActualizarContratoPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ConfiguracionContratacionFormalizacionRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ConfiguracionContratacionFormalizacionResponseMessage"/>
+    <variable name="setTittleVar" type="xsd:string"/>
+    <variable name="InvokeConsultarProductoByOperacionout" messageType="ns2:responseConsultarByIdOperacionMessage"/>
+    <variable name="outInvokeConsultarRolPorProceso" messageType="ns3:replyMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceCatchAll">
+        <assign name="assignCatchAll">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:result</to>
+          </copy>
+          <copy>
+            <from>concat("Error en ConfiguracionContratacionFormalizacion: ",ora:getFaultAsString())</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyCatchAll" variable="outputVariable"
+               partnerLink="configuracioncontratacionformalizacion_client"
+               portType="ns1:ConfiguracionContratacionFormalizacionPT"
+               operation="ConfiguracionContratacionFormalizacion"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionContratacionFormalizacion.wsdl) -->
+    <receive name="receiveInput" partnerLink="configuracioncontratacionformalizacion_client" portType="ns1:ConfiguracionContratacionFormalizacionPT" operation="ConfiguracionContratacionFormalizacion" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTittleVar">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion = ",$inputVariable.request/ns4:idOperacion))</from>
+        <to>$setTittleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarProductoByOperacion">
+      <variables>
+        <variable name="inInvokeConsultarProductoByOperacion" messageType="ns2:requestConsultarByIdOperacionMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarProductoByOperacion">
+        <assign name="assignIdOperacion">
+          <copy>
+            <from>$inputVariable.request/ns4:idOperacion</from>
+            <to>$inInvokeConsultarProductoByOperacion.request/ns15:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarProductoByOperacion" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarProductoByIdOperacion_PS" portType="ns2:ConsultarProductoByIdOperacionPT"
+                operation="consultarByIdOperacion" inputVariable="inInvokeConsultarProductoByOperacion"
+                outputVariable="InvokeConsultarProductoByOperacionout"/>
+        <if name="IfOKConsulta">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$InvokeConsultarProductoByOperacionout.response/ns15:Resultado/ns13:result = 'OK'</condition>
+          <empty name="resultOK"/>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceError">
+              <assign name="assignError">
+                <copy>
+                  <from>$InvokeConsultarProductoByOperacionout.response/ns15:Resultado</from>
+                  <to>$outputVariable.response/ns4:Resultado</to>
+                </copy>
+              </assign>
+              <reply name="ReplyError" variable="outputVariable"
+                     partnerLink="configuracioncontratacionformalizacion_client"
+                     portType="ns1:ConfiguracionContratacionFormalizacionPT"
+                     operation="ConfiguracionContratacionFormalizacion"/>
+              <exit name="Exit"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarRolPorProceso">
+      <variables>
+        <variable name="inInvokeConsultarRolPorProceso" messageType="ns3:requestMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarRolPorProceso">
+        <assign name="assignIdProceso">
+          <copy>
+            <from>'5'</from>
+            <to>$inInvokeConsultarRolPorProceso.request/ns30:Proceso/ns31:idProceso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarRolPorProceso" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarRolesPorProceso_PS" portType="ns3:ConsultarRolesPorProceso_ptt"
+                operation="ConsultarRolesPorProceso" inputVariable="inInvokeConsultarRolPorProceso"
+                outputVariable="outInvokeConsultarRolPorProceso"/>
+        <if name="IfOKConsulta">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeConsultarRolPorProceso.response/ns30:Result/ns13:message = 'Operacion Exitosa'</condition>
+          <assign name="XQResponse">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/ConfiguracionContratoFormalizacion_Response.xqy', 'InvokeConsultarProductoByOperacionout.response', $InvokeConsultarProductoByOperacionout.response, 'inputVariable.request', $inputVariable.request, 'outInvokeConsultarRolPorProceso.response', $outInvokeConsultarRolPorProceso.response)</from>
+              <to variable="outputVariable" part="response"/>
+            </copy>
+          </assign>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceError">
+              <assign name="assignError">
+                <copy>
+                  <from>$outInvokeConsultarRolPorProceso.response/ns30:Result</from>
+                  <to>$outputVariable.response/ns4:Resultado</to>
+                </copy>
+              </assign>
+              <reply name="ReplyError" variable="outputVariable"
+                     partnerLink="configuracioncontratacionformalizacion_client"
+                     portType="ns1:ConfiguracionContratacionFormalizacionPT"
+                     operation="ConfiguracionContratacionFormalizacion"/>
+              <exit name="Exit"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeActualizarContrato">
+      <variables>
+        <variable name="inActualizarContrato" messageType="ns32:ActualizarContratoRequestMessage"/>
+        <variable name="outActualizarContrato" messageType="ns32:ActualizarContratoResponseMessage"/>
+      </variables>
+      <sequence name="SequenceActualizarContrato">
+        <assign name="AssignActualizarContrato">
+          <copy>
+            <from>$inputVariable.request/ns4:Parameters[ns22:name = 'ID_CONTRATO']/ns22:value</from>
+            <to>$inActualizarContrato.request/ns33:Contrato/ns20:idContrato</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.request/ns4:intanciaProceso</from>
+            <to>$inActualizarContrato.request/ns33:Contrato/ns20:instanciaProceso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeActualizarContrato" bpelx:invokeAsDetail="no" partnerLink="ActualizarContrato"
+                portType="ns32:ActualizarContratoPT" operation="actualizarContrato"
+                inputVariable="inActualizarContrato" outputVariable="outActualizarContrato"/>
+      </sequence>
+    </scope>
+    <assign name="assingProducto">
+      <copy>
+        <from>$InvokeConsultarProductoByOperacionout.response/ns15:Producto</from>
+        <to>$outputVariable.response/ns4:configuracionContratoFormalizacion/ns5:producto</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configuracioncontratacionformalizacion_client" portType="ns1:ConfiguracionContratacionFormalizacionPT" operation="ConfiguracionContratacionFormalizacion" variable="outputVariable"/>
+  </sequence>
+</process>

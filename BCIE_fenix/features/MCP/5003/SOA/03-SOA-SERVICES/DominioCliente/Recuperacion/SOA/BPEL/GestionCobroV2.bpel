@@ -1,0 +1,202 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Jun 24 18:10:21 CST 2019
+  Author:  urbinaj
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="GestionCobroV2"
+               targetNamespace="http://xmlns.oracle.com/DominioCliente/Recuperacion/GestionCobroV2"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioCliente/Recuperacion/GestionCobroV2"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+               xmlns:ns0="http://www.bcie.org/GestionCobroMO"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns2="http://www.bcie.org/ResultBO"
+         xmlns:ns1="http://www.bcie.org/GestionCobroBO" xmlns:ns3="http://www.bcie.org/ErrorBO"
+         xmlns:ns4="http://www.bcie.org/PublicarJMS" xmlns:ns6="http://www.bcie.org/CommonBO"
+         xmlns:ns5="http://www.bcie.org/PublicarJMSMO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/GestionCobroMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/GestionCobro/V1/Schema/GestionCobroMO.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://www.bcie.org/GestionCobroMO" location="../WSDLs/GestionCobroV2SORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="PublicarJMS" partnerLinkType="ns4:PublicarJMS" partnerRole="PublicarJMSPT"/>
+    <partnerLink name="CrearAvisoCobroV2" partnerLinkType="ns0:CrearAvisoCobroV2" partnerRole="CrearAvisoCobroV2PT"/>
+    <partnerLink name="gestioncobrov2_direct" partnerLinkType="ns0:GestionCobroV2" myRole="GestionCobroV2PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns0:GestionCobroV2RequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns0:GestionCobroV2ResponseMessage"/>
+     <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="inInvokePublicarJMS" messageType="ns4:PublicarJMSRequestMessage"/>
+    <variable name="outInvokePublicarJMS" messageType="ns4:PublicarJMSResponseMessage"/>
+    <variable name="AvisoCobro" element="ns0:GenerarAvisoCobroV2Request"/>
+    <variable name="inInvokeCrearAvisoCobroV2" messageType="ns0:CrearAvisoCobroV2requestMessage"/>
+    <variable name="outInvokeCrearAvisoCobroV2" messageType="ns0:CrearAvisoCobroV2responseMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in GestionCobroV2.wsdl) -->
+    <receive name="receiveInput" partnerLink="gestioncobrov2_direct" portType="ns0:GestionCobroV2PT" operation="GestionCobroV2"
+             variable="inputVariable" createInstance="yes"/>
+    <assign name="SetTitle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle('GestionCobroV2')</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <sequence name="CrearAvisoCobroV2">
+      <assign name="XQCrearAvisoCobroV2">
+        <bpelx:annotation>
+          <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+        </bpelx:annotation>
+        <copy>
+          <from>ora:processXQuery10('../Transformations/GestionCobroV2_TO_CrearAvisoCobroV2.xqy', 'gestionCobro', $inputVariable.GestionCobroV2Request)</from>
+          <to variable="inInvokeCrearAvisoCobroV2" part="CrearAvisoCobroV2Request"/>
+        </copy>
+      </assign>
+      <invoke name="InvokeCrearAvisoCobroV2" bpelx:invokeAsDetail="no" partnerLink="CrearAvisoCobroV2"
+              portType="ns0:CrearAvisoCobroV2PT" operation="CrearAvisoCobroV2"
+              inputVariable="inInvokeCrearAvisoCobroV2" outputVariable="outInvokeCrearAvisoCobroV2"/>
+      <if name="IfDatos">
+        <documentation>
+          <![CDATA[Datos]]>
+        </documentation>
+        <condition>count($outInvokeCrearAvisoCobroV2.CrearAvisoCobroV2Response/ns0:AvisoCobro/ns1:aviso) &gt;0 </condition>
+        <empty name="Cotinua"/>
+        <else>
+          <documentation>
+            <![CDATA[Sin_Datos]]>
+          </documentation>
+          <sequence name="Sequence1">
+            <assign name="AssignSinDatos">
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.GestionCobroV2Response/ns0:Resultado/ns2:result</to>
+              </copy>
+              <copy>
+                <from>'No hay avisos para procesar'</from>
+                <to>$outputVariable.GestionCobroV2Response/ns0:Resultado/ns2:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplySinDatos" partnerLink="gestioncobrov2_direct" portType="ns0:GestionCobroV2PT"
+                   operation="GestionCobroV2" variable="outputVariable"/>
+            <exit name="ExitSinDatos"/>
+          </sequence>
+        </else>
+      </if>
+    </sequence>
+    <forEach parallel="no" counterName="AvisoCounter" name="ForEachAviso">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($outInvokeCrearAvisoCobroV2.CrearAvisoCobroV2Response/ns0:AvisoCobro/ns1:aviso)</finalCounterValue>
+      <scope name="Scope1">
+        <sequence name="PublicarJMS">
+          <if name="IfPublico">
+            <documentation>
+              <![CDATA[Publico]]>
+            </documentation>
+            <condition>xp20:lower-case($inputVariable.GestionCobroV2Request/ns0:Sector)   !=   'privado'</condition><assign name="AssignConfiguracionPublico">
+              <copy bpelx:insertMissingToData="yes">
+                <from>'CONSOLIDADO'</from>
+                <to>$outInvokeCrearAvisoCobroV2.CrearAvisoCobroV2Response/ns0:AvisoCobro/ns1:aviso[$AvisoCounter]/ns1:xml/CLIENTES/CONFIGURACION/NIVEL_DETALLE</to>
+              </copy>
+            </assign>
+            <else>
+              <documentation>
+                <![CDATA[Privado]]>
+              </documentation>
+              <assign name="AssignConfiguracionPrivado" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+   <copy bpelx:insertMissingToData="yes">
+         <from>'DETALLADO'</from>
+         <to>$outInvokeCrearAvisoCobroV2.CrearAvisoCobroV2Response/ns0:AvisoCobro/ns1:aviso[$AvisoCounter]/ns1:xml/CLIENTES/CONFIGURACION/NIVEL_DETALLE</to>
+      </copy></assign>
+            </else>
+          </if>
+          <assign name="AssignConfiguracion">
+            <copy bpelx:insertMissingToData="yes">
+              <from>'AMBAS'</from>
+              <to>$outInvokeCrearAvisoCobroV2.CrearAvisoCobroV2Response/ns0:AvisoCobro/ns1:aviso[$AvisoCounter]/ns1:xml/CLIENTES/CONFIGURACION/TIPO_GENERACION</to>
+            </copy>
+          </assign>
+          <assign name="AssignInvokePublicarJMS">
+            <copy>
+              <from>'Aviso.V2.JMS.Message.Queue'</from>
+              <to>$inInvokePublicarJMS.PublicarJMSRequest/ns5:JMS/ns6:nombreJMS</to>
+            </copy>
+            <copy>
+              <from>$outInvokeCrearAvisoCobroV2.CrearAvisoCobroV2Response/ns0:AvisoCobro/ns1:aviso[$AvisoCounter]</from>
+              <to>$AvisoCobro/ns0:AvisoCobro/ns1:aviso</to>
+            </copy>
+            <copy>
+              <from>$AvisoCobro</from>
+              <to>$inInvokePublicarJMS.PublicarJMSRequest/ns5:JMS/ns6:mensaje</to>
+            </copy>
+          </assign>
+          <invoke name="InvokePublicarJMS" bpelx:invokeAsDetail="no" partnerLink="PublicarJMS"
+                  portType="ns4:PublicarJMSPT" operation="publicarJMS" inputVariable="inInvokePublicarJMS"
+                  outputVariable="outInvokePublicarJMS"/>
+        </sequence>
+      </scope>
+    </forEach>
+    <assign name="AssignResultado">
+      <copy>
+        <from>'Operación realizada correctamente'</from>
+        <to>$outputVariable.GestionCobroV2Response/ns0:Resultado/ns2:message</to>
+      </copy>
+      <copy>
+        <from>'OK'</from>
+        <to>$outputVariable.GestionCobroV2Response/ns0:Resultado/ns2:result</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="gestioncobrov2_direct" portType="ns0:GestionCobroV2PT" operation="GestionCobroV2" variable="outputVariable"/>
+  </sequence>
+</process>

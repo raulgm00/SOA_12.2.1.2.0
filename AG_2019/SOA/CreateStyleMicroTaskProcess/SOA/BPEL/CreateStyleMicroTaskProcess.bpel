@@ -1,0 +1,144 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Jun 25 10:36:38 CDT 2019
+  Author:  joseb
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CreateStyleMicroTaskProcess"
+               targetNamespace="http://xmlns.oracle.com/CreateStyleMicroTaskProcess/CreateStyleMicroTaskProcess/CreateStyleMicroTaskProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/CreateStyleMicroTaskProcess/CreateStyleMicroTaskProcess/CreateStyleMicroTaskProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/Items/CreateStyleMicroTaskProcessSvc/v1.0"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns3="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Items/CreateItemEntity"
+         xmlns:ns4="http://mx.agarcia.ea/Capabilities/Core/Items/JDACreateItemProcessSvc/v1.0"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns6="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateStyleMicroTaskProcessSvc/v1.0"
+          location="../WSDLs/CreateStyleMicroTaskProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateStyleMicroTaskProcessSvc/v1.0"
+          location="../WSDLs/CreateStyleMicroTaskProcessWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="createstylemicrotaskprocess_client" partnerLinkType="ns1:CreateStyleMicroTaskProcess" myRole="createItemPType"/>
+    <partnerLink name="JDACreateItemProcessPXY" partnerLinkType="ns4:JDACreateItemProcessPXY"
+                 partnerRole="CreateItemJDAPTye"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:createItemRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:createItemResponseMessage"/>
+    <variable name="InvokeJDACreateItem_InputVariable" messageType="ns4:createItemJDARequestMessage"/>
+    <variable name="InvokeJDACreateItem_OutputVariable" messageType="ns4:createItemJDARequestMessage"/>
+    <variable name="messageError" messageType="ns1:standardMessageFault"/>
+    <variable name="header" messageType="ns1:standardMessageHeader"/>
+  </variables>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CreateStyleMicroTaskProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="createstylemicrotaskprocess_client" portType="ns1:createItemPType" operation="create" variable="inputVariable" createInstance="yes"
+             bpelx:headerVariable="header"/>
+    <scope name="Scope1">
+      <faultHandlers>
+        <catch bpelx:name="timeout" faultName="bpelx:timeout" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage"><assign name="AssignError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+   <copy>
+         <from>$Fault.detail</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorDescription</to>
+      </copy><copy>
+         <from>'CITEM-007'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorCode</to>
+      </copy></assign></catch>
+        <catch bpelx:name="remoteFault" faultName="bpelx:remoteFault" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage"><assign name="AssignError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+   <copy>
+         <from>$Fault.detail</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorDescription</to>
+      </copy><copy>
+         <from>'CITEM-007'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorCode</to>
+      </copy></assign></catch>
+        <catch bpelx:name="bindingFault" faultName="bpelx:bindingFault" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <assign name="AssignError">
+            <copy>
+              <from>$Fault.detail</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorDescription</to>
+            </copy>
+            <copy>
+              <from>'CITEM-007'</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorCode</to>
+            </copy>
+          </assign>
+        </catch>
+      </faultHandlers>
+      <sequence name="Sequence1">
+        <assign name="AssignInfoJDA">
+          <copy>
+            <from>$inputVariable.createItemRequestMessage</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeJDACreateItem_InputVariable.createItemJDARequest</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeJDACreateItem" partnerLink="JDACreateItemProcessPXY"
+                portType="ns4:CreateItemJDAPTye" operation="create" inputVariable="InvokeJDACreateItem_InputVariable"
+                outputVariable="InvokeJDACreateItem_OutputVariable" bpelx:invokeAsDetail="no"
+                bpelx:inputHeaderVariable="header"/>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="createstylemicrotaskprocess_client" portType="ns1:createItemPType" operation="create" variable="outputVariable"/>
+  </sequence>
+</process>

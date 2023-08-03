@@ -1,0 +1,271 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sat May 08 22:33:14 CST 2021
+  Author:  ngsAs
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionLeccionesAprendidas_bpel"
+               targetNamespace="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionLeccionesAprendidas/ConfiguracionLeccionesAprendidas_bpel"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionLeccionesAprendidas/ConfiguracionLeccionesAprendidas_bpel"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.org/LeccionesAprendidasService"
+         xmlns:ns3="http://www.bcie.com/ConsultarRolesPorProceso" xmlns:ns4="http://xmlns.bcie.com/OperacionService"
+         xmlns:ns6="http://www.bcie.org/ConfiguracionProcesosBO"
+         xmlns:ns5="http://www.bcie.org/ConfiguracionProcesosMO" xmlns:ns16="http://www.bcie.org/TerminoBO"
+         xmlns:ns7="http://www.bcie.org/OperacionBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns23="http://www.bcie.org/ResultBO" xmlns:ns18="http://www.bcie.org/CommonBO"
+         xmlns:ns20="http://www.bcie.org/LeccionAprendidaBO" xmlns:ns14="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns21="http://xmlns.bcie.org/ObjetoProceso/Comun/Proceso/V1" xmlns:ns10="http://www.bcie.org/ProductoBO"
+         xmlns:ns15="http://www.bcie.org/CondicionBO" xmlns:ns11="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns19="http://www.bcie.org/HerramientaCEBO" xmlns:ns17="http://www.bcie.org/ComisionBO"
+         xmlns:ns9="http://www.bcie.org/CatalogoBO" xmlns:ns12="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns13="http://www.bcie.org/ContratoBO" xmlns:ns8="http://www.bcie.org/ClienteBO"
+         xmlns:ns22="http://xmlns.bcie.org/ObjetoProceso/Comun/Tarea/V1" xmlns:ns24="http://www.bcie.org/ErrorBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns25="http://www.bcie.org/OperacionMO" xmlns:ns27="http://www.bcie.org/DocumentoBO"
+         xmlns:ns26="http://www.bcie.org/AtributoBO" xmlns:ns28="http://www.bcie.org/LeccionAprendidaMO"
+         xmlns:ns29="http://www.bcie.org/ConsultarRolesPorProcesoMO"
+         xmlns:ns30="http://www.bcie.org/ConsultarRolesPorProcesoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionLeccionesAprendidasSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="ConfiguracionLeccionesAprendidas" partnerLinkType="ns1:ConfiguracionLeccionesAprendidas_bpel" myRole="ConfiguracionLeccionesAprendidasPT"/>
+    <partnerLink name="ConsultarRolesCategoriaLeccionAprendida"
+                 partnerLinkType="ns2:ConsultarRolesCategoriaLeccionAprendida"
+                 partnerRole="ConsultarRolesCategoriaLeccionAprendidaPT"/>
+    <partnerLink name="ConsultarRolServer" partnerLinkType="ns3:ConsultarRolServer"
+                 partnerRole="ConsultarRolesPorProceso_ptt"/>
+    <partnerLink name="OperacionService" partnerLinkType="ns4:OperacionService" partnerRole="Operacion12Port"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ConfiguracionLeccionesAprendidasRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ConfiguracionLeccionesAprendidasResponseMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="inConsultarOperacion" messageType="ns4:requestConsultarOperacionesMessageByIdOperacion"/>
+    <variable name="outConsultarOperacion" messageType="ns4:responseConsultarOperacionMessage"/>
+    <variable name="inConsultarRolesCategoriaLeccionAprendida"
+              messageType="ns2:ConsultarRolesCategoriaLeccionAprendidaRequestMessage"/>
+    <variable name="outConsultarRolesCategoriaLeccionAprendida"
+              messageType="ns2:ConsultarRolesCategoriaLeccionAprendidaResponseMessage"/>
+    <variable name="inConsultarRolServer" messageType="ns3:requestMessage"/>
+    <variable name="outConsultarRolServer" messageType="ns3:replyMessage"/>
+    <variable name="CountROL" type="xsd:integer"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence1">
+        <assign name="AssignError">
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$inputVariable.ConfiguracionLeccionesAprendidasRequest/ns5:LeccionAprendida</from>
+            <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:configuracionLeccionesAprendidas/ns6:LeccionAprendida</to>
+          </copy>
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:Resultado/ns23:result</to>
+          </copy>
+          <copy>
+            <from>'Error al configurar las lecciones aprendidas'</from>
+            <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:Resultado/ns23:message</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:Resultado/ns23:error/ns24:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="ConfiguracionLeccionesAprendidas"
+               portType="ns1:ConfiguracionLeccionesAprendidasPT" operation="ConfiguracionLeccionesAprendidas"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionLeccionesAprendidas_bpel.wsdl) -->
+    <receive name="receiveInput" partnerLink="ConfiguracionLeccionesAprendidas" portType="ns1:ConfiguracionLeccionesAprendidasPT" operation="ConfiguracionLeccionesAprendidas" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignFlowName">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion= ",$inputVariable.ConfiguracionLeccionesAprendidasRequest/ns5:idOperacion, "idLeccion= ",$inputVariable.ConfiguracionLeccionesAprendidasRequest/ns5:LeccionAprendida/ns20:idLeccionAprendida))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <assign name="AssignConsultarOperacion">
+      <copy>
+        <from>$inputVariable.ConfiguracionLeccionesAprendidasRequest/ns5:idOperacion</from>
+        <to>$inConsultarOperacion.request/ns25:idOperacion</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultarOperacion" bpelx:invokeAsDetail="no" partnerLink="OperacionService"
+            portType="ns4:Operacion12Port" operation="consultarOperacionByIdOperacion"
+            inputVariable="inConsultarOperacion" outputVariable="outConsultarOperacion"/>
+    <if name="IfOk">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>$outConsultarOperacion.response/ns25:Resultado/ns23:result = 'OK'</condition>
+      <sequence name="Sequence2">
+        <assign name="AssignConsultarOperacion">
+          <copy>
+            <from>$outConsultarOperacion.response/ns25:Operacion</from>
+            <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:configuracionLeccionesAprendidas/ns6:operacion</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$outConsultarOperacion.response/ns25:Operacion/ns7:idOperacion</from>
+            <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:configuracionLeccionesAprendidas/ns6:LeccionAprendida[1]/ns20:operacion/ns7:idOperacion</to>
+          </copy>
+        </assign>
+        <assign name="AssignConsultarRolesCategoriaLeccionAprendida">
+          <copy>
+            <from>$inputVariable.ConfiguracionLeccionesAprendidasRequest/ns5:LeccionAprendida[1]</from>
+            <to>$inConsultarRolesCategoriaLeccionAprendida.ConsultarRolesCategoriaLeccionAprendidaRequest/ns28:LeccionAprendida</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarRolesCategoriaLeccionAprendida" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarRolesCategoriaLeccionAprendida"
+                portType="ns2:ConsultarRolesCategoriaLeccionAprendidaPT"
+                operation="ConsultarRolesCategoriaLeccionAprendida"
+                inputVariable="inConsultarRolesCategoriaLeccionAprendida"
+                outputVariable="outConsultarRolesCategoriaLeccionAprendida"/>
+        <if name="IfOkConsultarRolesCategoriaLeccionAprendida">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outConsultarRolesCategoriaLeccionAprendida.ConsultarRolesCategoriaLeccionAprendidaResponse/ns28:Resultado/ns23:result = 'OK'</condition>
+          <sequence name="Sequence4">
+            <assign name="AssignConsultarRolesCategoriaLeccionesAprendidas">
+              <copy>
+                <from>$outConsultarRolesCategoriaLeccionAprendida.ConsultarRolesCategoriaLeccionAprendidaResponse/ns28:LeccionAprendida</from>
+                <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:configuracionLeccionesAprendidas/ns6:LeccionAprendida</to>
+              </copy>
+            </assign>
+            <assign name="AssignConsultarRoles">
+              <copy>
+                <from>38</from>
+                <to>$inConsultarRolServer.request/ns29:Proceso/ns30:idProceso</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarRoles" bpelx:invokeAsDetail="no" partnerLink="ConsultarRolServer"
+                    portType="ns3:ConsultarRolesPorProceso_ptt" operation="ConsultarRolesPorProceso"
+                    inputVariable="inConsultarRolServer" outputVariable="outConsultarRolServer"/>
+            <assign name="AssignCountRol">
+              <copy>
+                <from>count($outConsultarRolServer.response/ns29:ListadoRoles/ns30:listadoRoles)</from>
+                <to>$CountROL</to>
+              </copy>
+            </assign>
+            <forEach parallel="no" counterName="CounterROL" name="ForEachRol">
+              <startCounterValue>1</startCounterValue>
+              <finalCounterValue>$CountROL</finalCounterValue>
+              <scope name="Scope1">
+                <assign name="AssignOutRol">
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>$outConsultarRolServer.response/ns29:ListadoRoles/ns30:listadoRoles[$CounterROL]</from>
+                    <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:configuracionLeccionesAprendidas/ns6:RolesEquipoTrabajo/ns6:Rol[$CounterROL]</to>
+                  </copy>
+                </assign>
+              </scope>
+            </forEach>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="Sequence3">
+              <assign name="AssignErrorConsultaRolesCategoria">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:Resultado/ns23:result</to>
+                </copy>
+                <copy>
+                  <from>$outConsultarRolesCategoriaLeccionAprendida.ConsultarRolesCategoriaLeccionAprendidaResponse/ns28:Resultado/ns23:message</from>
+                  <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:Resultado/ns23:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyErrorconsultaRolesCategoria" variable="outputVariable"
+                     partnerLink="ConfiguracionLeccionesAprendidas" portType="ns1:ConfiguracionLeccionesAprendidasPT"
+                     operation="ConfiguracionLeccionesAprendidas"/>
+              <exit name="ExitErrorConsultaRolesCategoria"/>
+            </sequence>
+          </else>
+        </if>
+        <assign name="AssignOk">
+          <copy>
+            <from>'OK'</from>
+            <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:Resultado/ns23:result</to>
+          </copy>
+          <copy>
+            <from>'Configuracion de lecciones aprendidas consultado exitosamente'</from>
+            <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:Resultado/ns23:message</to>
+          </copy>
+        </assign>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[ERROR]]>
+        </documentation>
+        <assign name="AssignErrorConsultaOperacion">
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$inputVariable.ConfiguracionLeccionesAprendidasRequest/ns5:LeccionAprendida</from>
+            <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:configuracionLeccionesAprendidas/ns6:LeccionAprendida</to>
+          </copy>
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:Resultado/ns23:result</to>
+          </copy>
+          <copy>
+            <from>$outConsultarOperacion.response/ns25:Resultado/ns23:message</from>
+            <to>$outputVariable.ConfiguracionLeccionesAprendidasResponse/ns5:Resultado/ns23:message</to>
+          </copy>
+        </assign>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="ConfiguracionLeccionesAprendidas" portType="ns1:ConfiguracionLeccionesAprendidasPT" operation="ConfiguracionLeccionesAprendidas" variable="outputVariable"/>
+  </sequence>
+</process>

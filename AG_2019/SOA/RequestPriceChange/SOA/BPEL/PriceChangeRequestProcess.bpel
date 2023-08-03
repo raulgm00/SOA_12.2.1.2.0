@@ -1,0 +1,1223 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Jun 17 15:54:50 CDT 2019
+  Author:  offic
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="PriceChangeRequestProcess"
+               targetNamespace="http://xmlns.oracle.com/PriceChangeProcessBackup/RequestPriceChange/PriceChangeRequestProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/PriceChangeProcessBackup/RequestPriceChange/PriceChangeRequestProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://msoffice.utils.ea.agarcia.mx/"
+         xmlns:ns2="http://mx.agarcia.ea/RetailOperations/SellService/PriceChangeTaskSvc/v1.0"
+         xmlns:ns6="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns7="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/RetailStore/v1"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns3="http://mx.agarcia.ea/RetailOperations/SellService/PriceChangeTaskSvc"
+         xmlns:ns4="http://mx.agarcia.ea/Canonical/Commons/ChangePrice/v1"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns8="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns9="http://xmlns.oracle.com/pcbpel/adapter/db/PriceChangeProcessBackup/RequestPriceChange/RPMSavePriceChange"
+         xmlns:ns10="http://xmlns.oracle.com/pcbpel/adapter/db/sp/RPMSavePriceChange"
+         xmlns:ns11="http://xmlns.oracle.com/pcbpel/adapter/db/PriceChangeProcessBackup/RequestPriceChange/RPM_CrearEvent"
+         xmlns:ns12="http://xmlns.oracle.com/pcbpel/adapter/db/sp/RPM_CrearEvent"
+         xmlns:ns13="http://xmlns.oracle.com/pcbpel/adapter/db/PriceChangeProcessBackup/RequestPriceChange/SaveMDMPriceChangeEventDB"
+         xmlns:ns14="http://xmlns.oracle.com/pcbpel/adapter/db/top/SaveMDMPriceChangeEventDB"
+         xmlns:ns15="http://xmlns.oracle.com/pcbpel/adapter/db/RMSCreateChangeEvent/RMSCreateChangeEvent/RMSCreateChangeEvent"
+         xmlns:ns16="http://xmlns.oracle.com/pcbpel/adapter/db/XXRMS/BPEL_RMSCREATECHANGEEVENT/XX_CARGAR_CAMBIO_DE_PRECIOS-24C/"
+         xmlns:ns17="http://mx.agarcia.ea/Commons/Schemas/AGStandardHeader"
+         xmlns:ns18="http://mx.agarcia.ea/Applications/Governance">
+  <import namespace="http://mx.agarcia.ea/Applications/Governance"
+          location="http://172.16.19.26:7004/Applications/Governance/PS/GovernanceAPIPXY/v1.0?WSDL"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/PriceChangeProcessBackup/RequestPriceChange/PriceChangeRequestProcess" location="../WSDLs/PriceChangeRequestProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="PriceChangeRequestService" partnerLinkType="client:PriceChangeRequestProcess" myRole="PriceChangeRequestProcessProvider"/>
+    <partnerLink name="ExcelParsingUtil" partnerLinkType="ns1:ExcelParsingUtil" partnerRole="ExcelParsingUtil"/>
+    <partnerLink name="RPMSavePriceChange" partnerLinkType="ns9:RPMSavePriceChange_plt"
+                 partnerRole="RPMSavePriceChange_role"/>
+    <partnerLink name="SaveMDMPriceChangeEventDB" partnerLinkType="ns13:SaveMDMPriceChangeEventDB_plt"
+                 partnerRole="SaveMDMPriceChangeEventDB_role"/>
+    <partnerLink name="RMSCreateChangeEventPXY" partnerLinkType="ns15:RMSCreateChangeEvent_plt"
+                 partnerRole="RMSCreateChangeEvent_role"/>
+    <partnerLink name="GovernanceAPIPXY" partnerLinkType="ns18:GovernanceAPIPXY" partnerRole="GovernancePort"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:PriceChangeRequestProcessRequestMessage"/>
+ 
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:PriceChangeRequestProcessResponseMessage"/>
+    
+        <variable name="rowNumber" type="xsd:int"/>
+    <variable name="rowsCounter" type="xsd:int"/>
+    <variable name="xPosVar" type="xsd:int"/>
+    <variable name="evDescVar" type="xsd:string"/>
+    <variable name="evTipoVar" type="xsd:string"/>
+    <variable name="fecIniVar" type="xsd:dateTime"/>
+    <variable name="fecFinVar" type="xsd:dateTime"/>
+    <variable name="evRazoVar" type="xsd:string"/>
+    <variable name="evNiveVar" type="xsd:string"/>
+    <variable name="evPRPLVar" type="xsd:int"/>
+    <variable name="evTrecVar" type="xsd:int"/>
+    <variable name="ExcelParsingUtil_InputVariable" messageType="ns1:parse"/>
+    <variable name="ExcelParsingUtil_OutputVariable" messageType="ns1:parseResponse"/>
+    <variable name="RMSSavePriceChange_InputVariable" messageType="ns9:args_in_msg"/>
+    <variable name="evStoreVar" type="xsd:int"/>
+    <variable name="rowEvTrec1" type="xsd:int"/>
+          <variable name="rowEvTrec2" type="xsd:int"/>
+          <variable name="rowEvTrec3" type="xsd:int"/>
+    <variable name="SaveMDMPriceEvent_InputVariable" messageType="ns13:PrcEventsCollection_msg"/>
+    <variable name="idEventVar" type="xsd:string"/>
+    <variable name="evProvVar" type="xsd:string"/>
+    <variable name="evStyleVar" type="xsd:string"/>
+    <variable name="evSecVar" type="xsd:string"/>
+    <variable name="evPorcVar" type="xsd:string"/>
+    <variable name="evSKUVar" type="xsd:string"/>
+    <variable name="evPrecVar" type="xsd:string"/>
+    <variable name="realNode" type="xsd:integer"/>
+    <variable name="RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable" messageType="ns15:args_in_msg"/>
+    <variable name="RMSCreateChangeEventPXY_RMSCreateChangeEvent_OutputVariable" messageType="ns15:args_out_msg"/>
+    <variable name="header" messageType="client:StandardHeaderMessage"/>
+    <variable name="interfaceId" type="xsd:string"/>
+    <variable name="activityId" type="xsd:string"/>
+    <variable name="updateInterface_audit_InputVariable" messageType="ns18:audit"/>
+    <variable name="updateInterface_audit_OutputVariable" messageType="ns18:auditResponse"/>
+    <variable name="entry_1" messageType="ns18:audit"/>
+    <variable name="entry_2" messageType="ns18:audit"/>
+    <variable name="Null" type="xsd:string"/>
+    <variable name="countRetail" type="xsd:integer">
+      <from>0</from>
+    </variable>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in PriceChangeRequestProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="PriceChangeRequestService" portType="client:PriceChangeRequestProcess" operation="process" variable="inputVariable" createInstance="yes"
+             bpelx:headerVariable="header"/>
+    <assign name="eventID">
+      <copy ignoreMissingFromData="yes">
+        <from>oraext:sequence-next-val('PRC_EVENTS_SEQ','jdbc/MDMSOA')</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$idEventVar</to>
+      </copy>
+      <copy>
+        <from>$idEventVar</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/client:result</to>
+      </copy>
+    </assign>
+    <sequence name="InterfaceId">
+      <sequence name="updateInterface">
+        <if name="validateInterfaceId">
+          <documentation>
+            <![CDATA[Recibe Id de interface]]>
+          </documentation>
+          <condition>$header.headerMessage/ns17:parameters/ns17:parameter[@Key='gov.interface.id']</condition>
+          <sequence name="Sequence1">
+            <assign name="getInterfaceId">
+              <copy>
+                <from>$header.headerMessage/ns17:parameters/ns17:parameter[@Key='gov.interface.id']</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$interfaceId</to>
+              </copy>
+            </assign>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[No recibe Id de interface]]>
+            </documentation>
+            <empty name="InterfaceIdNull"/>
+          </else>
+        </if>
+      </sequence></sequence>
+    <assign name="AssignExcelData">
+      <copy>
+        <from>$inputVariable.payload/ns2:excelFile</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$ExcelParsingUtil_InputVariable.parameters/request/document</to>
+      </copy>
+      <copy>
+        <from>0</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$realNode</to>
+      </copy>
+    </assign>
+    <invoke name="ExcelParsingUtil" bpelx:invokeAsDetail="no" partnerLink="ExcelParsingUtil"
+            portType="ns1:ExcelParsingUtil" operation="parse" inputVariable="ExcelParsingUtil_InputVariable"
+            outputVariable="ExcelParsingUtil_OutputVariable"/>
+    <forEach parallel="no" counterName="ForEachRows" name="iteratorEvTrec">
+      <startCounterValue>0</startCounterValue>
+      <finalCounterValue>($ExcelParsingUtil_OutputVariable.parameters/return/@rowsCount) - 1</finalCounterValue>
+      <scope name="RowEvTrecScope">
+        <sequence>
+          <if name="validateEvTrecRows">
+            <documentation>
+              <![CDATA[evtrec1]]>
+            </documentation>
+            <condition>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=number($ForEachRows)]/cell[@xPos='13']/data=1</condition>
+            <assign name="AssignRowEvTrec1">
+              <copy>
+                <from>number($ForEachRows)</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$rowEvTrec1</to>
+              </copy>
+            </assign>
+            <elseif>
+              <documentation>
+                <![CDATA[evtrec2]]>
+              </documentation>
+              <condition>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=number($ForEachRows)]/cell[@xPos='13']/data=2</condition>
+              <sequence>
+                <assign name="countRetail">
+                  <copy>
+                    <from>$countRetail +1</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$countRetail</to>
+                  </copy>
+                </assign>
+                <empty name="Retail"/>
+              </sequence>
+            </elseif>
+            <elseif>
+              <condition>($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachRows]/cell[@xPos='13']/data=3) and (string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachRows]/cell[@xPos='10']/data)&gt;0 or string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachRows]/cell[@xPos='11']/data)&gt;0)</condition>
+              <assign name="realNode">
+                <copy>
+                  <from>number($realNode) + 1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$realNode</to>
+                </copy>
+              </assign>
+            </elseif>
+            <else>
+              <empty name="evTrecNull"/>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+    </forEach>
+    <if name="evType">
+      <condition>$evTipoVar='C'</condition>
+      <assign name="Clearence">
+        <copy>
+          <from>'R'</from>
+          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$evTipoVar</to>
+        </copy>
+      </assign>
+      <else>
+        <empty name="Empty2"/>
+      </else>
+    </if>
+    <assign name="ParsingToVar">
+      <copy>
+        <from>'2'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$rowNumber</to>
+      </copy>
+      <copy>
+        <from>$ExcelParsingUtil_OutputVariable.parameters/return/@rowsCount</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$rowsCounter</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=$rowEvTrec1]/cell[@xPos='0']/data</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$evDescVar</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=$rowEvTrec1]/cell[@xPos='1']/data</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$evTipoVar</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=$rowEvTrec1]/cell[@xPos='2']/data</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$fecIniVar</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=$rowEvTrec1]/cell[@xPos='3']/data</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$fecFinVar</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>substring($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=$rowEvTrec1]/cell[@xPos='4']/data,0,2)</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$evRazoVar</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=$rowEvTrec1]/cell[@xPos='5']/data</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$evNiveVar</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>string(number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=$rowEvTrec1]/cell[@xPos='6']/data))</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$evProvVar</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=$rowEvTrec1]/cell[@xPos='8']/data</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$evStoreVar</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=$rowEvTrec1]/cell[@xPos='12']/data</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$evPRPLVar</to>
+      </copy>
+    </assign>
+    <scope name="insertMDM">
+      <sequence>
+        <assign name="insertEventMDM">
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$idEventVar</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:id</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+            <from>$evNiveVar</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:scope</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$evDescVar</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:name</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+            <from>$fecIniVar</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:effectiveDate</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$fecFinVar</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:expirationDate</to>
+          </copy>
+          <copy>
+            <from>'RPMENV'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:statusCode</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$evRazoVar</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:cause</to>
+          </copy>
+          <copy>
+            <from>'SOA'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:userRequestor</to>
+          </copy>
+          <copy>
+            <from>0</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:globalPercent</to>
+          </copy>
+          <copy>
+            <from>'MXN'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:currency</to>
+          </copy>
+          <copy>
+            <from>0</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:rpmId</to>
+          </copy>
+          <copy>
+            <from>0</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:jdaId</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$evDescVar</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:description</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+            <from>$evTipoVar</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:eventType</to>
+          </copy>
+          <copy>
+            <from>5</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$SaveMDMPriceEvent_InputVariable.PrcEventsCollection/ns14:PrcEvents/ns14:exportFlag</to>
+          </copy>
+        </assign>
+        <invoke name="SaveMDMPriceEvent" bpelx:invokeAsDetail="no" partnerLink="SaveMDMPriceChangeEventDB"
+                portType="ns13:SaveMDMPriceChangeEventDB_ptt" operation="insert"
+                inputVariable="SaveMDMPriceEvent_InputVariable"/>
+      </sequence>
+    </scope>
+    <scope name="NewLogical" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      <variables>
+        <variable name="realNodeCount" type="xsd:integer"/>
+      </variables><sequence>
+        <forEach parallel="no" counterName="ForEachCounterRetail" name="ForEachRetail">
+          <startCounterValue>0</startCounterValue>
+          <finalCounterValue>($ExcelParsingUtil_OutputVariable.parameters/return/@rowsCount) - 1</finalCounterValue>
+          <scope name="Scope2">
+            <sequence name="Sequence4">
+              <if name="IfRetail">
+                <documentation>
+                  <![CDATA[Existe tienda]]>
+                </documentation>
+                <condition>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=number($ForEachCounterRetail)]/cell[@xPos='13']/data=2</condition>
+                <sequence>
+                  <assign name="insertThisRetail">
+                    <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                      <from>number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=$ForEachCounterRetail]/cell[@xPos='8']/data)</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$evStoreVar</to>
+                    </copy>
+                  </assign>
+                  <assign name="AssignRowEvTrec2" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+   <copy>
+         <from>number($ForEachCounterRetail)</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$rowEvTrec2</to>
+      </copy><copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                   xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+         <from>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=$rowEvTrec2]/cell[@xPos='8']/data</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$evStoreVar</to>
+      </copy></assign>
+                  <assign name="initialize">
+                    <copy>
+                      <from>0</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$realNodeCount</to>
+                    </copy>
+                  </assign>
+                  <forEach parallel="no" counterName="ForEachCounterRow" name="iteratorRowRetail">
+                    <startCounterValue>$rowNumber</startCounterValue>
+                    <finalCounterValue>$rowsCounter - 1</finalCounterValue>
+                    <scope name="withRetail">
+                      <variables>
+                        <variable name="itemId" type="xsd:string"/>
+                      </variables>
+                      <sequence>
+                        <if name="insertTypeOnly3">
+                          <documentation>
+                            <![CDATA[rowEvTrec1]]>
+                          </documentation>
+                          <condition>($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $rowEvTrec1]/cell[@xPos='13']/data= $ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='13']/data) and (string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='11']/data)=0 or string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='10']/data)=0)</condition>
+                          <sequence>
+                            <empty name="rowEvTrec1"/>
+                          </sequence>
+                          <elseif>
+                            <documentation>
+                              <![CDATA[rowEvTrec2]]>
+                            </documentation>
+                            <condition>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $rowEvTrec2]/cell[@xPos='13']/data= $ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='13']/data</condition>
+                            <empty name="rowEvTrec2" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/>
+                          </elseif>
+                          <elseif>
+                            <documentation>
+                              <![CDATA[EvTrec3]]>
+                            </documentation>
+                            <condition>($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='13']/data=3) and (string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='10']/data)&gt;0 or string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='11']/data)&gt;0)</condition>
+                            <sequence name="callProcedure">
+                              <assign name="countRealNode">
+                                <copy>
+                                  <from>number($realNodeCount) + 1</from>
+                                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$realNodeCount</to>
+                                </copy>
+                              </assign>
+                              <if name="validateLvl">
+                                <condition>$evNiveVar='C'</condition>
+                                <assign name="cadena">
+                                  <copy>
+                                    <from>1</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_NIVEL</to>
+                                  </copy>
+                                </assign>
+                                <else>
+                                  <assign name="tienda">
+                                    <copy>
+                                      <from>3</from>
+                                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_NIVEL</to>
+                                    </copy>
+                                  </assign>
+                                </else>
+                              </if>
+                              <if name="validateLastRow">
+                                <condition>$realNode=$realNodeCount</condition>
+                                <sequence name="insertLastRow"
+                                          xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                  <flow name="Flow1">
+                                    <sequence name="Sequence">
+                                      <if name="Style">
+                                        <documentation>
+                                          <![CDATA[style]]>
+                                        </documentation>
+                                        <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='7']/data)&gt;0</condition>
+                                        <assign name="Style">
+                                          <copy>
+                                            <from>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='7']/data</from>
+                                            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_ESTILO</to>
+                                          </copy>
+                                        </assign>
+                                        <else>
+                                          <assign name="Style"
+                                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                              <from>$Null</from>
+                                              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_ESTILO</to>
+                                            </copy>
+                                          </assign>
+                                        </else>
+                                      </if>
+                                    </sequence>
+                                    <sequence name="Sequence2">
+                                      <if name="SKU">
+                                        <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='9']/data)&gt;0</condition>
+                                        <assign name="SKU"
+                                                xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                          <copy>
+                                            <from>number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='9']/data)</from>
+                                            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_SKU</to>
+                                          </copy>
+                                        </assign>
+                                        <else>
+                                          <assign name="SKU"
+                                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                            <copy>
+                                              <from>$Null</from>
+                                              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_SKU</to>
+                                            </copy>
+                                          </assign>
+                                        </else>
+                                      </if>
+                                    </sequence>
+                                  </flow>
+                                  <if name="validandoPorcentaje">
+                                    <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data)&gt;1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=2 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=3 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=4 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=5 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=6 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=7 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=8 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=9</condition>
+                                    <assign name="insertPCT">
+                                      <copy ignoreMissingFromData="no">
+                                        <from>string(number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data))</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PCT</to>
+                                      </copy>
+                                    </assign>
+                                    <else>
+                                      <sequence name="Sequence3">
+                                        <assign name="null"
+                                                xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                            <from>$Null</from>
+                                            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PCT</to>
+                                          </copy>
+                                        </assign>
+                                      </sequence>
+                                    </else>
+                                  </if>
+                                  <if name="validandoPrecio"
+                                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                    <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data)&gt;1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=2 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=3 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=4 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=5 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=6 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=7 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=8 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=9</condition>
+                                    <assign name="insertPre">
+                                      <copy ignoreMissingFromData="yes">
+                                        <from>number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data)</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PRECIO</to>
+                                      </copy>
+                                    </assign>
+                                    <else>
+                                      <sequence name="Sequence3">
+                                        <assign name="null"
+                                                xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                                xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                            <from>$Null</from>
+                                            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PRECIO</to>
+                                          </copy>
+                                        </assign>
+                                      </sequence>
+                                    </else>
+                                  </if>
+                                  <if name="validandoProveedor"
+                                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                    <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data)&gt;1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=2 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=3 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=4 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=5 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=6 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=7 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=8 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=9</condition>
+                                    <assign name="insertSupplier">
+                                      <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                        <from>string(number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data))</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PROVEEDOR/@xsi:nil</to>
+                                      </copy>
+                                    </assign>
+                                    <else>
+                                      <empty name="null"
+                                             xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/>
+                                    </else>
+                                  </if>
+                                  <assign name="insertEventNewLogical">
+                                    <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                          xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                      <from>$idEventVar</from>
+                                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_ID</to>
+                                    </copy>
+                                    <copy>
+                                      <from>1</from>
+                                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_FIN_DE_ARCHIVO</to>
+                                    </copy>
+                                    <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                          xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                      <from>$evStoreVar</from>
+                                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_TIENDA</to>
+                                    </copy>
+                                    <copy>
+                                      <from>0</from>
+                                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_CANT_CAMBIO</to>
+                                    </copy>
+                                    <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                          xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                      <from>$evDescVar</from>
+                                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_DESCRIPCION</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                          xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                      <from>$evTipoVar</from>
+                                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_TIPO</to>
+                                    </copy>
+                                    <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                          xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                      <from>$evRazoVar</from>
+                                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_RAZON</to>
+                                    </copy>
+                                    <copy>
+                                      <from>2</from>
+                                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_BASE</to>
+                                    </copy>
+                                    <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                          xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                      <from>$fecIniVar</from>
+                                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_FECHA_INICIAL</to>
+                                    </copy>
+                                    <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                          xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                      <from>$fecFinVar</from>
+                                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_FECHA_FINAL</to>
+                                    </copy>
+                                    <copy>
+                                      <from>3</from>
+                                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_DIAS</to>
+                                    </copy>
+                                  </assign>
+                                  <invoke name="RMSCreateChangeEventPXY" bpelx:invokeAsDetail="no"
+                                          partnerLink="RMSCreateChangeEventPXY" portType="ns15:RMSCreateChangeEvent_ptt"
+                                          operation="RMSCreateChangeEvent"
+                                          inputVariable="RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable"
+                                          outputVariable="RMSCreateChangeEventPXY_RMSCreateChangeEvent_OutputVariable"/>
+                                </sequence>
+                                <else>
+                                  <sequence name="insertRowSeq"
+                                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                    <flow name="Flow1" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                      <sequence name="Sequence">
+                                        <if name="Style">
+                                          <documentation>
+                                            <![CDATA[style]]>
+                                          </documentation>
+                                          <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='7']/data)&gt;0</condition>
+                                          <assign name="Style">
+                                            <copy>
+                                              <from>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='7']/data</from>
+                                              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_ESTILO</to>
+                                            </copy>
+                                          </assign>
+                                          <else>
+                                            <assign name="Style"
+                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                              <copy>
+                                                <from>$Null</from>
+                                                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_ESTILO</to>
+                                              </copy>
+                                            </assign>
+                                          </else>
+                                        </if>
+                                      </sequence>
+                                      <sequence name="Sequence2">
+                                        <if name="SKU">
+                                          <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='9']/data)&gt;0</condition>
+                                          <assign name="SKU"
+                                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                            <copy>
+                                              <from>number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='9']/data)</from>
+                                              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_SKU</to>
+                                            </copy>
+                                          </assign>
+                                          <else>
+                                            <assign name="SKU"
+                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                              <copy>
+                                                <from>$Null</from>
+                                                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_SKU</to>
+                                              </copy>
+                                            </assign>
+                                          </else>
+                                        </if>
+                                      </sequence>
+                                    </flow>
+                                    <if name="validandoProveedor">
+                                      <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data)&gt;1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=2 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=3 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=4 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=5 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=6 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=7 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=8 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=9</condition>
+                                      <assign name="insertSupplier"
+                                              xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                        <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                              xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                          <from>string(number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data))</from>
+                                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PROVEEDOR/@xsi:nil</to>
+                                        </copy>
+                                      </assign>
+                                      <else>
+                                        <empty name="null"/>
+                                      </else>
+                                    </if>
+                                    <if name="validandoPorcentaje"
+                                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                      <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data)&gt;1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=2 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=3 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=4 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=5 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=6 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=7 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=8 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=9</condition>
+                                      <assign name="insertPCT">
+                                        <copy ignoreMissingFromData="yes">
+                                          <from>string(number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data))</from>
+                                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PCT</to>
+                                        </copy>
+                                      </assign>
+                                      <else>
+                                        <sequence name="Sequence3">
+                                          <assign name="null"
+                                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                                  xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                              <from>$Null</from>
+                                              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PCT</to>
+                                            </copy>
+                                          </assign>
+                                        </sequence>
+                                      </else>
+                                    </if>
+                                    <if name="validandoPrecio"
+                                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                      <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data)&gt;1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=2 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=3 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=4 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=5 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=6 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=7 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=8 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=9</condition>
+                                      <assign name="insertPre">
+                                        <copy ignoreMissingFromData="yes">
+                                          <from>number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data)</from>
+                                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PRECIO</to>
+                                        </copy>
+                                      </assign>
+                                      <else>
+                                        <sequence name="Sequence3">
+                                          <assign name="null"
+                                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                                  xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                              <from>$Null</from>
+                                              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PRECIO</to>
+                                            </copy>
+                                          </assign>
+                                        </sequence>
+                                      </else>
+                                    </if>
+                                    <assign name="insertEventNewLogical"
+                                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                      <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                        <from>$idEventVar</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_ID</to>
+                                      </copy>
+                                      <copy>
+                                        <from>0</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_FIN_DE_ARCHIVO</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                        <from>$evStoreVar</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_TIENDA</to>
+                                      </copy>
+                                      <copy>
+                                        <from>0</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_CANT_CAMBIO</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                        <from>$evDescVar</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_DESCRIPCION</to>
+                                      </copy>
+                                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                        <from>$evTipoVar</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_TIPO</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                        <from>$evRazoVar</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_RAZON</to>
+                                      </copy>
+                                      <copy>
+                                        <from>2</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_BASE</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                        <from>$fecIniVar</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_FECHA_INICIAL</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                        <from>$fecFinVar</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_FECHA_FINAL</to>
+                                      </copy>
+                                      <copy>
+                                        <from>3</from>
+                                        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_DIAS</to>
+                                      </copy>
+                                    </assign>
+                                    <invoke name="RMSCreateChangeEventPXY" bpelx:invokeAsDetail="no"
+                                            partnerLink="RMSCreateChangeEventPXY"
+                                            portType="ns15:RMSCreateChangeEvent_ptt" operation="RMSCreateChangeEvent"
+                                            inputVariable="RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable"
+                                            outputVariable="RMSCreateChangeEventPXY_RMSCreateChangeEvent_OutputVariable"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/>
+                                  </sequence>
+                                </else>
+                              </if>
+                            </sequence>
+                          </elseif>
+                          <else>
+                            <empty name="Empty1"/>
+                          </else>
+                        </if>
+                      </sequence>
+                    </scope>
+                  </forEach>
+                </sequence>
+                <elseif>
+                  <condition>$countRetail=0</condition>
+                  <sequence>
+                    <assign name="initialize" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>0</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$realNodeCount</to>
+      </copy>
+   </assign>
+                    <sequence name="Sequence6">
+                      <forEach parallel="no" counterName="ForEachCounterRow" name="iteratorRow"
+                               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <startCounterValue>$rowNumber</startCounterValue>
+      <finalCounterValue>$rowsCounter - 1</finalCounterValue>
+      <scope name="withoutRetail">
+         <variables>
+            <variable name="itemId" type="xsd:string"/>
+         </variables>
+         <sequence>
+            <if name="insertTypeOnly3">
+               <documentation>
+                  <![CDATA[rowEvTrec1]]>
+               </documentation>
+               <condition>($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $rowEvTrec1]/cell[@xPos='13']/data= $ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='13']/data) and (string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='11']/data)=0 or string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='10']/data)=0)</condition>
+               <sequence>
+                  <empty name="rowEvTrec1"/>
+               </sequence>
+               <elseif>
+                  <documentation>
+                     <![CDATA[rowEvTrec2]]>
+                  </documentation>
+                  <condition>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $rowEvTrec2]/cell[@xPos='13']/data= $ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='13']/data</condition>
+                  <empty name="rowEvTrec2" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/>
+               </elseif>
+               <elseif>
+                  <documentation>
+                     <![CDATA[EvTrec3]]>
+                  </documentation>
+                  <condition>($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='13']/data=3) and (string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='10']/data)&gt;0 or string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num= $ForEachCounterRow]/cell[@xPos='11']/data)&gt;0)</condition>
+                  <sequence name="callProcedure">
+                     <assign name="countRealNode">
+                        <copy>
+                           <from>number($realNodeCount) + 1</from>
+                           <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$realNodeCount</to>
+                        </copy>
+                     </assign>
+                     <if name="validateLvl">
+                        <condition>$evNiveVar='C'</condition>
+                        <assign name="cadena">
+                           <copy>
+                              <from>1</from>
+                              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_NIVEL</to>
+                           </copy>
+                        </assign>
+                        <else>
+                           <assign name="tienda">
+                              <copy>
+                                 <from>3</from>
+                                 <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_NIVEL</to>
+                              </copy>
+                           </assign>
+                        </else>
+                     </if>
+                     <if name="validateLastRow">
+                        <condition>$realNode=$realNodeCount</condition>
+                        <sequence name="insertLastRow" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                           <flow name="Flow1">
+                              <sequence name="Sequence">
+                                 <if name="Style">
+                                    <documentation>
+                                       <![CDATA[style]]>
+                                    </documentation>
+                                    <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='7']/data)&gt;0</condition>
+                                    <assign name="Style">
+                                       <copy>
+                                          <from>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='7']/data</from>
+                                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_ESTILO</to>
+                                       </copy>
+                                    </assign>
+                                    <else>
+                                       <assign name="Style"
+                                               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                                xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                             <from>$Null</from>
+                                             <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_ESTILO</to>
+                                          </copy>
+                                       </assign>
+                                    </else>
+                                 </if>
+                              </sequence>
+                              <sequence name="Sequence2">
+                                 <if name="SKU">
+                                    <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='9']/data)&gt;0</condition>
+                                    <assign name="SKU" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                       <copy>
+                                          <from>number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='9']/data)</from>
+                                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_SKU</to>
+                                       </copy>
+                                    </assign>
+                                    <else>
+                                       <assign name="SKU"
+                                               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                          <copy>
+                                             <from>$Null</from>
+                                             <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_SKU</to>
+                                          </copy>
+                                       </assign>
+                                    </else>
+                                 </if>
+                              </sequence>
+                           </flow>
+                           <if name="validandoPorcentaje">
+                              <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data)&gt;1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=2 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=3 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=4 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=5 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=6 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=7 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=8 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=9</condition>
+                              <assign name="insertPCT">
+                                 <copy ignoreMissingFromData="no">
+                                    <from>string(number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data))</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PCT</to>
+                                 </copy>
+                              </assign>
+                              <else>
+                                 <sequence name="Sequence3">
+                                    <assign name="null"
+                                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                       <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                             xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                          <from>$Null</from>
+                                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PCT</to>
+                                       </copy>
+                                    </assign>
+                                 </sequence>
+                              </else>
+                           </if>
+                           <if name="validandoPrecio" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                              <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data)&gt;1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=2 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=3 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=4 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=5 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=6 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=7 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=8 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=9</condition>
+                              <assign name="insertPre">
+                                 <copy ignoreMissingFromData="yes">
+                                    <from>number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data)</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PRECIO</to>
+                                 </copy>
+                              </assign>
+                              <else>
+                                 <sequence name="Sequence3">
+                                    <assign name="null"
+                                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                       <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                             xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                          <from>$Null</from>
+                                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PRECIO</to>
+                                       </copy>
+                                    </assign>
+                                 </sequence>
+                              </else>
+                           </if>
+                           <if name="validandoProveedor"
+                               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                              <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data)&gt;1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=2 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=3 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=4 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=5 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=6 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=7 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=8 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=9</condition>
+                              <assign name="insertSupplier">
+                                 <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                       xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                    <from>string(number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data))</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PROVEEDOR/@xsi:nil</to>
+                                 </copy>
+                              </assign>
+                              <else>
+                                 <empty name="null" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/>
+                              </else>
+                           </if>
+                           <assign name="insertEventNewLogical">
+                              <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                 <from>$idEventVar</from>
+                                 <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_ID</to>
+                              </copy>
+                              <copy>
+                                 <from>1</from>
+                                 <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_FIN_DE_ARCHIVO</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                 <from>$evStoreVar</from>
+                                 <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_TIENDA</to>
+                              </copy>
+                              <copy>
+                                 <from>0</from>
+                                 <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_CANT_CAMBIO</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                 <from>$evDescVar</from>
+                                 <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_DESCRIPCION</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                 <from>$evTipoVar</from>
+                                 <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_TIPO</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                 <from>$evRazoVar</from>
+                                 <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_RAZON</to>
+                              </copy>
+                              <copy>
+                                 <from>2</from>
+                                 <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_BASE</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                 <from>$fecIniVar</from>
+                                 <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_FECHA_INICIAL</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                 <from>$fecFinVar</from>
+                                 <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_FECHA_FINAL</to>
+                              </copy>
+                              <copy>
+                                 <from>3</from>
+                                 <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_DIAS</to>
+                              </copy>
+                           </assign>
+                           <invoke name="RMSCreateChangeEventPXY" bpelx:invokeAsDetail="no"
+                                   partnerLink="RMSCreateChangeEventPXY" portType="ns15:RMSCreateChangeEvent_ptt"
+                                   operation="RMSCreateChangeEvent"
+                                   inputVariable="RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable"
+                                   outputVariable="RMSCreateChangeEventPXY_RMSCreateChangeEvent_OutputVariable"
+                                   xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/>
+                        </sequence>
+                        <else>
+                           <sequence name="insertRowSeq"
+                                     xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                              <flow name="Flow1" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                 <sequence name="Sequence">
+                                    <if name="Style">
+                                       <documentation>
+                                          <![CDATA[style]]>
+                                       </documentation>
+                                       <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='7']/data)&gt;0</condition>
+                                       <assign name="Style">
+                                          <copy>
+                                             <from>$ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='7']/data</from>
+                                             <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_ESTILO</to>
+                                          </copy>
+                                       </assign>
+                                       <else>
+                                          <assign name="Style"
+                                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                             <copy>
+                                                <from>$Null</from>
+                                                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_ESTILO</to>
+                                             </copy>
+                                          </assign>
+                                       </else>
+                                    </if>
+                                 </sequence>
+                                 <sequence name="Sequence2">
+                                    <if name="SKU">
+                                       <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='9']/data)&gt;0</condition>
+                                       <assign name="SKU"
+                                               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                          <copy>
+                                             <from>number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='9']/data)</from>
+                                             <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_SKU</to>
+                                          </copy>
+                                       </assign>
+                                       <else>
+                                          <assign name="SKU"
+                                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                             <copy>
+                                                <from>$Null</from>
+                                                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_SKU</to>
+                                             </copy>
+                                          </assign>
+                                       </else>
+                                    </if>
+                                 </sequence>
+                              </flow>
+                              <if name="validandoProveedor">
+                                 <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data)&gt;1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=2 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=3 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=4 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=5 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=6 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=7 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=8 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data=9</condition>
+                                 <assign name="insertSupplier"
+                                         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                    <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                          xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                       <from>string(number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='6']/data))</from>
+                                       <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PROVEEDOR/@xsi:nil</to>
+                                    </copy>
+                                 </assign>
+                                 <else>
+                                    <empty name="null"/>
+                                 </else>
+                              </if>
+                              <if name="validandoPorcentaje"
+                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                 <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data)&gt;1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=2 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=3 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=4 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=5 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=6 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=7 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=8 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data=9</condition>
+                                 <assign name="insertPCT">
+                                    <copy ignoreMissingFromData="yes">
+                                       <from>string(number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='11']/data))</from>
+                                       <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PCT</to>
+                                    </copy>
+                                 </assign>
+                                 <else>
+                                    <sequence name="Sequence3">
+                                       <assign name="null"
+                                               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                                xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                             <from>$Null</from>
+                                             <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PCT</to>
+                                          </copy>
+                                       </assign>
+                                    </sequence>
+                                 </else>
+                              </if>
+                              <if name="validandoPrecio"
+                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                 <condition>string-length($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data)&gt;1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=1 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=2 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=3 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=4 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=5 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=6 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=7 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=8 or $ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data=9</condition>
+                                 <assign name="insertPre">
+                                    <copy ignoreMissingFromData="yes">
+                                       <from>number($ExcelParsingUtil_OutputVariable.parameters/return/row[@num=string($ForEachCounterRow)]/cell[@xPos='10']/data)</from>
+                                       <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PRECIO</to>
+                                    </copy>
+                                 </assign>
+                                 <else>
+                                    <sequence name="Sequence3">
+                                       <assign name="null"
+                                               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                                xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                             <from>$Null</from>
+                                             <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_PRECIO</to>
+                                          </copy>
+                                       </assign>
+                                    </sequence>
+                                 </else>
+                              </if>
+                              <assign name="insertEventNewLogical"
+                                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                 <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                       xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                    <from>$idEventVar</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_ID</to>
+                                 </copy>
+                                 <copy>
+                                    <from>0</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_FIN_DE_ARCHIVO</to>
+                                 </copy>
+                                 <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                       xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                    <from>$evStoreVar</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_TIENDA</to>
+                                 </copy>
+                                 <copy>
+                                    <from>0</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_CANT_CAMBIO</to>
+                                 </copy>
+                                 <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                       xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                    <from>$evDescVar</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_DESCRIPCION</to>
+                                 </copy>
+                                 <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                       xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                    <from>$evTipoVar</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_TIPO</to>
+                                 </copy>
+                                 <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                       xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                    <from>$evRazoVar</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_RAZON</to>
+                                 </copy>
+                                 <copy>
+                                    <from>2</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_BASE</to>
+                                 </copy>
+                                 <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                       xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                    <from>$fecIniVar</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_FECHA_INICIAL</to>
+                                 </copy>
+                                 <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes"
+                                       xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                    <from>$fecFinVar</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_FECHA_FINAL</to>
+                                 </copy>
+                                 <copy>
+                                    <from>3</from>
+                                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable.InputParameters/ns16:I_DIAS</to>
+                                 </copy>
+                              </assign>
+                              <invoke name="RMSCreateChangeEventPXY" bpelx:invokeAsDetail="no"
+                                      partnerLink="RMSCreateChangeEventPXY" portType="ns15:RMSCreateChangeEvent_ptt"
+                                      operation="RMSCreateChangeEvent"
+                                      inputVariable="RMSCreateChangeEventPXY_RMSCreateChangeEvent_InputVariable"
+                                      outputVariable="RMSCreateChangeEventPXY_RMSCreateChangeEvent_OutputVariable"
+                                      xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/>
+                           </sequence>
+                        </else>
+                     </if>
+                  </sequence>
+               </elseif>
+               <else>
+                  <empty name="Empty1"/>
+               </else>
+            </if>
+         </sequence>
+      </scope>
+   </forEach>
+                    </sequence>
+                  </sequence>
+                </elseif>
+                <else>
+                  <empty name="Empty3"/>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+        </forEach>
+      </sequence>
+   </scope><!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="PriceChangeRequestService" portType="client:PriceChangeRequestProcess" operation="process" variable="outputVariable"/>
+  </sequence>
+</process>

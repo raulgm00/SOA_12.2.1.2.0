@@ -1,0 +1,189 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Jun 10 17:35:54 CDT 2019
+  Author:  offic
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="UpdateItemProcess"
+               targetNamespace="http://xmlns.oracle.com/UpdateItemApp/UpdateItemProcess/UpdateItemProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/UpdateItemApp/UpdateItemProcess/UpdateItemProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/Items/UpdateItemEntity"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ns2="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns3="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns4="http://xmlns.oracle.com/ProtoUpdateSKUApp/ProtoUpdateSKUProcess/ProtoUpdateSKUProcess"
+         xmlns:ns5="http://xmlns.oracle.com/JDAUpdateSKUApp/JDAUpdateSKUProcess/JDAUpdateSKUProcess"
+         xmlns:ns6="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:ns7="http://mx.agarcia.ea/Commons/Schemas/AGStandardHeader" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns8="http://xmlns.oracle.com/AGCreateStyleProcess/JDAUpdateStyle/JDAUpdateStyleProcess"
+         xmlns:ns9="http://mx.agarcia.ea/Capabilities/Core/Items/UpdateItemEntity/UpdateStyle"
+         xmlns:ns10="http://xmlns.oracle.com/JDAUpdateSKUApp/JDAUpdateSKUProcess/JDAUpdateSKUProcessx">
+
+    <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/UpdateItemApp/UpdateItemProcess/UpdateItemProcess" location="../WSDLs/UpdateItemProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="UpdateItemService" partnerLinkType="client:UpdateItemProcess" myRole="UpdateItemProcessProvider"/>
+    <partnerLink name="ProtoUpdateSKUService" partnerLinkType="ns4:ProtoUpdateSKUProcess"
+                 partnerRole="ProtoUpdateSKUProcessProvider"/>
+    <partnerLink name="UpdateItemEntService" partnerLinkType="ns8:JDAUpdateStyleProcess"
+                 partnerRole="JDAUpdateStyleProcessProvider"/>
+    <partnerLink name="JDAUpdateSKUSvc" partnerLinkType="ns10:JDAUpdateSKUProcess"
+                 partnerRole="JDAUpdateSKUProcessProvider"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:UpdateItemProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:UpdateItemProcessResponseMessage"/>
+    <variable name="InvokeProto_updateProto_InputVariable" messageType="ns4:ProtoUpdateSKUProcessRequestMessage"/>
+    <variable name="InvokeProto_updateProto_OutputVariable" messageType="ns4:ProtoUpdateSKUProcessResponseMessage"/>
+    <variable name="header" messageType="client:StandardHeaderMessage"/>
+    <variable name="interfaceId" type="xsd:string"/>
+    <variable name="UpdatestyleService_process_InputVariable" messageType="ns8:JDAUpdateStyleProcessRequestMessage"/>
+    <variable name="UpdatestyleService_process_OutputVariable" messageType="ns8:JDAUpdateStyleProcessResponseMessage"/>
+    <variable name="JDAUpdateSKUSvc_modifySKU_InputVariable" messageType="ns10:JDAUpdateSKUProcessRequestMessage"/>
+    <variable name="JDAUpdateSKUSvc_modifySKU_OutputVariable" messageType="ns10:JDAUpdateSKUProcessResponseMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in UpdateItemProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="UpdateItemService" portType="client:UpdateItemProcess" operation="update" variable="inputVariable" createInstance="yes"
+             bpelx:headerVariable="header"/>
+    <if name="validateInterface">
+      <condition>$header.headerMessage/ns7:parameters/ns7:parameter[@Key='gov.interface.id']</condition>
+      <assign name="getInterfaceId">
+        <copy>
+          <from>$header.headerMessage/ns7:parameters/ns7:parameter[@Key='gov.interface.id']</from>
+          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$interfaceId</to>
+        </copy>
+      </assign>
+      <else>
+        <empty name="NoInterface"/>
+      </else>
+    </if>
+    <if name="validateType">
+      <condition>$inputVariable.payload/ns1:items/ns2:item/ns2:id/@Type="SKU"</condition>
+      <sequence>
+        <empty name="SKU"/><if name="validateSourceProto" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+          <bpelx:skipCondition>1=1</bpelx:skipCondition>
+          <condition>string($header.headerMessage/ns7:source)="Proto"</condition>
+      <empty name="sourceProto"/>
+      <else>
+         <sequence>
+            
+            
+         <assign name="callProto">
+                <copy>
+                  <from>$inputVariable.payload</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeProto_updateProto_InputVariable.payload</to>
+                </copy>
+              </assign><invoke name="InvokeProto" partnerLink="ProtoUpdateSKUService"
+                               portType="ns4:ProtoUpdateSKUProcess" operation="updateProto"
+                               inputVariable="InvokeProto_updateProto_InputVariable"
+                               outputVariable="InvokeProto_updateProto_OutputVariable" bpelx:invokeAsDetail="no"
+                               bpelx:inputHeaderVariable="header">
+                <bpelx:skipCondition>1=1</bpelx:skipCondition>
+              </invoke></sequence>
+      </else>
+   </if>
+        <sequence name="updateSecuence">
+          <if name="validateSourceJDA">
+            <condition>string($header.headerMessage/ns7:source)="JDA"</condition>
+            <empty name="sourceJDA"/>
+            <else>
+              <sequence>
+                <assign name="callJDA">
+                  <copy>
+                    <from>$inputVariable.payload/ns1:items</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAUpdateSKUSvc_modifySKU_InputVariable.payload/ns1:items</to>
+                  </copy>
+                </assign>
+                <invoke name="JDAUpdateSKUSvc" partnerLink="JDAUpdateSKUSvc"
+                        portType="ns10:JDAUpdateSKUProcess" operation="modifySKU"
+                        inputVariable="JDAUpdateSKUSvc_modifySKU_InputVariable"
+                        outputVariable="JDAUpdateSKUSvc_modifySKU_OutputVariable" bpelx:invokeAsDetail="no"
+                        bpelx:inputHeaderVariable="header"/>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+      </sequence>
+      <elseif>
+        <condition>$inputVariable.payload/ns1:items/ns2:item/ns2:id/@Type="Style"</condition>
+        <sequence name="Sequence1">
+          <empty name="updateStyle"/><if name="validateSourceJDA"
+                                         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <condition>string($header.headerMessage/ns7:source)="JDA"</condition>
+      <empty name="sourceJDA"/>
+      <else>
+         <sequence>
+            <assign name="callJDA">
+                  <copy>
+                    <from>$inputVariable.payload/ns1:items</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$UpdatestyleService_process_InputVariable.payload/ns9:items</to>
+                  </copy>
+                </assign>
+                <invoke name="UpdatestyleService" partnerLink="UpdateItemEntService"
+                        portType="ns8:JDAUpdateStyleProcess" operation="process"
+                        inputVariable="UpdatestyleService_process_InputVariable"
+                        outputVariable="UpdatestyleService_process_OutputVariable" bpelx:invokeAsDetail="no"
+                        bpelx:inputHeaderVariable="header"/>
+              </sequence>
+      </else>
+   </if>
+        </sequence>
+      </elseif>
+      <else>
+        <empty name="updateUPC"/>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="UpdateItemService" portType="client:UpdateItemProcess" operation="update" variable="outputVariable"/>
+  </sequence>
+</process>

@@ -1,0 +1,83 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Aug 02 17:03:58 CDT 2019
+  Author:  Marisol
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CreateColorGroupProcess"
+               targetNamespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateColorGroupProcess/v1.0"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://mx.agarcia.ea/Capabilities/Core/Items/CreateColorGroupProcess/v1.0"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://xmlns.oracle.com/RetailOperMK/CreateColorGroupProcess/PROUpsertDiffRest"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Items/PROCreateColorProcess/v1.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns4="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Core/Items/CreateColorGroupEntity">
+
+    <import ui:processWSDL="true" namespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateColorGroupProcess/v1.0" location="../WSDLs/CreateColorGroupProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="createcolorgroupprocess_client" partnerLinkType="client:CreateColorGroupProcess" myRole="CreateColorGroupProcessProvider"/>
+    <partnerLink name="PROCreateColorGroupPXY" partnerLinkType="ns2:PROCreateColorProcess"
+                 partnerRole="PROCreateColorProcessProvider"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:CreateColorGroupProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:CreateColorGroupProcessResponseMessage"/>
+    <variable name="Invoke_createGroup_in" messageType="ns2:PROCreateColorProcessRequestMessage"/>
+    <variable name="Invoke_createGroup_out" messageType="ns2:PROCreateColorProcessResponseMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CreateColorGroupProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="createcolorgroupprocess_client" portType="client:CreateColorGroupProcess" operation="create" variable="inputVariable" createInstance="yes"/>
+    <assign name="Assign1">
+      <copy>
+        <from>$inputVariable.payload/ns3:colorGroup</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_createGroup_in.payload/ns3:colorGroup</to>
+      </copy>
+    </assign>
+    <invoke name="Invoke_createGroup" bpelx:invokeAsDetail="no" partnerLink="PROCreateColorGroupPXY"
+            portType="ns2:PROCreateColorProcess" operation="create" inputVariable="Invoke_createGroup_in"
+            outputVariable="Invoke_createGroup_out"/>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="createcolorgroupprocess_client" portType="client:CreateColorGroupProcess" operation="create" variable="outputVariable"/>
+  </sequence>
+</process>

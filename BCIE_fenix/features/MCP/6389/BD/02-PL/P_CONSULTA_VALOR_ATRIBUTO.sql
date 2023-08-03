@@ -1,0 +1,228 @@
+CREATE OR REPLACE PROCEDURE P_CONSULTA_VALOR_ATRIBUTO (
+   P_CONDICION       IN     INTEGER,
+   P_OPERACION   IN     INTEGER,
+   RECORDSET            OUT SYS_REFCURSOR)
+AS
+BEGIN
+   OPEN RECORDSET FOR
+      SELECT NOMBRE AS VALOR,
+             ID,
+             'NOMBRE' COLUMNA,
+             NULL AS ID_CAT,
+             NULL DESCRIPCION,
+             NULL DESCRIPCION_CORTA,
+             NULL FECHA_REGISTRO,
+             NULL BAN_ESTATUS,
+             NULL COD_EXTERNO
+        FROM CONDICION
+       WHERE ID_OPERACION = P_OPERACION AND NOMBRE IS NOT NULL
+      UNION ALL
+      SELECT DESCRIPCION AS VALOR,
+             ID,
+             'DESCRIPCION' COLUMNA,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL
+        FROM CONDICION
+       WHERE ID_OPERACION =P_OPERACION AND DESCRIPCION IS NOT NULL
+      UNION ALL
+      SELECT TO_CHAR (FECHA_INICIO) AS VALOR,
+             ID,
+             'FECHA_INICIO' COLUMNA,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL
+        FROM CONDICION
+       WHERE ID_OPERACION = P_OPERACION AND FECHA_INICIO IS NOT NULL
+      UNION ALL
+      SELECT TO_CHAR (PLAZO) AS VALOR,
+             ID,
+             'PLAZO' COLUMNA,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL
+        FROM CONDICION
+       WHERE ID_OPERACION = P_OPERACION AND PLAZO IS NOT NULL
+      UNION ALL
+      SELECT TO_CHAR (FECHA_FINAL) AS VALOR,
+             ID,
+             'FECHA_FINAL' COLUMNA,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL
+        FROM CONDICION
+       WHERE ID_OPERACION = P_OPERACION AND FECHA_FINAL IS NOT NULL
+      UNION ALL
+      SELECT TO_CHAR (ID_TCA_CONTROL_CONDICION) AS VALOR,
+             ID,
+             'ID_TCA_CONTROL_CONDICION' COLUMNA,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL
+        FROM CONDICION
+       WHERE ID_OPERACION = P_OPERACION AND ID_TCA_CONTROL_CONDICION IS NOT NULL
+      UNION ALL
+      SELECT TO_CHAR (ID_TCA_TIPO_FECHA_INICIO) AS VALOR,
+             ID,
+             'ID_TCA_TIPO_FECHA_INICIO' COLUMNA,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL
+        FROM CONDICION
+       WHERE ID_OPERACION = P_OPERACION AND ID_TCA_TIPO_FECHA_INICIO IS NOT NULL
+      UNION ALL
+      SELECT TO_CHAR (ID_TCA_FRECUENCIA_PLAZO) AS VALOR,
+             ID,
+             'ID_TCA_FRECUENCIA_PLAZO' COLUMNA,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL
+        FROM CONDICION
+       WHERE ID_OPERACION = P_OPERACION AND ID_TCA_FRECUENCIA_PLAZO IS NOT NULL
+       UNION ALL --Se agregan CAT Y TRE
+       SELECT NULL AS VALOR,
+             NULL,
+             'ID_TCA_CONTROL_CONDICION' AS COLUMNA,
+             ID,
+             DESCRIPCION,
+             DESCRIPCION_CORTA,
+             FECHA_REGISTRO,
+             BAN_ESTATUS,
+             COD_EXTERNO
+        FROM TCA_CONTROL_CONDICION TCA
+      UNION ALL
+      SELECT NULL AS VALOR,
+             NULL,
+             'ID_TCA_TIPO_FECHA_INICIO' AS COLUMNA,
+             ID,
+             DESCRIPCION,
+             DESCRIPCION_CORTA,
+             FECHA_REGISTRO,
+             BAN_ESTATUS,
+             COD_EXTERNO
+        FROM TCA_TIPO_FECHA_INICIO
+        WHERE COD_EXTERNO ='CONDICION'
+      UNION ALL
+      SELECT NULL AS VALOR,
+             NULL,
+             'ID_TCA_FRECUENCIA_PLAZO' AS COLUMNA,
+             ID,
+             DESCRIPCION,
+             DESCRIPCION_CORTA,
+             FECHA_REGISTRO,
+             BAN_ESTATUS,
+             COD_EXTERNO
+        FROM TCA_TIPO_FRECUENCIA
+              UNION ALL 
+      SELECT TO_CHAR (ID_TCA_EVENTO) AS VALOR,
+             ID_CONDICION,
+             'TRE_TCA_EVENTO_CONDICION' AS COLUMNA,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL
+        FROM TRE_TCA_EVENTO_CONDICION TR 
+       WHERE ID_CONDICION IN ( SELECT ID FROM CONDICION WHERE ID_OPERACION=P_OPERACION)
+       AND ID_TCA_EVENTO IS NOT NULL
+       UNION ALL
+       SELECT NULL AS VALOR,
+             NULL,
+             'TRE_TCA_EVENTO_CONDICION' AS COLUMNA,
+             ID,
+             DESCRIPCION,
+             DESCRIPCION_CORTA,
+             FECHA_REGISTRO,
+             BAN_ESTATUS,
+             COD_EXTERNO
+        FROM TCA_EVENTO_CONDICION
+             UNION ALL
+      SELECT DISTINCT TO_CHAR (ID_TCA_CATEGORIA) AS VALOR,
+             ID_CONDICION,
+             'TRE_CATEGORIA_CONDICION' COLUMNA,
+             NULL ID,
+             NULL DESCRIPCION,
+             NULL DESCRIPCION_CORTA,
+             NULL FECHA_REGISTRO,
+             NULL BAN_ESTATUS,
+             NULL COD_EXTERNO
+        FROM TRE_CATEGORIA_CONDICION TR 
+       WHERE ID_CONDICION IN ( SELECT ID FROM  CONDICION WHERE ID_OPERACION=P_OPERACION) 
+       AND ID_TCA_CATEGORIA IS NOT NULL
+      UNION ALL
+         SELECT  NULL AS VALOR,
+             NULL,
+             'TRE_CATEGORIA_CONDICION' COLUMNA,
+             CA.ID,
+             CA.DESCRIPCION,
+             CA.DESCRIPCION_CORTA,
+             CA.FECHA_REGISTRO,
+             CA.BAN_ESTATUS,
+             CA.COD_EXTERNO
+        FROM TCA_CATEGORIA_CONDICION CA
+      UNION ALL
+      SELECT TO_CHAR (ID_FUENTE) AS VALOR,
+             ID_CONDICION,
+             'TRE_FUENTE_CONDICION' COLUMNA,
+             FU.ID,
+             FU.DESCRIPCION,
+             NULL,
+             FU.FECHA_REGISTRO,
+             FU.BAN_ESTATUS,
+             NULL
+        FROM TRE_FUENTE_CONDICION TR INNER JOIN FUENTE FU
+                ON (TR.ID_FUENTE = FU.ID)
+       WHERE ID_CONDICION IN ( SELECT ID FROM  CONDICION WHERE ID_OPERACION=P_OPERACION)
+        AND ID_FUENTE IS NOT NULL
+      UNION ALL
+      SELECT TO_CHAR (ID_LINEA_CREDITO) AS VALOR,
+             ID_CONDICION,
+             'TRE_LINEA_CREDITO_CONDICION' COLUMNA,
+             LC.ID,
+             LC.DESCRIPCION_LINEA,
+             NULL,
+             LC.FECHA_REGISTRO,
+             LC.BAN_ESTATUS,
+             NULL
+        FROM tre_linea_credito_tcc TR INNER JOIN LINEA_CREDITO LC
+                ON (TR.ID_LINEA_CREDITO = LC.ID)
+       WHERE ID_CONDICION IN ( SELECT ID FROM CONDICION WHERE ID_OPERACION=P_OPERACION)  
+       AND ID_LINEA_CREDITO IS NOT NULL
+       UNION ALL 
+       SELECT OBSERVACION AS VALOR,
+  ID_CONDICION,
+ 'OBSERVACION_CONDICION' COLUMNA,
+  ID ,
+  OBSERVACION     ,
+  NULL    ,
+  FECHA_REGISTRO    ,
+  BAN_ESTATUS,
+  NULL
+   FROM OBSERVACION_CONDICION 
+  WHERE ID_CONDICION  IN (  SELECT ID  FROM CONDICION WHERE ID_OPERACION =P_OPERACION )
+       AND ES_PRINCIPAL=1
+       ;
+END;
+/

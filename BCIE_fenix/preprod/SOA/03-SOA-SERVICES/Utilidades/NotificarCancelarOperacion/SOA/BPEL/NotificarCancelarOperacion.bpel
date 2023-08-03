@@ -1,0 +1,653 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Feb 23 11:27:09 CST 2016
+  Author:  Perla Osorio
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="NotificarCancelarOperacion"
+               targetNamespace="http://xmlns.oracle.com/Utilidades/NotificarCancelarOperacion/NotificarCancelarOperacion"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/Utilidades/NotificarCancelarOperacion/NotificarCancelarOperacion"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/NotificarCancelarOperacion"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/OperacionService"
+         xmlns:ns3="http://xmlns.bcie.com/UsuarioService" xmlns:ns4="http://xmlns.bcie.com/CorreoElectronicoService"
+         xmlns:ns5="http://www.bcie.org/NotificarCancelarOperacionBO" xmlns:ns6="http://www.bcie.org/ResultBO"
+         xmlns:ns8="http://www.bcie.org/OperacionMO" xmlns:ns7="http://www.bcie.org/NotificarCancelarOperacionMO"
+         xmlns:ns9="http://www.bcie.org/ErrorBO" xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ns10="http://www.bcie.org/OperacionBO" xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:ns13="http://www.bcie.org/ProductoBO"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:ns14="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ns12="http://www.bcie.org/CatalogoBO"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns11="http://www.bcie.org/ClienteBO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns15="http://www.bcie.org/ConsultarTareasActivas"
+         xmlns:ns16="http://www.bcie.org/ConsultarTareasActivasBO"
+         xmlns:ns17="http://www.bcie.org/ConsultarTareasActivasMO" xmlns:ns18="http://www.bcie.org/UsuarioMO"
+         xmlns:ns19="http://www.bcie.org/UsuarioBO" xmlns:ns20="http://www.bcie.org/CorreoMO"
+         xmlns:ns21="http://www.bcie.org/CorreoBO" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/ConsultarTareasActivas"
+          location="oramds:/apps/Resources/ComponentesComunes/Utilidades/ConsultarTareasActivas/V1/Wsdl/ConsultarTareasActivas.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/OperacionMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Operacion/V1/Schema/OperacionMO.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://www.bcie.org/NotificarCancelarOperacion"
+          location="../WSDLs/NotificarCancelarOperacionWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="notificarcancelaroperacion_client" partnerLinkType="ns1:NotificarCancelarOperacion" myRole="NotificarCancelarOperacion_PT"/>
+    <partnerLink name="ConsultarOperacion_SB" partnerLinkType="ns2:ConsultarOperacion_SB"
+                 partnerRole="ConsultarOperacionById12Port"/>
+    <partnerLink name="ConsultarAtributosUsuario_SB" partnerLinkType="ns3:ConsultarAtributosUsuario_SB"
+                 partnerRole="UsuarioPT"/>
+    <partnerLink name="ConsultarTareasActivas_SB" partnerLinkType="ns15:ConsultarTareasActivas_SB"
+                 partnerRole="ConsultarTareasActivas_PT"/>
+    <partnerLink name="EnviarCorreoElectronico_direct" partnerLinkType="ns20:EnviarCorreoElectronico_direct"
+                 partnerRole="EnviarCorreoElectronicoPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestNotificarCancelarOperacionMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseNotificarCancelarOperacionMessage"/>
+    <variable name="outConsultarOperacion" messageType="ns2:responseConsultarOperacionMessage"/>
+    <variable name="outConsultarTareasActivas" messageType="ns15:responseConsultarTareasActivasMessage"/>
+    <variable name="outConsultaAtributosUsuario" messageType="ns3:responseConsultarAtributosUsuarioMessage"/>
+    <variable name="setInstanceTitle" type="xsd:string"/>
+    <variable name="faultVariable" messageType="bpelx:RuntimeFaultMessage"/>
+  </variables>
+  <faultHandlers>
+    <catch faultName="bpelx:remoteFault" faultVariable="faultVariable" faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="Sequence9">
+        <assign name="RemoteFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.code</from>
+            <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorCode</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.detail</from>
+            <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyRemoteFault" variable="outputVariable" partnerLink="notificarcancelaroperacion_client"
+               portType="ns1:NotificarCancelarOperacion_PT" operation="NotificarCancelarOperacion"/>
+      </sequence>
+    </catch>
+    <catch faultName="bpelx:bindingFault" faultVariable="faultVariable" faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="Sequence8">
+        <assign name="BindingFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.code</from>
+            <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorCode</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.detail</from>
+            <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyBindingFault" variable="outputVariable" partnerLink="notificarcancelaroperacion_client"
+               portType="ns1:NotificarCancelarOperacion_PT" operation="NotificarCancelarOperacion"/>
+      </sequence>
+    </catch>
+    <catchAll>
+      <sequence name="Sequence10">
+        <assign name="AllFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.code</from>
+            <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorCode</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.detail</from>
+            <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyAll" variable="outputVariable" partnerLink="notificarcancelaroperacion_client"
+               portType="ns1:NotificarCancelarOperacion_PT" operation="NotificarCancelarOperacion"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in NotificarCancelarOperacion.wsdl) -->
+    <receive name="receiveInput" partnerLink="notificarcancelaroperacion_client" portType="ns1:NotificarCancelarOperacion_PT" operation="NotificarCancelarOperacion" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat('Codigo Operacion: ',$inputVariable.request/ns7:Operacion/ns5:idOperacion))</from>
+        <to>$setInstanceTitle</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarOperacion">
+      <variables>
+        <variable name="inConsultarOperacion"
+                  messageType="ns2:requestConsultarOperacionMessage"/>
+        <variable name="FaultVariable" messageType="bpelx:RuntimeFaultMessage"/>
+      </variables>
+      <sequence name="ConsultarOperacion">
+        <assign name="requestConsultarOperacion">
+          <copy>
+            <from>$inputVariable.request/ns7:Operacion/ns5:idOperacion</from>
+            <to>$inConsultarOperacion.request/ns8:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarOperacion_SB" bpelx:invokeAsDetail="no" partnerLink="ConsultarOperacion_SB"
+                portType="ns2:ConsultarOperacionById12Port" operation="ConsultarOperacionById"
+                inputVariable="inConsultarOperacion" outputVariable="outConsultarOperacion"/>
+        <if name="IfValidaError">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$outConsultarOperacion.response/ns8:Resultado/ns6:result = 'ERROR'</condition>
+          <sequence name="Sequence4">
+            <assign name="ErrorConsultaOperacion">
+              <copy>
+                <from>$outConsultarOperacion.response/ns8:Resultado/ns6:result</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+              </copy>
+              <copy>
+                <from>$outConsultarOperacion.response/ns8:Resultado/ns6:message</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+              </copy>
+              <copy>
+                <from>$outConsultarOperacion.response/ns8:Resultado/ns6:error/ns9:errorCode</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorCode</to>
+              </copy>
+              <copy>
+                <from>$outConsultarOperacion.response/ns8:Resultado/ns6:error/ns9:errorDescription</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorDescription</to>
+              </copy>
+              <copy>
+                <from>$outConsultarOperacion.response/ns8:Resultado/ns6:error/ns9:errorType</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorType</to>
+              </copy>
+            </assign>
+            <reply name="ReplyErrorConsultarOperacion" variable="outputVariable"
+                   partnerLink="notificarcancelaroperacion_client" portType="ns1:NotificarCancelarOperacion_PT"
+                   operation="NotificarCancelarOperacion"/>
+            <exit name="Exit_Error"/>
+          </sequence>
+          <else>
+            <empty name="Empty"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarAtributoUsuario">
+      <variables>
+        <variable name="inConsultaAtributosUsuario" messageType="ns3:requestConsultarAtributosUsuarioMessage"/>
+      </variables>
+      <sequence name="ConsultarAtributosUsuario">
+        <assign name="requestConsultarAtributosUsuario">
+          <copy>
+            <from>$outConsultarOperacion.response/ns8:Operacion/ns10:responsable</from>
+            <to>$inConsultaAtributosUsuario.request/ns18:listaNombres/ns19:nombreUsuario</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultaAtributosUsuario" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarAtributosUsuario_SB" portType="ns3:UsuarioPT"
+                operation="consultarAtributosUsuario" inputVariable="inConsultaAtributosUsuario"
+                outputVariable="outConsultaAtributosUsuario"/>
+        <if name="IfValidaError">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$outConsultaAtributosUsuario.response/ns18:Resultado/ns6:result = 'ERROR'</condition>
+          <sequence name="Sequence6">
+            <assign name="ErrorConsultaAtributos">
+              <copy>
+                <from>$outConsultaAtributosUsuario.response/ns18:Resultado/ns6:result</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+              </copy>
+              <copy>
+                <from>$outConsultaAtributosUsuario.response/ns18:Resultado/ns6:message</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+              </copy>
+              <copy>
+                <from>$outConsultaAtributosUsuario.response/ns18:Resultado/ns6:error/ns9:errorCode</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorCode</to>
+              </copy>
+              <copy>
+                <from>$outConsultaAtributosUsuario.response/ns18:Resultado/ns6:error/ns9:errorDescription</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorDescription</to>
+              </copy>
+              <copy>
+                <from>$outConsultaAtributosUsuario.response/ns18:Resultado/ns6:error/ns9:errorType</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorType</to>
+              </copy>
+            </assign>
+            <reply name="ReplyErrorConsultarAtributosUsuario" variable="outputVariable"
+                   partnerLink="notificarcancelaroperacion_client" portType="ns1:NotificarCancelarOperacion_PT"
+                   operation="NotificarCancelarOperacion"/>
+            <exit name="Exit_Error"/>
+          </sequence>
+          <else>
+            <empty name="Empty"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarTareasActivas">
+      <variables>
+        <variable name="inConsultarTareasActivas" messageType="ns15:requestConsultarTareasActivasMessage"/>
+        <variable name="inEnviaCorreoElectronico" messageType="ns20:EnviarCorreoElectronicoRequestMessage"/>
+        <variable name="outEnviaCorreoElectronico" messageType="ns20:EnviarCorreoElectronicoResponseMessage"/>
+      </variables>
+      <sequence name="ConsultarTareasActivas">
+        <assign name="requestConsultarTareasActivas">
+          <copy>
+            <from>$inputVariable.request/ns7:Operacion/ns5:idOperacion</from>
+            <to>$inConsultarTareasActivas.request/ns17:Operacion/ns16:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarTareasActivas" bpelx:invokeAsDetail="no" partnerLink="ConsultarTareasActivas_SB"
+                portType="ns15:ConsultarTareasActivas_PT" operation="ConsultarTareasActivas"
+                inputVariable="inConsultarTareasActivas" outputVariable="outConsultarTareasActivas"/>
+        <if name="IfValidaConsultaTareas">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$outConsultarTareasActivas.response/ns17:Resultado/ns6:result = 'ERROR'</condition>
+          <sequence name="Sequence7">
+            <assign name="ErrorConsultarTareasActivas">
+              <copy>
+                <from>$outConsultarTareasActivas.response/ns17:Resultado/ns6:result</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+              </copy>
+              <copy>
+                <from>$outConsultarTareasActivas.response/ns17:Resultado/ns6:message</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+              </copy>
+              <copy>
+                <from>$outConsultarTareasActivas.response/ns17:Resultado/ns6:error/ns9:errorCode</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorCode</to>
+              </copy>
+              <copy>
+                <from>$outConsultarTareasActivas.response/ns17:Resultado/ns6:error/ns9:errorDescription</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorDescription</to>
+              </copy>
+              <copy>
+                <from>$outConsultarTareasActivas.response/ns17:Resultado/ns6:error/ns9:errorType</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorType</to>
+              </copy>
+            </assign>
+            <reply name="ReplyErrorConsultarTareas" variable="outputVariable"
+                   partnerLink="notificarcancelaroperacion_client" portType="ns1:NotificarCancelarOperacion_PT"
+                   operation="NotificarCancelarOperacion"/>
+            <exit name="Exit_Error"/>
+          </sequence>
+          <else>
+            <empty name="Empty"/>
+          </else>
+        </if>
+        <if name="IfValidaEstadoOperacion">
+          <documentation>
+            <![CDATA[Suspendida]]>
+          </documentation>
+          <condition>$outConsultarOperacion.response/ns8:Operacion/ns10:estado/ns12:Id = 2</condition>
+          <sequence name="OperacionSuspendida">
+            <assign name="RequestEnviarCorreoOperacionSusp">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/RequestEnviarCorreoOperacionSusp.xqy', 'inputVariable.request', $inputVariable.request, 'outConsultarOperacion.response', $outConsultarOperacion.response, 'outConsultaAtributosUsuario.response', $outConsultaAtributosUsuario.response)</from>
+                <to variable="inEnviaCorreoElectronico" part="EnviarCorreoElectronicoRequest"/>
+              </copy>
+            </assign>
+            <invoke name="InvokeEnviarCorreoElectronico" bpelx:invokeAsDetail="no"
+                    partnerLink="EnviarCorreoElectronico_direct" portType="ns20:EnviarCorreoElectronicoPT"
+                    operation="enviarCorreoElectronico" inputVariable="inEnviaCorreoElectronico"
+                    outputVariable="outEnviaCorreoElectronico"/>
+            <if name="IfValidaCorreoEnviadoOpeSuspendida">
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <condition>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:result  = 'ERROR'</condition>
+              <sequence name="Sequence11">
+                <assign name="ErrorEnviarCorreoGerente">
+                  <copy>
+                    <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:result</from>
+                    <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+                  </copy>
+                  <copy>
+                    <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:message</from>
+                    <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+                  </copy>
+                  <copy>
+                    <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:error/ns9:errorCode</from>
+                    <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorCode</to>
+                  </copy>
+                  <copy>
+                    <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:error/ns9:errorDescription</from>
+                    <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorDescription</to>
+                  </copy>
+                  <copy>
+                    <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:error/ns9:errorType</from>
+                    <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorType</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyErrorEnviarCorreoGerente" variable="outputVariable"
+                       partnerLink="notificarcancelaroperacion_client" portType="ns1:NotificarCancelarOperacion_PT"
+                       operation="NotificarCancelarOperacion"/>
+                <exit name="Exit_Error"/>
+              </sequence>
+              <else>
+                <empty name="Empty"/>
+              </else>
+            </if>
+            <if name="IfValidaTareasActivas">
+              <documentation>
+                <![CDATA[TareasActivas]]>
+              </documentation>
+              <condition>count($outConsultarTareasActivas.response/ns17:ListaTareasActivas) &gt; 0</condition>
+              <sequence>
+                <assign name="requestEnviarCorreoByTareaSusp">
+                  <bpelx:annotation>
+                    <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                  </bpelx:annotation>
+                  <copy>
+                    <from>ora:processXQuery10('../Transformations/RequestEnviarCorreoByTareaSusp.xqy', 'inputVariable.request', $inputVariable.request, 'outConsultarTareasActivas.response', $outConsultarTareasActivas.response)</from>
+                    <to variable="inEnviaCorreoElectronico" part="EnviarCorreoElectronicoRequest"/>
+                  </copy>
+                </assign>
+                <if name="IfExistenUsuarios">
+                  <documentation>
+                    <![CDATA[Si]]>
+                  </documentation>
+                  <condition>count($inEnviaCorreoElectronico.EnviarCorreoElectronicoRequest/ns20:correoElectronico/ns21:to/ns21:usuario)&gt;0</condition>
+                  <sequence>
+                    <invoke name="InvokeEnviarCorreoElectronico" bpelx:invokeAsDetail="no"
+                            partnerLink="EnviarCorreoElectronico_direct" portType="ns20:EnviarCorreoElectronicoPT"
+                            operation="enviarCorreoElectronico" inputVariable="inEnviaCorreoElectronico"
+                            outputVariable="outEnviaCorreoElectronico"/>
+                    <if name="IfValidaCorreoEnviadoTareasSus"
+                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                      <documentation>
+                        <![CDATA[ERROR]]>
+                      </documentation>
+                      <condition>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:result = 'ERROR'</condition>
+                      <sequence name="Sequence11">
+                        <assign name="ErrorEnviarCorreoGerente"
+                                xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                          <copy>
+                            <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:result</from>
+                            <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+                          </copy>
+                          <copy>
+                            <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:message</from>
+                            <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+                          </copy>
+                          <copy>
+                            <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:error/ns9:errorCode</from>
+                            <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorCode</to>
+                          </copy>
+                          <copy>
+                            <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:error/ns9:errorDescription</from>
+                            <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorDescription</to>
+                          </copy>
+                          <copy>
+                            <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:error/ns9:errorType</from>
+                            <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorType</to>
+                          </copy>
+                        </assign>
+                        <reply name="ReplyErrorEnviarCorreoGerente" variable="outputVariable"
+                               partnerLink="notificarcancelaroperacion_client"
+                               portType="ns1:NotificarCancelarOperacion_PT" operation="NotificarCancelarOperacion"/>
+                        <exit name="Exit_Error"/>
+                      </sequence>
+                      <else>
+                        <empty name="Empty"/>
+                      </else>
+                    </if>
+                  </sequence>
+                  <else>
+                    <documentation>
+                      <![CDATA[No]]>
+                    </documentation>
+                    <empty name="EmptyNo"/>
+                  </else>
+                </if>
+              </sequence>
+              <else>
+                <empty name="Empty"/>
+              </else>
+            </if>
+            <assign name="response">
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+              </copy>
+              <copy>
+                <from>'Se han enviando las notificaciones correctamente'</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+              </copy>
+            </assign>
+          </sequence>
+          <elseif>
+            <documentation>
+              <![CDATA[Cancelada]]>
+            </documentation>
+            <condition>$outConsultarOperacion.response/ns8:Operacion/ns10:estado/ns12:Id = 4</condition><sequence name="OperacionCancelada">
+              <assign name="requestEnvioCorreoOperacionCancelada">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:processXQuery10('../Transformations/RequestEnvioCorreoOperacionCancelada.xqy', 'inputVariable.request', $inputVariable.request, 'outConsultarOperacion.response', $outConsultarOperacion.response, 'outConsultaAtributosUsuario.response', $outConsultaAtributosUsuario.response)</from>
+                  <to variable="inEnviaCorreoElectronico" part="EnviarCorreoElectronicoRequest"/>
+                </copy>
+              </assign>
+              <invoke name="InvokeEnviarCorreoElectronico" bpelx:invokeAsDetail="no"
+                      partnerLink="EnviarCorreoElectronico_direct" portType="ns20:EnviarCorreoElectronicoPT"
+                      operation="enviarCorreoElectronico" inputVariable="inEnviaCorreoElectronico"
+                      outputVariable="outEnviaCorreoElectronico"/><if name="IfValidaCorreoEnviadoOpeCancelada"
+                                                                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+                  <![CDATA[ERROR]]>
+                </documentation>
+      <condition>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:result  = 'ERROR'</condition><sequence name="Sequence11">
+                  <assign name="ErrorEnviarCorreoGerente"
+                          xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:result</from>
+         <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+      </copy>
+      <copy>
+         <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:message</from>
+         <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+      </copy>
+      <copy>
+         <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:error/ns9:errorCode</from>
+         <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorCode</to>
+      </copy>
+      <copy>
+         <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:error/ns9:errorDescription</from>
+         <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorDescription</to>
+      </copy>
+      <copy>
+         <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:error/ns9:errorType</from>
+         <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorType</to>
+      </copy>
+   </assign>
+         <reply name="ReplyErrorEnviarCorreoGerente" variable="outputVariable"
+                partnerLink="notificarcancelaroperacion_client" portType="ns1:NotificarCancelarOperacion_PT"
+                operation="NotificarCancelarOperacion"/>
+         <exit name="Exit_Error"/>
+      </sequence>
+      <else>
+         <empty name="Empty"/>
+      </else>
+   </if><if name="IfValidaTareasActivas">
+                <documentation>
+                  <![CDATA[TareasActivas]]>
+                </documentation>
+                <condition>count($outConsultarTareasActivas.response/ns17:ListaTareasActivas) &gt; 0</condition>
+                <sequence>
+                  <assign name="requestEnviarCorreoByTareaCanc">
+                    <bpelx:annotation>
+                      <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                    </bpelx:annotation>
+                    <copy>
+                      <from>ora:processXQuery10('../Transformations/RequestEnviarCorreoByTareaCanc.xqy', 'inputVariable.request', $inputVariable.request, 'outConsultarTareasActivas.response', $outConsultarTareasActivas.response)</from>
+                      <to variable="inEnviaCorreoElectronico" part="EnviarCorreoElectronicoRequest"/>
+                    </copy>
+                  </assign>
+                  <if name="IfExistenUsuarios">
+                    <documentation>
+                      <![CDATA[Si]]>
+                    </documentation>
+                    <condition>count($inEnviaCorreoElectronico.EnviarCorreoElectronicoRequest/ns20:correoElectronico/ns21:to/ns21:usuario)&gt;0</condition>
+                    <sequence>
+                      <invoke name="InvokeEnviarCorreoElectronico" bpelx:invokeAsDetail="no"
+                              partnerLink="EnviarCorreoElectronico_direct" portType="ns20:EnviarCorreoElectronicoPT"
+                              operation="enviarCorreoElectronico" inputVariable="inEnviaCorreoElectronico"
+                              outputVariable="outEnviaCorreoElectronico"/>
+                      <if name="IfValidaCorreoEnviadoTareaCan"
+                          xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                        <documentation>
+                          <![CDATA[ERROR]]>
+                        </documentation>
+                        <condition>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:result = 'ERROR'</condition>
+                        <sequence name="Sequence11">
+                          <assign name="ErrorEnviarCorreoGerente"
+                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                            <copy>
+                              <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:result</from>
+                              <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+                            </copy>
+                            <copy>
+                              <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:message</from>
+                              <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+                            </copy>
+                            <copy>
+                              <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:error/ns9:errorCode</from>
+                              <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorCode</to>
+                            </copy>
+                            <copy>
+                              <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:error/ns9:errorDescription</from>
+                              <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorDescription</to>
+                            </copy>
+                            <copy>
+                              <from>$outEnviaCorreoElectronico.EnviarCorreoElectronicoResponse/ns20:Resultado/ns6:error/ns9:errorType</from>
+                              <to>$outputVariable.response/ns7:Resultado/ns6:error/ns9:errorType</to>
+                            </copy>
+                          </assign>
+                          <reply name="ReplyErrorEnviarCorreoGerente" variable="outputVariable"
+                                 partnerLink="notificarcancelaroperacion_client"
+                                 portType="ns1:NotificarCancelarOperacion_PT" operation="NotificarCancelarOperacion"/>
+                          <exit name="Exit_Error"/>
+                        </sequence>
+                        <else>
+                          <empty name="Empty"/>
+                        </else>
+                      </if>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[No]]>
+                      </documentation>
+                      <empty name="EmptyNo"/>
+                    </else>
+                  </if>
+                </sequence>
+                <else>
+                  <empty name="Empty"/>
+                </else>
+              </if>
+              <assign name="response" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>'OK'</from>
+         <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+      </copy>
+      <copy>
+         <from>'Se han enviando las notificaciones correctamente'</from>
+         <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+      </copy>
+   </assign>
+            </sequence>
+          </elseif>
+          <else>
+            <assign name="ResponseEstadoNoValido">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:result</to>
+              </copy>
+              <copy>
+                <from>'Estado no valido'</from>
+                <to>$outputVariable.response/ns7:Resultado/ns6:message</to>
+              </copy>
+            </assign>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="notificarcancelaroperacion_client" portType="ns1:NotificarCancelarOperacion_PT" operation="NotificarCancelarOperacion" variable="outputVariable"/>
+  </sequence>
+</process>

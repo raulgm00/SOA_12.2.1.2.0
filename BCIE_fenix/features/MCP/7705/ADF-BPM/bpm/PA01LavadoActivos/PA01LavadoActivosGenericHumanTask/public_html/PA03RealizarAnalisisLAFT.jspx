@@ -1,0 +1,539 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.1" xmlns:f="http://java.sun.com/jsf/core"
+          xmlns:af="http://xmlns.oracle.com/adf/faces/rich" xmlns:c="http://java.sun.com/jsp/jstl/core"
+          xmlns:trh="http://myfaces.apache.org/trinidad/html"
+          xmlns:wf="http://xmlns.oracle.com/bpel/workflow/workflow-taglib.tld"
+          xmlns:wlc="http://xmlns.oracle.com/bpel/workflow/worklist">
+    <c:set var="pa01lavadoactivosgenerichumantaskBundle"
+           value="#{adfBundle['pa01lavadoactivosgenerichumantask.PA01LavadoActivosGenericHumanTaskBundle']}"/>
+    <jsp:directive.page contentType="text/html;charset=UTF-8"/>
+    <f:view>
+        <af:document title="GHTPA01LavadoActivosForm.jspx" id="d1">
+            <af:messages id="m1"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:resource type="javascript" source="/jsLibs/taskDetailsWithTemplate.js"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:form id="f1" usesUpload="true">
+                <af:pageTemplate viewId="/templates/bcieTaskTemplate.jspx" id="pTiD">
+                    <f:facet name="action">
+                        <af:toolbar visible="#{actionAvailable.toolbarAvailable}" id="actionTlb">
+                            <af:switcher id="customActionButtons" facetName="#{actionAvailable.isCustomActionButtons}">
+                                <f:facet name="true">
+                                    <af:panelGroupLayout layout="horizontal" id="pgl2">
+                                        <af:button text="#{pa01lavadoactivosgenerichumantaskBundle.RETORNO}" id="b2"
+                                                   actionListener="#{LavadoActivosActionsBean.confirmarSolicitarMasInfoActionListener}"
+                                                   partialSubmit="true" styleClass="headerLink">
+                                            <af:setActionListener from="retorno" to="#{viewScope.headerAction}"/>
+                                        </af:button>
+                                        <af:button text="#{pa01lavadoactivosgenerichumantaskBundle.FINALIZAR_TAREA}"
+                                                   id="b1"
+                                                   actionListener="#{LavadoActivosActionsBean.confirmarSolicitarMasInfoActionListener}"
+                                                   partialSubmit="true" styleClass="headerLink">
+                                            <af:setActionListener from="finalizarTarea" to="#{viewScope.headerAction}"/>
+                                        </af:button>
+                                        <!--Atiende incidencia FNXII-5586
+                                        <af:button actionListener="#{invokeActionBean.setOperation}" text="#{resources.CLAIM}"
+                                                   id="Claim" action="#{invokeActionBean.invokeOperation}" partialSubmit="false"
+                                                   styleClass="headerLink"
+                                                   visible="#{actionAvailable.claimAvailable}">
+                                            <f:attribute name="DC_OPERATION_BINDING" value="bindings.Claim"/>
+                                        </af:button>
+                                        -->
+                                        <af:button id="acknowledge" actionListener="#{invokeActionBean.setOperation}"
+                                                   text="#{resources.ACKNOWLEDGE}"
+                                                   action="#{invokeActionBean.invokeOperation}" styleClass="headerLink"
+                                                   partialSubmit="false" visible="#{actionAvailable.isFyiTask}">
+                                            <f:attribute name="DC_OPERATION_BINDING" value="bindings.Acknowledge"/>
+                                        </af:button>
+                                        <af:button id="resume" actionListener="#{invokeActionBean.setOperation}"
+                                                   text="#{resources.RESUME}"
+                                                   action="#{invokeActionBean.invokeOperation}" styleClass="headerLink"
+                                                   partialSubmit="false" visible="#{actionAvailable.resumeAvailable}">
+                                            <f:attribute name="DC_OPERATION_BINDING" value="bindings.Resume"/>
+                                        </af:button>
+                                    </af:panelGroupLayout>
+                                </f:facet>
+                            </af:switcher>
+                            <af:panelGroupLayout layout="horizontal" id="pgl7">
+                                <af:group rendered="#{!((empty actionAvailable.customActions) and (empty actionAvailable.redirectActions) and (empty actionAvailable.otherActions)) || bindings.update.enabled}"
+                                          id="g5">
+                                    <af:menuBar id="mb1" styleClass="actionMenuBar" rendered="false">
+                                        <af:menu id="acts" text="#{resources.TASK_ACTIONS}" styleClass="actionMenu"
+                                                 visible="#{actionAvailable.actionsAvailable || bindings.update.enabled}">
+                                            <af:group id="g2">
+                                                <af:forEach var="childNode1" items="#{actionAvailable.customActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{childNode1.displayName}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi2">
+                                                        <f:attribute name="ACTION_MENU_ITEM"
+                                                                     value="#{childNode1.action}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g4">
+                                                <af:forEach var="childNode2" items="#{actionAvailable.redirectActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode2]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="true" id="cmi1">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode2}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g3">
+                                                <af:forEach var="childNode3" items="#{actionAvailable.otherActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode3]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi4">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode3}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g1">
+                                                <af:commandMenuItem id="save" textAndAccessKey="#{resources.SAVE}"
+                                                                    actionListener="#{invokeActionBean.setAction}"
+                                                                    action="#{invokeActionBean.action}"
+                                                                    partialSubmit="false"
+                                                                    rendered="#{actionAvailable.updateAvailable}">
+                                                    <f:attribute name="ACTION_MENU_ITEM" value="bindings.update"/>
+                                                </af:commandMenuItem>
+                                            </af:group>
+                                        </af:menu>
+                                    </af:menuBar>
+                                </af:group>
+                            </af:panelGroupLayout>
+                            <af:spacer width="10" id="s1"/>
+                            <af:image source="/images/info.png" id="pt_i2" shortDesc="Info"/>
+                            <af:spacer width="10" height="10" id="s10"/>
+                            <af:link shortDesc="#{resources.PREVIOUS_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/nexttraversalarrow_ena.png'  : '/hw_images/previoustraversalarrow_ena.png'}"
+                                     action="fetchPreviousTask"
+                                     visible="#{pageFlowScope.enableNavigationButton != null}" id="l2"/>
+                            <af:spacer width="10" id="s3"/>
+                            <af:link shortDesc="#{resources.NEXT_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/previoustraversalarrow_ena.png' : '/hw_images/nexttraversalarrow_ena.png'}"
+                                     action="fetchNextTask" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l1"/>
+                            <af:spacer width="10" id="s5"/>
+                            <af:link shortDesc="#{resources.SHORT_DESC_CLOSE}" icon="/hw_images/close_ena.png"
+                                     action="closeTaskFlow" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l3"/>
+                            <af:popup id="reassignPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog id="reAsDg" dialogListener="#{invokeActionBean.reassignAction}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           title="#{resources.REASSIGNPAGE}">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="reAsIdB" mode="REASSIGN" showActionButtons="false"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="requestInfoPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.INFOREQUESTEDPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.requestInfoAction}" id="reqIfD">
+                                    <wlc:requestInfoDialog workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                           id="rqIDgC"
+                                                           selectedTaskId="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds[0]}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="routePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.ROUTEPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.routeTaskAction}" id="rteDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="rteIdB" mode="ROUTE"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="decomposePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{pageFlowScope.ADFHumanTaskBean.decomposeDialogTitle}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.decomposeTaskAction}" id="dcmpDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.ADFHumanTaskBean.workflowContext}"
+                                                         id="dcmpIdB" mode="DECOMPOSE"
+                                                         selectedTaskObject="#{pageFlowScope.ADFHumanTaskBean.task}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="popupEnterPasswordDialog" contentDelivery="lazyUncached"
+                                      childCreation="deferred">
+                                <af:dialog title="#{resources.ENTER_PASSWORD}"
+                                           dialogListener="#{invokeActionBean.validatePassword}" type="okCancel"
+                                           modal="true" cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}" closeIconVisible="false"
+                                           id="pwdDlg">
+                                    <af:panelGroupLayout id="pgl8">
+                                        <af:panelFormLayout id="pfl1">
+                                            <af:inputText id="pwdBox" rows="1" columns="50"
+                                                          value="#{invokeActionBean.password}"
+                                                          label="#{resources.PASSWORD}" secret="true" required="true"/>
+                                        </af:panelFormLayout>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="helpPopup" childCreation="deferred">
+                                <af:switcher facetName="#{pageFlowScope.taskDocumentationBean.isTaskDoc}" id="s6">
+                                    <f:facet name="true">
+                                        <af:panelGroupLayout layout="vertical" id="pgl4">
+                                            <af:link text="#{resources.OPEN_IN_WINDOW}"
+                                                     destination="#{pageFlowScope.taskDocumentationBean.docURL}"
+                                                     targetFrame="help" id="help"
+                                                     rendered="#{!empty bindings.activityId.inputValue}"/>
+                                            <af:outputFormatted value="#{pageFlowScope.taskDocumentationBean.taskDoc}"
+                                                                id="of1"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <f:facet name="false">
+                                        <af:outputText value="#{resources.TASK_DOC_NOT_AVAILABLE}" id="ot7"/>
+                                    </f:facet>
+                                </af:switcher>
+                            </af:popup>
+                        </af:toolbar>
+                    </f:facet>
+                    <f:facet name="header">
+                        <af:region value="#{bindings.encabezadoBTF1.regionModel}" id="r4"/>
+                    </f:facet>
+                    <f:facet name="body">
+                        <af:panelGroupLayout layout="vertical" id="pglBody">
+                            <af:panelAccordion discloseMany="true" discloseNone="true" styleClass="secctionAccordion"
+                                               id="pa1">
+                                <af:showDetailItem id="pn1"
+                                                   text="#{pa01lavadoactivosgenerichumantaskBundle.ACCORDION_PANEL_DETALLE_OPERACION}"
+                                                   immediate="true">
+                                    <af:region value="#{bindings.detalleOperacionBTF1.regionModel}" id="r2"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="paneCA"
+                                                   text="#{pa01lavadoactivosgenerichumantaskBundle.LBL_CLASIFICACION_AMBIENTAL}"
+                                                   immediate="true">
+                                    <af:region value="#{bindings.editarClasificacionAmbientalBTF1.regionModel}"
+                                               id="r5"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="pn2"
+                                                   text="#{pa01lavadoactivosgenerichumantaskBundle.ACCORDION_PANEL_DOCUMENTOS}"
+                                                   immediate="true">
+                                    <af:region value="#{bindings.gestorDocumentosBTF1.regionModel}" id="r3"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem text="#{pa01lavadoactivosgenerichumantaskBundle.DATOS_DE_LA_TAREA}"
+                                                   id="sdi2" disclosed="true" immediate="true">
+                                    <af:spacer width="10" height="10" id="s21"/>
+                                    <af:button text="#{pa01lavadoactivosgenerichumantaskBundle.ACTUALIZAR}"
+                                               actionListener="#{LavadoActivosActionsBean.recargarDeclaracionJurada}"
+                                               id="b3"/>
+                                    <af:panelGroupLayout id="pgl9" inlineStyle="width:697px;">
+                                        <!-- Por Seguimiento. Panel readOnly, informativo de la seleccion realizada en la tarea anterior. -->
+                                        <af:panelGroupLayout id="pgl16"
+                                                             visible="#{pageFlowScope.LavadoActivosBean.esPorSeguimiento}">
+                                            <af:panelFormLayout id="pfl5" labelAlignment="top" rows="2">
+                                                <af:selectOneRadio value="#{pageFlowScope.LavadoActivosBean.tipoSeguimiento}"
+                                                                   label="#{pa01lavadoactivosgenerichumantaskBundle.TIPO_DE_SEGUIMIENTO}"
+                                                                   id="sorTipoSeguimiento" layout="horizontal"
+                                                                   autoSubmit="true" disabled="true"
+                                                                   showRequired="true">
+                                                    <af:selectItem label="#{pa01lavadoactivosgenerichumantaskBundle.POR_ACTUALIZACION}"
+                                                                   value="1" id="si4"/>
+                                                    <af:selectItem label="#{pa01lavadoactivosgenerichumantaskBundle.POR_ALERTA}"
+                                                                   value="2" id="si5"/>
+                                                </af:selectOneRadio>
+                                            </af:panelFormLayout>
+                                        </af:panelGroupLayout>
+                                        <!-- Termina Por Seguimiento. Panel readOnly, informativo de la seleccion realizada en la tarea anterior. -->
+                                        <af:spacer width="10" height="10" id="s2"/>
+                                        <!--  Panel readOnly, informativo de la seleccion realizada en la tarea anterior, con radios Tipo de Solicitud y botones de Crear/Duplicar DJ. 
+                                          Valores asignados desde tarea Recopilar Informacion y recuperados aqui mediante metodo mappingBlobToBean. -->
+                                        <af:panelGroupLayout id="pgl17"
+                                                             visible="#{(pageFlowScope.LavadoActivosBean.esExcepcionLaft and pageFlowScope.LavadoActivosBean.esNuevaLaft) or (pageFlowScope.LavadoActivosBean.esPorSeguimiento and (pageFlowScope.LavadoActivosBean.tipoSeguimiento eq 1))}">
+                                            <af:panelFormLayout id="pfl12" labelAlignment="top" rows="3">
+                                                <af:selectOneRadio value="#{pageFlowScope.LavadoActivosBean.tipoSolicitudSinDj}"
+                                                                   label="#{pa01lavadoactivosgenerichumantaskBundle.TIPO_DE_SOLICITUD}"
+                                                                   id="sorTipoSolicitudSinDj" layout="horizontal"
+                                                                   disabled="true" showRequired="true">
+                                                    <af:selectItem label="#{pa01lavadoactivosgenerichumantaskBundle.NUEVA_DECLARACION_JURADA}"
+                                                                   value="1" id="si6"/>
+                                                    <af:selectItem label="#{pa01lavadoactivosgenerichumantaskBundle.SOLICITUD_DE_ASOCIACION_DE_DECLARACION}"
+                                                                   value="2" id="si7"/>
+                                                    <af:selectItem label="#{pa01lavadoactivosgenerichumantaskBundle.SOLICITUD_DE_EXCEPCION_DE_DECLARACION}"
+                                                                   value="3" id="si8"/>
+                                                </af:selectOneRadio>
+                                                <af:panelGroupLayout id="pgl18" layout="horizontal"
+                                                                     visible="#{pageFlowScope.LavadoActivosBean.tipoSolicitudSinDj eq 1}">
+                                                    <af:button text="#{pa01lavadoactivosgenerichumantaskBundle.CREAR_NUEVA_DECLARACION_JURADA}"
+                                                               id="btnCrearDJ" disabled="true"
+                                                               visible="#{!pageFlowScope.LavadoActivosBean.esDjDuplicada}"/>
+                                                    <af:spacer width="10" height="5" id="s20"/>
+                                                    <af:button text="#{pa01lavadoactivosgenerichumantaskBundle.DUPLICAR_DECLARACION_JURADA}"
+                                                               id="btnDuplicarDJ" disabled="true"
+                                                               visible="#{!pageFlowScope.LavadoActivosBean.esDjCreada}"/>
+                                                </af:panelGroupLayout>
+                                                <af:spacer width="1" height="1" id="s8"/>
+                                            </af:panelFormLayout>
+                                        </af:panelGroupLayout>
+                                        <!-- Termina  Panel readOnly, informativo de la seleccion realizada en la tarea anterior, con radios Tipo de Solicitud y botones de Crear/Duplicar DJ -->
+                                        <!--  Realizar analisis LAFT por asociacion/excepcion. Radios readonly. -->
+                                        <af:panelGroupLayout id="pg21"
+                                                             visible="#{!pageFlowScope.LavadoActivosBean.esPorSeguimiento and ((pageFlowScope.LavadoActivosBean.esAsociacionLaft) or (pageFlowScope.LavadoActivosBean.esExcepcionLaft and !pageFlowScope.LavadoActivosBean.esNuevaLaft))}">
+                                            <af:selectOneRadio label="#{pa01lavadoactivosgenerichumantaskBundle.TIPO_DE_SOLICITUD}"
+                                                               value="#{pageFlowScope.LavadoActivosBean.tipoSolicitudAsoc}"
+                                                               id="sor5" layout="horizontal" changed="true"
+                                                               autoSubmit="true" disabled="true">
+                                                <af:selectItem label="#{pa01lavadoactivosgenerichumantaskBundle.SOLICITUD_DE_ASOCIACION_DE_DECLARACION}"
+                                                               value="1" id="si12"/>
+                                                <af:selectItem label="#{pa01lavadoactivosgenerichumantaskBundle.SOLICITUD_DE_EXCEPCION_DE_DECLARACION}"
+                                                               value="2" id="si13"/>
+                                            </af:selectOneRadio>
+                                        </af:panelGroupLayout>
+                                        <!--  Termina  Realizar analisis LAFT por asociacion/excepcion. Radios readonly. -->
+                                        <!-- Cuenta con la No Objeción - Usado en Realizar análisis LAFT  cuando es nueva, Realizar análisis LAFT  por actualización de información, Realizar análisis LAFT por por asociacion / excepcion -->
+                                        <af:panelFormLayout id="pfl2">
+                                            <af:inputText value="#{bindings.NoObjecion.inputValue}" id="it25"
+                                                          label="#{pa01lavadoactivosgenerichumantaskBundle.CUENTA_CON_LA_NO_OBJECION}"
+                                                          readOnly="true" labelStyle="text-align:left;"/>
+                                            <af:spacer width="10" height="10" id="s17"/>
+                                        </af:panelFormLayout>
+                                        <!-- Termina Cuenta con la No Objeción -->
+                                        <!--  Panel común con información de la declaración. Mostrado siempre que exista una DJ 
+                                          Incidencia FNXII-3320: NO se muestra cuando es seguimiento, se cuenta con una dj y se solicita una asociacion 
+                                          Incidencia FNXII-3474: el punto anterior se muestra una vez que se realiza una asociacion desde LAA -->
+                                        <!--  Nota by FCP: Se usa rendered en lugar de visible debido a que al hacer click en cualquier boton se invocaba la accion del valueChangeListener de los combos -->
+                                        <af:panelGroupLayout id="pgl14"
+                                                             rendered="#{(!empty pageFlowScope.LavadoActivosBean.idDeclaracion) and !(pageFlowScope.LavadoActivosBean.esPorSeguimiento and pageFlowScope.LavadoActivosBean.esAsociacionLaft and (empty pageFlowScope.LavadoActivosBean.idDjAntesDeAsociar or (bindings.IdDeclaracion.inputValue eq pageFlowScope.LavadoActivosBean.idDjAntesDeAsociar)))}">
+                                            <af:panelLabelAndMessage label="#{pa01lavadoactivosgenerichumantaskBundle.DECLARACI_U00F3N_JURADA}"
+                                                                     id="plam2" labelStyle="text-align:left;"/>
+                                            <af:spacer width="10" height="10" id="s19"/>
+                                            <af:panelGroupLayout id="pgl10" layout="horizontal">
+                                                <af:panelFormLayout id="pfl3" labelAlignment="top">
+                                                    <af:inputText value="#{bindings.CodigoExternoDeclaracion.inputValue}"
+                                                                  label="#{bindings.CodigoExternoDeclaracion.hints.label}"
+                                                                  required="#{bindings.CodigoExternoDeclaracion.hints.mandatory}"
+                                                                  columns="25"
+                                                                  maximumLength="#{bindings.CodigoExternoDeclaracion.hints.precision}"
+                                                                  shortDesc="#{bindings.CodigoExternoDeclaracion.hints.tooltip}"
+                                                                  id="it26" readOnly="true">
+                                                        <f:validator binding="#{bindings.CodigoExternoDeclaracion.validator}"/>
+                                                        <af:convertNumber groupingUsed="false"
+                                                                          pattern="#{bindings.CodigoExternoDeclaracion.format}"/>
+                                                    </af:inputText>
+                                                </af:panelFormLayout>
+                                                <af:spacer width="50" height="10" id="s11"/>
+                                                <af:panelFormLayout id="pfl4" labelAlignment="top">
+                                                    <af:inputDate value="#{bindings.FechaFirmaDeclaracion.inputValue}"
+                                                                  label="#{bindings.FechaFirmaDeclaracion.hints.label}"
+                                                                  required="#{bindings.FechaFirmaDeclaracion.hints.mandatory}"
+                                                                  columns="25"
+                                                                  shortDesc="#{bindings.FechaFirmaDeclaracion.hints.tooltip}"
+                                                                  id="id1" readOnly="true">
+                                                        <f:validator binding="#{bindings.FechaFirmaDeclaracion.validator}"/>
+                                                        <af:convertDateTime pattern="#{bindings.FechaFirmaDeclaracion.format}"/>
+                                                    </af:inputDate>
+                                                </af:panelFormLayout>
+                                                <af:spacer width="90" height="10" id="s12"/>
+                                                <af:panelFormLayout id="pfl6" labelAlignment="top">
+                                                    <af:inputDate value="#{bindings.FechaVencimiento.inputValue}"
+                                                                  label="#{bindings.FechaVencimiento.hints.label}"
+                                                                  required="#{bindings.FechaVencimiento.hints.mandatory}"
+                                                                  columns="25"
+                                                                  shortDesc="#{bindings.FechaVencimiento.hints.tooltip}"
+                                                                  id="id2" readOnly="true" partialTriggers="b3">
+                                                        <f:validator binding="#{bindings.FechaVencimiento.validator}"/>
+                                                        <af:convertDateTime pattern="#{bindings.FechaVencimiento.format}"/>
+                                                    </af:inputDate>
+                                                </af:panelFormLayout>
+                                                <af:spacer width="50" height="10" id="s13"/>
+                                                <af:panelFormLayout id="pfl7" labelAlignment="top">
+                                                    <af:selectOneChoice value="#{bindings.Riesgo.inputValue}"
+                                                                        label="#{bindings.Riesgo.label}"
+                                                                        required="#{bindings.Riesgo.hints.mandatory}"
+                                                                        shortDesc="#{bindings.Riesgo.hints.tooltip}"
+                                                                        id="soc3" readOnly="true"
+                                                                        inlineStyle="column-width:25px;"
+                                                                        partialTriggers="b3">
+                                                        <f:selectItems value="#{bindings.Riesgo.items}" id="si3"/>
+                                                        <f:validator binding="#{bindings.Riesgo.validator}"/>
+                                                    </af:selectOneChoice>
+                                                </af:panelFormLayout>
+                                            </af:panelGroupLayout>
+                                            <af:panelGroupLayout id="pgl11" layout="horizontal">
+                                                <af:panelFormLayout id="pfl8" labelAlignment="top">
+                                                    <af:selectOneChoice value="#{bindings.EstadoDeclaracion.inputValue}"
+                                                                        label="#{bindings.EstadoDeclaracion.label}"
+                                                                        required="#{bindings.EstadoDeclaracion.hints.mandatory}"
+                                                                        shortDesc="#{bindings.EstadoDeclaracion.hints.tooltip}"
+                                                                        id="soc1" inlineStyle="column-width:25px;"
+                                                                        autoSubmit="true"
+                                                                        readOnly="#{pageFlowScope.LavadoActivosBean.esAsociacionLaft}"
+                                                                        valueChangeListener="#{LavadoActivosActionsBean.actualizarEstadoValueChangeListener}">
+                                                        <f:selectItems value="#{bindings.EstadoDeclaracion.items}"
+                                                                       id="si1"/>
+                                                        <f:validator binding="#{bindings.EstadoDeclaracion.validator}"/>
+                                                    </af:selectOneChoice>
+                                                </af:panelFormLayout>
+                                                <af:spacer width="240" height="10" id="s15"/>
+                                                <af:panelFormLayout id="pfl9" labelAlignment="top">
+                                                    <af:selectOneChoice value="#{bindings.EstadoBusqueda.inputValue}"
+                                                                        label="#{pa01lavadoactivosgenerichumantaskBundle.ESTADO_BUSQUEDA_LCP}"
+                                                                        required="#{bindings.EstadoBusqueda.hints.mandatory}"
+                                                                        shortDesc="#{bindings.EstadoBusqueda.hints.tooltip}"
+                                                                        id="soc2" inlineStyle="column-width:25px;"
+                                                                        autoSubmit="true"
+                                                                        readOnly="#{(pageFlowScope.LavadoActivosBean.esAsociacionLaft) or (pageFlowScope.LavadoActivosBean.esExcepcionLaft and !pageFlowScope.LavadoActivosBean.esNuevaLaft)}"
+                                                                        valueChangeListener="#{LavadoActivosActionsBean.actualizarEstadoValueChangeListener}"
+                                                                        partialTriggers="b3">
+                                                        <f:selectItems value="#{bindings.EstadoBusqueda.items}"
+                                                                       id="si2"/>
+                                                        <f:validator binding="#{bindings.EstadoBusqueda.validator}"/>
+                                                    </af:selectOneChoice>
+                                                </af:panelFormLayout>
+                                            </af:panelGroupLayout>
+                                            <af:panelGroupLayout id="pgl12" layout="horizontal">
+                                                <af:panelFormLayout id="pfl10" labelAlignment="top">
+                                                    <af:inputText value="#{bindings.ConclusionAnalisisDeclaracion.inputValue}"
+                                                                  label="#{bindings.ConclusionAnalisisDeclaracion.hints.label}"
+                                                                  required="#{bindings.ConclusionAnalisisDeclaracion.hints.mandatory}"
+                                                                  columns="50" rows="5"
+                                                                  contentStyle="border-width: 1px;"
+                                                                  maximumLength="#{bindings.ConclusionAnalisisDeclaracion.hints.precision}"
+                                                                  shortDesc="#{bindings.ConclusionAnalisisDeclaracion.hints.tooltip}"
+                                                                  readOnly="false" id="it27" autoSubmit="true">
+                                                        <f:validator binding="#{bindings.ConclusionAnalisisDeclaracion.validator}"/>
+                                                    </af:inputText>
+                                                </af:panelFormLayout>
+                                                <af:spacer width="50" height="10" id="s16"/>
+                                                <af:panelFormLayout id="pfl11" labelAlignment="top">
+                                                    <af:inputText value="#{bindings.ConclusionAnalisisBusqueda.inputValue}"
+                                                                  label="#{pa01lavadoactivosgenerichumantaskBundle.CONCLUSION_ANALISIS_BUSQUEDA_LCP}"
+                                                                  required="#{bindings.ConclusionAnalisisBusqueda.hints.mandatory}"
+                                                                  columns="50" rows="5"
+                                                                  contentStyle="border-width: 1px;"
+                                                                  maximumLength="#{bindings.ConclusionAnalisisBusqueda.hints.precision}"
+                                                                  shortDesc="#{bindings.ConclusionAnalisisBusqueda.hints.tooltip}"
+                                                                  readOnly="false" id="it28" autoSubmit="true">
+                                                        <f:validator binding="#{bindings.ConclusionAnalisisBusqueda.validator}"/>
+                                                    </af:inputText>
+                                                </af:panelFormLayout>
+                                            </af:panelGroupLayout>
+                                        </af:panelGroupLayout>
+                                        <!--  Termina Panel común -->
+                                        <!-- Invocar aplicación externa LAA - Usado en Realizar análisis LAFT por por asociacion -->
+                                        <af:button text="#{(pageFlowScope.LavadoActivosBean.esAsociacionLaft) ? pa01lavadoactivosgenerichumantaskBundle.CONSULTAR_ASOCIACION : pa01lavadoactivosgenerichumantaskBundle.CONSULTAR_DECLARACION}"
+                                                   id="btnConsultar" styleClass="orangeBtn"
+                                                   rendered="#{!(pageFlowScope.LavadoActivosBean.esExcepcionLaft and !pageFlowScope.LavadoActivosBean.esNuevaLaft)}"
+                                                   actionListener="#{LavadoActivosActionsBean.consultarDeclaracionEnLaaActionListener}"/>
+                                        <!-- Termina Invocar aplicación externa LAA -->
+                                        <af:outputText value="Inicializar formulario" id="ot9" visible="false"
+                                                       binding="#{LavadoActivosActionsBean.otInitForm}"/>
+                                    </af:panelGroupLayout>
+                                    <af:panelGroupLayout id="pgl6">
+                                        <af:popup childCreation="deferred" autoCancel="disabled"
+                                                  id="popupConfirmarFinalizarProceso" contentDelivery="lazyUncached"
+                                                  binding="#{LavadoActivosActionsBean.popupConfirmarFinalizarProceso}">
+                                            <af:dialog id="d2" type="none"
+                                                       title="#{pa01lavadoactivosgenerichumantaskBundle.CONFIRMAR_ACCION}">
+                                                <af:panelGroupLayout id="pgl13"
+                                                                     inlineStyle="width: 600px; height: 100px;">
+                                                    <af:outputText value="#{pa01lavadoactivosgenerichumantaskBundle.CONFIRMAR_SOLICITAR_MAS_INFORMACION}"
+                                                                   id="ot13"
+                                                                   visible="#{(viewScope.headerAction eq 'retorno')}"/>
+                                                    <af:outputText value="#{pa01lavadoactivosgenerichumantaskBundle.CONFIRMAR_FINALIZAR_TAREA}"
+                                                                   id="ot18"
+                                                                   visible="#{(viewScope.headerAction eq 'finalizarTarea')}"/>
+                                                </af:panelGroupLayout>
+                                                <f:facet name="buttonBar">
+                                                    <af:panelGroupLayout id="pgl1">
+                                                        <af:button text="#{pa01lavadoactivosgenerichumantaskBundle.ACEPTAR}"
+                                                                   id="b7"
+                                                                   action="#{LavadoActivosActionsBean.aceptarRetornoLaftAction}"
+                                                                   actionListener="#{invokeActionBean.setOperation}"
+                                                                   visible="#{(viewScope.headerAction eq 'retorno')}">
+                                                            <f:attribute name="DC_OPERATION_BINDING"
+                                                                         value="bindings.RETORNO"/>
+                                                        </af:button>
+                                                        <af:button text="#{pa01lavadoactivosgenerichumantaskBundle.ACEPTAR}"
+                                                                   id="b4"
+                                                                   action="#{LavadoActivosActionsBean.aceptarFinalizarTareaLaftAction}"
+                                                                   actionListener="#{invokeActionBean.setOperation}"
+                                                                   visible="#{(viewScope.headerAction eq 'finalizarTarea')}">
+                                                            <f:attribute name="DC_OPERATION_BINDING"
+                                                                         value="bindings.FINALIZARPROCESO"/>
+                                                        </af:button>
+                                                        <af:spacer width="10" height="10" id="s18"/>
+                                                        <af:button text="#{pa01lavadoactivosgenerichumantaskBundle.CANCELAR}"
+                                                                   id="b5" immediate="true"
+                                                                   actionListener="#{LavadoActivosActionsBean.cancelarFinalizarProcesoActionListener}">
+                                                            <af:resetActionListener/>
+                                                        </af:button>
+                                                    </af:panelGroupLayout>
+                                                </f:facet>
+                                            </af:dialog>
+                                        </af:popup>
+                                    </af:panelGroupLayout>
+                                </af:showDetailItem>
+                            </af:panelAccordion>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:facet name="lowerbody">
+                        <af:panelGroupLayout layout="vertical" id="pg16">
+                            <af:panelAccordion discloseMany="true" discloseNone="true" styleClass="secctionAccordion"
+                                               id="pa2">
+                                <af:showDetailItem id="pn3"
+                                                   text="#{pa01lavadoactivosgenerichumantaskBundle.ACCORDION_PANEL_COMENTARIOS}"
+                                                   immediate="true">
+                                    <af:region value="#{bindings.comentariosBTF1.regionModel}" id="r1"/>
+                                </af:showDetailItem>
+                            </af:panelAccordion>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:facet name="upperbody"/>
+                    <f:facet name="comment"/>
+                    <f:facet name="attachment"/>
+                    <f:facet name="history">
+                        <af:panelGroupLayout layout="vertical" id="pglHistory" rendered="false">
+                            <af:switcher facetName="#{actionAvailable.showHistory}" id="s4">
+                                <f:facet name="true">
+                                    <af:showDetailHeader size="2" id="histHd" text="#{resources.HISTORY}"
+                                                         disclosureListener="#{pageFlowScope.aleComponentBean.toggle}"
+                                                         disclosed="false">
+                                        <f:facet name="info"/>
+                                        <f:facet name="legend"/>
+                                        <f:facet name="menuBar"/>
+                                        <f:facet name="toolbar"/>
+                                        <f:facet name="context"/>
+                                        <af:panelGroupLayout layout="vertical"
+                                                             binding="#{pageFlowScope.aleComponentBean.historyPanel}"
+                                                             id="historyPanel">
+                                            <wlc:taskHistory initParam="#{pageFlowScope.aleComponentBean.comp}"
+                                                             showTabularView="true" showGraphicalView="true"
+                                                             id="taskHst"/>
+                                        </af:panelGroupLayout>
+                                    </af:showDetailHeader>
+                                </f:facet>
+                            </af:switcher>
+                            <af:switcher facetName="#{pageFlowScope.ADFHumanTaskBean.hasSubTasks}"
+                                         binding="#{invokeActionBean.subTaskPanel}" id="s7">
+                                <f:facet name="true">
+                                    <af:showDetailHeader size="2" id="decompHd" text="#{resources.SUB_TASKS}"
+                                                         disclosed="false">
+                                        <af:panelGroupLayout layout="vertical" id="pgl3">
+                                            <wlc:taskDecompose initParam="#{pageFlowScope.ADFHumanTaskBean.subTaskComp}"
+                                                               id="th1"/>
+                                        </af:panelGroupLayout>
+                                    </af:showDetailHeader>
+                                </f:facet>
+                            </af:switcher>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:attribute name="title"
+                                 value="#{pa01lavadoactivosgenerichumantaskBundle.REALIZAR_ANALISIS_LAFT}"/>
+                </af:pageTemplate>
+            </af:form>
+        </af:document>
+    </f:view>
+</jsp:root>

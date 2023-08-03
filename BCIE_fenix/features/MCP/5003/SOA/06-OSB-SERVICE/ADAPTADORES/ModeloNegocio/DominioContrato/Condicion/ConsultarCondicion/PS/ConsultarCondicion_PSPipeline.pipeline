@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioContrato/Condicion/V1/Wsdl/ADAPTER/ConsultarCondicionSAD"/>
+            <con:binding>
+                <con:name>Condicion12Bnd</con:name>
+                <con:namespace>http://www.bcie.org/CondicionService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="error" name="error-a050ab8.N794a90f1.0.151350b8397.N7ec0" xmlns:con4="http://www.bea.com/wli/sb/typesystem/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+            <con:stage id="_StageId-a050ab8.N794a90f1.0.151350b8397.N7ebf" name="StageError">
+                <con:context/>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-a050ab8.N794a90f1.0.151350b8397.N7ebe</con2:id>
+                        <con1:case id="_BranchId-a050ab8.N794a90f1.0.151350b8397.N7ebd">
+                            <con1:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError) = 0</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:assign varName="codigoError">
+                                    <con2:id>_ActionId-a050ab8.N794a90f1.0.151350b8397.N7ebc</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:assign>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default/>
+                    </con1:ifThenElse>
+                    <con1:assign varName="inMapeoError">
+                        <con2:id>_ActionId-a050ab8.N794a90f1.0.151350b8397.N7ebb</con2:id>
+                        <con1:expr>
+                            <con4:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con4:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con4:param name="codigoError">
+                                    <con4:path>xs:string(fn:data($codigoError))</con4:path>
+                                </con4:param>
+                            </con4:xqueryTransform>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:wsCallout>
+                        <con2:id>_ActionId-a050ab8.N794a90f1.0.151350b8397.N7eba</con2:id>
+                        <con1:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>MapearError</con1:operation>
+                        <con1:request>
+                            <con1:body wrapped="false">inMapeoError</con1:body>
+                        </con1:request>
+                        <con1:response>
+                            <con1:body wrapped="false">outMapeoError</con1:body>
+                        </con1:response>
+                        <con1:requestTransform/>
+                        <con1:responseTransform/>
+                    </con1:wsCallout>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-a050ab8.N794a90f1.0.151350b8397.N7eb9</con2:id>
+                        <con1:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/Condicion/ConsultarCondicion/XQUERY/Error_TO_ConsultarCondicion_PS_Response"/>
+                                <con2:param name="message">
+                                    <con2:path>xs:string(fn:data($fault/ctx:reason))</con2:path>
+                                </con2:param>
+                                <con2:param name="ErrorResponse">
+                                    <con2:path>$outMapeoError</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con4:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-a050ab8.N794a90f1.0.151350b8397.N7eb8</con4:id>
+                    </con4:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteNode1" error-handler="error-a050ab8.N794a90f1.0.151350b8397.N7ec0">
+                <con:context>
+                    <con2:userNsDecl prefix="con" namespace="http://www.bcie.org/CondicionMO"/>
+                </con:context>
+                <con:actions>
+                    <con3:route>
+                        <con2:id>_ActionId-a050ab8.N794a90f1.0.151350b8397.N7eb5</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/DominioContrato/Condicion/ConsultarCondicion/BS/ConsultarCondicionDB" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>ConsultarCondicionDBSelect</con3:operation>
+                        <con3:outboundTransform>
+                            <con4:log>
+                                <con2:id>_ActionId-a050a83.N6bffdfd2.0.15338446c9f.N7f89</con2:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con4:expr>
+                                <con4:message>ConsultarCondicion-Request</con4:message>
+                            </con4:log>
+                            <con1:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-a050ab8.N794a90f1.0.151350b8397.N7eb2</con2:id>
+                                <con1:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con1:location>
+                                <con1:expr>
+                                    <con2:xqueryTransform>
+                                        <con2:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/Condicion/ConsultarCondicion/XQUERY/ConsultarCondicion_PS_TO_ConsultarCondicion_BS_Request"/>
+                                        <con2:param name="CondicionRequest">
+                                            <con2:path>$body/con:ConsultarCondicionRequest</con2:path>
+                                        </con2:param>
+                                    </con2:xqueryTransform>
+                                </con1:expr>
+                            </con1:replace>
+                        </con3:outboundTransform>
+                        <con3:responseTransform>
+                            <con1:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-a050ab8.N1828aa6c.0.15135aa4e03.N7ffe</con2:id>
+                                <con1:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con1:location>
+                                <con1:expr>
+                                    <con2:xqueryTransform>
+                                        <con2:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/Condicion/ConsultarCondicion/XQUERY/ConsultarCondicion_BS_TO_ConsultarCondicion_PS_Response"/>
+                                        <con2:param name="CondicionResponse">
+                                            <con2:path>$body/*[1]</con2:path>
+                                        </con2:param>
+                                    </con2:xqueryTransform>
+                                </con1:expr>
+                            </con1:replace>
+                            <con4:log>
+                                <con2:id>_ActionId-a050a83.N6bffdfd2.0.15338446c9f.N7f86</con2:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con4:expr>
+                                <con4:message>ConsultarCondicion-Response</con4:message>
+                            </con4:log>
+                        </con3:responseTransform>
+                    </con3:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

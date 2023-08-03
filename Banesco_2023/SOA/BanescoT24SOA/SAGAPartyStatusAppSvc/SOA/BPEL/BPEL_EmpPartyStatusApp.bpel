@@ -1,0 +1,325 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer
+
+  Created: Fri Dec 01 11:52:59 EST 2017
+  Author:  BDSM
+  Type: BPEL 2.0 Process
+  Purpose: Empty BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="BPEL_EmpPartyStatusApp" targetNamespace="http://xmlns.banesco.com/BPEL/AppSvc/EmpPartyStatusSvc_V1.0"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:client="http://xmlns.banesco.com/BPEL/AppSvc/EmpPartyStatusSvc_V1.0"
+         xmlns:ora="http://schemas.oracle.com/xpath/extension" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://xmlns.oracle.com/pcbpel/adapter/ftp/ApplicationSOABanesco/SAGAPartyStatusAppSvc/SAGAEmpPartyAppFTP"
+         xmlns:ns2="http://xmlns.banesco.com/AppSvc/SAGAEmpPartySvc_V1.0"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns3="http://xmlns.banesco.com/BizLayer/PartySvc_V1.0"
+         xmlns:ns4="http://xmlns.banesco.com/appopt/SAGAPartyAppSvc/EmpPartyStatusModFail_V1.0"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns5="http://xmlns.banesco.com/appopt/SAGAPartyAppSvc/EmpPartyStatusMod_V1.0"
+         xmlns:ns7="http://xmlns.banesco.com/eo/Party_V1.0" xmlns:ns9="http://xmlns.banesco.com/eo/Status_V1.0"
+         xmlns:ns8="http://xmlns.banesco.com/eo/Common_V1.0"
+         xmlns:ns6="http://xmlns.banesco.com/eopt/EmpPartyStatusMod_V1.0"
+         xmlns:ns10="http://xmlns.banesco.com/eo/Banking_V1.0"
+         xmlns:ns11="http://xmlns.oracle.com/pcbpel/adapter/ftp/ApplicationSOABanesco/SAGAPartyStatusAppSvc/EmpPartyStatusFailFTP"
+         xmlns:ns12="http://xmlns.oracle.com/pcbpel/adapter/file/ApplicationSOABanesco/SAGAPartyStatusAppSvc/SAGAEmpPartyAppFile"
+         xmlns:ns13="http://xmlns.oracle.com/pcbpel/adapter/file/ApplicationSOABanesco/SAGAPartyStatusAppSvc/EmpPartyStatusFailFile"
+         xmlns:ns14="http://xmlns.banesco.com/eo/MsgHdr_V1.0"
+         xmlns:ns15="http://xmlns.banesco.com/appopt/AOptCommon_V1.0"
+         xmlns:ns16="http://xmlns.banesco.com/TechLayer/PartyTechSvc_V1.0">
+  <!--
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC
+     Set of activities coordinating the flow of messages across the
+     services integrated within this business process
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.oracle.com/pcbpel/adapter/file/ApplicationSOABanesco/SAGAPartyStatusAppSvc/SAGAEmpPartyAppFile"
+          location="../WSDLs/SAGAEmpPartyAppFile.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.banesco.com/appopt/SAGAPartyAppSvc/EmpPartyStatusModFail_V1.0"
+          location="../Schemas/EmpPartyStatusFailNXSD_V1.0.xsd" importType="http://www.w3.org/2001/XMLSchema"/>
+  <partnerLinks>
+    <partnerLink name="SAGAEmpPartyAppFile" partnerLinkType="ns12:SAGAEmpPartyAppSvc_V1.0_plt"
+                 myRole="EmpPartyStatusMod_role"/>
+    <partnerLink name="EmpPartyStatusFailFile" partnerLinkType="ns13:SAGEmpPartyAppFailSvc_V1.0_plt"
+                 partnerRole="EmpPartyStatusMod_role"/>
+    <partnerLink name="PartyTechSvc" partnerLinkType="ns16:PartyTechSvc" partnerRole="PartyTechSvcPort"/>
+  </partnerLinks>
+  <variables>
+    <variable name="bitacora" element="ns4:Parties"/>
+    <variable name="contadorTotal" type="xsd:int"/>
+    <variable name="contador" type="xsd:int"/>
+    <variable name="FlagError" type="xsd:int"/>
+    <variable name="vError" type="xsd:string"/>
+    <variable name="EmpPartyStatusMod_InputVariable" messageType="ns2:EmpPartyStatusModRq"/>
+    <variable name="MsgHdr" messageType="ns2:MsgHdrRq"/>
+  </variables>
+  <sequence name="main">
+    <receive name="Receive" partnerLink="SAGAEmpPartyAppFile" portType="ns2:SAGAEmpPartyAppSvc_V1.0"
+             operation="EmpPartyStatusMod" variable="EmpPartyStatusMod_InputVariable" createInstance="yes"/>
+    <assign name="InicializaVariables">
+      <copy>
+        <from>ora:countNodes('EmpPartyStatusMod_InputVariable','EmpPartyStatusModRq','ns5:EmpParty')</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$contadorTotal</to>
+      </copy>
+      <copy>
+        <from>0</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$FlagError</to>
+      </copy>
+      <copy>
+        <from>1</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$contador</to>
+      </copy>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/TrHeaderReq.xsl", $MsgHdr.MsgHdrRq)</from>
+        <to>$MsgHdr.MsgHdrRq</to>
+      </copy>
+    </assign>
+    <assign name="TransBitacoraStatus">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/TrBitacora.xsl", $EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq)</from>
+        <to variable="bitacora"/>
+      </copy>
+    </assign>
+    <while name="WhileParties">
+      <condition>$contador &lt;= $contadorTotal</condition>
+      <sequence name="SequenceParties">
+        <scope name="ScopeEmpPartyStatus">
+          <variables>
+            <variable name="EmpPartyStatusMod_TechInputVariable" messageType="ns16:EmpPartyStatusModRq"/>
+            <variable name="EmpPartyStatusMod_TechOutputVariable" messageType="ns16:EmpPartyStatusModRs"/>
+            <variable name="accion" type="xsd:string"/>
+          </variables>
+          <faultHandlers>
+            <catch faultName="ns16:SystemFault" faultVariable="SystemFault" faultMessageType="ns16:SystemFault">
+              <assign name="AssignError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                <copy>
+                  <from>1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$FlagError</to>
+                </copy>
+                <copy>
+                  <from>$SystemFault.SystemFault/ns9:StatusCode</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$bitacora/ns4:Party[$contador]/ns4:Status</to>
+                </copy>
+                <copy>
+                  <from>substring($SystemFault.SystemFault/ns9:AdditionalStatus/ns9:StatusDesc,1,400)</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$bitacora/ns4:Party[$contador]/ns4:FailReason</to>
+                </copy>
+              </assign>
+            </catch>
+            <catch faultName="bpelx:remoteFault" faultVariable="FaultVariable"
+                   faultMessageType="bpelx:RuntimeFaultMessage">
+              <assign name="AssignError">
+                <copy>
+                  <from>1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$FlagError</to>
+                </copy>
+                <copy>
+                  <from>'M0006'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$bitacora/ns4:Party[$contador]/ns4:Status</to>
+                </copy>
+                <copy>
+                  <from>$FaultVariable.summary</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$bitacora/ns4:Party[$contador]/ns4:FailReason</to>
+                </copy>
+              </assign>
+            </catch>
+            <catch faultName="bpelx:bindingFault" faultVariable="FaultVariable"
+                   faultMessageType="bpelx:RuntimeFaultMessage">
+              <assign name="AssignError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                <copy>
+                  <from>1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$FlagError</to>
+                </copy>
+                <copy>
+                  <from>'M0006'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$bitacora/ns4:Party[$contador]/ns4:Status</to>
+                </copy>
+                <copy>
+                  <from>$FaultVariable.summary</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$bitacora/ns4:Party[$contador]/ns4:FailReason</to>
+                </copy>
+              </assign>
+            </catch>
+            <catchAll>
+              <assign name="AssignError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                <copy>
+                  <from>1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$FlagError</to>
+                </copy>
+                <copy>
+                  <from>ora:getFaultAsString()</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$vError</to>
+                </copy>
+                <copy>
+                  <from>'M0006'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$bitacora/ns4:Party[$contador]/ns4:Status</to>
+                </copy>
+                <copy>
+                  <from>$vError</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$bitacora/ns4:Party[$contador]/ns4:FailReason</to>
+                </copy>
+              </assign>
+            </catchAll>
+          </faultHandlers>
+          <sequence name="SequenceEmpPartyStatus">
+            <!--assign name="AssignToEmpPartyStatus">
+              <copy>
+                <from>$EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq/ns5:EmpParty[$contador]/ns5:UserName</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$EmpPartyStatus_InputVariable.EmpPartyStatusModRq/ns6:PersonData/ns7:PersonName/ns7:FullName</to>
+              </copy>
+              <copy>
+                <from>$EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq/ns5:EmpParty[$contador]/ns5:SignOnName</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$EmpPartyStatus_InputVariable.EmpPartyStatusModRq/ns6:LoginIdent/ns7:LoginName</to>
+              </copy>
+              <copy>
+                <from>$EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq/ns5:EmpParty[$contador]/ns5:DepartmentCode</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$EmpPartyStatus_InputVariable.EmpPartyStatusModRq/ns6:EmployeeData/ns7:Department/ns8:Value</to>
+              </copy>
+              <copy>
+                <from>concat($EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq/ns5:EmpParty[$contador]/ns5:EndDateProfile,'T00:00:00')</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$EmpPartyStatus_InputVariable.EmpPartyStatusModRq/ns6:PartyStatus/ns7:EffDt</to>
+              </copy>
+              <copy>
+                <from>$EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq/ns5:EmpParty[$contador]/ns5:LockReason</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$EmpPartyStatus_InputVariable.EmpPartyStatusModRq/ns6:PartyStatus/ns7:StatusDesc</to>
+              </copy>
+              <copy>
+                <from>$EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq/ns5:EmpParty[$contador]/ns5:UserType</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$EmpPartyStatus_InputVariable.EmpPartyStatusModRq/ns6:Employment/ns7:EmploymentType</to>
+              </copy>
+            </assign-->
+            <!--invoke name="InvokeEmpPartyStatusMod" partnerLink="PartySvc"
+                    portType="ns3:PartySvc_V1.0PortType" operation="EmpPartyStatusMod"
+                    inputVariable="EmpPartyStatus_InputVariable" outputVariable="EmpPartyStatus_OutputVariable"
+                    bpelx:invokeAsDetail="no" bpelx:inputHeaderVariable="MsgHdr"/-->
+            <assign name="AssignToEmpPartyStatusTech">
+              <copy>
+                <from>$EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq/ns5:EmpParty[$contador]/ns5:UserName</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$EmpPartyStatusMod_TechInputVariable.EmpPartyStatusModRq/ns6:PersonData/ns7:PersonName/ns7:FullName</to>
+              </copy>
+              <copy>
+                <from>$EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq/ns5:EmpParty[$contador]/ns5:SignOnName</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$EmpPartyStatusMod_TechInputVariable.EmpPartyStatusModRq/ns6:LoginIdent/ns7:LoginName</to>
+              </copy>
+              <copy>
+                <from>$EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq/ns5:EmpParty[$contador]/ns5:DepartmentCode</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$EmpPartyStatusMod_TechInputVariable.EmpPartyStatusModRq/ns6:EmployeeData/ns7:Department/ns8:Value</to>
+              </copy>
+              <copy>
+                <from>concat($EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq/ns5:EmpParty[$contador]/ns5:EndDateProfile,'T00:00:00')</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$EmpPartyStatusMod_TechInputVariable.EmpPartyStatusModRq/ns6:PartyStatus/ns7:EffDt</to>
+              </copy>
+              <copy>
+                <from>$EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq/ns5:EmpParty[$contador]/ns5:LockReason</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$EmpPartyStatusMod_TechInputVariable.EmpPartyStatusModRq/ns6:PartyStatus/ns7:StatusDesc</to>
+              </copy>
+              <copy>
+                <from>$EmpPartyStatusMod_InputVariable.EmpPartyStatusModRq/ns5:EmpParty[$contador]/ns5:UserType</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$EmpPartyStatusMod_TechInputVariable.EmpPartyStatusModRq/ns6:Employment/ns7:EmploymentType</to>
+              </copy>
+              <copy>
+                <from>'http://xmlns.banesco.com/TechLayer/PartyTechSvc_V1.0/EmpPartyStatusMod'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$accion</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeEmpPartyModTech" partnerLink="PartyTechSvc" portType="ns16:PartyTechSvcPort"
+                    operation="EmpPartyStatusMod" inputVariable="EmpPartyStatusMod_TechInputVariable"
+                    outputVariable="EmpPartyStatusMod_TechOutputVariable"
+                    bpelx:inputHeaderVariable="MsgHdr" bpelx:invokeAsDetail="yes"
+                    bpelx:detailLabel="EmpPartyStatusMod"/>
+            <assign name="AssignBitacora">
+              <copy>
+                <from>$EmpPartyStatusMod_TechOutputVariable.EmpPartyStatusModRs/ns6:Status/ns9:StatusCode</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$bitacora/ns4:Party[$contador]/ns4:Status</to>
+              </copy>
+              <copy>
+                <from>$EmpPartyStatusMod_TechOutputVariable.EmpPartyStatusModRs/ns6:Status/ns9:StatusDesc</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$bitacora/ns4:Party[$contador]/ns4:FailReason</to>
+              </copy>
+            </assign>
+            <if name="IfError">
+              <documentation>
+                <![CDATA[FlagError]]>
+              </documentation>
+              <condition>$EmpPartyStatusMod_TechOutputVariable.EmpPartyStatusModRs/ns6:Status/ns9:StatusCode!='M0000'</condition>
+              <assign name="AssignFlagError">
+                <copy>
+                  <from>1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$FlagError</to>
+                </copy>
+              </assign>
+            </if>
+          </sequence>
+        </scope>
+        <assign name="AssignIncremento">
+          <copy>
+            <from>$contador + 1</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$contador</to>
+          </copy>
+        </assign>
+      </sequence>
+    </while>
+    <if name="IfFlagError">
+      <documentation>
+        <![CDATA[WriteFileError]]>
+      </documentation>
+      <condition>$FlagError = 1</condition>
+      <scope name="ScopeWriteFileError">
+        <bpelx:annotation>
+          <bpelx:general>
+            <bpelx:property name="userImage">
+              <![CDATA[document_lg.png]]>
+            </bpelx:property>
+          </bpelx:general>
+        </bpelx:annotation>
+        <variables>
+          <variable name="EmpPartyStatusFail_InputVariable" messageType="ns2:EmpPartyStatusFailRq"/>
+          <variable name="nombreArchivoFail" type="xsd:string"/>
+        </variables>
+        <sequence name="SequenceWriteFileError">
+          <assign name="AssignFileName">
+            <copy>
+              <from>concat('EmpPartyStatusFail_',xp20:format-dateTime(xp20:current-dateTime(),'[Y0001][M01][D01]'),'.txt')</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$nombreArchivoFail</to>
+            </copy>
+          </assign>
+          <assign name="TranToPutFileError">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:doXSLTransformForDoc("../Transformations/TranToEmpPartyStatusFail.xsl", $bitacora)</from>
+              <to variable="EmpPartyStatusFail_InputVariable" part="EmpPartyStatusModRq"/>
+            </copy>
+          </assign>
+          <invoke name="InvokeWriteFileError" partnerLink="EmpPartyStatusFailFile"
+                  portType="ns2:SAGEmpPartyAppFailSvc_V1.0" operation="EmpPartyStatusMod"
+                  inputVariable="EmpPartyStatusFail_InputVariable" bpelx:invokeAsDetail="no">
+            <bpelx:toProperties>
+              <bpelx:toProperty name="jca.file.FileName" variable="nombreArchivoFail"/>
+            </bpelx:toProperties>
+          </invoke>
+        </sequence>
+      </scope>
+    </if>
+  </sequence>
+</process>

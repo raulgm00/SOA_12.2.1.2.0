@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+    <con:coreEntry>
+        <con:binding type="Any SOAP" isSoap12="false" xsi:type="con:AnySoapBindingType"/>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-N3f57fe7d.N43d9399b.0.163bbff8745.N7fc4">
+        <con:pipeline type="request" name="request-N3f57fe7d.N43d9399b.0.163bbff8745.N7fc8">
+            <con:stage id="_StageId-N3f57fe7d.N43d9399b.0.163bbff8745.N7e2d" name="stg_LoadDT">
+                <con:context/>
+                <con:actions>
+                    <con1:assign varName="svcOperation">
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7e2a</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$varOperation</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:assign varName="svcHeader">
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7e27</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$header</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-N3f57fe7d.N43d9399b.0.163bbff8745.N7f01" name="stg_ValidateIn">
+                <con:context/>
+                <con:actions>
+                    <con1:validate>
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7ebd</con2:id>
+                        <con1:schema ref="Commons/xsd/EOpt/Payment/BillInq/BillInq_V1.0"/>
+                        <con1:schemaElement xmlns:bil="http://xmlns.banesco.com/eopt/BillInq_V1.0">bil:BillInqRq</con1:schemaElement>
+                        <con1:varName>body</con1:varName>
+                        <con1:location>
+                            <con2:xpathText>./*</con2:xpathText>
+                        </con1:location>
+                    </con1:validate>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-N3f57fe7d.N43d9399b.0.163bbff8745.N7ebc" name="stg_BillersRulesInq">
+                <con:context>
+                    <con2:userNsDecl prefix="eoStatus" namespace="http://xmlns.banesco.com/eo/Status_V1.0"/>
+                    <con2:userNsDecl prefix="billInq" namespace="http://xmlns.banesco.com/eopt/BillInq_V1.0"/>
+                    <con2:userNsDecl prefix="rulesInq" namespace="http://xmlns.banesco.com/eopt/BillersRulesInq_V1.0"/>
+                </con:context>
+                <con:actions>
+                    <con1:wsCallout>
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7eb9</con2:id>
+                        <con1:service ref="PmtTS/proxy/PX_Pmt_V1.0" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>BillersRulesInq</con1:operation>
+                        <con1:request>
+                            <con1:body wrapped="false">billersRulesInqRq</con1:body>
+                            <con1:header>svcHeader</con1:header>
+                        </con1:request>
+                        <con1:response>
+                            <con1:body wrapped="false">billersRulesInqRs</con1:body>
+                        </con1:response>
+                        <con1:requestTransform>
+                            <con1:assign varName="varOperation">
+                                <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7e2e</con2:id>
+                                <con1:expr>
+                                    <con2:xqueryText>'BillersRulesInq'</con2:xqueryText>
+                                </con1:expr>
+                            </con1:assign>
+                            <con1:assign varName="billersRulesInqRq">
+                                <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7eb3</con2:id>
+                                <con1:expr>
+                                    <con2:xsltTransform>
+                                        <con2:resource ref="PmtSvc/resources/xslt/BillInq/xslt_in_BillInqRq_to_BillersRulesInqRq"/>
+                                        <con2:input>$body/*</con2:input>
+                                    </con2:xsltTransform>
+                                </con1:expr>
+                            </con1:assign>
+                        </con1:requestTransform>
+                        <con1:responseTransform/>
+                    </con1:wsCallout>
+                    <con1:assign varName="varOperation">
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7e24</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$svcOperation</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7ea1</con2:id>
+                        <con1:case id="_BranchId-N3f57fe7d.N43d9399b.0.163bbff8745.N7ea0">
+                            <con1:condition>
+                                <con2:xqueryText>$billersRulesInqRs/rulesInq:Status/eoStatus:StatusCode != 'M0000' or not(exists($billersRulesInqRs/rulesInq:Field))</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:replace varName="body" contents-only="true">
+                                    <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7e6c</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryText><![CDATA[<billInq:BillInqRs>
+  <billInq:Status>
+    <eoStatus:StatusCode>{ $billersRulesInqRs/rulesInq:Status/eoStatus:StatusCode/text() }</eoStatus:StatusCode>
+    <eoStatus:StatusDesc>{ $billersRulesInqRs/rulesInq:Status/eoStatus:StatusDesc/text() }</eoStatus:StatusDesc>
+    <eoStatus:AdditionalStatus>
+      <eoStatus:StatusCode>{ $billersRulesInqRs/rulesInq:Status/eoStatus:AdditionalStatus/eoStatus:StatusCode/text() }</eoStatus:StatusCode>
+      <eoStatus:StatusDesc>{ $billersRulesInqRs/rulesInq:Status/eoStatus:AdditionalStatus/eoStatus:StatusDesc/text() }</eoStatus:StatusDesc>
+    </eoStatus:AdditionalStatus>
+  </billInq:Status>
+</billInq:BillInqRs>]]></con2:xqueryText>
+                                    </con1:expr>
+                                </con1:replace>
+                                <con2:reply isError="false">
+                                    <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7e66</con2:id>
+                                </con2:reply>
+                            </con1:actions>
+                        </con1:case>
+                    </con1:ifThenElse>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-N3f57fe7d.N43d9399b.0.163bbff8745.N7eb2" name="stg_TrnIn">
+                <con:context/>
+                <con:actions>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7eab</con2:id>
+                        <con1:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="PmtSvc/resources/xslt/BillInq/xslt_in_BillersRulesInqRs_to_BillCPagInqRq"/>
+                                <con2:input>$billersRulesInqRs</con2:input>
+                                <con2:param name="BillInqRq">
+                                    <con2:path>$body/*</con2:path>
+                                </con2:param>
+                            </con2:xsltTransform>
+                        </con1:expr>
+                    </con1:replace>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-N3f57fe7d.N43d9399b.0.163bbff8745.N7fc7">
+            <con:stage id="_StageId-N3f57fe7d.N43d9399b.0.163bbff8745.N7e65" name="stg_TrnOut">
+                <con:context/>
+                <con:actions>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7e62</con2:id>
+                        <con1:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="PmtSvc/resources/xslt/BillInq/xslt_out_BillCPagInqRs_to_BillInqRs"/>
+                                <con2:input>$body/*</con2:input>
+                            </con2:xsltTransform>
+                        </con1:expr>
+                    </con1:replace>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-N3f57fe7d.N43d9399b.0.163bbff8745.N7fc5" name="stg_ValidateOut">
+                <con:context/>
+                <con:actions>
+                    <con1:validate>
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7e69</con2:id>
+                        <con1:schema ref="Commons/xsd/EOpt/Payment/BillInq/BillInq_V1.0"/>
+                        <con1:schemaElement xmlns:bil="http://xmlns.banesco.com/eopt/BillInq_V1.0">bil:BillInqRs</con1:schemaElement>
+                        <con1:varName>body</con1:varName>
+                        <con1:location>
+                            <con2:xpathText>./*</con2:xpathText>
+                        </con1:location>
+                    </con1:validate>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-N3f57fe7d.N43d9399b.0.163bbff8745.N7fc4">
+            <con:stage id="_StageId-N3f57fe7d.N43d9399b.0.163bbff8745.N7f3c" name="stg_ErrorHandler">
+                <con:context/>
+                <con:actions>
+                    <con1:assign varName="varOperation">
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7f3b</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$svc_operation</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7f3a</con2:id>
+                        <con1:case id="_BranchId-N3f57fe7d.N43d9399b.0.163bbff8745.N7f39">
+                            <con1:condition>
+                                <con2:xqueryText>not(fn:empty($body/*:Fault//*:SystemFault))</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions/>
+                        </con1:case>
+                        <con1:case id="_BranchId-N3f57fe7d.N43d9399b.0.163bbff8745.N7f38">
+                            <con1:condition>
+                                <con2:xqueryText>not(fn:empty($fault/*:details/*:ValidationFailureDetail))</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:replace varName="body" contents-only="true">
+                                    <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7f37</con2:id>
+                                    <con1:location>
+                                        <con2:xpathText>.</con2:xpathText>
+                                    </con1:location>
+                                    <con1:expr>
+                                        <con2:xqueryText><![CDATA[<soap-env:Fault>
+      <faultcode>{data($fault/*:errorCode)}</faultcode>
+      <faultstring>{data($fault/*:reason)}</faultstring>
+<detail>
+  <eoStatus:SystemFault xmlns:eoStatus="http://xmlns.banesco.com/eo/Status_V1.0">
+      <eoStatus:StatusCode>M0003</eoStatus:StatusCode>
+      <eoStatus:StatusDesc>ERROR TECNICO</eoStatus:StatusDesc>
+          <eoStatus:AdditionalStatus>
+              <eoStatus:StatusCode>{data($fault/*:errorCode)}</eoStatus:StatusCode>
+              <eoStatus:StatusDesc>{data($fault/*:details/*:ValidationFailureDetail/*:message)}</eoStatus:StatusDesc>
+          </eoStatus:AdditionalStatus>
+  </eoStatus:SystemFault>
+  <location>
+    <node>{data($fault/*:location/*:node)}</node>
+    <pipeline>{data($fault/*:location/*:pipeline)}</pipeline>
+    <stage>{data($fault/*:location/*:stage)}</stage>
+    <path>{data($fault/*:location/*:path)}</path>
+  </location>
+</detail>
+</soap-env:Fault>]]></con2:xqueryText>
+                                    </con1:expr>
+                                </con1:replace>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:case id="_BranchId-N3f57fe7d.N43d9399b.0.163bbff8745.N7f36">
+                            <con1:condition>
+                                <con2:xqueryText>not(fn:empty($fault/*:details/*:ReceivedFaultDetail))</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:replace varName="body" contents-only="true">
+                                    <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7f35</con2:id>
+                                    <con1:location>
+                                        <con2:xpathText>.</con2:xpathText>
+                                    </con1:location>
+                                    <con1:expr>
+                                        <con2:xqueryText><![CDATA[<soap-env:Fault>
+      <faultcode>{data($fault/*:errorCode)}</faultcode>
+      <faultstring>{data($fault/*:reason)}</faultstring>
+<detail>
+  <eoStatus:SystemFault xmlns:eoStatus="http://xmlns.banesco.com/eo/Status_V1.0">
+      <eoStatus:StatusCode>M0003</eoStatus:StatusCode>
+      <eoStatus:StatusDesc>ERROR TECNICO</eoStatus:StatusDesc>
+          <eoStatus:AdditionalStatus>
+              <eoStatus:StatusCode>{data($fault/*:details/*:ReceivedFaultDetail/*:faultcode)}</eoStatus:StatusCode>
+              <eoStatus:StatusDesc>{data($fault/*:details/*:ReceivedFaultDetail/*:faultstring)}</eoStatus:StatusDesc>
+          </eoStatus:AdditionalStatus>
+  </eoStatus:SystemFault>
+  <location>
+    <node>{data($fault/*:location/*:node)}</node>
+    <pipeline>{data($fault/*:location/*:pipeline)}</pipeline>
+    <stage>{data($fault/*:location/*:stage)}</stage>
+    <path>{data($fault/*:location/*:path)}</path>
+  </location>
+</detail>
+</soap-env:Fault>]]></con2:xqueryText>
+                                    </con1:expr>
+                                </con1:replace>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con1:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7f34</con2:id>
+                                <con1:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con1:location>
+                                <con1:expr>
+                                    <con2:xqueryText><![CDATA[<soap-env:Fault>
+      <faultcode>{data($fault/*:errorCode)}</faultcode>
+      <faultstring>{data($fault/*:reason)}</faultstring>
+<detail>
+  <eoStatus:SystemFault xmlns:eoStatus="http://xmlns.banesco.com/eo/Status_V1.0">
+      <eoStatus:StatusCode>M0003</eoStatus:StatusCode>
+      <eoStatus:StatusDesc>ERROR TECNICO</eoStatus:StatusDesc>
+          <eoStatus:AdditionalStatus>
+              <eoStatus:StatusCode>{data($fault/*:details/*:ReceivedFaultDetail/*:faultcode)}</eoStatus:StatusCode>
+              <eoStatus:StatusDesc>{data($fault/*:details/*:ReceivedFaultDetail/*:faultstring)}</eoStatus:StatusDesc>
+          </eoStatus:AdditionalStatus>
+  </eoStatus:SystemFault>
+  <location>
+    <node>{data($fault/*:location/*:node)}</node>
+    <pipeline>{data($fault/*:location/*:pipeline)}</pipeline>
+    <stage>{data($fault/*:location/*:stage)}</stage>
+    <path>{data($fault/*:location/*:path)}</path>
+  </location>
+</detail>
+</soap-env:Fault>]]></con2:xqueryText>
+                                </con1:expr>
+                            </con1:replace>
+                        </con1:default>
+                    </con1:ifThenElse>
+                    <con2:reply isError="true">
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7f33</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PPN_BillInq">
+                <con:request>request-N3f57fe7d.N43d9399b.0.163bbff8745.N7fc8</con:request>
+                <con:response>response-N3f57fe7d.N43d9399b.0.163bbff8745.N7fc7</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RN_PmtTS">
+                <con:context/>
+                <con:actions>
+                    <con3:route>
+                        <con2:id>_ActionId-N3f57fe7d.N43d9399b.0.163bbff8745.N7eae</con2:id>
+                        <con3:service ref="PmtTS/proxy/PX_Pmt_V1.1" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>BillInq</con3:operation>
+                        <con3:outboundTransform/>
+                        <con3:responseTransform/>
+                    </con3:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+        <con:shared-variables>
+            <con:variable>varOperation</con:variable>
+            <con:variable>varHeader</con:variable>
+        </con:shared-variables>
+    </con:router>
+</con:pipelineEntry>

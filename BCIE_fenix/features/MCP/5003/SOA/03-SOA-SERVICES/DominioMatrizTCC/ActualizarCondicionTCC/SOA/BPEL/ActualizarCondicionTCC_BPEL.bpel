@@ -1,0 +1,1574 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Feb 10 11:10:27 CST 2016
+  Author:  luis-morales
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ActualizarCondicionTCC_BPEL" targetNamespace="http://xmlns.oracle.com/DominioMatrizTCC/ActualizarCondicionTCC/ActualizarCondicionTCC_BPEL" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable" xmlns:client="http://xmlns.oracle.com/DominioMatrizTCC/ActualizarCondicionTCC/ActualizarCondicionTCC_BPEL" xmlns:ora="http://schemas.oracle.com/xpath/extension" xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xmlns:ns1="http://www.bcie.org/ActualizarTCC" xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable" xml:id="id_1"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/EliminarCondicionService"
+         xmlns:ns3="http://www.bcie.org/CondicionService"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ns5="http://www.bcie.org/TerminoBO" xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:ns9="http://www.bcie.org/CondicionBO"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns10="http://www.bcie.org/DocumentoBO" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ns8="http://www.bcie.org/ComisionBO" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns4="http://www.bcie.org/MatrizTCCMO" xmlns:ns6="http://www.bcie.org/CatalogoBO"
+         xmlns:ns7="http://www.bcie.org/AtributoBO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns11="http://www.bcie.org/MapeoErrorMO" xmlns:ns13="http://www.bcie.org/ResultBO"
+         xmlns:ns12="http://www.bcie.org/ErrorBO" xmlns:ns14="http://www.bcie.org/CondicionMO"
+         xmlns:ns15="http://www.bcie.org/MatrizTCCService" xmlns:ns16="http://www.bcie.org/MatrizTCCBO"
+         xmlns:ns17="http://www.bcie.org/ConsultarOperacionEnProcesoService"
+         xmlns:ns19="http://www.bcie.org/ConsultarOperacionEnProcesoBO"
+         xmlns:ns18="http://www.bcie.org/ConsultarOperacionEnProcesoMO" xmlns:ns20="urn:ActualizarDetalleEnmiendaSAD"
+         xmlns:ns24="http://www.bcie.org/ReglaBO" xmlns:ns21="http://www.bcie.org/OperacionBO"
+         xmlns:ns23="http://www.bcie.org/CommonBO" xmlns:ns27="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns25="http://www.bcie.org/ProductoBO" xmlns:ns26="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns22="http://www.bcie.org/DesembolsoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <bpelx:inlineSubProcess name="ValidaActualizaCondicion" xml:id="id_957">
+    <variables xml:id="id_958">
+      <variable name="validarEstadoTCC_Input" messageType="ns15:ValidarEstadoTCCRequestMessage" xml:id="id_959"/>
+      <variable name="validarEstadoTCC_Output" messageType="ns15:ValidarEstadoTCCResponseMessage" xml:id="id_960"/>
+      <variable name="actualizarCondicion_Input" messageType="ns3:ActualizarCondicionRequestMessage" xml:id="id_961"/>
+      <variable name="actualizarCondicion_Output" messageType="ns3:ActualizarCondicionResponseMessage" xml:id="id_962"/>
+      <variable name="consultarCondicion_Input" messageType="ns3:ConsultarCondicionRequestMessage" xml:id="id_1038"/>
+      <variable name="consultarCondicion_Output" messageType="ns3:ConsultarCondicionResponseMessage" xml:id="id_1039"/>
+    </variables>
+    <sequence name="ValidaActualiza" xml:id="id_963">
+      <invoke name="ValidaCondicion" xml:id="id_964" partnerLink="ValidarEstadoTCC" portType="ns15:MatrizTCCPT"
+              operation="validarEstadoTCC" inputVariable="validarEstadoTCC_Input"
+              outputVariable="validarEstadoTCC_Output" bpelx:invokeAsDetail="no"/>
+      <if name="IfValidacionEstado" xml:id="id_965">
+        <documentation xml:id="id_966">
+          <![CDATA[Validacion Estado != false]]>
+        </documentation>
+        <condition xml:id="id_967">$validarEstadoTCC_Output.response/ns4:validacionEstados != 'false'</condition>
+        <sequence name="ActualizaCondicion" xml:id="id_968">
+          <assign name="SetActualizaCondicion" xml:id="id_1095">
+            <bpelx:annotation xml:id="id_1096">
+              <bpelx:pattern patternName="bpelx:transformation" xml:id="id_1097"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy xml:id="id_1098">
+              <from xml:id="id_1099">ora:doXSLTransformForDoc("../Transformations/ValidaEstadoToActualizaCondicion.xsl", $validarEstadoTCC_Input.request)</from>
+              <to xml:id="id_1100" variable="actualizarCondicion_Input" part="request"/>
+            </copy>
+          </assign>
+          <invoke name="ActualizaCondicion" xml:id="id_976" partnerLink="ActualizarCondicion"
+                  portType="ns3:ActualizarCondicionPT" operation="actualizarCondicion"
+                  inputVariable="actualizarCondicion_Input" outputVariable="actualizarCondicion_Output"
+                  bpelx:invokeAsDetail="no"/>
+          <if name="IfActualizaCondicionOK" xml:id="id_1025">
+            <condition xml:id="id_1027">$actualizarCondicion_Output.response/ns14:Resultado/ns13:result = 'OK'</condition>
+            <sequence name="ConsultaCondicionResponse" xml:id="id_1032">
+              <assign name="SetConsultaCondicion" xml:id="id_1033">
+                <copy xml:id="id_1040">
+                  <from xml:id="id_1041">$validarEstadoTCC_Input.request/ns4:tcc/ns16:id</from>
+                  <to xml:id="id_1042">$consultarCondicion_Input.request/ns14:idCondicion</to>
+                </copy>
+              </assign>
+              <invoke name="ConsultaCondicion" xml:id="id_1034" partnerLink="ConsultarCondicion"
+                      portType="ns3:ConsultarCondicionPT" operation="consultarCondicion"
+                      inputVariable="consultarCondicion_Input" outputVariable="consultarCondicion_Output"
+                      bpelx:invokeAsDetail="no"/>
+            </sequence>
+            <else xml:id="id_1026">
+              <assign name="SetErrorActualizar" xml:id="id_1028">
+                <copy xml:id="id_1029">
+                  <from xml:id="id_1030">$actualizarCondicion_Output.response/ns14:Resultado</from>
+                  <to xml:id="id_1031">$outputVariable.response/ns4:Resultado</to>
+                </copy>
+              </assign>
+            </else>
+          </if>
+        </sequence>
+        <else xml:id="id_977">
+          <documentation xml:id="id_978">
+            <![CDATA[Validacion Estado = false]]>
+          </documentation>
+          <throw name="ValidacionEstado" xml:id="id_979" faultName="bpel:selectionFailure"/>
+        </else>
+      </if>
+    </sequence>
+  </bpelx:inlineSubProcess>
+  <import namespace="http://www.bcie.org/CondicionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioContrato/Condicion/V1/Wsdl/ADAPTER/ConsultarCondicionSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" xml:id="id_1037"/>
+  <import namespace="http://www.bcie.org/MatrizTCCService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/Wsdl/MatrizTCC.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" xml:id="id_992"/>
+  <import namespace="http://www.bcie.org/CondicionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioContrato/Condicion/V1/Wsdl/ADAPTER/ActualizarCondicionSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" xml:id="id_948"/>
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" xml:id="id_116"/>
+  <import namespace="http://www.bcie.org/MapeoErrorMO"
+          location="oramds:/apps/Resources/ComponentesComunes/Utilidades/MapeoError/V1/Schema/MapeoErrorMO.xsd"
+          importType="http://www.w3.org/2001/XMLSchema" xml:id="id_78"/>
+  <import namespace="http://www.bcie.org/ActualizarTCC" location="../WSDLs/ActualizarTCCSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks xml:id="id_2">
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="actualizarCondicion_Service" partnerLinkType="ns1:ActualizarTCCPTSOR_PLT"
+                 myRole="ActualizarTCCPTSOR_Role" xml:id="id_3"/>
+    <partnerLink name="ConsultarCondicion" partnerLinkType="ns3:ConsultarCondicion" partnerRole="ConsultarCondicionPT"
+                 xml:id="id_30"/>
+    <partnerLink name="ActualizarCondicion" partnerLinkType="ns3:ActualizarCondicion"
+                 partnerRole="ActualizarCondicionPT" xml:id="id_31"/>
+    <partnerLink name="CrearCondicion" partnerLinkType="ns3:CrearCondicion" partnerRole="CondicionPT" xml:id="id_32"/>
+    <partnerLink name="ValidarEstadoTCC" partnerLinkType="ns15:ValidarEstadoTCC" partnerRole="MatrizTCCPT"
+                 xml:id="id_288"/>
+    <partnerLink name="ConsultarOperacionProceso_SB" partnerLinkType="ns17:ConsultarOperacionProceso_SB"
+                 partnerRole="ConsultarOperacionEnProcesoPT" xml:id="id_434"/>
+    <partnerLink name="ActualizarDetalleEnmienda_SB" partnerLinkType="ns20:ActualizarDetalleEnmienda_SB"
+                 partnerRole="ActualizarDetalleEnmiendaRequest_PT" xml:id="id_786"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables xml:id="id_4">
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ActualizarTCCRequestMessage" xml:id="id_5"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ActualizarTCCResponseMessage" xml:id="id_6"/>
+    <variable name="Error" type="ns11:MapeoErrorResponse" xml:id="id_79"/>
+    <variable name="outConsultarProcesoOperacion" messageType="ns17:consultarOperacionEnProcesoResponseMessage"
+              xml:id="id_437"/>
+    <variable name="outConsultarCondicion" messageType="ns3:ConsultarCondicionResponseMessage" xml:id="id_466"/>
+    <variable name="outConsultarCondicionActualizada" messageType="ns3:ConsultarCondicionResponseMessage"
+              xml:id="id_777"/>
+    <variable name="ActualizaValidaCondicion" messageType="ns15:ValidarEstadoTCCRequestMessage" xml:id="id_993"/>
+    <variable name="consultarCondicion_Input" messageType="ns3:ConsultarCondicionRequestMessage" xml:id="id_1035"/>
+    <variable name="consultarCondicion_Output" messageType="ns3:ConsultarCondicionResponseMessage" xml:id="id_1036"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main" xml:id="id_7">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ActualizarCondicionTCC_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="actualizarCondicion_Service" portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC" variable="inputVariable" createInstance="yes" xml:id="id_8"/>
+    <forEach parallel="no" counterName="CondicionCounter" name="CondicionList" xml:id="id_33">
+      <startCounterValue xml:id="id_34">1</startCounterValue>
+      <finalCounterValue xml:id="id_35">count($inputVariable.request/ns4:Condicion)</finalCounterValue>
+      <scope name="CondicionScope" xml:id="id_36">
+        <variables xml:id="id_1044">
+          <variable name="ConsultarCondicionResponse" messageType="ns3:ConsultarCondicionResponseMessage"
+                    xml:id="id_1045"/>
+        </variables>
+        <faultHandlers xml:id="id_903">
+          <catch xml:id="id_904" faultName="bpel:selectionFailure">
+            <sequence name="ProcesoIncorrectoSequence" xml:id="id_906">
+              <assign name="ReplyError" xml:id="id_905">
+                <copy xml:id="id_909">
+                  <from xml:id="id_910">'ERROR'</from>
+                  <to xml:id="id_911">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                </copy>
+                <copy xml:id="id_912">
+                  <from xml:id="id_913">'El proceso no es válido para la acción'</from>
+                  <to xml:id="id_914">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyWithError" xml:id="id_907" variable="outputVariable"
+                     partnerLink="actualizarCondicion_Service" portType="ns1:ActualizarTCCPTSOR"
+                     operation="actualizarTCC"/>
+              <exit name="ExitWithError" xml:id="id_908"/>
+            </sequence>
+          </catch>
+        </faultHandlers>
+        <sequence xml:id="id_444">
+          <scope name="ConsultarOperacionProceso" xml:id="id_430">
+            <variables xml:id="id_435">
+              <variable name="inConsultarProcesoOperacion" messageType="ns17:consultarOperacionEnProcesoRequestMessage"
+                        xml:id="id_436"/>
+            </variables>
+            <sequence name="ConsultarOperacionProcesoSequence" xml:id="id_432">
+              <assign name="ConsultarOperacionProcesoAssign" xml:id="id_431">
+                <copy xml:id="id_438">
+                  <from xml:id="id_439">$inputVariable.request/ns4:idProceso</from>
+                  <to xml:id="id_440">$inConsultarProcesoOperacion.request/ns18:OperacionEnProceso/ns19:idProceso</to>
+                </copy>
+                <copy xml:id="id_441">
+                  <from xml:id="id_442">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:operacion</from>
+                  <to xml:id="id_443">$inConsultarProcesoOperacion.request/ns18:OperacionEnProceso/ns19:idOperacion</to>
+                </copy>
+              </assign>
+              <invoke name="ConsultarOperacionProcesoInvoke" xml:id="id_433" bpelx:invokeAsDetail="no"
+                      partnerLink="ConsultarOperacionProceso_SB" portType="ns17:ConsultarOperacionEnProcesoPT"
+                      operation="consultarOperacionEnProceso" inputVariable="inConsultarProcesoOperacion"
+                      outputVariable="outConsultarProcesoOperacion"/>
+              <if name="IdCondicion" xml:id="id_447">
+                <documentation xml:id="id_450">
+                  <![CDATA[NoIdCondicion]]>
+                </documentation>
+                <condition xml:id="id_449">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion = ''</condition>
+                <empty name="ValidarEstados" xml:id="id_452"/>
+                <else xml:id="id_448">
+                  <documentation xml:id="id_451">
+                    <![CDATA[ConsultarCondicion]]>
+                  </documentation>
+                  <sequence name="ConsultarProcesoResponseSequence" xml:id="id_454">
+                    <if name="OK" xml:id="id_455">
+                      <documentation xml:id="id_458">
+                        <![CDATA[OK]]>
+                      </documentation>
+                      <condition xml:id="id_457">$outConsultarProcesoOperacion.response/ns18:Resultado/ns13:result != 'ERROR'</condition>
+                      <scope name="ConsultarCondicionScope" xml:id="id_453">
+                        <variables xml:id="id_784">
+                          <variable name="inConsultarCondicion" messageType="ns3:ConsultarCondicionRequestMessage"
+                                    xml:id="id_785"/>
+                        </variables>
+                        <sequence name="ConsultarCondicionSequence" xml:id="id_462">
+                          <assign name="ConsultarCondicionAssign" xml:id="id_461">
+                            <copy xml:id="id_467">
+                              <from xml:id="id_468">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                              <to xml:id="id_469">$inConsultarCondicion.request/ns14:idCondicion</to>
+                            </copy>
+                          </assign>
+                          <invoke name="ConsultarCondicionSequence" xml:id="id_463" inputVariable="inConsultarCondicion"
+                                  outputVariable="outConsultarCondicion" bpelx:invokeAsDetail="no"
+                                  partnerLink="ConsultarCondicion" portType="ns3:ConsultarCondicionPT"
+                                  operation="consultarCondicion"/>
+                          <if name="OK" xml:id="id_470">
+                            <documentation xml:id="id_473">
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <condition xml:id="id_472">$outConsultarCondicion.response/ns14:Resultado/ns13:result != 'ERROR'</condition>
+                            <empty name="ValidarEstados" xml:id="id_475"/>
+                            <else xml:id="id_471">
+                              <documentation xml:id="id_474">
+                                <![CDATA[ERROR]]>
+                              </documentation>
+                              <throw name="ThrowErrorConsultarCondicion" xml:id="id_476" faultName="bpelx:remoteFault"/>
+                            </else>
+                          </if>
+                        </sequence>
+                      </scope>
+                      <else xml:id="id_456">
+                        <documentation xml:id="id_459">
+                          <![CDATA[ERROR]]>
+                        </documentation>
+                        <sequence xml:id="id_1101">
+                          <assign name="AssignErrorConsultarOperacion" xml:id="id_745">
+                            <copy xml:id="id_746">
+                              <from xml:id="id_747">'ERROR'</from>
+                              <to xml:id="id_748">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                            </copy>
+                            <copy xml:id="id_749">
+                              <from xml:id="id_750">'La operación no se encuentra en un proceso activo'</from>
+                              <to xml:id="id_751">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                            </copy>
+                          </assign>
+                          <reply name="ReplyError" xml:id="id_1102" variable="outputVariable"
+                                 partnerLink="actualizarCondicion_Service" portType="ns1:ActualizarTCCPTSOR"
+                                 operation="actualizarTCC"/>
+                          <exit name="ExitWithError" xml:id="id_1103"/>
+                        </sequence>
+                      </else>
+                    </if>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+          <if name="Accion" xml:id="id_37">
+            <documentation xml:id="id_40">
+              <![CDATA[AGREGAR]]>
+            </documentation>
+            <condition xml:id="id_39">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion = 'AGREGAR'</condition>
+            <sequence name="Sequence1" xml:id="id_427">
+              <if name="Proceso" xml:id="id_445">
+                <documentation xml:id="id_479">
+                  <![CDATA[ProcesoCorrecto]]>
+                </documentation>
+                <condition xml:id="id_478">$inputVariable.request/ns4:idProceso = 3 or $inputVariable.request/ns4:idProceso = 5 or $inputVariable.request/ns4:idProceso = 10 or $inputVariable.request/ns4:idProceso = 6 or  $inputVariable.request/ns4:idProceso = 31</condition>
+                <scope name="CrearCondicionScope" xml:id="id_46">
+                  <variables xml:id="id_50">
+                    <variable name="inCrearCondicion" messageType="ns3:CrearCondicionRequestMessage" xml:id="id_51"/>
+                    <variable name="outCrearCondicion" messageType="ns3:CrearCondicionResponseMessage" xml:id="id_52"/>
+                  </variables>
+                  <faultHandlers xml:id="id_114">
+                    <catch xml:id="id_115" faultName="bpelx:remoteFault" faultVariable="ErrorCrearCondicion"
+                           faultMessageType="bpelx:RuntimeFaultMessage" bpelx:name="ErrorCrearCondicion">
+                      <sequence name="ErrorCrearCondicion" xml:id="id_118">
+                        <assign name="ErrorCrearCondicionRequest" xml:id="id_117">
+                          <copy xml:id="id_120">
+                            <from xml:id="id_121">$ErrorCrearCondicion.code</from>
+                            <to xml:id="id_122">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorCode</to>
+                          </copy>
+                          <copy xml:id="id_123">
+                            <from xml:id="id_124">$ErrorCrearCondicion.detail</from>
+                            <to xml:id="id_125">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorDescription</to>
+                          </copy>
+                          <copy xml:id="id_126">
+                            <from xml:id="id_127">$ErrorCrearCondicion.summary</from>
+                            <to xml:id="id_128">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorType</to>
+                          </copy>
+                          <copy xml:id="id_129">
+                            <from xml:id="id_130">'ERROR'</from>
+                            <to xml:id="id_131">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                          </copy>
+                          <copy xml:id="id_132">
+                            <from xml:id="id_133">'Error al momento de crear la condicion'</from>
+                            <to xml:id="id_134">$outputVariable.response/ns4:Resultado/ns13:error</to>
+                          </copy>
+                        </assign>
+                        <reply name="ReplyError" xml:id="id_119" variable="outputVariable"
+                               partnerLink="actualizarCondicion_Service" portType="ns1:ActualizarTCCPTSOR"
+                               operation="actualizarTCC"/>
+                      </sequence>
+                    </catch>
+                  </faultHandlers>
+                  <sequence name="CrearCondicionSequence" xml:id="id_48">
+                    <scope name="ValidarTCCScope" xml:id="id_290">
+                      <variables xml:id="id_299">
+                        <variable name="inValidarEstado" messageType="ns15:ValidarEstadoTCCRequestMessage"
+                                  xml:id="id_300"/>
+                        <variable name="outValidarEstado" messageType="ns15:ValidarEstadoTCCResponseMessage"
+                                  xml:id="id_301"/>
+                      </variables>
+                      <sequence name="ValidarEstadoSequence" xml:id="id_292">
+                        <assign name="ValidarEstadoTccAssign" xml:id="id_291">
+                          <copy xml:id="id_306">
+                            <from xml:id="id_307">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                            <to xml:id="id_308">$inValidarEstado.request/ns4:tcc/ns16:id</to>
+                          </copy>
+                          <copy xml:id="id_309">
+                            <from xml:id="id_310">$inputVariable.request/ns4:Tipo</from>
+                            <to xml:id="id_311">$inValidarEstado.request/ns4:tcc/ns16:tipo</to>
+                          </copy>
+                          <copy xml:id="id_312">
+                            <from xml:id="id_313">7</from>
+                            <to xml:id="id_314">$inValidarEstado.request/ns4:tcc/ns16:estado</to>
+                          </copy>
+                        </assign>
+                        <invoke name="ValidarEstadoInvoke" xml:id="id_293" partnerLink="ValidarEstadoTCC"
+                                portType="ns15:MatrizTCCPT" operation="validarEstadoTCC" inputVariable="inValidarEstado"
+                                outputVariable="outValidarEstado" bpelx:invokeAsDetail="no"/>
+                        <if name="True" xml:id="id_294">
+                          <documentation xml:id="id_303">
+                            <![CDATA[True]]>
+                          </documentation>
+                          <condition xml:id="id_302">$outValidarEstado.response/ns4:validacionEstados != 'false'</condition>
+                          <sequence xml:id="id_420" name="CrearConsultarSequence">
+                            <assign name="CrearCondicionRequest" xml:id="id_47">
+                              <copy xml:id="id_95" bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                <from xml:id="id_96">$inputVariable.request/ns4:Condicion[$CondicionCounter]</from>
+                                <to xml:id="id_97">$inCrearCondicion.request/ns14:Condicion</to>
+                              </copy>
+                              <copy xml:id="id_424" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from xml:id="id_425">7</from>
+                                <to xml:id="id_426">$inCrearCondicion.request/ns14:Condicion/ns9:estadoTCC/ns7:id</to>
+                              </copy>
+                            </assign>
+                            <invoke name="CrearCondicionScope" xml:id="id_49" bpelx:invokeAsDetail="no"
+                                    partnerLink="CrearCondicion" portType="ns3:CondicionPT" operation="crearCondicion"
+                                    inputVariable="inCrearCondicion" outputVariable="outCrearCondicion"/>
+                            <if name="OK" xml:id="id_106">
+                              <documentation xml:id="id_109">
+                                <![CDATA[OK]]>
+                              </documentation>
+                              <condition xml:id="id_108">$outCrearCondicion.response/ns14:Resultado/ns13:result != 'ERROR'</condition>
+                              <sequence name="ConsultarSequence" xml:id="id_289">
+                                <scope name="ConsultarCondicionActualizadaScope" xml:id="id_138">
+                                  <variables xml:id="id_778">
+                                    <variable name="inConsultarCondicionActualizada"
+                                              messageType="ns3:ConsultarCondicionRequestMessage" xml:id="id_779"/>
+                                  </variables>
+                                  <faultHandlers xml:id="id_158">
+                                    <catch xml:id="id_159" bpelx:name="ConsultarCondicionError"
+                                           faultName="bpelx:remoteFault" faultVariable="ErrorConsultarCondicion"
+                                           faultMessageType="bpelx:RuntimeFaultMessage">
+                                      <sequence name="ConsultarCondicionSequence" xml:id="id_161">
+                                        <assign name="ErrorConsultarCondicion" xml:id="id_160">
+                                          <copy xml:id="id_163">
+                                            <from xml:id="id_164">$ErrorConsultarCondicion.code</from>
+                                            <to xml:id="id_165">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorCode</to>
+                                          </copy>
+                                          <copy xml:id="id_166">
+                                            <from xml:id="id_167">$ErrorConsultarCondicion.detail</from>
+                                            <to xml:id="id_168">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorDescription</to>
+                                          </copy>
+                                          <copy xml:id="id_169">
+                                            <from xml:id="id_170">$ErrorConsultarCondicion.summary</from>
+                                            <to xml:id="id_171">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorType</to>
+                                          </copy>
+                                          <copy xml:id="id_172">
+                                            <from xml:id="id_173">'ERROR'</from>
+                                            <to xml:id="id_174">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                                          </copy>
+                                          <copy xml:id="id_175">
+                                            <from xml:id="id_176">'Error al consultar la nueva declaración'</from>
+                                            <to xml:id="id_177">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                                          </copy>
+                                        </assign>
+                                        <reply name="ReplyError" xml:id="id_162" variable="outputVariable"
+                                               partnerLink="actualizarCondicion_Service"
+                                               portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+                                      </sequence>
+                                    </catch>
+                                  </faultHandlers>
+                                  <sequence name="ConsultarCondicionSequence" xml:id="id_140">
+                                    <assign name="ConsultarCondicionActualizadaRequest" xml:id="id_139">
+                                      <copy xml:id="id_145">
+                                        <from xml:id="id_146">$outCrearCondicion.response/ns14:codigoContrato</from>
+                                        <to xml:id="id_147">$inConsultarCondicionActualizada.request/ns14:idCondicion</to>
+                                      </copy>
+                                    </assign>
+                                    <invoke name="ConsultarCondicionActualizadaInvoke" xml:id="id_141"
+                                            partnerLink="ConsultarCondicion" portType="ns3:ConsultarCondicionPT"
+                                            operation="consultarCondicion"
+                                            inputVariable="inConsultarCondicionActualizada"
+                                            outputVariable="outConsultarCondicionActualizada"
+                                            bpelx:invokeAsDetail="no"/>
+                                    <if name="OK" xml:id="id_148">
+                                      <documentation xml:id="id_151">
+                                        <![CDATA[OK]]>
+                                      </documentation>
+                                      <condition xml:id="id_150">$outConsultarCondicionActualizada.response/ns14:Resultado/ns13:result != 'ERROR'</condition>
+                                      <assign name="ConsultarCondicionResponse" xml:id="id_153">
+                                        <copy xml:id="id_249" bpelx:insertMissingToData="yes">
+                                          <from xml:id="id_250">$outConsultarCondicionActualizada.response/ns14:Condicion</from>
+                                          <to xml:id="id_251">$outputVariable.response/ns4:Condicion[$CondicionCounter]</to>
+                                        </copy>
+                                        <copy xml:id="id_155" bpelx:insertMissingToData="yes">
+                                          <from xml:id="id_156">$outCrearCondicion.response/ns14:Resultado</from>
+                                          <to xml:id="id_157">$outputVariable.response/ns4:Resultado[$CondicionCounter]</to>
+                                        </copy>
+                                      </assign>
+                                      <else xml:id="id_149">
+                                        <documentation xml:id="id_152">
+                                          <![CDATA[ERROR]]>
+                                        </documentation>
+                                        <throw name="ThrowErrorConsultar" xml:id="id_154"
+                                               faultName="bpelx:remoteFault"/>
+                                      </else>
+                                    </if>
+                                  </sequence>
+                                </scope>
+                              </sequence>
+                              <else xml:id="id_107">
+                                <documentation xml:id="id_110">
+                                  <![CDATA[ERROR]]>
+                                </documentation>
+                                <throw name="CrearCondicionError" xml:id="id_111" faultName="bpelx:remoteFault"/>
+                              </else>
+                            </if>
+                          </sequence>
+                          <else xml:id="id_295">
+                            <documentation xml:id="id_304">
+                              <![CDATA[False]]>
+                            </documentation>
+                            <throw name="ThrowErrorValidarEstado" xml:id="id_305" faultName="bpelx:remoteFault"/>
+                          </else>
+                        </if>
+                      </sequence>
+                    </scope>
+                  </sequence>
+                </scope>
+                <else xml:id="id_884">
+                  <documentation xml:id="id_886">
+                    <![CDATA[ProcesoIncorrecto]]>
+                  </documentation>
+                  <throw name="ThrowErrorProcess" xml:id="id_885" faultName="bpel:selectionFailure"/>
+                </else>
+              </if>
+            </sequence>
+            <elseif xml:id="id_41">
+              <documentation xml:id="id_43">
+                <![CDATA[EDITAR]]>
+              </documentation>
+              <condition xml:id="id_104">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion = 'EDITAR'</condition>
+              <sequence name="Sequence2" xml:id="id_480">
+                <if name="Proceso" xml:id="id_481">
+                  <documentation xml:id="id_484">
+                    <![CDATA[ProcesoCorrecto]]>
+                  </documentation>
+                  <condition xml:id="id_483">$outConsultarProcesoOperacion.response/ns18:Proceso/ns19:idProceso = 3 or $outConsultarProcesoOperacion.response/ns18:Proceso/ns19:idProceso = 5 or $outConsultarProcesoOperacion.response/ns18:Proceso/ns19:idProceso = 10 or $inputVariable.request/ns4:idProceso = 6 or $inputVariable.request/ns4:idProceso = 31 or  $inputVariable.request/ns4:idProceso = 36</condition>
+                  <scope name="ActualizarCondicionScope" xml:id="id_56">
+                    <variables xml:id="id_60">
+                      <variable name="inActualizarCondicion" messageType="ns3:ActualizarCondicionRequestMessage"
+                                xml:id="id_61"/>
+                      <variable name="outActualizarCondicion" messageType="ns3:ActualizarCondicionResponseMessage"
+                                xml:id="id_62"/>
+                    </variables>
+                    <sequence name="ActualizarCondicionSequence" xml:id="id_58">
+                      <scope name="ValidarCondicionScope" xml:id="id_332">
+                        <variables xml:id="id_339">
+                          <variable name="inValidarCondicion" messageType="ns15:ValidarEstadoTCCRequestMessage"
+                                    xml:id="id_340"/>
+                          <variable name="outValidarCondicion" messageType="ns15:ValidarEstadoTCCResponseMessage"
+                                    xml:id="id_341"/>
+                        </variables>
+                        <faultHandlers xml:id="id_761">
+                          <catchAll xml:id="id_762">
+                            <assign name="AssignErrorValidarEstado" xml:id="id_752">
+                              <copy xml:id="id_755">
+                                <from xml:id="id_756">'ERROR'</from>
+                                <to xml:id="id_757">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                              </copy>
+                              <copy xml:id="id_758">
+                                <from xml:id="id_759">'Estado inválido para la actualización de la condición'</from>
+                                <to xml:id="id_760">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                              </copy>
+                            </assign>
+                          </catchAll>
+                        </faultHandlers>
+                        <sequence name="ValidarCondicionSequence" xml:id="id_334">
+                          <assign name="ValidarCondicionAssign" xml:id="id_333">
+                            <copy bpelx:insertMissingToData="yes" xml:id="id_342">
+                              <from xml:id="id_343">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                              <to xml:id="id_344">$inValidarCondicion.request/ns4:tcc/ns16:id</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" xml:id="id_345">
+                              <from xml:id="id_346">$inputVariable.request/ns4:Tipo</from>
+                              <to xml:id="id_347">$inValidarCondicion.request/ns4:tcc/ns16:tipo</to>
+                            </copy>
+                            <copy xml:id="id_348" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from xml:id="id_349">$outConsultarCondicion.response/ns14:Condicion[1]/ns9:estadoTCC/ns7:id</from>
+                              <to xml:id="id_350">$inValidarCondicion.request/ns4:tcc/ns16:estado</to>
+                            </copy>
+                            <copy xml:id="id_351">
+                              <from xml:id="id_352">dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion, "idProceso", $inputVariable.request/ns4:idProceso)</from>
+                              <to xml:id="id_353">$inValidarCondicion.request/ns4:tcc/ns16:subEstado</to>
+                            </copy>
+                          </assign>
+                          <invoke name="ValidarCondicionInvoke" xml:id="id_335" partnerLink="ValidarEstadoTCC"
+                                  portType="ns15:MatrizTCCPT" operation="validarEstadoTCC"
+                                  inputVariable="inValidarCondicion" outputVariable="outValidarCondicion"
+                                  bpelx:invokeAsDetail="no"/>
+                          <if name="True" xml:id="id_354">
+                            <documentation xml:id="id_357">
+                              <![CDATA[True]]>
+                            </documentation>
+                            <condition xml:id="id_356">$outValidarCondicion.response/ns4:validacionEstados != 'false'</condition>
+                            <sequence xml:id="id_359" name="ActualizarCondicionValidada">
+                              <assign name="ActualizarCondicionRequest" xml:id="id_57">
+                                <copy xml:id="id_98" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from xml:id="id_99">$inputVariable.request/ns4:Condicion[$CondicionCounter]</from>
+                                  <to xml:id="id_100">$inActualizarCondicion.request/ns14:Condicion</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" xml:id="id_361" bpelx:insertMissingToData="yes">
+                                  <from xml:id="id_362">dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion, "idProceso", $inputVariable.request/ns4:idProceso)</from>
+                                  <to xml:id="id_363">$inActualizarCondicion.request/ns14:Condicion/ns9:subEstadoTCC/ns7:id</to>
+                                </copy>
+                              </assign>
+                              <invoke name="ActualizarCondicionInvoke" xml:id="id_59" bpelx:invokeAsDetail="no"
+                                      partnerLink="ActualizarCondicion" portType="ns3:ActualizarCondicionPT"
+                                      operation="actualizarCondicion" inputVariable="inActualizarCondicion"
+                                      outputVariable="outActualizarCondicion"/>
+                              <if name="OK" xml:id="id_178">
+                                <documentation xml:id="id_181">
+                                  <![CDATA[OK]]>
+                                </documentation>
+                                <condition xml:id="id_180">$outActualizarCondicion.response/ns14:Resultado/ns13:result != 'ERROR'</condition>
+                                <scope name="ConsultarActualizarCondicionScope" xml:id="id_184">
+                                  <variables xml:id="id_775">
+                                    <variable name="inConsultarCondicionActualizada"
+                                              messageType="ns3:ConsultarCondicionRequestMessage" xml:id="id_776"/>
+                                  </variables>
+                                  <faultHandlers xml:id="id_229">
+                                    <catch xml:id="id_230" bpelx:name="ErrorConsultarActualizarCondicion"
+                                           faultName="bpelx:remoteFault"
+                                           faultVariable="ErrorConsultarActualizarCondicion"
+                                           faultMessageType="bpelx:RuntimeFaultMessage">
+                                      <sequence name="ErrorConsultarActualizarCondicion" xml:id="id_232">
+                                        <assign name="ErrorConsultarResponse" xml:id="id_231">
+                                          <copy xml:id="id_234">
+                                            <from xml:id="id_235">$ErrorConsultarActualizarCondicion.code</from>
+                                            <to xml:id="id_236">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorCode</to>
+                                          </copy>
+                                          <copy xml:id="id_237">
+                                            <from xml:id="id_238">$ErrorConsultarActualizarCondicion.summary</from>
+                                            <to xml:id="id_239">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorType</to>
+                                          </copy>
+                                          <copy xml:id="id_240">
+                                            <from xml:id="id_241">$ErrorConsultarActualizarCondicion.detail</from>
+                                            <to xml:id="id_242">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorDescription</to>
+                                          </copy>
+                                          <copy xml:id="id_243">
+                                            <from xml:id="id_244">'ERROR'</from>
+                                            <to xml:id="id_245">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                                          </copy>
+                                          <copy xml:id="id_246">
+                                            <from xml:id="id_247">'Error al consultar la condición actualizada'</from>
+                                            <to xml:id="id_248">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                                          </copy>
+                                        </assign>
+                                        <reply name="ReplyError" xml:id="id_233" variable="outputVariable"
+                                               partnerLink="actualizarCondicion_Service"
+                                               portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+                                      </sequence>
+                                    </catch>
+                                  </faultHandlers>
+                                  <sequence name="ConsultarCondicionSequence" xml:id="id_186">
+                                    <assign name="ConsultarActualizarCondicionRequest" xml:id="id_185">
+                                      <copy xml:id="id_191" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                        <from xml:id="id_192">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                                        <to xml:id="id_193">$inConsultarCondicionActualizada.request/ns14:idCondicion</to>
+                                      </copy>
+                                    </assign>
+                                    <invoke name="ConsultarActualizarInvoke" xml:id="id_187"
+                                            partnerLink="ConsultarCondicion" portType="ns3:ConsultarCondicionPT"
+                                            operation="consultarCondicion"
+                                            inputVariable="inConsultarCondicionActualizada"
+                                            outputVariable="outConsultarCondicionActualizada"
+                                            bpelx:invokeAsDetail="no"/>
+                                    <if name="OK" xml:id="id_214">
+                                      <documentation xml:id="id_217">
+                                        <![CDATA[OK]]>
+                                      </documentation>
+                                      <condition xml:id="id_216">$outConsultarCondicionActualizada.response/ns14:Resultado/ns13:result != 'ERROR'</condition>
+                                      <assign name="ConsultarActualizarCondicionResponse" xml:id="id_224">
+                                        <copy bpelx:insertMissingToData="yes" xml:id="id_252">
+                                          <from xml:id="id_253">$outConsultarCondicionActualizada.response/ns14:Condicion</from>
+                                          <to xml:id="id_254">$outputVariable.response/ns4:Condicion[$CondicionCounter]</to>
+                                        </copy>
+                                        <copy xml:id="id_225" bpelx:insertMissingToData="yes">
+                                          <from xml:id="id_226">$outActualizarCondicion.response/ns14:Resultado</from>
+                                          <to xml:id="id_227">$outputVariable.response/ns4:Resultado[$CondicionCounter]</to>
+                                        </copy>
+                                      </assign>
+                                      <else xml:id="id_215">
+                                        <documentation xml:id="id_218">
+                                          <![CDATA[ERROR]]>
+                                        </documentation>
+                                        <throw name="ErrorConsultarActualizarCondicion" xml:id="id_228"
+                                               faultName="bpelx:remoteFault"/>
+                                      </else>
+                                    </if>
+                                  </sequence>
+                                </scope>
+                                <else xml:id="id_179">
+                                  <documentation xml:id="id_182">
+                                    <![CDATA[ERROR]]>
+                                  </documentation>
+                                  <throw name="ThrowErrorActualizarCondicion" xml:id="id_183"
+                                         faultName="bpelx:remoteFault"/>
+                                </else>
+                              </if>
+                            </sequence>
+                            <else xml:id="id_355">
+                              <documentation xml:id="id_358">
+                                <![CDATA[False]]>
+                              </documentation>
+                              <throw name="ThrowRemoteFault" xml:id="id_763" faultName="bpelx:remoteFault"/>
+                            </else>
+                          </if>
+                        </sequence>
+                      </scope>
+                    </sequence>
+                  </scope>
+                  <elseif xml:id="id_796">
+                    <documentation xml:id="id_797">
+                      <![CDATA[Aprobacion]]>
+                    </documentation>
+                    <condition xml:id="id_798">$inputVariable.request/ns4:idProceso = 4</condition>
+                    <scope name="ValidarEstadoScope" xml:id="id_799">
+                      <variables xml:id="id_803">
+                        <variable name="inValidarEstado" messageType="ns15:ValidarEstadoTCCRequestMessage"
+                                  xml:id="id_804"/>
+                        <variable name="outValidarEstado" messageType="ns15:ValidarEstadoTCCResponseMessage"
+                                  xml:id="id_805"/>
+                      </variables>
+                      <faultHandlers xml:id="id_862">
+                        <catchAll xml:id="id_863">
+                          <sequence name="ValidarEstadoError" xml:id="id_865">
+                            <assign name="ValidarEstadoErrorAssign" xml:id="id_864">
+                              <copy xml:id="id_869">
+                                <from xml:id="id_870">'ERROR'</from>
+                                <to xml:id="id_871">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                              </copy>
+                              <copy xml:id="id_872">
+                                <from xml:id="id_873">'El cambio de estado es inválido'</from>
+                                <to xml:id="id_874">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                              </copy>
+                            </assign>
+                            <reply name="ReplyWithError" xml:id="id_867" variable="outputVariable"
+                                   partnerLink="actualizarCondicion_Service" portType="ns1:ActualizarTCCPTSOR"
+                                   operation="actualizarTCC"/>
+                            <exit name="ExitWithError" xml:id="id_868"/>
+                          </sequence>
+                        </catchAll>
+                      </faultHandlers>
+                      <sequence name="ValidarEstadoSequence" xml:id="id_801">
+                        <assign name="ValidarEstadoAprobacion" xml:id="id_800">
+                          <copy xml:id="id_806">
+                            <from xml:id="id_807">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                            <to xml:id="id_808">$inValidarEstado.request/ns4:tcc/ns16:id</to>
+                          </copy>
+                          <copy xml:id="id_809">
+                            <from xml:id="id_810">$inputVariable.request/ns4:Tipo</from>
+                            <to xml:id="id_811">$inValidarEstado.request/ns4:tcc/ns16:tipo</to>
+                          </copy>
+                          <copy xml:id="id_875">
+                            <from xml:id="id_876">$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id</from>
+                            <to xml:id="id_877">$inValidarEstado.request/ns4:tcc/ns16:estado</to>
+                          </copy>
+                          <copy xml:id="id_915">
+                            <from xml:id="id_916">dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id, "IdSubEstadoDespues", "No encontrado", "Accion", $inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion, "idProceso", $inputVariable.request/ns4:idProceso)</from>
+                            <to xml:id="id_917">$inValidarEstado.request/ns4:tcc/ns16:subEstado</to>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeValidarEstadoAssign" xml:id="id_802"
+                                partnerLink="ValidarEstadoTCC" portType="ns15:MatrizTCCPT"
+                                operation="validarEstadoTCC" inputVariable="inValidarEstado"
+                                outputVariable="outValidarEstado" bpelx:invokeAsDetail="no"/>
+                        <if name="SeValida" xml:id="id_818">
+                          <documentation xml:id="id_821">
+                            <![CDATA[true]]>
+                          </documentation>
+                          <condition xml:id="id_820">$outValidarEstado.response/ns4:validacionEstados != 'false'</condition>
+                          <scope name="ActualizarCondicionScope" xml:id="id_823">
+                            <variables xml:id="id_827">
+                              <variable name="inActualizarCondicion"
+                                        messageType="ns3:ActualizarCondicionRequestMessage" xml:id="id_828"/>
+                              <variable name="outActualizarCondicion"
+                                        messageType="ns3:ActualizarCondicionResponseMessage" xml:id="id_829"/>
+                            </variables>
+                            <sequence name="ActualizarCondicionsequence" xml:id="id_825">
+                              <assign name="ActualizarCondicionAssign" xml:id="id_824">
+                                <copy xml:id="id_830" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from xml:id="id_831">$inputVariable.request/ns4:Condicion[$CondicionCounter]</from>
+                                  <to xml:id="id_832">$inActualizarCondicion.request/ns14:Condicion</to>
+                                </copy>
+                                <copy xml:id="id_918" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from xml:id="id_919">dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id, "IdSubEstadoDespues", "No encontrado", "Accion", $inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion, "idProceso", $inputVariable.request/ns4:idProceso)</from>
+                                  <to xml:id="id_920">$inActualizarCondicion.request/ns14:Condicion/ns9:subEstadoTCC/ns7:id</to>
+                                </copy>
+                              </assign>
+                              <invoke name="ActualizarCondicionInvoke" xml:id="id_826" bpelx:invokeAsDetail="no"
+                                      partnerLink="ActualizarCondicion" portType="ns3:ActualizarCondicionPT"
+                                      operation="actualizarCondicion" inputVariable="inActualizarCondicion"
+                                      outputVariable="outActualizarCondicion"/>
+                              <if name="OK" xml:id="id_834">
+                                <documentation xml:id="id_837">
+                                  <![CDATA[OK]]>
+                                </documentation>
+                                <condition xml:id="id_836">$outActualizarCondicion.response/ns14:Resultado/ns13:result != 'ERROR'</condition>
+                                <scope name="ConsultarCondicionActualizada" xml:id="id_839">
+                                  <variables xml:id="id_844">
+                                    <variable name="inConsultarCondicionActualizada"
+                                              messageType="ns3:ConsultarCondicionRequestMessage" xml:id="id_845"/>
+                                  </variables>
+                                  <sequence name="ConsultarCondicionSequence" xml:id="id_842">
+                                    <assign name="ConsultarCondicionAssign" xml:id="id_841">
+                                      <copy xml:id="id_846" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                        <from xml:id="id_847">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                                        <to xml:id="id_848">$inConsultarCondicionActualizada.request/ns14:idCondicion</to>
+                                      </copy>
+                                    </assign>
+                                    <invoke name="ConsultarCondicionInvoke" xml:id="id_843" bpelx:invokeAsDetail="no"
+                                            partnerLink="ConsultarCondicion" portType="ns3:ConsultarCondicionPT"
+                                            operation="consultarCondicion"
+                                            inputVariable="inConsultarCondicionActualizada"
+                                            outputVariable="outConsultarCondicionActualizada"/>
+                                    <if name="OK" xml:id="id_849">
+                                      <documentation xml:id="id_852">
+                                        <![CDATA[OK]]>
+                                      </documentation>
+                                      <condition xml:id="id_851">$outConsultarCondicionActualizada.response/ns14:Resultado/ns13:result != 'ERROR'</condition>
+                                      <assign name="AssignResponse" xml:id="id_854">
+                                        <copy xml:id="id_856">
+                                          <from xml:id="id_857">$outConsultarCondicionActualizada.response/ns14:Condicion</from>
+                                          <to xml:id="id_858">$outputVariable.response/ns4:Condicion</to>
+                                        </copy>
+                                        <copy xml:id="id_859">
+                                          <from xml:id="id_860">$outActualizarCondicion.response/ns14:Resultado</from>
+                                          <to xml:id="id_861">$outputVariable.response/ns4:Resultado</to>
+                                        </copy>
+                                      </assign>
+                                      <else xml:id="id_850">
+                                        <documentation xml:id="id_853">
+                                          <![CDATA[ERROR]]>
+                                        </documentation>
+                                        <throw name="ThrowErrorConsultar" xml:id="id_855"
+                                               faultName="bpelx:remoteFault"/>
+                                      </else>
+                                    </if>
+                                  </sequence>
+                                </scope>
+                                <else xml:id="id_835">
+                                  <documentation xml:id="id_838">
+                                    <![CDATA[ERROR]]>
+                                  </documentation>
+                                  <throw name="ThrowRemoteFault" xml:id="id_840" faultName="bpelx:remoteFault"/>
+                                </else>
+                              </if>
+                            </sequence>
+                          </scope>
+                          <else xml:id="id_819">
+                            <documentation xml:id="id_822">
+                              <![CDATA[false]]>
+                            </documentation>
+                            <throw name="RemoteFault" xml:id="id_833" faultName="bpelx:remoteFault"/>
+                          </else>
+                        </if>
+                      </sequence>
+                    </scope>
+                  </elseif>
+                  <else xml:id="id_887">
+                    <documentation xml:id="id_888">
+                      <![CDATA[ProcesoIncorrecto]]>
+                    </documentation>
+                    <throw name="ThrowProcesoIncorrecto" xml:id="id_889" faultName="bpel:selectionFailure"/>
+                  </else>
+                </if>
+              </sequence>
+            </elseif>
+            <elseif xml:id="id_42">
+              <documentation xml:id="id_44">
+                <![CDATA[ELIMINAR]]>
+              </documentation>
+              <condition xml:id="id_105">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion = 'ELIMINAR'</condition>
+              <sequence name="Sequence3" xml:id="id_485">
+                <if name="Proceso" xml:id="id_486">
+                  <documentation xml:id="id_489">
+                    <![CDATA[ProcesoCorrecto]]>
+                  </documentation>
+                  <condition xml:id="id_488">$outConsultarProcesoOperacion.response/ns18:Proceso/ns19:idProceso = 3 or $outConsultarProcesoOperacion.response/ns18:Proceso/ns19:idProceso = 5 or $outConsultarProcesoOperacion.response/ns18:Proceso/ns19:idProceso = 10 or $outConsultarProcesoOperacion.response/ns18:Proceso/ns19:idProceso = 4 or $inputVariable.request/ns4:idProceso = 6 or $inputVariable.request/ns4:idProceso = 31</condition>
+                  <scope name="EliminarCondicionScope" xml:id="id_63">
+                    <faultHandlers xml:id="id_268">
+                      <catch xml:id="id_269" bpelx:name="ErrorEliminarCondicion" faultName="bpelx:remoteFault"
+                             faultVariable="ErrorEliminarCondicion" faultMessageType="bpelx:RuntimeFaultMessage">
+                        <sequence name="ErrorEliminarCondicionSequence" xml:id="id_271">
+                          <assign name="ErrorElimnarCondicionResponse" xml:id="id_270">
+                            <copy xml:id="id_273">
+                              <from xml:id="id_274">$ErrorEliminarCondicion.code</from>
+                              <to xml:id="id_275">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorCode</to>
+                            </copy>
+                            <copy xml:id="id_276">
+                              <from xml:id="id_277">$ErrorEliminarCondicion.detail</from>
+                              <to xml:id="id_278">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorDescription</to>
+                            </copy>
+                            <copy xml:id="id_279">
+                              <from xml:id="id_280">$ErrorEliminarCondicion.summary</from>
+                              <to xml:id="id_281">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorType</to>
+                            </copy>
+                            <copy xml:id="id_282">
+                              <from xml:id="id_283">'No se pudo eliminar la condición'</from>
+                              <to xml:id="id_284">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                            </copy>
+                            <copy xml:id="id_285">
+                              <from xml:id="id_286">'ERROR'</from>
+                              <to xml:id="id_287">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                            </copy>
+                          </assign>
+                          <reply name="ReplyError" xml:id="id_272" variable="outputVariable"
+                                 partnerLink="actualizarCondicion_Service" portType="ns1:ActualizarTCCPTSOR"
+                                 operation="actualizarTCC"/>
+                        </sequence>
+                      </catch>
+                    </faultHandlers>
+                    <sequence name="EliminarCondicionSequence" xml:id="id_65">
+                      <scope name="ValidarEstadoTCCScope" xml:id="id_381">
+                        <variables xml:id="id_388">
+                          <variable name="inValidarEstado" messageType="ns15:ValidarEstadoTCCRequestMessage"
+                                    xml:id="id_389"/>
+                          <variable name="outValidarEstado" messageType="ns15:ValidarEstadoTCCResponseMessage"
+                                    xml:id="id_390"/>
+                          <variable name="inActualizarCondicion" messageType="ns3:ActualizarCondicionRequestMessage"
+                                    xml:id="id_411"/>
+                          <variable name="outActualizarCondicion" messageType="ns3:ActualizarCondicionResponseMessage"
+                                    xml:id="id_412"/>
+                        </variables>
+                        <sequence name="ValidarEstadoTCCSequence" xml:id="id_383">
+                          <assign name="ValidarEstadoTccAssign" xml:id="id_382">
+                            <copy bpelx:insertMissingToData="yes" xml:id="id_391" ignoreMissingFromData="yes">
+                              <from xml:id="id_392">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                              <to xml:id="id_393">$inValidarEstado.request/ns4:tcc/ns16:id</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" xml:id="id_394" ignoreMissingFromData="yes">
+                              <from xml:id="id_395">$inputVariable.request/ns4:Tipo</from>
+                              <to xml:id="id_396">$inValidarEstado.request/ns4:tcc/ns16:tipo</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" xml:id="id_397" ignoreMissingFromData="yes">
+                              <from xml:id="id_398">$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id</from>
+                              <to xml:id="id_399">$inValidarEstado.request/ns4:tcc/ns16:estado</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" xml:id="id_400">
+                              <from xml:id="id_401">dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion, "idProceso", $inputVariable.request/ns4:idProceso)</from>
+                              <to xml:id="id_402">$inValidarEstado.request/ns4:tcc/ns16:subEstado</to>
+                            </copy>
+                          </assign>
+                          <invoke name="ValidarEstadoTccInvoke" xml:id="id_384" partnerLink="ValidarEstadoTCC"
+                                  portType="ns15:MatrizTCCPT" operation="validarEstadoTCC"
+                                  inputVariable="inValidarEstado" outputVariable="outValidarEstado"
+                                  bpelx:invokeAsDetail="no"/>
+                          <if name="True" xml:id="id_403">
+                            <documentation xml:id="id_406">
+                              <![CDATA[True]]>
+                            </documentation>
+                            <condition xml:id="id_405">$outValidarEstado.response/ns4:validacionEstados != 'false'</condition>
+                            <sequence xml:id="id_408" name="EliminarCondicionValidada">
+                              <assign name="EliminarCondicionRequest" xml:id="id_64">
+                                <copy xml:id="id_101" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from xml:id="id_102">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                                  <to xml:id="id_103">$inActualizarCondicion.request/ns14:Condicion/ns9:idCondicion</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" xml:id="id_413" bpelx:insertMissingToData="yes">
+                                  <from xml:id="id_414">0</from>
+                                  <to xml:id="id_415">$inActualizarCondicion.request/ns14:Condicion/ns9:estado</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" xml:id="id_416" bpelx:insertMissingToData="yes">
+                                  <from xml:id="id_417">dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion, "idProceso", $inputVariable.request/ns4:idProceso)</from>
+                                  <to xml:id="id_418">$inActualizarCondicion.request/ns14:Condicion/ns9:subEstadoTCC/ns7:id</to>
+                                </copy>
+                              </assign>
+                              <invoke name="EliminarCondicion" xml:id="id_410" bpelx:invokeAsDetail="no"
+                                      partnerLink="ActualizarCondicion" portType="ns3:ActualizarCondicionPT"
+                                      operation="actualizarCondicion" inputVariable="inActualizarCondicion"
+                                      outputVariable="outActualizarCondicion"/>
+                              <if name="OK" xml:id="id_255">
+                                <documentation xml:id="id_258">
+                                  <![CDATA[OK]]>
+                                </documentation>
+                                <condition xml:id="id_257">$outActualizarCondicion.response/ns14:Resultado/ns13:result != 'ERROR'</condition>
+                                <assign name="AssignResponseEliminar" xml:id="id_260">
+                                  <copy bpelx:insertMissingToData="yes" xml:id="id_261">
+                                    <from xml:id="id_262">'OK'</from>
+                                    <to xml:id="id_263">$outputVariable.response/ns4:Resultado[$CondicionCounter]/ns13:result</to>
+                                  </copy>
+                                  <copy bpelx:insertMissingToData="yes" xml:id="id_264">
+                                    <from xml:id="id_265">concat('La condición: ', $inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion, ' se ha eliminado correctamente')</from>
+                                    <to xml:id="id_266">$outputVariable.response/ns4:Resultado[$CondicionCounter]/ns13:message</to>
+                                  </copy>
+                                </assign>
+                                <else xml:id="id_256">
+                                  <documentation xml:id="id_259">
+                                    <![CDATA[ERROR]]>
+                                  </documentation>
+                                  <throw name="ErrorEliminarCondicion" xml:id="id_267" faultName="bpelx:remoteFault"/>
+                                </else>
+                              </if>
+                            </sequence>
+                            <else xml:id="id_404">
+                              <documentation xml:id="id_407">
+                                <![CDATA[False]]>
+                              </documentation>
+                              <throw name="ThrowErrorValidarCondicion" xml:id="id_409" faultName="bpelx:remoteFault"/>
+                            </else>
+                          </if>
+                        </sequence>
+                      </scope>
+                    </sequence>
+                  </scope>
+                  <else xml:id="id_893">
+                    <throw name="ThrowProcesoIncorrecto" xml:id="id_892" faultName="bpel:selectionFailure"/>
+                  </else>
+                </if>
+              </sequence>
+            </elseif>
+            <elseif xml:id="id_490">
+              <documentation xml:id="id_491">
+                <![CDATA[EXCEPTUAR]]>
+              </documentation>
+              <condition xml:id="id_494">$inputVariable.request/ns4:Condicion/ns9:Accion = 'EXCEPTUAR'</condition>
+              <if name="Proceso" xml:id="id_496">
+                <documentation xml:id="id_499">
+                  <![CDATA[ProcesoCorrecto]]>
+                </documentation>
+                <condition xml:id="id_498">$outConsultarProcesoOperacion.response/ns18:Proceso/ns19:idProceso = 3 or $outConsultarProcesoOperacion.response/ns18:Proceso/ns19:idProceso = 5</condition><scope name="ExceptuarCondicionScope"
+                                                                                                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+                                                                                                                                    xml:id="id_500">
+      <variables xml:id="id_501">
+         <variable name="inActualizarCondicion" messageType="ns3:ActualizarCondicionRequestMessage" xml:id="id_502"/>
+         <variable name="outActualizarCondicion" messageType="ns3:ActualizarCondicionResponseMessage" xml:id="id_503"/>
+      </variables>
+      <faultHandlers xml:id="id_504">
+         <catch bpelx:name="ErrorActualizarCondicion" faultName="bpelx:remoteFault"
+                faultVariable="ErrorActualizarCondicion" faultMessageType="bpelx:RuntimeFaultMessage"
+                xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_505">
+            <sequence name="ErrorActualizarCondicionSequence" xml:id="id_506">
+               <assign name="ErrorActualizarCondicionRequest" xml:id="id_507">
+                  <copy xml:id="id_508">
+                     <from xml:id="id_509">$ErrorActualizarCondicion.code</from>
+                     <to xml:id="id_510">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorCode</to>
+                  </copy>
+                  <copy xml:id="id_511">
+                     <from xml:id="id_512">$ErrorActualizarCondicion.detail</from>
+                     <to xml:id="id_513">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorDescription</to>
+                  </copy>
+                  <copy xml:id="id_514">
+                     <from xml:id="id_515">$ErrorActualizarCondicion.summary</from>
+                     <to xml:id="id_516">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorType</to>
+                  </copy>
+                  <copy xml:id="id_517">
+                     <from xml:id="id_518">'ERROR'</from>
+                     <to xml:id="id_519">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                  </copy>
+                  <copy xml:id="id_520">
+                     <from xml:id="id_521">'Error al actualizar la condición'</from>
+                     <to xml:id="id_522">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                  </copy>
+               </assign>
+               <reply name="ReplyError" variable="outputVariable" partnerLink="actualizarCondicion_Service"
+                      portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC" xml:id="id_523"/>
+            </sequence>
+         </catch>
+      </faultHandlers>
+      <sequence name="ExceptuarCondicionSequence" xml:id="id_524">
+         <scope name="ValidarCondicionScope" xml:id="id_525">
+            <variables xml:id="id_526">
+               <variable name="inValidarCondicion" messageType="ns15:ValidarEstadoTCCRequestMessage" xml:id="id_527"/>
+               <variable name="outValidarCondicion" messageType="ns15:ValidarEstadoTCCResponseMessage" xml:id="id_528"/>
+            </variables>
+            <sequence name="ValidarCondicionSequence" xml:id="id_529">
+               <assign name="ValidarCondicionAssign" xml:id="id_530">
+                          <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                xml:id="id_531" ignoreMissingFromData="yes">
+                            <from xml:id="id_532">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                            <to xml:id="id_533">$inValidarCondicion.request/ns4:tcc/ns16:id</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                xml:id="id_534" ignoreMissingFromData="yes">
+                            <from xml:id="id_535">$inputVariable.request/ns4:Tipo</from>
+                            <to xml:id="id_536">$inValidarCondicion.request/ns4:tcc/ns16:tipo</to>
+                          </copy>
+                          <copy xml:id="id_537" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                            <from xml:id="id_538">$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id</from>
+                            <to xml:id="id_539">$inValidarCondicion.request/ns4:tcc/ns16:estado</to>
+                          </copy>
+                          <copy xml:id="id_540">
+                            <from xml:id="id_541">dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion, "idProceso", $inputVariable.request/ns4:idProceso)</from>
+                            <to xml:id="id_542">$inValidarCondicion.request/ns4:tcc/ns16:subEstado</to>
+                          </copy>
+                        </assign>
+               <invoke name="ValidarCondicionInvoke" partnerLink="ValidarEstadoTCC" portType="ns15:MatrizTCCPT"
+                       operation="validarEstadoTCC" inputVariable="inValidarCondicion"
+                       outputVariable="outValidarCondicion" bpelx:invokeAsDetail="no"
+                       xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_543"/>
+               <if name="True" xml:id="id_544">
+                  <documentation xml:id="id_545">
+                     <![CDATA[True]]>
+                  </documentation>
+                  <condition xml:id="id_546">$outValidarCondicion.response/ns4:validacionEstados != 'false'</condition>
+                  <sequence name="ActualizarCondicionValidada" xml:id="id_547">
+                     <assign name="ActualizarCondicionRequest" xml:id="id_548">
+                              <copy xml:id="id_549" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from xml:id="id_550">$inputVariable.request/ns4:Condicion[$CondicionCounter]</from>
+                                <to xml:id="id_551">$inActualizarCondicion.request/ns14:Condicion</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" xml:id="id_552" bpelx:insertMissingToData="yes">
+                                <from xml:id="id_553">dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion, "idProceso", $inputVariable.request/ns4:idProceso)</from>
+                                <to xml:id="id_554">$inActualizarCondicion.request/ns14:Condicion/ns9:subEstadoTCC/ns7:id</to>
+                              </copy>
+                            </assign>
+                     <invoke name="ActualizarCondicionInvoke" bpelx:invokeAsDetail="no"
+                             partnerLink="ActualizarCondicion" portType="ns3:ActualizarCondicionPT"
+                             operation="actualizarCondicion" inputVariable="inActualizarCondicion"
+                             outputVariable="outActualizarCondicion"
+                             xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_555"/>
+                     <if name="OK" xml:id="id_556">
+                        <documentation xml:id="id_557">
+                           <![CDATA[OK]]>
+                        </documentation>
+                        <condition xml:id="id_558">$outActualizarCondicion.response/ns14:Resultado/ns13:result != 'ERROR'</condition>
+                        <scope name="ConsultarActualizarCondicionScope" xml:id="id_559">
+                                <variables xml:id="id_780">
+                                  <variable name="inConsultarCondicionActualizada"
+                                            messageType="ns3:ConsultarCondicionRequestMessage" xml:id="id_781"/>
+                                </variables>
+                                <faultHandlers xml:id="id_563">
+                              <catch bpelx:name="ErrorConsultarActualizarCondicion" faultName="bpelx:remoteFault"
+                                     faultVariable="ErrorConsultarActualizarCondicion"
+                                     faultMessageType="bpelx:RuntimeFaultMessage"
+                                     xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_564">
+                                 <sequence name="ErrorConsultarActualizarCondicion" xml:id="id_565">
+                                    <assign name="ErrorConsultarResponse" xml:id="id_566">
+                                       <copy xml:id="id_567">
+                                          <from xml:id="id_568">$ErrorConsultarActualizarCondicion.code</from>
+                                          <to xml:id="id_569">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorCode</to>
+                                       </copy>
+                                       <copy xml:id="id_570">
+                                          <from xml:id="id_571">$ErrorConsultarActualizarCondicion.summary</from>
+                                          <to xml:id="id_572">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorType</to>
+                                       </copy>
+                                       <copy xml:id="id_573">
+                                          <from xml:id="id_574">$ErrorConsultarActualizarCondicion.detail</from>
+                                          <to xml:id="id_575">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorDescription</to>
+                                       </copy>
+                                       <copy xml:id="id_576">
+                                          <from xml:id="id_577">'ERROR'</from>
+                                          <to xml:id="id_578">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                                       </copy>
+                                       <copy xml:id="id_579">
+                                          <from xml:id="id_580">'Error al consultar la condición actualizada'</from>
+                                          <to xml:id="id_581">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                                       </copy>
+                                    </assign>
+                                    <reply name="ReplyError" variable="outputVariable"
+                                           partnerLink="actualizarCondicion_Service" portType="ns1:ActualizarTCCPTSOR"
+                                           operation="actualizarTCC" xml:id="id_582"/>
+                                 </sequence>
+                              </catch>
+                           </faultHandlers>
+                           <sequence name="ConsultarCondicionSequence" xml:id="id_583">
+                              <assign name="ConsultarActualizarCondicionRequest" xml:id="id_584">
+                                    <copy xml:id="id_585" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from xml:id="id_586">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                                      <to xml:id="id_587">$inConsultarCondicionActualizada.request/ns14:idCondicion</to>
+                                    </copy>
+                                  </assign>
+                              <invoke name="ConsultarActualizarInvoke"
+                                      partnerLink="ConsultarCondicion" portType="ns3:ConsultarCondicionPT"
+                                      operation="consultarCondicion" inputVariable="inConsultarCondicionActualizada"
+                                      outputVariable="outConsultarCondicionActualizada"
+                                      xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_588"
+                                      bpelx:invokeAsDetail="no"/>
+                              <if name="OK" xml:id="id_589">
+                                 <documentation xml:id="id_590">
+                                      <![CDATA[OK]]>
+                                    </documentation>
+                                 <condition xml:id="id_591">$outConsultarCondicionActualizada.response/ns14:Resultado/ns13:result != 'ERROR'</condition>
+                                 <assign name="ConsultarActualizarCondicionResponse" xml:id="id_592">
+                                      <copy bpelx:insertMissingToData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_593">
+                                        <from xml:id="id_594">$outConsultarCondicionActualizada.response/ns14:Condicion</from>
+                                        <to xml:id="id_595">$outputVariable.response/ns4:Condicion[$CondicionCounter]</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_596">
+                                        <from xml:id="id_597">$outActualizarCondicion.response/ns14:Resultado</from>
+                                        <to xml:id="id_598">$outputVariable.response/ns4:Resultado[$CondicionCounter]</to>
+                                      </copy>
+                                    </assign>
+                                 <else xml:id="id_599">
+                                    <documentation xml:id="id_600">
+                                       <![CDATA[ERROR]]>
+                                    </documentation>
+                                    <throw name="ErrorConsultarActualizarCondicion" faultName="bpelx:remoteFault"
+                                           xml:id="id_601"/>
+                                 </else>
+                              </if>
+                           </sequence>
+                        </scope>
+                        <else xml:id="id_602">
+                           <documentation xml:id="id_603">
+                              <![CDATA[ERROR]]>
+                           </documentation>
+                           <throw name="ThrowErrorActualizarCondicion" faultName="bpelx:remoteFault" xml:id="id_604"/>
+                        </else>
+                     </if>
+                  </sequence>
+                  <else xml:id="id_605">
+                     <documentation xml:id="id_606">
+                        <![CDATA[False]]>
+                     </documentation>
+                     <throw name="ThrowValidarCondicion" faultName="bpelx:remoteFault" xml:id="id_607"/>
+                  </else>
+               </if>
+            </sequence>
+         </scope>
+      </sequence>
+   </scope>
+                <else xml:id="id_894">
+                  <documentation xml:id="id_895">
+                    <![CDATA[ProcesoIncorrecto]]>
+                  </documentation>
+                  <throw name="ThrowProcesoIncorrecto" xml:id="id_896" faultName="bpel:selectionFailure"/>
+                </else>
+              </if>
+            </elseif>
+            <elseif xml:id="id_492">
+              <documentation xml:id="id_493">
+                <![CDATA[DISPENSAR]]>
+              </documentation>
+              <condition xml:id="id_495">$inputVariable.request/ns4:Condicion/ns9:Accion = 'DISPENSAR'</condition>
+              <if name="Proceso" xml:id="id_608">
+                <documentation xml:id="id_611">
+                  <![CDATA[ProcesoCorrecto]]>
+                </documentation>
+                <condition xml:id="id_610">$outConsultarProcesoOperacion.response/ns18:Proceso/ns19:idProceso = 10</condition><scope name="DispensarCondicionScope"
+                                                                                                                                     xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+                                                                                                                                     xml:id="id_612">
+      <variables xml:id="id_613">
+         <variable name="inActualizarCondicion" messageType="ns3:ActualizarCondicionRequestMessage" xml:id="id_614"/>
+         <variable name="outActualizarCondicion" messageType="ns3:ActualizarCondicionResponseMessage" xml:id="id_615"/>
+      </variables>
+      <faultHandlers xml:id="id_616">
+         <catch bpelx:name="ErrorActualizarCondicion" faultName="bpelx:remoteFault"
+                faultVariable="ErrorActualizarCondicion" faultMessageType="bpelx:RuntimeFaultMessage"
+                xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_617">
+            <sequence name="ErrorActualizarCondicionSequence" xml:id="id_618">
+               <assign name="ErrorActualizarCondicionRequest" xml:id="id_619">
+                  <copy xml:id="id_620">
+                     <from xml:id="id_621">$ErrorActualizarCondicion.code</from>
+                     <to xml:id="id_622">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorCode</to>
+                  </copy>
+                  <copy xml:id="id_623">
+                     <from xml:id="id_624">$ErrorActualizarCondicion.detail</from>
+                     <to xml:id="id_625">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorDescription</to>
+                  </copy>
+                  <copy xml:id="id_626">
+                     <from xml:id="id_627">$ErrorActualizarCondicion.summary</from>
+                     <to xml:id="id_628">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorType</to>
+                  </copy>
+                  <copy xml:id="id_629">
+                     <from xml:id="id_630">'ERROR'</from>
+                     <to xml:id="id_631">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                  </copy>
+                  <copy xml:id="id_632">
+                     <from xml:id="id_633">'Error al actualizar la condición'</from>
+                     <to xml:id="id_634">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                  </copy>
+               </assign>
+               <reply name="ReplyError" variable="outputVariable" partnerLink="actualizarCondicion_Service"
+                      portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC" xml:id="id_635"/>
+            </sequence>
+         </catch>
+      </faultHandlers>
+      <sequence name="DispensarCondicionSequence" xml:id="id_636">
+         <scope name="ValidarCondicionScope" xml:id="id_637">
+            <variables xml:id="id_638">
+               <variable name="inValidarCondicion" messageType="ns15:ValidarEstadoTCCRequestMessage" xml:id="id_639"/>
+               <variable name="outValidarCondicion" messageType="ns15:ValidarEstadoTCCResponseMessage" xml:id="id_640"/>
+            </variables>
+            <sequence name="ValidarCondicionSequence" xml:id="id_641">
+               <assign name="ValidarCondicionAssign" xml:id="id_642">
+                          <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                xml:id="id_643" ignoreMissingFromData="yes">
+                            <from xml:id="id_644">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                            <to xml:id="id_645">$inValidarCondicion.request/ns4:tcc/ns16:id</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                xml:id="id_646" ignoreMissingFromData="yes">
+                            <from xml:id="id_647">$inputVariable.request/ns4:Tipo</from>
+                            <to xml:id="id_648">$inValidarCondicion.request/ns4:tcc/ns16:tipo</to>
+                          </copy>
+                          <copy xml:id="id_649" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                            <from xml:id="id_650">$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id</from>
+                            <to xml:id="id_651">$inValidarCondicion.request/ns4:tcc/ns16:estado</to>
+                          </copy>
+                          <copy xml:id="id_652">
+                            <from xml:id="id_653">dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion, "idProceso", $inputVariable.request/ns4:idProceso)</from>
+                            <to xml:id="id_654">$inValidarCondicion.request/ns4:tcc/ns16:subEstado</to>
+                          </copy>
+                        </assign>
+               <invoke name="ValidarCondicionInvoke" partnerLink="ValidarEstadoTCC" portType="ns15:MatrizTCCPT"
+                       operation="validarEstadoTCC" inputVariable="inValidarCondicion"
+                       outputVariable="outValidarCondicion" bpelx:invokeAsDetail="no"
+                       xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_655"/>
+               <if name="True" xml:id="id_656">
+                  <documentation xml:id="id_657">
+                     <![CDATA[True]]>
+                  </documentation>
+                  <condition xml:id="id_658">$outValidarCondicion.response/ns4:validacionEstados != 'false'</condition>
+                  <sequence name="ActualizarCondicionValidada" xml:id="id_659">
+                     <assign name="ActualizarCondicionRequest" xml:id="id_660">
+                              <copy xml:id="id_661" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from xml:id="id_662">$inputVariable.request/ns4:Condicion[$CondicionCounter]</from>
+                                <to xml:id="id_663">$inActualizarCondicion.request/ns14:Condicion</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" xml:id="id_664" bpelx:insertMissingToData="yes">
+                                <from xml:id="id_665">dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:Accion, "idProceso", $inputVariable.request/ns4:idProceso)</from>
+                                <to xml:id="id_666">$inActualizarCondicion.request/ns14:Condicion/ns9:subEstadoTCC/ns7:id</to>
+                              </copy>
+                            </assign>
+                     <invoke name="ActualizarCondicionInvoke" bpelx:invokeAsDetail="no"
+                             partnerLink="ActualizarCondicion" portType="ns3:ActualizarCondicionPT"
+                             operation="actualizarCondicion" inputVariable="inActualizarCondicion"
+                             outputVariable="outActualizarCondicion"
+                             xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_667"/>
+                     <if name="OK" xml:id="id_668">
+                        <documentation xml:id="id_669">
+                           <![CDATA[OK]]>
+                        </documentation>
+                        <condition xml:id="id_670">$outActualizarCondicion.response/ns14:Resultado/ns13:result != 'ERROR'</condition>
+                        <scope name="ConsultarActualizarCondicionScope" xml:id="id_671">
+                                <variables xml:id="id_782">
+                                  <variable name="inConsultarCondicionActualizada"
+                                            messageType="ns3:ConsultarCondicionRequestMessage" xml:id="id_783"/>
+                                </variables>
+                                <faultHandlers xml:id="id_675">
+                              <catch bpelx:name="ErrorConsultarActualizarCondicion" faultName="bpelx:remoteFault"
+                                     faultVariable="ErrorConsultarActualizarCondicion"
+                                     faultMessageType="bpelx:RuntimeFaultMessage"
+                                     xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_676">
+                                 <sequence name="ErrorConsultarActualizarCondicion" xml:id="id_677">
+                                    <assign name="ErrorConsultarResponse" xml:id="id_678">
+                                       <copy xml:id="id_679">
+                                          <from xml:id="id_680">$ErrorConsultarActualizarCondicion.code</from>
+                                          <to xml:id="id_681">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorCode</to>
+                                       </copy>
+                                       <copy xml:id="id_682">
+                                          <from xml:id="id_683">$ErrorConsultarActualizarCondicion.summary</from>
+                                          <to xml:id="id_684">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorType</to>
+                                       </copy>
+                                       <copy xml:id="id_685">
+                                          <from xml:id="id_686">$ErrorConsultarActualizarCondicion.detail</from>
+                                          <to xml:id="id_687">$outputVariable.response/ns4:Resultado/ns13:error/ns12:errorDescription</to>
+                                       </copy>
+                                       <copy xml:id="id_688">
+                                          <from xml:id="id_689">'ERROR'</from>
+                                          <to xml:id="id_690">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                                       </copy>
+                                       <copy xml:id="id_691">
+                                          <from xml:id="id_692">'Error al consultar la condición actualizada'</from>
+                                          <to xml:id="id_693">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                                       </copy>
+                                    </assign>
+                                    <reply name="ReplyError" variable="outputVariable"
+                                           partnerLink="actualizarCondicion_Service" portType="ns1:ActualizarTCCPTSOR"
+                                           operation="actualizarTCC" xml:id="id_694"/>
+                                 </sequence>
+                              </catch>
+                           </faultHandlers>
+                           <sequence name="ConsultarCondicionSequence" xml:id="id_695">
+                              <assign name="ConsultarActualizarCondicionRequest" xml:id="id_696">
+                                    <copy xml:id="id_697" ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from xml:id="id_698">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                                      <to xml:id="id_699">$inConsultarCondicionActualizada.request/ns14:idCondicion</to>
+                                    </copy>
+                                  </assign>
+                              <invoke name="ConsultarActualizarInvoke"
+                                      partnerLink="ConsultarCondicion" portType="ns3:ConsultarCondicionPT"
+                                      operation="consultarCondicion" inputVariable="inConsultarCondicionActualizada"
+                                      outputVariable="outConsultarCondicionActualizada"
+                                      xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_700"
+                                      bpelx:invokeAsDetail="no"/>
+                              <if name="OK" xml:id="id_701">
+                                 <documentation xml:id="id_702">
+                                    <![CDATA[OK]]>
+                                 </documentation>
+                                 <condition xml:id="id_703">$outConsultarCondicionActualizada.response/ns14:Resultado/ns13:result != 'ERROR'</condition>
+                                 <assign name="ConsultarActualizarCondicionResponse" xml:id="id_704">
+                                      <copy bpelx:insertMissingToData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_705">
+                                        <from xml:id="id_706">$outConsultarCondicionActualizada.response/ns14:Condicion</from>
+                                        <to xml:id="id_707">$outputVariable.response/ns4:Condicion[$CondicionCounter]</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xml:id="id_708">
+                                        <from xml:id="id_709">$outActualizarCondicion.response/ns14:Resultado</from>
+                                        <to xml:id="id_710">$outputVariable.response/ns4:Resultado[$CondicionCounter]</to>
+                                      </copy>
+                                    </assign>
+                                 <else xml:id="id_711">
+                                    <documentation xml:id="id_712">
+                                       <![CDATA[ERROR]]>
+                                    </documentation>
+                                    <throw name="ErrorConsultarActualizarCondicion" faultName="bpelx:remoteFault"
+                                           xml:id="id_713"/>
+                                 </else>
+                              </if>
+                           </sequence>
+                        </scope>
+                        <else xml:id="id_714">
+                           <documentation xml:id="id_715">
+                              <![CDATA[ERROR]]>
+                           </documentation>
+                           <throw name="ThrowErrorActualizarCondicion" faultName="bpelx:remoteFault" xml:id="id_716"/>
+                        </else>
+                     </if>
+                  </sequence>
+                  <else xml:id="id_717">
+                     <documentation xml:id="id_718">
+                        <![CDATA[False]]>
+                     </documentation>
+                     <throw name="ThrowValidarCondicion" faultName="bpelx:remoteFault" xml:id="id_719"/>
+                  </else>
+               </if>
+            </sequence>
+         </scope>
+      </sequence>
+   </scope>
+                <else xml:id="id_897">
+                  <documentation xml:id="id_899">
+                    <![CDATA[ProcesoIncorrecto]]>
+                  </documentation>
+                  <throw name="ThrowProcesoIncorrecto" xml:id="id_898" faultName="bpel:selectionFailure"/>
+                </else>
+              </if>
+            </elseif>
+            <elseif xml:id="id_921">
+              <documentation xml:id="id_923">
+                <![CDATA[INACTIVAR]]>
+              </documentation>
+              <condition xml:id="id_922">$inputVariable.request/ns4:Condicion/ns9:Accion = 'INACTIVAR'</condition>
+              <sequence name="Inactivar" xml:id="id_927">
+                <if name="ProcesoValido" xml:id="id_1076">
+                  <condition xml:id="id_1080">$inputVariable.request/ns4:idProceso = 6 or $inputVariable.request/ns4:idProceso = 31</condition>
+                  <sequence name="InactivarProcesoValido" xml:id="id_1078">
+                    <assign name="SetInactivar" xml:id="id_994">
+                      <copy xml:id="id_1000">
+                        <from xml:id="id_1001">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                        <to xml:id="id_1002">$ActualizaValidaCondicion.request/ns4:tcc/ns16:id</to>
+                      </copy>
+                      <copy xml:id="id_1003">
+                        <from xml:id="id_1004">$inputVariable.request/ns4:Tipo</from>
+                        <to xml:id="id_1005">$ActualizaValidaCondicion.request/ns4:tcc/ns16:tipo</to>
+                      </copy>
+                      <copy xml:id="id_1006">
+                        <from xml:id="id_1007">$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id</from>
+                        <to xml:id="id_1008">$ActualizaValidaCondicion.request/ns4:tcc/ns16:estado</to>
+                      </copy>
+                      <copy xml:id="id_1009">
+                        <from xml:id="id_1010">31</from>
+                        <to xml:id="id_1011">$ActualizaValidaCondicion.request/ns4:tcc/ns16:subEstado</to>
+                      </copy>
+                    </assign>
+                    <extensionActivity>
+                      <bpelx:call name="ValidaActualizaINACTIVAR" target="ValidaActualizaCondicion" xml:id="id_981">
+                        <bpelx:param name="validarEstadoTCC_Input" copyByValue="yes" variable="ActualizaValidaCondicion"
+                                     xml:id="id_1050"/>
+                        <bpelx:param name="consultarCondicion_Output" copyByValue="no"
+                                     variable="ConsultarCondicionResponse" xml:id="id_1051"/>
+                      </bpelx:call>
+                    </extensionActivity>
+                    <assign name="SetResponse" xml:id="id_1052">
+                      <copy xml:id="id_1053">
+                        <from xml:id="id_1054">$ConsultarCondicionResponse.response/ns14:Resultado/ns13:result</from>
+                        <to xml:id="id_1055">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                      </copy>
+                      <copy xml:id="id_1056">
+                        <from xml:id="id_1057">$ConsultarCondicionResponse.response/ns14:Resultado/ns13:message</from>
+                        <to xml:id="id_1058">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                      </copy>
+                      <copy xml:id="id_1059" ignoreMissingFromData="yes">
+                        <from xml:id="id_1060">$ConsultarCondicionResponse.response/ns14:Resultado/ns13:error</from>
+                        <to xml:id="id_1061">$outputVariable.response/ns4:Resultado/ns13:error</to>
+                      </copy>
+                    </assign>
+                  </sequence>
+                  <else xml:id="id_1077">
+                    <throw name="ProcesoInvalido" xml:id="id_1081" faultName="bpelx:remoteFault"/>
+                  </else>
+                </if>
+              </sequence>
+            </elseif>
+            <elseif xml:id="id_924">
+              <documentation xml:id="id_926">
+                <![CDATA[REACTIVAR]]>
+              </documentation>
+              <condition xml:id="id_925">$inputVariable.request/ns4:Condicion/ns9:Accion = 'REACTIVAR'</condition><sequence name="Reactivar" xml:id="id_928">
+                <if name="ProcesoValido" xml:id="id_1082">
+                  <condition xml:id="id_1087">$inputVariable.request/ns4:idProceso = 6 or $inputVariable.request/ns4:idProceso = 31</condition>
+                  <sequence name="ActivaProcesoValido" xml:id="id_1084">
+                    <assign name="SetReactiva" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+                            xml:id="id_1012">
+                      <copy xml:id="id_1013">
+                        <from xml:id="id_1014">$inputVariable.request/ns4:Condicion[$CondicionCounter]/ns9:idCondicion</from>
+                        <to xml:id="id_1015">$ActualizaValidaCondicion.request/ns4:tcc/ns16:id</to>
+                      </copy>
+                      <copy xml:id="id_1016">
+                        <from xml:id="id_1017">$inputVariable.request/ns4:Tipo</from>
+                        <to xml:id="id_1018">$ActualizaValidaCondicion.request/ns4:tcc/ns16:tipo</to>
+                      </copy>
+                      <copy xml:id="id_1019">
+                        <from xml:id="id_1020">$outConsultarCondicion.response/ns14:Condicion/ns9:estadoTCC/ns7:id</from>
+                        <to xml:id="id_1021">$ActualizaValidaCondicion.request/ns4:tcc/ns16:estado</to>
+                      </copy>
+                      <copy xml:id="id_1092">
+                        <from xml:id="id_1093">0</from>
+                        <to xml:id="id_1094">$ActualizaValidaCondicion.request/ns4:tcc/ns16:subEstado</to>
+                      </copy>
+                    </assign>
+                    <extensionActivity>
+                      <bpelx:call name="ValidaActualizaREACTIVAR" target="ValidaActualizaCondicion" xml:id="id_987">
+                        <bpelx:param name="validarEstadoTCC_Input" copyByValue="yes" variable="ActualizaValidaCondicion"
+                                     xml:id="id_1074"/>
+                        <bpelx:param name="consultarCondicion_Output" copyByValue="no"
+                                     variable="ConsultarCondicionResponse" xml:id="id_1075"/>
+                      </bpelx:call>
+                    </extensionActivity>
+                    <assign name="SetResponse" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+                            xml:id="id_1062">
+                      <copy xml:id="id_1063">
+                        <from xml:id="id_1064">$ConsultarCondicionResponse.response/ns14:Resultado/ns13:result</from>
+                        <to xml:id="id_1065">$outputVariable.response/ns4:Resultado/ns13:result</to>
+                      </copy>
+                      <copy xml:id="id_1066">
+                        <from xml:id="id_1067">$ConsultarCondicionResponse.response/ns14:Resultado/ns13:message</from>
+                        <to xml:id="id_1068">$outputVariable.response/ns4:Resultado/ns13:message</to>
+                      </copy>
+                      <copy xml:id="id_1069" ignoreMissingFromData="yes">
+                        <from xml:id="id_1070">$ConsultarCondicionResponse.response/ns14:Resultado/ns13:error</from>
+                        <to xml:id="id_1071">$outputVariable.response/ns4:Resultado/ns13:error</to>
+                      </copy>
+                    </assign>
+                  </sequence>
+                  <else xml:id="id_1083">
+                    <throw name="ProcesoInvalido" xml:id="id_1086" faultName="bpelx:remoteFault"/>
+                  </else>
+                </if>
+              </sequence>
+            </elseif>
+            <else xml:id="id_38">
+              <documentation xml:id="id_45">
+                <![CDATA[ERROR]]>
+              </documentation>
+              <throw name="ErrorGeneral" xml:id="id_70" faultName="bpel:selectionFailure" faultVariable="Error"/>
+            </else>
+          </if>
+          <if name="Enmiendas" xml:id="id_769">
+            <documentation xml:id="id_772">
+              <![CDATA[ActualizarDetalleEnmiendas]]>
+            </documentation>
+            <condition xml:id="id_771">$inputVariable.request/ns4:idProceso = 10 and$outputVariable.response/ns4:Resultado/ns13:result != 'ERROR'</condition>
+            <scope name="ActualizarDetalleEnmiendaScope" xml:id="id_765">
+              <variables xml:id="id_787">
+                <variable name="inActualizarDetalleEnmienda"
+                          messageType="ns20:ActualizarDetalleEnmiendaRequestMessage" xml:id="id_788"/>
+                <variable name="outActualizarDetalleEnmienda"
+                          messageType="ns20:ActualizarDetalleEnmiendaResponseMessage" xml:id="id_789"/>
+              </variables>
+              <sequence name="ActualizarDetalleEnmiendasSequence" xml:id="id_767">
+                <assign name="ActualizarDetalleEnmiendaAssign" xml:id="id_790">
+                  <bpelx:annotation xml:id="id_791">
+                    <bpelx:pattern patternName="bpelx:xquery" xml:id="id_792"></bpelx:pattern>
+                  </bpelx:annotation>
+                  <copy xml:id="id_793">
+                    <from xml:id="id_794">ora:processXQuery10('../Transformations/DetalleEnmiendaTransformation.xqy', 'inputVariable.request', $inputVariable.request, 'outConsultarCondicionActualizada.response', $outConsultarCondicionActualizada.response)</from>
+                    <to xml:id="id_795" variable="inActualizarDetalleEnmienda" part="ActualizarDetalleEnmiendaRequest"/>
+                  </copy>
+                </assign>
+                <invoke name="ActualizarDetalleEnmiendaInvoke" xml:id="id_768" bpelx:invokeAsDetail="no"
+                        partnerLink="ActualizarDetalleEnmienda_SB" portType="ns20:ActualizarDetalleEnmiendaRequest_PT"
+                        operation="actualizarDetalleEnmiendaRequest" inputVariable="inActualizarDetalleEnmienda"
+                        outputVariable="outActualizarDetalleEnmienda"/>
+              </sequence>
+            </scope>
+            <else xml:id="id_770">
+              <documentation xml:id="id_773">
+                <![CDATA[NoEsProcesoEnmiendas]]>
+              </documentation>
+              <empty name="SeguirValidacion" xml:id="id_774"/>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+    </forEach>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="actualizarCondicion_Service" portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC" variable="outputVariable" xml:id="id_9"/>
+  </sequence>
+</process>

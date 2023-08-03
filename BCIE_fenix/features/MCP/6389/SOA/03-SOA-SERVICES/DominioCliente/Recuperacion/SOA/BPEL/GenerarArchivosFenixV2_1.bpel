@@ -1,0 +1,432 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Jul 03 15:16:44 CST 2019
+  Author:  urbinaj
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="GenerarArchivosFenixV2_1"
+               targetNamespace="http://xmlns.oracle.com/DominioCliente/Recuperacion/GenerarArchivosFenixV2_1"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioCliente/Recuperacion/GenerarArchivosFenixV2_1"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/GestionCobroMO"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns3="http://www.bcie.org/ResultBO"
+         xmlns:ns2="http://www.bcie.org/CommonBO" xmlns:ns5="http://www.bcie.org/GestionCobroBO"
+         xmlns:ns4="http://www.bcie.org/ErrorBO" xmlns:ns6="http://www.bcie.org/DocumentoBO"
+         xmlns:ns7="http://xmlns.bcie.com/DocumentoService" xmlns:ns8="http://www.bcie.org/DocumentoMO"
+         xmlns:ns10="http://www.bcie.org/CatalogoBO" xmlns:ns9="http://www.bcie.org/ClienteBO"
+         xmlns:ns12="http://www.bcie.org/GenerarArchivo">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/GestionCobroMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/GestionCobro/V1/Wsdl/ADAPTER/GenerarAvisoCobroV2SAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/GestionCobroMO" location="../WSDLs/GenerarArchivosFenixV2SORWrapper1.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="generararchivosfenixv2_1_client" partnerLinkType="ns1:GenerarArchivosFenixV2_1" myRole="GenerarArchivosFenixV2PT"/>
+    <partnerLink name="CargarDocumentoFenix" partnerLinkType="ns7:CargarDocumentoFenix"
+                 partnerRole="CargarDocumentoFPT"/>
+    <partnerLink name="EliminarDocumentoFenix" partnerLinkType="ns7:EliminarDocumentoFenix"
+                 partnerRole="EliminarDocumentoFenix"/>
+    <partnerLink name="GenerarAvisoCobroZipV2" partnerLinkType="ns1:GenerarAvisoCobroZipV2"
+                 partnerRole="GenerarReporteAvisoCobroV2PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:GenerarArchivosFenixV2RequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:GenerarArchivosFenixV2ResponseMessage"/>
+    
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="ListaBase64" messageType="ns7:requestCargarDocumentoFenixMessage"/>
+    <variable name="inInvokeCargarDocumento" messageType="ns7:requestCargarDocumentoFenixMessage"/>
+    <variable name="outInvokeCargarDocumento" messageType="ns7:responseCargarDocumentoFenixMessage"/>
+    
+    <variable name="ListaAdjuntos" type="ns12:ListaAdjuntosType"/>
+    <variable name="ListaDocumentosAdjuntos" messageType="ns7:requestCargarDocumentoFenixMessage"/>
+    <variable name="inInvokeEliminarDocumentoFenix" messageType="ns7:EliminarDocumentoFenixRequestMessage"/>
+    <variable name="outInvokeEliminarDocumentoFenix" messageType="ns7:EliminarDocumentoFenixResponseMessage"/>
+    <variable name="inInvokeGenerarAvisoCobroV2" messageType="ns1:GenerarReporteAvisoCobroV2RequestMessage"/>
+    <variable name="outInvokeGenerarAvisoCobroV2" messageType="ns1:GenerarReporteAvisoCobroV2ResponseMessage"/>
+    <variable name="inInvokeGenerarAvisoCobroMoraV2" messageType="ns1:GenerarReporteAvisoCobroV2RequestMessage"/>
+    <variable name="outInvokeGenerarAvisoCobroMoraV2" messageType="ns1:GenerarReporteAvisoCobroV2ResponseMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in GenerarArchivosFenixV2_1.wsdl) -->
+    <receive name="receiveInput" partnerLink="generararchivosfenixv2_1_client" portType="ns1:GenerarArchivosFenixV2PT" operation="generarArchivosFenixV2" variable="inputVariable" createInstance="yes"/>
+    
+    <assign name="AssignTitle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat('GenerarArchivosFenixV2, ', ' Cliente:',  $inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso/ns5:codigoCliente))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <sequence name="SequenceAvisoCobro">
+      <if name="IfNoVencidos">
+        <documentation>
+          <![CDATA[NoVencidos]]>
+        </documentation>
+        <condition>count($inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso[1]/ns5:xml/CLIENTES/CLIENTE/LINEA/VENCIMIENTOS/VENCIMIENTO[VENCIDO='N']) &gt; 0</condition>
+        <sequence>
+          <assign name="AssignConfiguracionAviso">
+            <copy bpelx:insertMissingToData="yes">
+              <from>'AVISO'</from>
+              <to>$inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso[1]/ns5:xml/CLIENTES/CONFIGURACION/TIPO_DOCUMENTO</to>
+            </copy>
+          </assign>
+          <assign name="AssignInvokeGenerarAvisoCobroV2">
+            <copy>
+              <from>$inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso/ns5:codigoCliente</from>
+              <to>$inInvokeGenerarAvisoCobroV2.GenerarReporteAvisoCobroV2Request/ns1:AvisoCobro/ns5:aviso/ns5:codigoCliente</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso/ns5:nombreCompleto</from>
+              <to>$inInvokeGenerarAvisoCobroV2.GenerarReporteAvisoCobroV2Request/ns1:AvisoCobro/ns5:aviso/ns5:nombreCompleto</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso/ns5:pais</from>
+              <to>$inInvokeGenerarAvisoCobroV2.GenerarReporteAvisoCobroV2Request/ns1:AvisoCobro/ns5:aviso/ns5:pais</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso/ns5:xml</from>
+              <to>$inInvokeGenerarAvisoCobroV2.GenerarReporteAvisoCobroV2Request/ns1:AvisoCobro/ns5:aviso/ns5:xml</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeGenerarAvisoCobroV2Zip" bpelx:invokeAsDetail="no" partnerLink="GenerarAvisoCobroZipV2"
+                  portType="ns1:GenerarReporteAvisoCobroV2PT" operation="generarReporteAvisoCobroV2"
+                  inputVariable="inInvokeGenerarAvisoCobroV2" outputVariable="outInvokeGenerarAvisoCobroV2"/>
+          <if name="IfResultadoGenerarAvisoV2">
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>$outInvokeGenerarAvisoCobroV2.GenerarReporteAvisoCobroV2Response/ns1:Resultado/ns3:result = 'OK'</condition>
+            <assign name="XQListaBase64">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/GenerarAvisoCobroV2_TO_ListaBase64.xqy', 'inputVariable.GenerarArchivosFenixV2Request', $inputVariable.GenerarArchivosFenixV2Request, 'outInvokeGenerarAvisoCobroV2.GenerarReporteAvisoCobroV2Response', $outInvokeGenerarAvisoCobroV2.GenerarReporteAvisoCobroV2Response)</from>
+                <to variable="ListaBase64" part="request"/>
+              </copy>
+            </assign>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <sequence name="Sequence1">
+                <assign name="AssignError">
+                  <copy>
+                    <from>3</from>
+                    <to>$outputVariable.GenerarArchivosFenixV2Response/ns1:Resultado/ns3:error/ns4:errorCode</to>
+                  </copy>
+                  <copy>
+                    <from>$outInvokeGenerarAvisoCobroV2.GenerarReporteAvisoCobroV2Response/ns1:Resultado/ns3:result</from>
+                    <to>$outputVariable.GenerarArchivosFenixV2Response/ns1:Resultado/ns3:result</to>
+                  </copy>
+                  <copy>
+                    <from>$outInvokeGenerarAvisoCobroV2.GenerarReporteAvisoCobroV2Response/ns1:Resultado/ns3:message</from>
+                    <to>$outputVariable.GenerarArchivosFenixV2Response/ns1:Resultado/ns3:message</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyErrorGenerarAvisoV2" variable="outputVariable"
+                       partnerLink="generararchivosfenixv2_1_client" portType="ns1:GenerarArchivosFenixV2PT"
+                       operation="generarArchivosFenixV2"/>
+                <exit name="ExitErrorGenerarAviso"/>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+        <else>
+          <documentation>
+            <![CDATA[Continua]]>
+          </documentation>
+          <empty name="Continua"/>
+        </else>
+      </if>
+    </sequence>
+    <sequence name="SequenceGenerarAvisoCobroMora">
+      <if name="IfVencidos">
+        <documentation>
+          <![CDATA[Vencido]]>
+        </documentation>
+        <condition>count($inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso[1]/ns5:xml/CLIENTES/CLIENTE/LINEA/VENCIMIENTOS/VENCIMIENTO[VENCIDO='S']) &gt; 0</condition>
+        <sequence name="Sequence3">
+          <assign name="AssignConfiguracionMora">
+            <copy bpelx:insertMissingToData="yes">
+              <from>'MORA'</from>
+              <to>$inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso[1]/ns5:xml/CLIENTES/CONFIGURACION/TIPO_DOCUMENTO</to>
+            </copy>
+          </assign>
+          <assign name="AssignGenerarAvisoCobroMora">
+            <copy>
+              <from>$inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso/ns5:codigoCliente</from>
+              <to>$inInvokeGenerarAvisoCobroMoraV2.GenerarReporteAvisoCobroV2Request/ns1:AvisoCobro/ns5:aviso/ns5:codigoCliente</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso/ns5:nombreCompleto</from>
+              <to>$inInvokeGenerarAvisoCobroMoraV2.GenerarReporteAvisoCobroV2Request/ns1:AvisoCobro/ns5:aviso/ns5:nombreCompleto</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso/ns5:pais</from>
+              <to>$inInvokeGenerarAvisoCobroMoraV2.GenerarReporteAvisoCobroV2Request/ns1:AvisoCobro/ns5:aviso/ns5:pais</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.GenerarArchivosFenixV2Request/ns1:AvisoCobro/ns5:aviso/ns5:xml</from>
+              <to>$inInvokeGenerarAvisoCobroMoraV2.GenerarReporteAvisoCobroV2Request/ns1:AvisoCobro/ns5:aviso/ns5:xml</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeGenerarAvisoCobroV2ZipMora" bpelx:invokeAsDetail="no"
+                  partnerLink="GenerarAvisoCobroZipV2" portType="ns1:GenerarReporteAvisoCobroV2PT"
+                  operation="generarReporteAvisoCobroV2" inputVariable="inInvokeGenerarAvisoCobroMoraV2"
+                  outputVariable="outInvokeGenerarAvisoCobroMoraV2"/>
+          <if name="IfResultadoGenerarAvisoMoraV2">
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>$outInvokeGenerarAvisoCobroMoraV2.GenerarReporteAvisoCobroV2Response/ns1:Resultado/ns3:result = 'OK'</condition>
+            <assign name="XQListaBase64Mora">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/GenerarAvisoCobroMoraV2_TO_ListaBase64.xqy', 'outInvokeGenerarAvisoCobroMoraV2.GenerarReporteAvisoCobroV2Response', $outInvokeGenerarAvisoCobroMoraV2.GenerarReporteAvisoCobroV2Response, 'inputVariable.GenerarArchivosFenixV2Request', $inputVariable.GenerarArchivosFenixV2Request, 'ListaBase64.request', $ListaBase64.request)</from>
+                <to variable="ListaBase64" part="request"/>
+              </copy>
+            </assign>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <sequence name="Sequence5">
+                <assign name="AssignErrorGenerarAvisoCobroMoraV2">
+                  <copy>
+                    <from>3</from>
+                    <to>$outputVariable.GenerarArchivosFenixV2Response/ns1:Resultado/ns3:error/ns4:errorCode</to>
+                  </copy>
+                  <copy>
+                    <from>'ERROR AL GENERAR EL AVISO DE COBRO MORA'</from>
+                    <to>$outputVariable.GenerarArchivosFenixV2Response/ns1:Resultado/ns3:error/ns4:errorDescription</to>
+                  </copy>
+                  <copy>
+                    <from>$outInvokeGenerarAvisoCobroMoraV2.GenerarReporteAvisoCobroV2Response/ns1:Resultado/ns3:result</from>
+                    <to>$outputVariable.GenerarArchivosFenixV2Response/ns1:Resultado/ns3:result</to>
+                  </copy>
+                  <copy>
+                    <from>$outInvokeGenerarAvisoCobroMoraV2.GenerarReporteAvisoCobroV2Response/ns1:Resultado/ns3:message</from>
+                    <to>$outputVariable.GenerarArchivosFenixV2Response/ns1:Resultado/ns3:message</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyErrorGenerarAvisoCobroMoraV2" variable="outputVariable"
+                       partnerLink="generararchivosfenixv2_1_client" portType="ns1:GenerarArchivosFenixV2PT"
+                       operation="generarArchivosFenixV2"/>
+                <exit name="ExitErrorGenerarAvisoCobroMoraV2"/>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+        <else>
+          <documentation>
+            <![CDATA[SinValorVencido]]>
+          </documentation>
+          <bpelx:annotation>
+            <bpelx:documentation>
+              <![CDATA[SinValor]]>
+            </bpelx:documentation>
+          </bpelx:annotation>
+          <empty name="Continua"/>
+        </else>
+      </if>
+    </sequence>
+    <if name="IfValidaDocumentosExistentes">
+      <documentation>
+        <![CDATA[ExistenDocumentos]]>
+      </documentation>
+      <condition>count($ListaBase64.request/ns8:Documentos/ns6:Documento) &gt; 0</condition>
+      <sequence name="Sequence2">
+        <forEach parallel="no" counterName="DoctosCounter" name="ForEachDocumentos">
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($ListaBase64.request/ns8:Documentos/ns6:Documento)</finalCounterValue>
+          <scope name="ScopeForDocumentos">
+            <sequence name="SequenceDocumentos">
+              <assign name="AssignCargarDocumento">
+                <copy>
+                  <from>$ListaBase64.request/ns8:Documentos/ns6:Documento[$DoctosCounter]/ns6:content</from>
+                  <to>$inInvokeCargarDocumento.request/ns8:Documentos/ns6:Documento/ns6:content</to>
+                </copy>
+                <copy>
+                  <from>$ListaBase64.request/ns8:Documentos/ns6:Documento[$DoctosCounter]/ns6:filename</from>
+                  <to>$inInvokeCargarDocumento.request/ns8:Documentos/ns6:Documento/ns6:filename</to>
+                </copy>
+                <copy>
+                  <from>$ListaBase64.request/ns8:Documentos/ns6:Documento[$DoctosCounter]/ns6:mime_type</from>
+                  <to>$inInvokeCargarDocumento.request/ns8:Documentos/ns6:Documento/ns6:mime_type</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.GenerarArchivosFenixV2Request/ns1:Cliente/ns9:idCliente</from>
+                  <to>$inInvokeCargarDocumento.request/ns8:Documentos/ns6:Documento/ns6:idCliente</to>
+                </copy>
+                <copy>
+                  <from>xp20:current-date()</from>
+                  <to>$inInvokeCargarDocumento.request/ns8:Documentos/ns6:Documento/ns6:fechaRegistro</to>
+                </copy>
+                <copy>
+                  <from>1</from>
+                  <to>$inInvokeCargarDocumento.request/ns8:Documentos/ns6:Documento/ns6:idExterno</to>
+                </copy>
+                <copy>
+                  <from>1</from>
+                  <to>$inInvokeCargarDocumento.request/ns8:Documentos/ns6:Documento/ns6:status</to>
+                </copy>
+                <copy>
+                  <from>0</from>
+                  <to>$inInvokeCargarDocumento.request/ns8:Documentos/ns6:Documento/ns6:esJustificacion</to>
+                </copy>
+                <copy>
+                  <from>$ListaBase64.request/ns8:Documentos/ns6:Documento[$DoctosCounter]/ns6:idTipoDocumento</from>
+                  <to>$inInvokeCargarDocumento.request/ns8:Documentos/ns6:Documento/ns6:idTipoDocumento</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$inputVariable.GenerarArchivosFenixV2Request/ns1:idFlujoNegocio</from>
+                  <to>$inInvokeCargarDocumento.request/ns8:Documentos/ns6:Documento/ns6:idFlujoNegocio</to>
+                </copy>
+                <copy>
+                  <from>143</from>
+                  <to>$inInvokeCargarDocumento.request/ns8:Documentos/ns6:Documento/ns6:idtarea</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeCargarDocumento" partnerLink="CargarDocumentoFenix" portType="ns7:CargarDocumentoFPT"
+                      operation="cargarDocumentoFenix" inputVariable="inInvokeCargarDocumento"
+                      outputVariable="outInvokeCargarDocumento" bpelx:invokeAsDetail="no"/>
+              <if name="IfResultadoCargarDocumentos">
+                <documentation>
+                  <![CDATA[OK]]>
+                </documentation>
+                <condition>$outInvokeCargarDocumento.response/ns8:Resultado/ns3:result = 'OK'</condition>
+                <sequence name="SequenceOKCargarDocumento">
+                  <assign name="AssignIdAdjunto">
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>$outInvokeCargarDocumento.response/ns8:Adjunto</from>
+                      <to>$ListaAdjuntos/ns12:idAdjunto[$DoctosCounter]</to>
+                    </copy>
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>$inInvokeCargarDocumento.request/ns8:Documentos/ns6:Documento</from>
+                      <to>$ListaDocumentosAdjuntos.request/ns8:Documentos/ns6:Documento[$DoctosCounter]</to>
+                    </copy>
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>$outInvokeCargarDocumento.response/ns8:Adjunto</from>
+                      <to>$ListaDocumentosAdjuntos.request/ns8:Documentos/ns6:Documento[$DoctosCounter]/ns6:idAdjunto</to>
+                    </copy>
+                  </assign>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[ERROR]]>
+                  </documentation>
+                  <sequence name="SequenceERROR">
+                    <sequence name="SequenceEliminarDocumentoFenix">
+                      <assign name="XQEliminarDocumentos">
+                        <bpelx:annotation>
+                          <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                        </bpelx:annotation>
+                        <copy>
+                          <from>ora:processXQuery10('../Transformations/CargarDocumentoFenix_PS_TO_EliminarDocumentoFenix_PS_Request.xqy', 'ListaAdjuntos', $ListaAdjuntos)</from>
+                          <to variable="inInvokeEliminarDocumentoFenix" part="EliminarDocumentoFenixRequest"/>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeEliminarDocumentoFenix" bpelx:invokeAsDetail="no"
+                              partnerLink="EliminarDocumentoFenix" portType="ns7:EliminarDocumentoFenix"
+                              operation="eliminarDocumentoFenix" inputVariable="inInvokeEliminarDocumentoFenix"
+                              outputVariable="outInvokeEliminarDocumentoFenix"/>
+                    </sequence>
+                    <assign name="AssignError">
+                      <copy>
+                        <from>8</from>
+                        <to>$outputVariable.GenerarArchivosFenixV2Response/ns1:Resultado/ns3:error/ns4:errorCode</to>
+                      </copy>
+                    </assign>
+                    <reply name="ReplyErrorCargarDocumento" variable="outputVariable"
+                           partnerLink="generararchivosfenixv2_1_client" portType="ns1:GenerarArchivosFenixV2PT"
+                           operation="generarArchivosFenixV2"/>
+                    <exit name="ExitErrorCargarDocumento"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+        </forEach>
+        <assign name="XQGeneracionArchivosFenixResponse">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:processXQuery10('../Transformations/XQGeneracionArchivosFenixV2Response.xqy', 'ListaDocumentosAdjuntos.request', $ListaDocumentosAdjuntos.request)</from>
+            <to variable="outputVariable" part="GenerarArchivosFenixV2Response"/>
+          </copy>
+        </assign>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[NoExistenDocumentos]]>
+        </documentation>
+        <assign name="AssignNoExistenDocumentos">
+          <copy>
+            <from>'OK'</from>
+            <to>$outputVariable.GenerarArchivosFenixV2Response/ns1:Resultado/ns3:result</to>
+          </copy>
+          <copy>
+            <from>'No existe información necesario ára la generación de archivos en Fenix'</from>
+            <to>$outputVariable.GenerarArchivosFenixV2Response/ns1:Resultado/ns3:message</to>
+          </copy>
+        </assign>
+      </else>
+    </if>
+    
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="generararchivosfenixv2_1_client" portType="ns1:GenerarArchivosFenixV2PT" operation="generarArchivosFenixV2" variable="outputVariable"/>
+  </sequence>
+</process>

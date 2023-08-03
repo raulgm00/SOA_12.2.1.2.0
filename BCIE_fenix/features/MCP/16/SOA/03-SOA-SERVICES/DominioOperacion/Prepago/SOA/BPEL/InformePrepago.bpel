@@ -1,0 +1,356 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Oct 21 11:18:07 CDT 2016
+  Author:  dalia-reyes
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="InformePrepago"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/Prepago/InformePrepago"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/Prepago/InformePrepago"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/PrepagoService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/PrepagoMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns11="http://www.bcie.org/ProductoBO"
+         xmlns:ns7="http://www.bcie.org/OperacionBO" xmlns:ns14="http://www.bcie.org/ResultBO"
+         xmlns:ns5="http://www.bcie.org/CommonBO" xmlns:ns12="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns13="http://www.bcie.org/ComisionBO" xmlns:ns4="http://www.bcie.org/PrepagoBO"
+         xmlns:ns9="http://www.bcie.org/LineaCreditoBO" xmlns:ns6="http://www.bcie.org/CatalogoBO"
+         xmlns:ns10="http://www.bcie.org/DesembolsoBO" xmlns:ns8="http://www.bcie.org/ClienteBO"
+         xmlns:ns3="http://www.bcie.org/AtributoBO" xmlns:ns15="http://www.bcie.org/ErrorBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns16="http://www.bcie.org/ConversorMonedas"
+         xmlns:ns18="http://www.bcie.org/ConversorMonedasBO" xmlns:ns17="http://www.bcie.org/ConversorMonedasMO"
+         xmlns:ns19="http://www.bcie.org/GestionCobroBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/PrepagoBO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Prepago/V1/Schema/PrepagoBO.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://xmlns.bcie.com/PrepagoService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Prepago/V1/Wsdl/ADAPTER/ExtraerReportePrepagoSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/PrepagoService" location="../WSDLs/InformePrepagoSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="informeprepago_client" partnerLinkType="ns1:InformePrepago" myRole="InformePrepagoPT"/>
+    <partnerLink name="ExtraerReportePrepago" partnerLinkType="ns1:ExtraerReportePrepago"
+                 partnerRole="ExtraerReportePrepagoPT"/>
+    <partnerLink name="ConsultarPrepago" partnerLinkType="ns1:ConsultarPrepago" partnerRole="ConsultarPrepagoPT"/>
+    <partnerLink name="ConvertirMonedasImportes" partnerLinkType="ns16:ConvertirMonedasImportes"
+                 partnerRole="ConversorMonedas_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:InformePrepagoRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:InformePrepagoResponseMessage"/>
+    <variable name="Prepago" messageType="ns1:ExtraerReportePrepagoResponseMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in InformePrepago.wsdl) -->
+    <receive name="receiveInput" partnerLink="informeprepago_client" portType="ns1:InformePrepagoPT" operation="informePrepago" variable="inputVariable" createInstance="yes"/>
+    <scope name="ScopeConsultarPrepago">
+      <variables>
+        <variable name="inInvokeConsultarPrepago" messageType="ns1:ConsultarPrepagoRequestMessage"/>
+        <variable name="outInvokeConsultarPrepago" messageType="ns1:ConsultarPrepagoResponseMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarPrepago">
+        <assign name="AssignConsultarPrepago">
+          <copy>
+            <from>$inputVariable.InformePrepagoRequest/ns2:idPrepago</from>
+            <to>$inInvokeConsultarPrepago.ConsultarPrepagoRequest/ns2:idPrepago</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarPrepago" bpelx:invokeAsDetail="no" partnerLink="ConsultarPrepago"
+                portType="ns1:ConsultarPrepagoPT" operation="consultarPrepago"
+                inputVariable="inInvokeConsultarPrepago" outputVariable="outInvokeConsultarPrepago"/>
+        <if name="IfResultadoConsultarPrepago">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeConsultarPrepago.ConsultarPrepagoResponse/ns2:Resultado/ns14:result = 'OK'</condition>
+          <scope name="ScopeExtraerReporte">
+            <bpelx:skipCondition>string($outInvokeConsultarPrepago.ConsultarPrepagoResponse/ns2:Prepago/ns3:id) = ''</bpelx:skipCondition>
+            <variables>
+              <variable name="inInvokeExtraerReportePrepago" messageType="ns1:ExtraerReportePrepagoRequestMessage"/>
+              <variable name="outInvokeExtraerReportePrepago" messageType="ns1:ExtraerReportePrepagoResponseMessage"/>
+              <variable name="MontosFuentes" messageType="ns1:ExtraerReportePrepagoResponseMessage"/>
+              <variable name="MontoDAECI" type="xsd:double"/>
+            </variables>
+            <sequence name="SequenceExtraerReporte">
+              <assign name="AssignExtraerReportePrepago">
+                <copy>
+                  <from>$inputVariable.InformePrepagoRequest/ns2:idPrepago</from>
+                  <to>$inInvokeExtraerReportePrepago.ExtraerReportePrepagoRequest/ns2:idPrepago</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeExtraerReportePrepago" bpelx:invokeAsDetail="no" partnerLink="ExtraerReportePrepago"
+                      portType="ns1:ExtraerReportePrepagoPT" operation="extraerReportePrepago"
+                      inputVariable="inInvokeExtraerReportePrepago" outputVariable="outInvokeExtraerReportePrepago"/>
+              <if name="IfResultadoExtraerReporte">
+                <documentation>
+                  <![CDATA[OK]]>
+                </documentation>
+                <condition>$outInvokeExtraerReportePrepago.ExtraerReportePrepagoResponse/ns2:Resultado/ns14:result = 'OK'</condition>
+                <sequence name="SequenceOK">
+                  <assign name="XQObtenerMontosFuentes">
+                    <bpelx:annotation>
+                      <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                    </bpelx:annotation>
+                    <copy>
+                      <from>ora:processXQuery10('../Transformations/ConsultarExtraerPrepago_Response_TO_MontosFuentes.xqy', 'outInvokeConsultarPrepago.ConsultarPrepagoResponse', $outInvokeConsultarPrepago.ConsultarPrepagoResponse, 'outInvokeExtraerReportePrepago.ExtraerReportePrepagoResponse', $outInvokeExtraerReportePrepago.ExtraerReportePrepagoResponse)</from>
+                      <to variable="MontosFuentes" part="ExtraerReportePrepagoResponse"/>
+                    </copy>
+                  </assign>
+                  <if name="IfMonedaDAECIaPrepago">
+                    <documentation>
+                      <![CDATA[Diferente]]>
+                    </documentation>
+                    <condition>$MontosFuentes.ExtraerReportePrepagoResponse/ns2:Reporte/ns4:Consolidado/ns4:Monto/ns5:moneda/ns6:Descripcion =0 and  $MontosFuentes.ExtraerReportePrepagoResponse/ns2:Reporte/ns4:Consolidado/ns4:Monto/ns5:moneda/ns6:DescripcionCorta = 'USD'</condition>
+                    <sequence name="SequenceDiferente">
+                      <scope name="ScopeConversorMonedas">
+                        <variables>
+                          <variable name="inInvokeConversorMonedas" messageType="ns16:ConversorMonedasRequestMessage"/>
+                          <variable name="outInvokeConversorMonedas"
+                                    messageType="ns16:ConversorMonedasResponseMessage"/>
+                        </variables>
+                        <sequence name="SequenceConversorMonedas">
+                          <assign name="AssignConversorMonedas">
+                            <copy>
+                              <from>$MontosFuentes.ExtraerReportePrepagoResponse/ns2:Reporte/ns4:Consolidado[1]/ns4:Monto[1]/ns5:moneda/ns6:DescripcionCorta</from>
+                              <to>$inInvokeConversorMonedas.RequestConvsorMonedas/ns17:ConvierteMonedas/ns18:monedaDe/ns6:codigoExterno</to>
+                            </copy>
+                            <copy>
+                              <from>$outInvokeConsultarPrepago.ConsultarPrepagoResponse/ns2:Prepago[1]/ns4:Monto[ns5:tipo/ns6:Descripcion = 'MONTO_PREPAGO']/ns5:moneda/ns6:DescripcionCorta</from>
+                              <to>$inInvokeConversorMonedas.RequestConvsorMonedas/ns17:ConvierteMonedas/ns18:monedaA/ns6:codigoExterno</to>
+                            </copy>
+                            <copy>
+                              <from>$MontosFuentes.ExtraerReportePrepagoResponse/ns2:Reporte/ns4:Consolidado[1]/ns4:Monto[1]/ns5:importe</from>
+                              <to>$inInvokeConversorMonedas.RequestConvsorMonedas/ns17:ConvierteMonedas/ns18:monto</to>
+                            </copy>
+                          </assign>
+                          <invoke name="InvokeConversorMonedas" partnerLink="ConvertirMonedasImportes"
+                                  portType="ns16:ConversorMonedas_PT" operation="conversorMonedas"
+                                  inputVariable="inInvokeConversorMonedas" outputVariable="outInvokeConversorMonedas"
+                                  bpelx:invokeAsDetail="no"/>
+                          <if name="IfResultadoConversorMoneda">
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <condition>$outInvokeConversorMonedas.ResponseConversorMonedas/ns17:Resultado/ns14:result = 'OK'</condition>
+                            <sequence name="SequenceOK">
+                              <assign name="AssignMontoDAECI">
+                                <copy>
+                                  <from>$outInvokeConversorMonedas.ResponseConversorMonedas/ns17:montoConvertido</from>
+                                  <to>$MontoDAECI</to>
+                                </copy>
+                              </assign>
+                            </sequence>
+                            <else>
+                              <documentation>
+                                <![CDATA[ERROR]]>
+                              </documentation>
+                              <sequence name="SequenceERROR">
+                                <assign name="AssignErrorConversor"
+                                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+      
+   <copy>
+         <from>'ERROR'</from>
+         <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:result</to>
+      </copy><copy>
+         <from>$outInvokeExtraerReportePrepago.ExtraerReportePrepagoResponse/ns2:Resultado/ns14:error</from>
+         <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:error</to>
+      </copy><copy>
+         <from>'Error al convertir la moneda'</from>
+         <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:message</to>
+      </copy></assign>
+                                <reply name="ReplyErrorConversor" variable="outputVariable"
+                                       partnerLink="informeprepago_client" portType="ns1:InformePrepagoPT"
+                                       operation="informePrepago"/>
+                                <exit name="ExitErrorConversor"/>
+                              </sequence>
+                            </else>
+                          </if>
+                        </sequence>
+                      </scope>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[Misma]]>
+                      </documentation>
+                      <assign name="AssignMontoDAECI">
+                        <copy>
+                          <from>$outInvokeConsultarPrepago.ConsultarPrepagoResponse/ns2:Prepago[1]/ns4:Cargo[ns4:Rol/ns6:Id = 21]/ns4:Monto[ns5:tipo/ns6:Descripcion = 'OTROS_CARGOS']/ns5:importe</from>
+                          <to>$MontoDAECI</to>
+                        </copy>
+                        <copy>
+                          <from>$MontosFuentes.ExtraerReportePrepagoResponse/ns2:Reporte/ns4:Consolidado[1]/ns4:Monto[1]/ns5:moneda/ns6:Descripcion</from>
+                          <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:result</to>
+                        </copy>
+                        <copy>
+                          <from>$MontosFuentes.ExtraerReportePrepagoResponse/ns2:Reporte/ns4:Consolidado[1]/ns4:Monto[1]/ns5:moneda/ns6:DescripcionCorta</from>
+                          <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:message</to>
+                        </copy>
+                      </assign>
+                    </else>
+                  </if>
+                  <if name="IfMontoFuentesMayorDAECI">
+                    <documentation>
+                      <![CDATA[SI]]>
+                    </documentation>
+                    <condition>$MontosFuentes.ExtraerReportePrepagoResponse/ns2:Reporte/ns4:Penalidad/ns4:Monto[ns5:tipo/ns6:Descripcion = 'MONTO_FUENTES' ]/ns5:importe &gt; $MontoDAECI</condition>
+                    <assign name="XQSumaFuentes">
+                      <bpelx:annotation>
+                        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                      </bpelx:annotation>
+                      <copy>
+                        <from>ora:processXQuery10('../Transformations/MontosFuentes_TO_ConsultarPrepago.xqy', 'MontosFuentes.ExtraerReportePrepagoResponse', $MontosFuentes.ExtraerReportePrepagoResponse, 'outInvokeConsultarPrepago.ConsultarPrepagoResponse', $outInvokeConsultarPrepago.ConsultarPrepagoResponse)</from>
+                        <to variable="outInvokeConsultarPrepago" part="ConsultarPrepagoResponse"/>
+                      </copy>
+                    </assign>
+                    <else>
+                      <documentation>
+                        <![CDATA[NO]]>
+                      </documentation>
+                      <assign name="XQSinFuentes">
+                        <bpelx:annotation>
+                          <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                        </bpelx:annotation>
+                        <copy>
+                          <from>ora:processXQuery10('../Transformations/MontoSinFuentes_TO_ConsultarPrepago_.xqy', 'MontosFuentes.ExtraerReportePrepagoResponse', $MontosFuentes.ExtraerReportePrepagoResponse, 'outInvokeConsultarPrepago.ConsultarPrepagoResponse', $outInvokeConsultarPrepago.ConsultarPrepagoResponse)</from>
+                          <to variable="outInvokeConsultarPrepago" part="ConsultarPrepagoResponse"/>
+                        </copy>
+                      </assign>
+                    </else>
+                  </if>
+                  <assign name="XQConsolidado">
+                    <bpelx:annotation>
+                      <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                    </bpelx:annotation>
+                    <copy>
+                      <from>ora:processXQuery10('../Transformations/ConsultarExtraerPrepago_To_ConsolidadoPago.xqy', 'outInvokeConsultarPrepago.ConsultarPrepagoResponse', $outInvokeConsultarPrepago.ConsultarPrepagoResponse)</from>
+                      <to variable="Prepago" part="ExtraerReportePrepagoResponse"/>
+                    </copy>
+                  </assign>
+                  <assign name="XQInformePrepago">
+                    <bpelx:annotation>
+                      <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                    </bpelx:annotation>
+                    <copy>
+                      <from>ora:processXQuery10('../Transformations/ConsultarPrepago_ExtraerReporte_TO_InformePrepago.xqy', 'outInvokeConsultarPrepago.ConsultarPrepagoResponse', $outInvokeConsultarPrepago.ConsultarPrepagoResponse, 'outInvokeExtraerReportePrepago.ExtraerReportePrepagoResponse', $outInvokeExtraerReportePrepago.ExtraerReportePrepagoResponse, 'Prepago.ExtraerReportePrepagoResponse', $Prepago.ExtraerReportePrepagoResponse)</from>
+                      <to variable="outputVariable" part="InformePrepagoResponse"/>
+                    </copy>
+                  </assign>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[ERROR]]>
+                  </documentation>
+                  <sequence name="SequenceERROR">
+                    <assign name="AssignErrorExtraer" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                      <copy>
+                        <from>'ERROR'</from>
+                        <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:result</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeExtraerReportePrepago.ExtraerReportePrepagoResponse/ns2:Resultado/ns14:error</from>
+                        <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:error</to>
+                      </copy>
+                      <copy>
+                        <from>'Error al extraer el reporte'</from>
+                        <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:message</to>
+                      </copy>
+                    </assign>
+                    <reply name="ReplyExtraerReporte" variable="outputVariable" partnerLink="informeprepago_client"
+                           portType="ns1:InformePrepagoPT" operation="informePrepago"/>
+                    <exit name="ExitExtraerReporte"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceERROR">
+              <assign name="AssignErrorConsultar">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:result</to>
+                </copy>
+                <copy>
+                  <from>'Error al conultar el prepago'</from>
+                  <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:message</to>
+                </copy>
+                <copy>
+                  <from>$outInvokeConsultarPrepago.ConsultarPrepagoResponse/ns2:Resultado/ns14:error</from>
+                  <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:error</to>
+                </copy>
+              </assign>
+              <reply name="ReplyErrorConsultarPrepago" variable="outputVariable" partnerLink="informeprepago_client"
+                     portType="ns1:InformePrepagoPT" operation="informePrepago"/>
+              <exit name="ExitConsultarPrepago"/>
+            </sequence>
+          </else>
+        </if>
+        <assign name="AssignResultado">
+          <copy bpelx:insertMissingToData="yes">
+            <from>'OK'</from>
+            <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:result</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>'Operación Exitosa'</from>
+            <to>$outputVariable.InformePrepagoResponse/ns2:Resultado/ns14:message</to>
+          </copy>
+        </assign>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="informeprepago_client" portType="ns1:InformePrepagoPT" operation="informePrepago" variable="outputVariable"/>
+  </sequence>
+</process>

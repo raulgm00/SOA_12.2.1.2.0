@@ -1,0 +1,12 @@
+
+  CREATE OR REPLACE VIEW VTA_PRODUCTO_FLEXCUBE AS 
+	SELECT PARAM.Codigo_Producto AS ID, 
+		nvl(PROD.Descripcion_Larga,'<Producto sin descripción') ||' ('|| PARAM.Codigo_Producto||')' AS DESCRIPCION,
+		PARAM.Revolvente AS ES_REVOLVENTE,
+		CAT_PROD.ID AS COD_PRODUCTO, 
+		CAT_PROD.COD_EXTERNO AS COD_EXTERNO		
+	FROM middle.fc_Producto_Param PARAM
+	LEFT OUTER JOIN middle.fc_v_Producto PROD ON  PARAM.Codigo_Producto = PROD.Codigo
+	LEFT OUTER JOIN CAT_PRODUCTO CAT_PROD ON PARAM.CODIGO_TIPO_SOLICITUD = CAT_PROD.COD_EXTERNO
+	WHERE
+	PARAM.Tipo_Producto='C';

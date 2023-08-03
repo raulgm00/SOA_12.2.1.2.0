@@ -1,0 +1,289 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sat Oct 08 21:17:02 CDT 2016
+  Author:  perla-osorio
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ValidarReglas"
+               targetNamespace="http://xmlns.oracle.com/Utilidades/Reglas/ValidarReglas"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/Utilidades/Reglas/ValidarReglas"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ValidarReglasSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie/ConsultarReglas"
+         xmlns:ns6="http://www.bcie.org/ReglaTareaBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/" xmlns:ns4="http://www.bcie.org/ReglaBO"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns7="http://www.bcie.org/CommonBO" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ns5="http://www.bcie.org/CatalogoBO"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns3="http://www.bcie.org/ReglaTareaMO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns8="http://www.bcie.org/ResultBO" xmlns:ns9="http://www.bcie.org/ErrorBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns10="http://www.bcie.org/Desembolso"
+         xmlns:ns11="http://www.bcie.org/DesembolsoMO" xmlns:ns12="http://www.bcie.org/AtributoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ValidarReglasSOR"
+          location="oramds:/apps/Resources/ComponentesComunes/Utilidades/ReglaTarea/V1/Wsdl/BPEL/ValidarReglasSOR.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/ValidarReglasSOR" location="../WSDLs/ValidarReglasSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="validarreglas_client" partnerLinkType="ns1:ValidarReglas" myRole="ValidarReglas_PT"/>
+    <partnerLink name="ConsultarReglas" partnerLinkType="ns2:ConsultarReglas" partnerRole="ConsultarReglas_PT"/>
+    <partnerLink name="DesembolsoService_SB" partnerLinkType="ns10:DesembolsoService_SB" partnerRole="Desembolso_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestValidarReglasMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseValidarReglasMessage"/>
+    <variable name="reglasDesembolso" messageType="ns1:requestValidarReglasMessage"/>
+    <variable name="outConsultarReglas" messageType="ns2:responseConsultarReglasMessage"/>
+    <variable name="estadoRegla" type="xsd:string"/>
+    <variable name="mensajeRegla" type="xsd:string"/>
+    <variable name="outValidarReglasDesembolso" messageType="ns10:responseValidarReglasDesembolsoMessage"/>
+    <variable name="setInstanceVariable" type="xsd:string"/>
+    <variable name="inputVariableRegla" messageType="ns1:requestValidarReglasMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence6">
+        <assign name="FaultAll">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns8:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns3:Resultado/ns8:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyFaultAll" variable="outputVariable" partnerLink="validarreglas_client"
+               portType="ns1:ValidarReglas_PT" operation="validarReglas"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ValidarReglas.wsdl) -->
+    <receive name="receiveInput" partnerLink="validarreglas_client" portType="ns1:ValidarReglas_PT" operation="validarReglas" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>concat("Tarea: ",$inputVariable.request/ns3:Parametros[ns7:name='ID_TAREA']/ns7:value)</from>
+        <to>$setInstanceVariable</to>
+      </copy>
+    </assign>
+    <forEach parallel="no" counterName="contador" name="ForEachReglaEvaluacion">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($inputVariable.request/ns3:Reglas)</finalCounterValue>
+      <scope name="Scope1">
+        <variables>
+          <variable name="inConsultarReglas" messageType="ns2:requestConsultarReglasMessage"/>
+        </variables>
+        <if name="IfConsultarRegla">
+          <documentation>
+            <![CDATA[ConsultarReglas]]>
+          </documentation>
+          <condition>string-length($inputVariable.request/ns3:Reglas[$contador]/ns4:Transaccion = '') &gt;0</condition>
+          <sequence name="Sequence1">
+            <assign name="requestConsultarReglas">
+              <copy>
+                <from>$inputVariable.request/ns3:Reglas[$contador]/ns4:Id</from>
+                <to>$inConsultarReglas.request/ns3:Regla/ns4:Id</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarReglas" bpelx:invokeAsDetail="no" partnerLink="ConsultarReglas"
+                    portType="ns2:ConsultarReglas_PT" operation="consultarReglas" inputVariable="inConsultarReglas"
+                    outputVariable="outConsultarReglas"/>
+            <if name="IfValidaOK">
+              <documentation>
+                <![CDATA[OK]]>
+              </documentation>
+              <condition>$outConsultarReglas.response/ns3:Resultado/ns8:result = 'OK'</condition>
+              <sequence name="Sequence7">
+                <assign name="responseConsultarReglas">
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$outConsultarReglas.response/ns3:Reglas/ns4:Id</from>
+                    <to>$inputVariableRegla.request/ns3:Reglas[$contador]/ns4:Id</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$outConsultarReglas.response/ns3:Reglas/ns4:Descripcion</from>
+                    <to>$inputVariableRegla.request/ns3:Reglas[$contador]/ns4:Descripcion</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$outConsultarReglas.response/ns3:Reglas/ns4:Transaccion</from>
+                    <to>$inputVariableRegla.request/ns3:Reglas[$contador]/ns4:Transaccion</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$outConsultarReglas.response/ns3:Reglas/ns4:Tipo/ns5:DescripcionCorta</from>
+                    <to>$inputVariableRegla.request/ns3:Reglas[$contador]/ns4:Tipo/ns5:DescripcionCorta</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$outConsultarReglas.response/ns3:Reglas/ns4:PosibleExceptuar</from>
+                    <to>$inputVariableRegla.request/ns3:Reglas[$contador]/ns4:PosibleExceptuar</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outConsultarReglas.response/ns3:Reglas/ns4:Estatus</from>
+                    <to>$inputVariableRegla.request/ns3:Reglas[$contador]/ns4:Estatus</to>
+                  </copy>
+                </assign>
+              </sequence>
+              <else>
+                <assign name="errorConsultarReglas">
+                  <extensionAssignOperation>
+                    <bpelx:append>
+                      <bpelx:from>$outConsultarReglas.response/ns3:Resultado/ns8:result</bpelx:from>
+                      <bpelx:to>$inputVariable.request/ns3:Reglas[$contador]/ns4:Estado/ns5:DescripcionCorta</bpelx:to>
+                    </bpelx:append>
+                  </extensionAssignOperation>
+                  <extensionAssignOperation>
+                    <bpelx:append>
+                      <bpelx:from>$outConsultarReglas.response/ns3:Resultado/ns8:message</bpelx:from>
+                      <bpelx:to>$inputVariable.request/ns3:Reglas[$contador]/ns6:Mensaje/ns5:Descripcion</bpelx:to>
+                    </bpelx:append>
+                  </extensionAssignOperation>
+                </assign>
+              </else>
+            </if>
+          </sequence>
+          <else>
+            <assign name="AssignInputVariableRegla">
+              <extensionAssignOperation>
+                <bpelx:copyList>
+                  <bpelx:from>$inputVariable.request/ns3:Reglas[$contador]</bpelx:from>
+                  <bpelx:to>$inputVariableRegla.request/ns3:Reglas[$contador]</bpelx:to>
+                </bpelx:copyList>
+              </extensionAssignOperation>
+            </assign>
+          </else>
+        </if>
+      </scope>
+    </forEach>
+    <assign name="asignarParametros">
+      <extensionAssignOperation>
+        <bpelx:copyList>
+          <bpelx:from>$inputVariable.request/ns3:Parametros</bpelx:from>
+          <bpelx:to>$inputVariableRegla.request/ns3:Parametros</bpelx:to>
+        </bpelx:copyList>
+      </extensionAssignOperation>
+    </assign>
+    <if name="IfValidaReglaDesembolso">
+      <documentation>
+        <![CDATA[ValidarReglaDesembolso]]>
+      </documentation>
+      <condition>$inputVariable.request/ns3:Parametros[ns7:name='ID_DESEMBOLSO']/ns7:value !='' and $inputVariable.request/ns3:Parametros[ns7:name='ID_TAREA']/ns7:value != '' and $inputVariable.request/ns3:Parametros[ns7:name='PROCESO']/ns7:value != ''</condition>
+      <sequence name="Sequence3">
+        <scope name="ValidarReglasDesembolso">
+          <variables>
+            <variable name="inValidarReglasDesembolso" messageType="ns10:requestValidarReglasDesembolsoMessage"/>
+          </variables>
+          <sequence name="Sequence4">
+            <assign name="XQ_Input_TO_ValidarReglasDesembolso_Request">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/XQ_Input_TO_ValidarReglasDesembolso_Request.xqy', 'inputVariable.request', $inputVariableRegla.request)</from>
+                <to variable="inValidarReglasDesembolso" part="request"/>
+              </copy>
+            </assign>
+            <invoke name="InvokeValidarReglasDesembolso" bpelx:invokeAsDetail="no" partnerLink="DesembolsoService_SB"
+                    portType="ns10:Desembolso_PT" operation="validarReglasDesembolso"
+                    inputVariable="inValidarReglasDesembolso" outputVariable="outValidarReglasDesembolso"/>
+            <if name="IfValidaOK">
+              <documentation>
+                <![CDATA[OK]]>
+              </documentation>
+              <condition>$outValidarReglasDesembolso.response/ns11:Resultado/ns8:result = 'OK'</condition>
+              <assign name="XQ_ResponseValidarReglas">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:processXQuery10('../Transformations/XQ_ResponseValidarReglas.xqy', 'outValidarReglasDesembolso.response', $outValidarReglasDesembolso.response)</from>
+                  <to variable="outputVariable" part="response"/>
+                </copy>
+              </assign>
+              <else>
+                <documentation>
+                  <![CDATA[ERROR]]>
+                </documentation>
+                <sequence name="Sequence5">
+                  <assign name="errorValidarReglasDesembolso">
+                    <copy>
+                      <from>'ERROR'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns8:result</to>
+                    </copy>
+                    <copy>
+                      <from>concat("Error en el servicio ValidarReglasDesembolso ",$outValidarReglasDesembolso.response/ns11:Resultado/ns8:message)</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns8:message</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplyErrorValidarReglasDesembolso" variable="outputVariable"
+                         partnerLink="validarreglas_client" portType="ns1:ValidarReglas_PT" operation="validarReglas"/>
+                  <exit name="ErrorValidarReglasDesembolso"/>
+                </sequence>
+              </else>
+            </if>
+          </sequence>
+        </scope>
+      </sequence>
+      <else>
+        <sequence name="Sequence2">
+          <assign name="errorParametrosRequeridos">
+            <copy>
+              <from>'ERROR'</from>
+              <to>$outputVariable.response/ns3:Resultado/ns8:result</to>
+            </copy>
+            <copy>
+              <from>'Faltan Datos Requeridos para Validar Reglas  Desembolso'</from>
+              <to>$outputVariable.response/ns3:Resultado/ns8:message</to>
+            </copy>
+          </assign>
+          <reply name="ReplyError" variable="outputVariable" partnerLink="validarreglas_client"
+                 portType="ns1:ValidarReglas_PT" operation="validarReglas"/>
+          <exit name="Exit"/>
+        </sequence>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="validarreglas_client" portType="ns1:ValidarReglas_PT" operation="validarReglas" variable="outputVariable"/>
+  </sequence>
+</process>

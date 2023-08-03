@@ -1,0 +1,540 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sun Jan 10 21:07:29 CST 2016
+  Author:  francisco-taboada
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionCondiciones_BPEL"
+               targetNamespace="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionCondiciones/ConfiguracionCondiciones_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionCondiciones/ConfiguracionCondiciones_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/ProductoService"
+         xmlns:ns3="http://www.bcie.com/ConsultarRolesPorProceso" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns4="http://www.bcie.org/ConfiguracionProcesosMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns5="http://www.bcie.org/ProductoMO"
+         xmlns:ns7="http://www.bcie.org/OperacionBO" xmlns:ns11="http://www.bcie.org/ResultBO"
+         xmlns:ns6="http://www.bcie.org/ProductoBO" xmlns:ns10="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns9="http://www.bcie.org/CatalogoBO" xmlns:ns8="http://www.bcie.org/ClienteBO"
+         xmlns:ns12="http://www.bcie.org/ErrorBO" xmlns:ns13="http://www.bcie.org/ConfiguracionProcesosBO"
+         xmlns:ns14="http://www.bcie.org/ConsultarRolesPorProcesoMO"
+         xmlns:ns15="http://www.bcie.org/ConsultarRolesPorProcesoBO" xmlns:ns16="http://www.bcie.org/CondicionService"
+         xmlns:ns17="http://www.bcie.org/CondicionMO" xmlns:ns18="http://www.bcie.org/CondicionBO"
+         xmlns:ns20="http://www.bcie.org/DocumentoBO" xmlns:ns19="http://www.bcie.org/AtributoBO"
+         xmlns:ns21="http://www.bcie.org/MatrizTCCService" xmlns:ns23="http://www.bcie.org/MatrizTCCBO"
+         xmlns:ns22="http://www.bcie.org/MatrizTCCMO" xmlns:ns26="http://www.bcie.org/TerminoBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns29="http://www.bcie.org/CommonBO"
+         xmlns:ns25="http://www.bcie.org/LineaCreditoBO" xmlns:ns30="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns27="http://www.bcie.org/ComisionBO" xmlns:ns28="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns24="http://www.bcie.org/ContratoBO" xmlns:ns32="http://www.bcie.org/ReglaBO"
+         xmlns:ns31="http://xmlns.bcie.org/ObjetoProceso/Comun/Parameter/V1"
+         xmlns:ns33="http://www.bcie.org/CrearActualizarDesembolsoSAD" xmlns:ns34="http://www.bcie.org/DesembolsoMO"
+         xmlns:ns35="http://www.bcie.org/MergeAgrupadorService">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/MatrizTCCService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/Wsdl/ADAPTER/ActualizarEstadoTCCSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/CondicionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioContrato/Condicion/V1/Wsdl/ADAPTER/ConsultarCondicionByRolSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/CondicionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioContrato/Condicion/V1/Wsdl/ADAPTER/UpsertTransaccionCondicionSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/CondicionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioContrato/Condicion/V1/Wsdl/ADAPTER/ConsultarCondicionByIdEventoSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionCondicionesSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configuracioncondiciones_bpel_client" partnerLinkType="ns1:ConfiguracionCondiciones_BPEL" myRole="ConfiguracionCondicionesPT"/>
+    <partnerLink name="ProductoServicr" partnerLinkType="ns2:ProductoServicr" partnerRole="ProductoPT"/>
+    <partnerLink name="RolService" partnerLinkType="ns3:RolService" partnerRole="ConsultarRolesPorProceso_ptt"/>
+    <partnerLink name="ActualizarEstadoTCC" partnerLinkType="ns21:ActualizarEstadoTCC"
+                 partnerRole="ActualizarEstadoTCCPT"/>
+    <partnerLink name="ConsultarCondicionByIdEvento" partnerLinkType="ns16:ConsultarCondicionByIdEvento"
+                 partnerRole="ConsultarCondicionByIdEventoPT"/>
+    <partnerLink name="UpsertTransaccionCondicion" partnerLinkType="ns16:UpsertTransaccionCondicion"
+                 partnerRole="UpsertTransaccionCondicionPT"/>
+    <partnerLink name="ConsultarCondicionByRol" partnerLinkType="ns16:ConsultarCondicionByRol"
+                 partnerRole="ConsultarCondicionbyRolPT"/>
+    <partnerLink name="MergeAgrupadorCondicion" partnerLinkType="ns35:MergeAgrupadorCondicion"
+                 partnerRole="MergeAgrupadorPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestconfiguracionCondicionesmessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseconfiguracionCondicionesmessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="inconsultarByIdOperacion" messageType="ns2:requestConsultarByIdOperacionMessage"/>
+    <variable name="outconsultarByIdOperacion" messageType="ns2:responseConsultarByIdOperacionMessage"/>
+    <variable name="outInvokeUpsertTransaccionCondicion" messageType="ns16:UpsertTransaccionCondicionResponseMessage"/>
+   
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence3">
+        <assign name="Assign_Error">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns11:result</to>
+          </copy>
+          <copy>
+            <from>'Error en ConfiguracionCondiciones'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns11:message</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns4:Resultado/ns11:error/ns12:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="Reply_Error" variable="outputVariable" partnerLink="configuracioncondiciones_bpel_client"
+               portType="ns1:ConfiguracionCondicionesPT" operation="configuracionCondiciones"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionCondiciones_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="configuracioncondiciones_bpel_client" portType="ns1:ConfiguracionCondicionesPT" operation="configuracionCondiciones" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignFlowName">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion= ",$inputVariable.request/ns4:idOperacion))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <assign name="AssignInConsultarProducto">
+      <copy>
+        <from>$inputVariable.request/ns4:idOperacion</from>
+        <to>$inconsultarByIdOperacion.request/ns5:idOperacion</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeProducto" partnerLink="ProductoServicr" portType="ns2:ProductoPT"
+            operation="consultarByIdOperacion" inputVariable="inconsultarByIdOperacion"
+            outputVariable="outconsultarByIdOperacion" bpelx:invokeAsDetail="no"/>
+    <if name="IfRespuesta">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>$outconsultarByIdOperacion.response/ns5:Resultado/ns11:result='OK'</condition>
+      <sequence name="Sequence1">
+        <scope name="ScopeRol">
+          <variables>
+            <variable name="InRol" messageType="ns3:requestMessage"/>
+            <variable name="OutRol" messageType="ns3:replyMessage"/>
+            <variable name="CountRol" type="xsd:unsignedInt"/>
+            <variable name="outInvokeConsultarCondicionByIdEvento"
+                      messageType="ns16:ConsultarCondicionByIdEventoResponseMessage"/>
+            <variable name="outInvokeUpsertTransaccionCondicion"
+                      messageType="ns16:UpsertTransaccionCondicionResponseMessage"/>
+            <variable name="outInvokeConsultarCondicionByRol"
+                      messageType="ns16:ConsultarCondicionbyRolResponseMessage"/>
+          </variables>
+          <sequence name="SequenceConsultarRol">
+            <assign name="AssigninRol">
+              <copy>
+                <from>9</from>
+                <to>$InRol.request/ns14:Proceso/ns15:idProceso</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeRol" partnerLink="RolService"
+                    portType="ns3:ConsultarRolesPorProceso_ptt" operation="ConsultarRolesPorProceso"
+                    inputVariable="InRol" outputVariable="OutRol" bpelx:invokeAsDetail="no"/>
+            <if name="IfOKConsultarRolPorProceso">
+              <documentation>
+                <![CDATA[OK]]>
+              </documentation>
+              <condition>$OutRol.response/ns14:Result/ns11:message = 'Operacion Exitosa'</condition>
+              <sequence name="SequenceOKAgrupadorEvento">
+                <if name="IfAgrupadorEvento">
+                  <documentation>
+                    <![CDATA[Evento]]>
+                  </documentation>
+                  <condition>$inputVariable.request/ns4:idEventoCondicion != ''</condition>
+                  <scope name="ScopeConsultarCondiciones">
+                    <variables>
+                      <variable name="inInvokeConsultarCondicionByIdEvento"
+                                messageType="ns16:ConsultarCondicionByIdEventoRequestMessage"/>
+                    </variables>
+                    <sequence name="SequenceConsultarCondiciones">
+                      <assign name="AssignOperacionEvento">
+                        <copy>
+                          <from>$inputVariable.request/ns4:idOperacion</from>
+                          <to>$inInvokeConsultarCondicionByIdEvento.request/ns17:idOperacion</to>
+                        </copy>
+                        <copy>
+                          <from>$inputVariable.request/ns4:idEventoCondicion</from>
+                          <to>$inInvokeConsultarCondicionByIdEvento.request/ns17:idEventoCondicion</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeConsultarCondicionByIdEvento" partnerLink="ConsultarCondicionByIdEvento"
+                              portType="ns16:ConsultarCondicionByIdEventoPT" operation="ConsultarCondicionByIdEvento"
+                              inputVariable="inInvokeConsultarCondicionByIdEvento"
+                              outputVariable="outInvokeConsultarCondicionByIdEvento" bpelx:invokeAsDetail="no"/>
+                      <if name="IfOkConsultarCondicionByEvento">
+                        <documentation>
+                          <![CDATA[OK]]>
+                        </documentation>
+                        <condition>$outInvokeConsultarCondicionByIdEvento.response/ns17:Resultado/ns11:result = 'OK'</condition>
+                        <scope name="ScopeUpsertTransaccinCondicion">
+                          <variables>
+                            <variable name="inInvokeUpesertTransaccionCondicion"
+                                      messageType="ns16:UpsertTransaccionCondicionRequestMessage"/>
+                          </variables>
+                          <sequence name="SequenceUpsertTransaccionCondicion">
+                            <assign name="InUpsertTransaccion">
+                              <bpelx:annotation>
+                                <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+                              </bpelx:annotation>
+                              <copy>
+                                <from>ora:doXSLTransformForDoc("../Transformations/ConsultarCondicionByIdEvento_TO_UpsertTransaccionCondicion_Request.xsl", $outInvokeConsultarCondicionByIdEvento.response)</from>
+                                <to variable="inInvokeUpesertTransaccionCondicion" part="request"/>
+                              </copy>
+                            </assign>
+                            <if name="IfCondiciones">
+                              <condition>count($inInvokeUpesertTransaccionCondicion.request/ns17:transaccionCondicion/ns18:Condicion) &gt; 0</condition>
+                              <sequence>
+                                <invoke name="InvokeUpsertTransaccionCondicion" bpelx:invokeAsDetail="no"
+                                        partnerLink="UpsertTransaccionCondicion"
+                                        portType="ns16:UpsertTransaccionCondicionPT"
+                                        operation="UpsertTransaccionCondicion"
+                                        inputVariable="inInvokeUpesertTransaccionCondicion"
+                                        outputVariable="outInvokeUpsertTransaccionCondicion"/>
+                                <if name="IfOKUpsertTransaccion">
+                                  <documentation>
+                                    <![CDATA[OK]]>
+                                  </documentation>
+                                  <condition>$outInvokeUpsertTransaccionCondicion.response/ns17:Resultado/ns11:result = 'OK'</condition>
+                                  <sequence>
+                                    <assign name="assignAgrupador">
+                                      <copy>
+                                        <from>'AGRUPADOR'</from>
+                                        <to>$outputVariable.response/ns4:configuracionCondiciones/ns31:ParameterType/ns31:parameterName</to>
+                                      </copy>
+                                      <copy>
+                                        <from>$outInvokeUpsertTransaccionCondicion.response/ns17:idAgrupador</from>
+                                        <to>$outputVariable.response/ns4:configuracionCondiciones/ns31:ParameterType/ns31:parameterValue</to>
+                                      </copy>
+                                    </assign>
+                                    <assign name="Assigntrue">
+                                      <copy>
+                                        <from>'true'</from>
+                                        <to>$outputVariable.response/ns4:configuracionCondiciones/ns13:requiereValidarCondiciones</to>
+                                      </copy>
+                                      <copy>
+                                        <from>'OK'</from>
+                                        <to>$outputVariable.response/ns4:Resultado/ns11:result</to>
+                                      </copy>
+                                      <copy>
+                                        <from>'Operacion exitosa'</from>
+                                        <to>$outputVariable.response/ns4:Resultado/ns11:message</to>
+                                      </copy>
+                                    </assign>
+                                  </sequence>
+                                  <else>
+                                    <documentation>
+                                      <![CDATA[ERROR]]>
+                                    </documentation>
+                                    <assign name="assignError">
+                                      <copy>
+                                        <from>$outInvokeUpsertTransaccionCondicion.response/ns17:Resultado</from>
+                                        <to>$outputVariable.response/ns4:Resultado</to>
+                                      </copy>
+                                    </assign>
+                                  </else>
+                                </if>
+                              </sequence>
+                              <else>
+                                <assign name="NoValidacion">
+                                  <copy>
+                                    <from>false()</from>
+                                    <to>$outputVariable.response/ns4:configuracionCondiciones/ns13:requiereValidarCondiciones</to>
+                                  </copy>
+                                  <copy>
+                                    <from>'OK'</from>
+                                    <to>$outputVariable.response/ns4:Resultado/ns11:result</to>
+                                  </copy>
+                                  <copy>
+                                    <from>'Exito'</from>
+                                    <to>$outputVariable.response/ns4:Resultado/ns11:message</to>
+                                  </copy>
+                                </assign>
+                              </else>
+                            </if>
+                          </sequence>
+                        </scope>
+                        <else>
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <assign name="assignError">
+                            <copy>
+                              <from>$outInvokeConsultarCondicionByIdEvento.response/ns17:Resultado</from>
+                              <to>$outputVariable.response/ns4:Resultado</to>
+                            </copy>
+                          </assign>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                  <else>
+                    <documentation>
+                      <![CDATA[Agrupador]]>
+                    </documentation>
+                    <scope name="ScopeConsultarCondicionByRol">
+                      <variables>
+                        <variable name="inInvokeConsultarCondicionByRol"
+                                  messageType="ns16:ConsultarCondicionbyRolRequestMessage"/>
+                      </variables>
+                      <sequence name="SequenceConsultarCondicionByRol">
+                        <assign name="assignAgrupador">
+                          <copy>
+                            <from>$inputVariable.request/ns4:idOperacion</from>
+                            <to>$inInvokeConsultarCondicionByRol.request/ns17:idOperacion</to>
+                          </copy>
+                          <copy>
+                            <from>$inputVariable.request/ns4:Agrupador</from>
+                            <to>$inInvokeConsultarCondicionByRol.request/ns17:Agrupador</to>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeConsultarCondicionByRol" bpelx:invokeAsDetail="no"
+                                partnerLink="ConsultarCondicionByRol" portType="ns16:ConsultarCondicionbyRolPT"
+                                operation="consultarCondicionbyRol" inputVariable="inInvokeConsultarCondicionByRol"
+                                outputVariable="outInvokeConsultarCondicionByRol"/>
+                        <if name="IfOKConsultarCondicionByROl">
+                          <documentation>
+                            <![CDATA[OK]]>
+                          </documentation>
+                          <condition>$outInvokeConsultarCondicionByRol.response/ns17:Resultado/ns11:message = 'Consulta realizada existosamente'</condition>
+                          <scope name="ScopeUpsertTransaccionCondicion">
+                            <variables>
+                              <variable name="inInvokeUpsertTransaccionCondicion"
+                                        messageType="ns16:UpsertTransaccionCondicionRequestMessage"/>
+                            </variables>
+                            <sequence name="SequenceUpsertTransaccionCondicion">
+                              <assign name="inUpertTransaccion">
+                                <bpelx:annotation>
+                                  <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                                </bpelx:annotation>
+                                <copy>
+                                  <from>ora:processXQuery10('../Transformations/ConsultarCondicionByRol_TO_UpsertTransaccionCondicion_Request.xqy', 'outInvokeConsultarCondicionByRol.response', $outInvokeConsultarCondicionByRol.response, 'inputVariable.request', $inputVariable.request)</from>
+                                  <to variable="inInvokeUpsertTransaccionCondicion" part="request"/>
+                                </copy>
+                              </assign>
+                              <invoke name="InvokeUpsertTransaccionCondicion" bpelx:invokeAsDetail="no"
+                                      partnerLink="UpsertTransaccionCondicion"
+                                      portType="ns16:UpsertTransaccionCondicionPT"
+                                      operation="UpsertTransaccionCondicion"
+                                      inputVariable="inInvokeUpsertTransaccionCondicion"
+                                      outputVariable="outInvokeUpsertTransaccionCondicion"/>
+                              <if name="IfOKUpsertTransaccion">
+                                <documentation>
+                                  <![CDATA[OK]]>
+                                </documentation>
+                                <condition>$outInvokeUpsertTransaccionCondicion.response/ns17:Resultado/ns11:result = 'OK'</condition>
+                                <sequence name="SequenceAssignAgrupador">
+                                  <assign name="assignAgupador">
+                                    <copy>
+                                      <from>'AGRUPADOR'</from>
+                                      <to>$outputVariable.response/ns4:configuracionCondiciones/ns31:ParameterType/ns31:parameterName</to>
+                                    </copy>
+                                    <copy>
+                                      <from>$outInvokeUpsertTransaccionCondicion.response/ns17:idAgrupador</from>
+                                      <to>$outputVariable.response/ns4:configuracionCondiciones/ns31:ParameterType/ns31:parameterValue</to>
+                                    </copy>
+                                  </assign>
+                                  <if name="IfOKConsultarCondicionByRol">
+                                    <documentation>
+                                      <![CDATA[True]]>
+                                    </documentation>
+                                    <condition>$outInvokeConsultarCondicionByRol.response/ns17:Resultado/ns11:message = 'Consulta realizada existosamente'</condition>
+                                    <assign name="assignTrue">
+                                      <copy>
+                                        <from>'true'</from>
+                                        <to>$outputVariable.response/ns4:configuracionCondiciones/ns13:requiereValidarCondiciones</to>
+                                      </copy>
+                                      <copy>
+                                        <from>'OK'</from>
+                                        <to>$outputVariable.response/ns4:Resultado/ns11:result</to>
+                                      </copy>
+                                      <copy>
+                                        <from>'Operacion exitosa'</from>
+                                        <to>$outputVariable.response/ns4:Resultado/ns11:message</to>
+                                      </copy>
+                                    </assign>
+                                    <else>
+                                      <documentation>
+                                        <![CDATA[False]]>
+                                      </documentation>
+                                      <assign name="assignFalse">
+                                        <copy>
+                                          <from>'false'</from>
+                                          <to>$outputVariable.response/ns4:configuracionCondiciones/ns13:requiereValidarCondiciones</to>
+                                        </copy>
+                                      </assign>
+                                    </else>
+                                  </if>
+                                </sequence>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[ERROR]]>
+                                  </documentation>
+                                  <assign name="assignError">
+                                    <copy>
+                                      <from>$outInvokeUpsertTransaccionCondicion.response/ns17:Resultado</from>
+                                      <to>$outputVariable.response/ns4:Resultado</to>
+                                    </copy>
+                                  </assign>
+                                </else>
+                              </if>
+                            </sequence>
+                          </scope>
+                          <else>
+                            <documentation>
+                              <![CDATA[ERROR]]>
+                            </documentation>
+                            <assign name="assignError">
+                              <copy>
+                                <from>$outInvokeConsultarCondicionByRol.response/ns17:Resultado</from>
+                                <to>$outputVariable.response/ns4:Resultado</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                      </sequence>
+                    </scope>
+                  </else>
+                </if>
+                <assign name="AddRoles">
+                  <bpelx:annotation>
+                    <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+                  </bpelx:annotation>
+                  <copy>
+                    <from>ora:doXSLTransformForDoc("../Transformations/OutConsultarRoles_TO_Output.xsl", $outputVariable.response, "OutRol.response", $OutRol.response)</from>
+                    <to variable="outputVariable" part="response"/>
+                  </copy>
+                </assign>
+                <scope name="ScopeMergeAgrupador">
+                  <variables>
+                    <variable name="inMergeAgrupador" messageType="ns35:MergeAgrupadorRequestMessage"/>
+                    <variable name="outMergeAgrupador" messageType="ns35:MergeAgrupadorResponseMessage"/>
+                  </variables>
+                  <faultHandlers>
+                    <catchAll>
+                      <empty name="Continua"/>
+                    </catchAll>
+                  </faultHandlers>
+                  <sequence name="Sequence4">
+                    <assign name="AssignMergeAgrupador">
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$inputVariable.request/ns4:instanciaProceso</from>
+                        <to>$inMergeAgrupador.MergeAgrupadorRequest/ns17:instanciaProceso</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$outputVariable.response/ns4:configuracionCondiciones/ns31:ParameterType[ns31:parameterName = 'AGRUPADOR']/ns31:parameterValue</from>
+                        <to>$inMergeAgrupador.MergeAgrupadorRequest/ns17:Agrupador</to>
+                      </copy>
+                    </assign>
+                    <if name="IfDatosCorrectos">
+                      <documentation>
+                        <![CDATA[DatosCorrectos]]>
+                      </documentation>
+                      <condition>$inMergeAgrupador.MergeAgrupadorRequest/ns17:Agrupador &gt; 0 and $inMergeAgrupador.MergeAgrupadorRequest/ns17:instanciaProceso &gt; 0</condition>
+                      <invoke name="InvokeMergeAgrupador" bpelx:invokeAsDetail="no"
+                              partnerLink="MergeAgrupadorCondicion" portType="ns35:MergeAgrupadorPT"
+                              operation="mergeAgrupador" inputVariable="inMergeAgrupador"
+                              outputVariable="outMergeAgrupador"/>
+                      <else>
+                        <documentation>
+                          <![CDATA[Continua]]>
+                        </documentation>
+                        <empty name="Continua"/>
+                      </else>
+                    </if>
+                  </sequence>
+                </scope>
+                <assign name="assignResponse">
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$outconsultarByIdOperacion.response/ns5:Producto</from>
+                    <to>$outputVariable.response/ns4:configuracionCondiciones/ns13:producto</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$outconsultarByIdOperacion.response/ns5:Operacion</from>
+                    <to>$outputVariable.response/ns4:configuracionCondiciones/ns13:operacion</to>
+                  </copy>
+                </assign>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[ERROR]]>
+                </documentation>
+                <assign name="assignError">
+                  <copy>
+                    <from>$OutRol.response/ns14:Result</from>
+                    <to>$outputVariable.response/ns4:Resultado</to>
+                  </copy>
+                </assign>
+              </else>
+            </if>
+          </sequence>
+        </scope>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[Error]]>
+        </documentation>
+        <assign name="AssignError">
+          <copy>
+            <from>$outconsultarByIdOperacion.response/ns5:Resultado/ns11:error</from>
+            <to>$outputVariable.response/ns4:Resultado/ns11:error</to>
+          </copy>
+        </assign>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configuracioncondiciones_bpel_client" portType="ns1:ConfiguracionCondicionesPT" operation="configuracionCondiciones" variable="outputVariable"/>
+  </sequence>
+</process>

@@ -1,0 +1,453 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Dec 02 16:26:49 CST 2016
+  Author:  perla-osorio
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="PropagarTransferenciasRecursos"
+               targetNamespace="http://xmlns.oracle.com/DominioDesembolso/PropagarTransferenciasRecursos/PropagarTransferenciasRecursos"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioDesembolso/PropagarTransferenciasRecursos/PropagarTransferenciasRecursos"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http//www.bcie.org/PropagarTransferenciaRecursosSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/ConsultarDesembolsosByIdSAD"
+         xmlns:ns3="http://www.bcie.org/ConsultarInformacionReglaById"
+         xmlns:ns4="http://www.bcie.org/CrearTransferenciaFLEXCUBESAD" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns5="http://www.bcie.org/DesembolsoMO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns15="http://www.bcie.org/ResultBO" xmlns:ns9="http://www.bcie.org/CommonBO"
+         xmlns:ns12="http://www.bcie.org/MatrizTCCBO" xmlns:ns11="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns7="http://www.bcie.org/ProductoBO" xmlns:ns10="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns13="http://www.bcie.org/ComisionBO" xmlns:ns8="http://www.bcie.org/CatalogoBO"
+         xmlns:ns6="http://www.bcie.org/DesembolsoBO" xmlns:ns14="http://www.bcie.org/AtributoBO"
+         xmlns:ns16="http://www.bcie.org/ErrorBO" xmlns:ns22="http://www.bcie.org/TerminoBO"
+         xmlns:ns21="http://www.bcie.org/ReglaBO" xmlns:ns20="http://www.bcie.org/OperacionBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns18="http://www.bcie.org/CondicionBO"
+         xmlns:ns23="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns19="http://www.bcie.org/DocumentoBO"
+         xmlns:ns24="http://www.bcie.org/ContratoBO" xmlns:ns17="http://www.bcie.org/ClienteBO"
+         xmlns:ns25="http://www.bcie.org/ConsultarTransferenciasRecursosByIdSAD"
+         xmlns:ns26="http/www.bcie.org/CrearActualizarTransferenciaRecursosSAD">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http//www.bcie.org/PropagarTransferenciaRecursosSOR"
+          location="../WSDLs/PropagarTransferenciaRecursosSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="propagartransferenciasrecursos_client" partnerLinkType="ns1:PropagarTransferenciasRecursos" myRole="PropagarTransferenciaRecursos_PT"/>
+    <partnerLink name="ConsultarDesembolsoById_SB" partnerLinkType="ns2:ConsultarDesembolsoById_SB"
+                 partnerRole="ConsultarDesembolsosById_PT"/>
+    <partnerLink name="ConsultarInformacionDesembolso_SB" partnerLinkType="ns3:ConsultarInformacionDesembolso_SB"
+                 partnerRole="ConsultarInformacionReglaById_PT"/>
+    <partnerLink name="CrearTransferenciaFLEXCUBE" partnerLinkType="ns4:CrearTransferenciaFLEXCUBE"
+                 partnerRole="CrearTransferenciaFLEXCUBE_PT"/>
+    <partnerLink name="ConsultarTransferenciasRecursos_SB" partnerLinkType="ns25:ConsultarTransferenciasRecursos_SB"
+                 partnerRole="ConsultarTransferenciasRecursosById_PT"/>
+    <partnerLink name="CrearActualizarTransferenciaRecursos" partnerLinkType="ns26:CrearActualizarTransferenciaRecursos"
+                 partnerRole="CrearActualizarTransferenciaRecursosPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestPropagarTransferenciaRecursosMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responsePropagarTransferenciaRecursosMessage"/>
+    <variable name="outConsultarDesembolsoById" messageType="ns2:responseConsultarDesembolsosByIdMessage"/>
+    <variable name="setTitleVariable" type="xsd:string"/>
+    <variable name="outConsultarInformacionDesembolso" messageType="ns3:responseConsultarInformacionReglaByIdMessage"/>
+    <variable name="outCrearTransferenciaFLEXCUBE" messageType="ns4:responseCrearTransferenciaFLEXCUBEMessage"/>
+    <variable name="outConsultarTransferenciasRecursos"
+              messageType="ns25:responseConsultarTransferenciasRecursosByIdMessage"/>
+    <variable name="outCrearActualizarTransferenciaRecurso"
+              messageType="ns26:responseCrearActualizarTransferenciaRecursosMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence11">
+        <assign name="allFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns5:Resultado/ns15:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns5:Resultado/ns15:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyAllFault" variable="outputVariable" partnerLink="propagartransferenciasrecursos_client"
+               portType="ns1:PropagarTransferenciaRecursos_PT" operation="propagarTransferenciaRecursos"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in PropagarTransferenciasRecursos.wsdl) -->
+    <receive name="receiveInput" partnerLink="propagartransferenciasrecursos_client" portType="ns1:PropagarTransferenciaRecursos_PT" operation="propagarTransferenciaRecursos" variable="inputVariable" createInstance="yes"/>
+    <validate name="Validate" variables="inputVariable"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idDesembolso: ",string($inputVariable.request/ns5:idDesembolso)))</from>
+        <to>$setTitleVariable</to>
+      </copy>
+    </assign>
+    <scope name="ConsultarDesembolsoById_SB">
+      <variables>
+        <variable name="inConsultarDesembolsoById" messageType="ns2:requestConsultarDesembolsosByIdMessage"/>
+      </variables>
+      <sequence name="Sequence1">
+        <assign name="requestConsultarDesembolsoById">
+          <copy>
+            <from>$inputVariable.request/ns5:idDesembolso</from>
+            <to>$inConsultarDesembolsoById.request/ns5:idContratoDesembolso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarDesembolsoById_SB" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarDesembolsoById_SB" portType="ns2:ConsultarDesembolsosById_PT"
+                operation="ConsultarDesembolsosById" inputVariable="inConsultarDesembolsoById"
+                outputVariable="outConsultarDesembolsoById"/>
+        <if name="IfValidaOK">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outConsultarDesembolsoById.response/ns5:Resultado/ns15:result = 'OK'</condition>
+          <empty name="OK"/>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="Sequence4">
+              <assign name="errorConsultarDesembolsoById">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns5:Resultado/ns15:result</to>
+                </copy>
+                <copy>
+                  <from>concat("Error en el servicio ConsultarDesembolso: ",$outConsultarDesembolsoById.response/ns5:Resultado/ns15:message)</from>
+                  <to>$outputVariable.response/ns5:Resultado/ns15:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyERROR" variable="outputVariable" partnerLink="propagartransferenciasrecursos_client"
+                     portType="ns1:PropagarTransferenciaRecursos_PT" operation="propagarTransferenciaRecursos"/>
+              <exit name="ERROR"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ConsultarInformacionDesmebolso">
+      <variables>
+        <variable name="inConsultarInformacionDesembolso"
+                  messageType="ns3:requestConsultarInformacionReglaByIdMessage"/>
+      </variables>
+      <sequence name="Sequence2">
+        <assign name="requestConsultarInformacionDesembolso">
+          <copy>
+            <from>$inputVariable.request/ns5:idDesembolso</from>
+            <to>$inConsultarInformacionDesembolso.request/ns5:idDesembolso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarInformacionDesembolso_SB" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarInformacionDesembolso_SB" portType="ns3:ConsultarInformacionReglaById_PT"
+                operation="consultarInformacionReglaById" inputVariable="inConsultarInformacionDesembolso"
+                outputVariable="outConsultarInformacionDesembolso"/>
+        <if name="IfValidaOK">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outConsultarInformacionDesembolso.response/ns5:Resultado/ns15:result = 'OK'</condition>
+          <empty name="OK"/>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="Sequence3">
+              <assign name="errorConsultarInformacionDesembolso">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns5:Resultado/ns15:result</to>
+                </copy>
+                <copy>
+                  <from>concat("Error en el servicio ConsultarInformacionDesembolso: ",$outConsultarInformacionDesembolso.response/ns5:Resultado/ns15:message)</from>
+                  <to>$outputVariable.response/ns5:Resultado/ns15:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyERROR" variable="outputVariable" partnerLink="propagartransferenciasrecursos_client"
+                     portType="ns1:PropagarTransferenciaRecursos_PT" operation="propagarTransferenciaRecursos"/>
+              <exit name="ERROR"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ConsultarTransferenciasRecursos_SB">
+      <variables>
+        <variable name="inConsultarTransferenciasRecursos"
+                  messageType="ns25:requestConsultarTransferenciasRecursosByIdMessage"/>
+      </variables>
+      <sequence name="Sequence6">
+        <assign name="requestConsultarTransferenciasRecursos">
+          <copy>
+            <from>$inputVariable.request/ns5:idDesembolso</from>
+            <to>$inConsultarTransferenciasRecursos.request/ns5:idDesembolso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarTransferenciasRecursos_SB" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarTransferenciasRecursos_SB" portType="ns25:ConsultarTransferenciasRecursosById_PT"
+                operation="consultarTransferenciasRecursosById" inputVariable="inConsultarTransferenciasRecursos"
+                outputVariable="outConsultarTransferenciasRecursos"/>
+        <if name="IfValidaOK">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outConsultarTransferenciasRecursos.response/ns5:Resultado/ns15:result = 'OK'</condition>
+          <empty name="OK"/>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="Sequence7">
+              <assign name="errorConsultarTransferenciasRecursos">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns5:Resultado/ns15:result</to>
+                </copy>
+                <copy>
+                  <from>concat("Error en el servicio ConsultarTransferenciasRecursos: ",$outConsultarTransferenciasRecursos.response/ns5:Resultado/ns15:message)</from>
+                  <to>$outputVariable.response/ns5:Resultado/ns15:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyERROR" variable="outputVariable" partnerLink="propagartransferenciasrecursos_client"
+                     portType="ns1:PropagarTransferenciaRecursos_PT" operation="propagarTransferenciaRecursos"/>
+              <exit name="ERROR"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="CrearTransferenciaFLEXCUBE_SB">
+      <variables>
+        <variable name="inCrearTransferenciaFLEXCUBE" messageType="ns4:requestCrearTransferenciaFLEXCUBEMessage"/>
+      </variables>
+      <sequence name="Sequence5">
+        <if name="IfTransferenciasRecursos">
+          <documentation>
+            <![CDATA[TieneRegistros]]>
+          </documentation>
+          <condition>count($outConsultarTransferenciasRecursos.response/ns5:ContratoDesembolso/ns6:TransferenciaRecursos)&gt;0</condition>
+          <sequence>
+            <assign name="asignaUsuario">
+              <copy bpelx:insertMissingToData="yes">
+                <from>string(ids:getUserProperty($outConsultarDesembolsoById.response/ns5:ContratoDesembolso/ns6:usuario, 'employeenumber'))</from>
+                <to>$outConsultarDesembolsoById.response/ns5:ContratoDesembolso/ns6:usuario</to>
+              </copy>
+            </assign>
+            <assign name="XQ_CrearTransferenciaFLEXCUBE">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/XQ_CrearTransferenciaFLEXCUBExqy', 'outConsultarDesembolsoById.response', $outConsultarDesembolsoById.response, 'outConsultarInformacionDesembolso.response', $outConsultarInformacionDesembolso.response)</from>
+                <to variable="inCrearTransferenciaFLEXCUBE" part="request"/>
+              </copy>
+            </assign>
+            <forEach parallel="no" counterName="contador" name="ForEachTransferencia">
+              <startCounterValue>1</startCounterValue>
+              <finalCounterValue>count($outConsultarTransferenciasRecursos.response/ns5:ContratoDesembolso/ns6:TransferenciaRecursos)</finalCounterValue>
+              <scope name="Scope3">
+                <variables>
+                  <variable name="inCrearActualizarTransferenciaRecurso"
+                            messageType="ns26:requestCrearActualizarTransferenciaRecursosMessage"/>
+                </variables>
+                <sequence name="Sequence9">
+                  <if name="IfTieneBHQ">
+                    <documentation>
+                      <![CDATA[SinBHQ]]>
+                    </documentation>
+                    <condition>$outConsultarTransferenciasRecursos.response/ns5:ContratoDesembolso/ns6:TransferenciaRecursos[$contador]/ns6:idFacturador = ''</condition>
+                    <sequence>
+                      <assign name="asignarDatosTransferencia">
+                        <extensionAssignOperation>
+                          <bpelx:copyList>
+                            <bpelx:from>$outConsultarTransferenciasRecursos.response/ns5:ContratoDesembolso/ns6:Transferencia</bpelx:from>
+                            <bpelx:to>$inCrearTransferenciaFLEXCUBE.request/ns5:ContratoDesembolso/ns6:Transferencia</bpelx:to>
+                          </bpelx:copyList>
+                        </extensionAssignOperation>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>$outConsultarTransferenciasRecursos.response/ns5:ContratoDesembolso/ns6:TransferenciaRecursos[$contador]/ns6:idTransferencia</from>
+                          <to>$inCrearTransferenciaFLEXCUBE.request/ns5:ContratoDesembolso/ns6:Transferencia/ns6:idTransferencia</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>$outConsultarTransferenciasRecursos.response/ns5:ContratoDesembolso/ns6:TransferenciaRecursos[$contador]/ns6:idDesembolso</from>
+                          <to>$inCrearTransferenciaFLEXCUBE.request/ns5:ContratoDesembolso/ns6:Transferencia/ns6:idDesembolso</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>$outConsultarTransferenciasRecursos.response/ns5:ContratoDesembolso/ns6:TransferenciaRecursos[$contador]/ns6:idFacturador</from>
+                          <to>$inCrearTransferenciaFLEXCUBE.request/ns5:ContratoDesembolso/ns6:Transferencia/ns6:idFacturador</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>'TRANSFERENCIA_BANCARIA'</from>
+                          <to>$inCrearTransferenciaFLEXCUBE.request/ns5:ContratoDesembolso/ns6:Transferencia/ns6:Monto/ns9:tipo/ns8:DescripcionCorta</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>$outConsultarTransferenciasRecursos.response/ns5:ContratoDesembolso/ns6:TransferenciaRecursos[$contador]/ns6:Monto[ns9:tipo/ns8:DescripcionCorta='DESEMBOLSADO']/ns9:importe</from>
+                          <to>$inCrearTransferenciaFLEXCUBE.request/ns5:ContratoDesembolso/ns6:Transferencia/ns6:Monto/ns9:importe</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>$outConsultarDesembolsoById.response/ns5:ContratoDesembolso/ns6:monto[ns9:tipo/ns8:DescripcionCorta='DESEMBOLSO']/ns9:moneda/ns8:codigoExterno</from>
+                          <to>$inCrearTransferenciaFLEXCUBE.request/ns5:ContratoDesembolso/ns6:Transferencia/ns6:Monto/ns9:moneda/ns8:codigoExterno</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>'FT05'</from>
+                          <to>$inCrearTransferenciaFLEXCUBE.request/ns5:ContratoDesembolso/ns6:Transferencia/ns6:tipoMensaje</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>$outConsultarTransferenciasRecursos.response/ns5:ContratoDesembolso/ns6:TransferenciaRecursos[$contador]/ns6:numeroCuenta</from>
+                          <to>$inCrearTransferenciaFLEXCUBE.request/ns5:ContratoDesembolso/ns6:Transferencia/ns6:numeroCuenta</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>'TR'</from>
+                          <to>$inCrearTransferenciaFLEXCUBE.request/ns5:ContratoDesembolso/ns6:Transferencia/ns6:estado</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>'ND'</from>
+                          <to>$inCrearTransferenciaFLEXCUBE.request/ns5:ContratoDesembolso/ns6:Transferencia/ns6:Beneficiario/ns6:beneficiario</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>'ND'</from>
+                          <to>$inCrearTransferenciaFLEXCUBE.request/ns5:ContratoDesembolso/ns6:Transferencia/ns6:Beneficiario/ns6:direccion</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeCrearTransferenciaFLEXCUBE_SB" bpelx:invokeAsDetail="no"
+                              partnerLink="CrearTransferenciaFLEXCUBE" portType="ns4:CrearTransferenciaFLEXCUBE_PT"
+                              operation="crearTransferenciaFLEXCUBE" inputVariable="inCrearTransferenciaFLEXCUBE"
+                              outputVariable="outCrearTransferenciaFLEXCUBE"/>
+                      <if name="IfValidaOK">
+                        <documentation>
+                          <![CDATA[OK]]>
+                        </documentation>
+                        <condition>$outCrearTransferenciaFLEXCUBE.response/ns5:Resultado/ns15:result = 'OK'</condition>
+                        <sequence name="Sequence10">
+                          <assign name="requestCrearActualizarTransferenciasRecursos">
+                            <copy>
+                              <from>$outConsultarTransferenciasRecursos.response/ns5:ContratoDesembolso/ns6:TransferenciaRecursos[$contador]/ns6:idTransferencia</from>
+                              <to>$inCrearActualizarTransferenciaRecurso.request/ns5:TransferenciaRecursos/ns6:idTransferencia</to>
+                            </copy>
+                            <copy>
+                              <from>$outCrearTransferenciaFLEXCUBE.response/ns5:ContratoDesembolso/ns6:Transferencia/ns6:idFacturador</from>
+                              <to>$inCrearActualizarTransferenciaRecurso.request/ns5:TransferenciaRecursos/ns6:idFacturador</to>
+                            </copy>
+                            <copy>
+                              <from>$outConsultarDesembolsoById.response/ns5:ContratoDesembolso/ns6:fechaDisponibilidadFondos</from>
+                              <to>$inCrearActualizarTransferenciaRecurso.request/ns5:TransferenciaRecursos/ns6:fechaEfectiva</to>
+                            </copy>
+                          </assign>
+                          <invoke name="InvokeCrearActualizarTransferenciaRecurso_SB" bpelx:invokeAsDetail="no"
+                                  partnerLink="CrearActualizarTransferenciaRecursos"
+                                  portType="ns26:CrearActualizarTransferenciaRecursosPT"
+                                  operation="crearActualizarTransferenciaRecursos"
+                                  inputVariable="inCrearActualizarTransferenciaRecurso"
+                                  outputVariable="outCrearActualizarTransferenciaRecurso"/>
+                          <if name="IfValidaOK">
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <condition>$outCrearActualizarTransferenciaRecurso.response/ns5:Resultado/ns15:result = 'OK'</condition>
+                            <assign name="asignaBHQ">
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outCrearTransferenciaFLEXCUBE.response/ns5:ContratoDesembolso/ns6:Transferencia/ns6:idFacturador</from>
+                                <to>$outConsultarTransferenciasRecursos.response/ns5:ContratoDesembolso/ns6:TransferenciaRecursos[$contador]/ns6:idFacturador</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$outConsultarDesembolsoById.response/ns5:ContratoDesembolso/ns6:fechaDisponibilidadFondos</from>
+                                <to>$outConsultarTransferenciasRecursos.response/ns5:ContratoDesembolso/ns6:TransferenciaRecursos[$contador]/ns6:fechaEfectiva</to>
+                              </copy>
+                            </assign>
+                            <else>
+                              <documentation>
+                                <![CDATA[ERROR]]>
+                              </documentation>
+                              <empty name="ERROR"/>
+                            </else>
+                          </if>
+                        </sequence>
+                        <else>
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <empty name="ERROR"/>
+                        </else>
+                      </if>
+                    </sequence>
+                    <else>
+                      <empty name="Empty"/>
+                    </else>
+                  </if>
+                </sequence>
+              </scope>
+            </forEach>
+          </sequence>
+          <else>
+            <assign name="response">
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns5:Resultado/ns15:result</to>
+              </copy>
+              <copy>
+                <from>'No hay lineas pasivas que propagar'</from>
+                <to>$outputVariable.response/ns5:Resultado/ns15:message</to>
+              </copy>
+            </assign>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <assign name="XQ_ResponsePropagarTransferenciasRecursos">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:processXQuery10('../Transformations/XQ_ResponsePropagarTransferenciasRecursos.xqy', 'outConsultarTransferenciasRecursos.response', $outConsultarTransferenciasRecursos.response)</from>
+        <to variable="outputVariable" part="response"/>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="propagartransferenciasrecursos_client" portType="ns1:PropagarTransferenciaRecursos_PT" operation="propagarTransferenciaRecursos" variable="outputVariable"/>
+  </sequence>
+</process>

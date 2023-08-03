@@ -1,0 +1,215 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sat Oct 08 21:07:29 CDT 2016
+  Author:  perla-osorio
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ValidarTareaReglas"
+               targetNamespace="http://xmlns.oracle.com/Utilidades/Reglas/ValidarTareaReglas"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/Utilidades/Reglas/ValidarTareaReglas"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ValidarTareaReglasSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/ValidarReglasSOR"
+         xmlns:ns3="http://www.bcie.org/ConsultarReglasTarea" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns5="http://www.bcie.org/CommonBO"
+         xmlns:ns4="http://www.bcie.org/ReglaTareaMO" xmlns:ns6="http://www.bcie.org/ReglaTareaBO"
+         xmlns:ns7="http://www.bcie.org/ReglaBO" xmlns:ns9="http://www.bcie.org/ResultBO"
+         xmlns:ns8="http://www.bcie.org/CatalogoBO" xmlns:ns10="http://www.bcie.org/ErrorBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ValidarTareaReglasSOR" location="../WSDLs/ValidarTareaReglasSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="validartareareglas_client" partnerLinkType="ns1:ValidarTareaReglas" myRole="ValidarTareaReglas_PT"/>
+    <partnerLink name="ValidarReglas" partnerLinkType="ns2:ValidarReglas"
+                 partnerRole="ValidarReglas_PT"/>
+    <partnerLink name="ConsultarReglasTarea" partnerLinkType="ns3:ConsultarReglasTarea"
+                 partnerRole="ConsultarReglasTarea_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestValidarTareaReglasMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseValidarTareaReglasMessage"/>
+    <variable name="setInstanceVariable" type="xsd:string"/>
+    <variable name="outConsultarReglasTarea" messageType="ns3:responseConsultarReglasTareaMessage"/>
+    <variable name="outValidarReglas" messageType="ns2:responseValidarReglasMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ValidarTareaReglas.wsdl) -->
+    <receive name="receiveInput" partnerLink="validartareareglas_client" portType="ns1:ValidarTareaReglas_PT" operation="validarTareaReglas" variable="inputVariable" createInstance="yes"/>
+    <assign name="setInstanceTitle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idTarea: ",string($inputVariable.request/ns4:idTarea)))</from>
+        <to>$setInstanceVariable</to>
+      </copy>
+    </assign>
+    <validate name="Validate" variables="inputVariable"/>
+    <scope name="ConsultarReglasTarea">
+      <variables>
+        <variable name="inConsultarReglasTarea" messageType="ns3:requestConsultarReglasTareaMessage"/>
+      </variables>
+      <sequence name="ConsultarReglasTarea">
+        <assign name="requestConsultarReglasTarea">
+          <copy>
+            <from>$inputVariable.request/ns4:idTarea</from>
+            <to>$inConsultarReglasTarea.request/ns4:idTarea</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarReglasTarea_SB" bpelx:invokeAsDetail="no" partnerLink="ConsultarReglasTarea"
+                portType="ns3:ConsultarReglasTarea_PT" operation="consultarReglasTarea"
+                inputVariable="inConsultarReglasTarea" outputVariable="outConsultarReglasTarea"/>
+        <if name="IfValidaOK">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outConsultarReglasTarea.response/ns4:Resultado/ns9:result = 'OK'</condition>
+          <if name="IfValidaRegistrosConsultarReglasTarea">
+            <documentation>
+              <![CDATA[Tiene Registros]]>
+            </documentation>
+            <condition>count($outConsultarReglasTarea.response/ns4:TareaReglas) &gt;0</condition>
+            <empty name="Empty"/>
+            <else>
+              <sequence name="Sequence3">
+                <assign name="SinRegistros">
+                  <copy>
+                    <from>'ERROR'</from>
+                    <to>$outputVariable.response/ns4:Resultado/ns9:result</to>
+                  </copy>
+                  <copy>
+                    <from>'No existen registros al ConsultarReglasTarea'</from>
+                    <to>$outputVariable.response/ns4:Resultado/ns9:message</to>
+                  </copy>
+                </assign>
+                <reply name="ReplySinRegistros" variable="outputVariable" partnerLink="validartareareglas_client"
+                       portType="ns1:ValidarTareaReglas_PT" operation="validarTareaReglas"/>
+                <exit name="Exit"/>
+              </sequence>
+            </else>
+          </if>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="errorReglasTarea">
+              <assign name="errorReglasTarea">
+                <copy>
+                  <from>'ERRROR'</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns9:result</to>
+                </copy>
+                <copy>
+                  <from>concat("Error en el servicio ConsultarReglasTarea: ",$outConsultarReglasTarea.response/ns4:Resultado/ns9:message)</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns9:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyErrorConsultarReglasTarea" variable="outputVariable"
+                     partnerLink="validartareareglas_client" portType="ns1:ValidarTareaReglas_PT"
+                     operation="validarTareaReglas"/>
+              <exit name="Exit"/>
+            </sequence>
+          </else>
+        </if>
+        <scope name="ValidarReglas">
+          <variables>
+            <variable name="inValidarReglas" messageType="ns2:requestValidarReglasMessage"/>
+          </variables>
+          <sequence name="Sequence1">
+            <assign name="XQ_ConsultarReglasTarea_TO_ValidarReglas">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/XQ_ConsultarReglasTarea_TO_ValidarReglas.xqy', 'inputVariable.request', $inputVariable.request, 'outConsultarReglasTarea.response', $outConsultarReglasTarea.response)</from>
+                <to variable="inValidarReglas" part="request"/>
+              </copy>
+            </assign>
+            <invoke name="InvokeValidarReglas" bpelx:invokeAsDetail="no" partnerLink="ValidarReglas"
+                    portType="ns2:ValidarReglas_PT" operation="validarReglas" inputVariable="inValidarReglas"
+                    outputVariable="outValidarReglas"/>
+            <if name="IfValidaOK">
+              <documentation>
+                <![CDATA[OK]]>
+              </documentation>
+              <condition>$outValidarReglas.response/ns4:Resultado/ns9:result = 'OK'</condition>
+              <assign name="XQ_ResponseValidarReglasTarea">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:processXQuery10('../Transformations/XQ_ResponseValidarReglasTarea.xqy', 'outValidarReglas.response', $outValidarReglas.response, 'outConsultarReglasTarea.response', $outConsultarReglasTarea.response)</from>
+                  <to variable="outputVariable" part="response"/>
+                </copy>
+              </assign>
+              <else>
+                <documentation>
+                  <![CDATA[ERROR]]>
+                </documentation>
+                <sequence name="Sequence2">
+                  <assign name="errorValidarReglas">
+                    <copy>
+                      <from>'ERROR'</from>
+                      <to>$outputVariable.response/ns4:Resultado/ns9:result</to>
+                    </copy>
+                    <copy>
+                      <from>concat("Error al Validar Reglas:  ",$outValidarReglas.response/ns4:Resultado/ns9:message)</from>
+                      <to>$outputVariable.response/ns4:Resultado/ns9:message</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplyValidarReglas" variable="outputVariable" partnerLink="validartareareglas_client"
+                         portType="ns1:ValidarTareaReglas_PT" operation="validarTareaReglas"/>
+                  <exit name="Exit"/>
+                </sequence>
+              </else>
+            </if>
+          </sequence>
+        </scope>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="validartareareglas_client" portType="ns1:ValidarTareaReglas_PT" operation="validarTareaReglas" variable="outputVariable"/>
+  </sequence>
+</process>

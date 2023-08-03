@@ -1,0 +1,102 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Nov 25 19:19:57 CST 2019
+  Author:  joseb
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CreateSupplierPorcess"
+               targetNamespace="http://xmlns.oracle.com/CreateSupplierProcess_v2/CreateSupplierProcess/CreateSupplierPorcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/CreateSupplierProcess_v2/CreateSupplierProcess/CreateSupplierPorcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/Suppliers/CreateSupplierProcess/v1.0"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Suppliers/JDACreateSupplierProcess"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns4="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Foundation/Party/SupplierEntitySvc">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Suppliers/CreateSupplierProcess/v1.0"
+          location="../WSDLs/CreateSupplierPorcessWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="createsupplierporcess_client" partnerLinkType="ns1:CreateSupplierPorcess" myRole="CreateSupplierPType"/>
+    <partnerLink name="JDACreateSupplierProcessPXY" partnerLinkType="ns2:JDACreateSupplierProcessPXY"
+                 partnerRole="CreateSupplierPType"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:createSupplierRequest"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:createSupplierResponse"/>
+    <variable name="JDACreateSupplier_InputVariable" messageType="ns2:createSupplierRequest"/>
+    <variable name="JDACreateSupplier_OutputVariable" messageType="ns2:createSupplierResponse"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CreateSupplierPorcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="createsupplierporcess_client" portType="ns1:CreateSupplierPType" operation="createSupplier" variable="inputVariable" createInstance="yes"/>
+    <assign name="XSLTReqSupplierJDA">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/XSLTJDACreateSupplier.xsl", $inputVariable.createSupplierRequest)</from>
+        <to variable="JDACreateSupplier_InputVariable" part="part1"/>
+      </copy>
+    </assign>
+    <invoke name="JDACreateSupplier" bpelx:invokeAsDetail="no" partnerLink="JDACreateSupplierProcessPXY"
+            portType="ns2:CreateSupplierPType" operation="createSupplierPType"
+            inputVariable="JDACreateSupplier_InputVariable" outputVariable="JDACreateSupplier_OutputVariable"/>
+    <assign name="AssignResponse">
+      <copy>
+        <from>'true'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.createSupplierResponse/ns4:result</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="createsupplierporcess_client" portType="ns1:CreateSupplierPType" operation="createSupplier" variable="outputVariable"/>
+  </sequence>
+</process>

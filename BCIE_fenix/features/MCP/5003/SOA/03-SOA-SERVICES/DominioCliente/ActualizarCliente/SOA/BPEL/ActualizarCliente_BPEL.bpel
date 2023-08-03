@@ -1,0 +1,757 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Sep 25 09:35:34 CDT 2015
+  Author:  luis-morales
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ActualizarCliente_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioCliente/ActualizarCliente/ActualizarCliente_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioCliente/ActualizarCliente/ActualizarCliente_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ClienteService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns4="http://www.bcie.org/CatalogoBO"
+         xmlns:ns2="http://www.bcie.org/ClienteMO" xmlns:ns3="http://www.bcie.org/ClienteBO"
+         xmlns:ns5="http://www.bcie.org/ResultBO" xmlns:ns6="http://www.bcie.org/ErrorBO"
+         xmlns:ns7="http://xmlns.bcie.com/OperacionService" xmlns:ns10="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns9="http://www.bcie.org/OperacionBO" xmlns:ns8="http://www.bcie.org/OperacionMO"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns11="http://xmlns.bcie.com/UsuarioService" xmlns:ns12="http://www.bcie.org/UsuarioMO"
+         xmlns:ns13="http://www.bcie.org/UsuarioBO" xmlns:ns14="http://www.bcie.org/ProductoBO"
+         xmlns:ns15="http://xmlns.bcie.com/Flexcube14/ClienteService" xmlns:ns23="http://www.bcie.org/TerminoBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns19="http://www.bcie.org/CommonBO"
+         xmlns:ns18="http://www.bcie.org/LineaCreditoBO" xmlns:ns20="http://www.bcie.org/CondicionBO"
+         xmlns:ns22="http://www.bcie.org/DocumentoBO" xmlns:ns25="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns24="http://www.bcie.org/ComisionBO" xmlns:ns16="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns17="http://www.bcie.org/ContratoBO" xmlns:ns21="http://www.bcie.org/AtributoBO"
+         xmlns:ns26="http://www.bcie.org/FLEXCUBE14/ClienteMO" xmlns:ns28="http://www.bcie.org/FLEXCUBE14/ErrorBO"
+         xmlns:ns27="http://www.bcie.org/FLEXCUBE14/ResultBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/ClienteService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/Cliente/V1/Wsdl/ADAPTER/CrearClienteSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ClienteService" location="../WSDLs/ActualizarClienteSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="ActualizarCliente" partnerLinkType="ns1:ActualizarCliente_BPEL" myRole="ClientePT"/>
+    <partnerLink name="ActualizarClienteGecco_SB" partnerLinkType="ns1:ActualizarClienteGecco_SB"
+                 partnerRole="ClientePT"/>
+    <partnerLink name="ConsultarClienteById" partnerLinkType="ns1:ConsultarClienteById" partnerRole="ClientePT"/>
+    <partnerLink name="ConsultarAtributosUsuarioService" partnerLinkType="ns11:ConsultarAtributosUsuarioService"
+                 partnerRole="UsuarioPT"/>
+    <partnerLink name="ActualizarClienteFLEXCUBEService" partnerLinkType="ns1:ActualizarClienteFLEXCUBEService"
+                 partnerRole="ActualizarClienteFLEXCUBEPT"/>
+    <partnerLink name="ConsultarOperacionService" partnerLinkType="ns7:ConsultarOperacionService"
+                 partnerRole="ConsultarOperacionById12Port"/>
+    <partnerLink name="ActualizarCliente_SB" partnerLinkType="ns1:ActualizarCliente_SB"
+                 partnerRole="ActualizarClientePT"/>
+    <partnerLink name="ActualizarClienteFLEXCUBE14" partnerLinkType="ns15:ActualizarClienteFLEXCUBE14"
+                 partnerRole="actualizarClienteFLEXCUBE_V14_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestActualizarClienteMessage"/>
+  <variable name="originalVariable" messageType="ns1:requestActualizarClienteMessage"/>
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseActualizarClienteMessage"/>
+   
+    <variable name="faultVar" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="ConsultarOperacionById_OutputVariable" messageType="ns7:responseConsultarOperacionMessage"/>
+     <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="nombreEjecutivo" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence10">
+        <assign name="Assign_Error">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+          </copy>
+        </assign>
+        <compensate name="CompensateActualizaciones"/>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="ActualizarCliente" portType="ns1:ClientePT"
+               operation="actualizarCliente"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ActualizarCliente_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="ActualizarCliente" portType="ns1:ClientePT" operation="actualizarCliente" variable="inputVariable" createInstance="yes"/>
+     <assign name="AssignSetTitleVar">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat('idCliente = ', $inputVariable.request/ns2:Cliente/ns3:idCliente))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarCliente">
+    
+      <variables>
+        <variable name="consultarByIdCliente_InputVariable"
+                  messageType="ns1:requestConsultarClienteMessageByIdCliente"/>
+                   <variable name="consultarByIdCliente_OutputVariable" messageType="ns1:responseConsultarClienteMessageByIdCliente"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <throw name="ThrowErrorConsulta" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence11">
+         
+            <assign name="Assign_ErrorAlConsultar">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>'Error al general Consultar Cliente'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowErrorConsulta" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence8">
+        <assign name="Assign_ConsultarClienteByIdInput">
+          <copy>
+            <from>$inputVariable.request/ns2:Cliente/ns3:idCliente</from>
+            <to>$consultarByIdCliente_InputVariable.request/ns2:idCliente</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarClienteById" bpelx:invokeAsDetail="no" partnerLink="ConsultarClienteById"
+                portType="ns1:ClientePT" operation="consultarByIdCliente"
+                inputVariable="consultarByIdCliente_InputVariable"
+                outputVariable="consultarByIdCliente_OutputVariable"/>
+        <if name="IfErrorConsulta">
+          <documentation>
+            <![CDATA[ErrorConsulta]]>
+          </documentation>
+          <condition>$consultarByIdCliente_OutputVariable.response/ns2:Resultado/ns5:result = 'ERROR'</condition>
+          <sequence name="Sequence14">
+            <assign name="Assign_ErrorAlConsultar">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>concat('Error al Consultar Cliente', ' - ',$consultarByIdCliente_OutputVariable.response/ns2:Resultado/ns5:message)</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowErrorConsulta" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ConsultaExitosa]]>
+            </documentation>
+            <sequence>
+              <assign name="backupCliente">
+                <copy>
+                  <from>$consultarByIdCliente_OutputVariable.response/ns2:Cliente</from>
+                  <to>$originalVariable.request/ns2:Cliente</to>
+                </copy>
+              </assign>
+              <assign name="XQTransform_Actualizar_TO_Consultar">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:processXQuery10('../Transformations/Transform_Actualizar_TO_Consultar.xqy', 'consultarByIdCliente_OutputVariable.response', $consultarByIdCliente_OutputVariable.response, 'inputVariable.request', $inputVariable.request)</from>
+                  <to variable="consultarByIdCliente_OutputVariable" part="response"/>
+                </copy>
+              </assign>
+              <if name="IfNoOperacionInputVariable">
+                <documentation>
+                  <![CDATA[NoOperacionEnInput]]>
+                </documentation>
+                <condition>string-length($inputVariable.request/ns2:idOperacion)&lt;= 0</condition>
+                <sequence>
+                  <if name="IfOperacionesRelacionadas">
+                    <documentation>
+                      <![CDATA[ListadeOperaciones]]>
+                    </documentation>
+                    <condition>count($consultarByIdCliente_OutputVariable.response/ns2:Operaciones)&gt;0</condition>
+                    <assign name="Assign_OperacionConsultaAInput">
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$consultarByIdCliente_OutputVariable.response/ns2:Operaciones[1]/ns3:idOperacion</from>
+                        <to>$inputVariable.request/ns2:idOperacion</to>
+                      </copy>
+                      <copy>
+                        <from>$consultarByIdCliente_OutputVariable.response/ns2:Operaciones[1]/ns3:idOperacion</from>
+                        <to>$originalVariable.request/ns2:idOperacion</to>
+                      </copy>
+                    </assign>
+                    <else>
+                      <documentation>
+                        <![CDATA[NoOperaciones]]>
+                      </documentation>
+                      <sequence name="Sequence16">
+                        <if name="IfClienteDefinitivo">
+                          <documentation>
+                            <![CDATA[DefinitivoSinOperacion]]>
+                          </documentation>
+                          <condition>$consultarByIdCliente_OutputVariable.response/ns2:Cliente/ns3:tipoCliente = 2</condition>
+                          <sequence name="Sequence20">
+                            <empty name="DefinitivoSinOperacion"/>
+                          </sequence>
+                          <else>
+                            <documentation>
+                              <![CDATA[ProspectoSinOperacion]]>
+                            </documentation>
+                            <empty name="ClienteProspectoSinOperacion"/>
+                          </else>
+                        </if>
+                      </sequence>
+                    </else>
+                  </if>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[OperacionEnInput]]>
+                  </documentation>
+                  <empty name="YaTieneOperacion"/>
+                </else>
+              </if>
+              <scope name="ScopeConsultarAtributosUsuario">
+                <variables>
+                  <variable name="consultarAtributosUsuario_InputVariable"
+                            messageType="ns11:requestConsultarAtributosUsuarioMessage"/>
+                  <variable name="consultarAtributosUsuario_OutputVariable"
+                            messageType="ns11:responseConsultarAtributosUsuarioMessage"/>
+                </variables>
+                <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <throw name="ThrowErrorConsulta" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence11">
+            <assign name="Assign_ErrorAlConsultarAtributos">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>'Error al Consultar Atributos de Ejecutivo'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowErrorConsultarAtributos" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+                <sequence name="Sequence18">
+                  <assign name="Assign_ConsultarAtributosUsuarioInput">
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>$consultarByIdCliente_OutputVariable.response/ns2:Cliente/ns3:ejecutivo</from>
+                      <to>$consultarAtributosUsuario_InputVariable.request/ns12:listaNombres/ns13:nombreUsuario</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>$consultarByIdCliente_OutputVariable.response/ns2:Cliente/ns3:ejecutivo</from>
+                      <to>$nombreEjecutivo</to>
+                    </copy>
+                  </assign>
+                  <invoke name="Invoke_ConsultarAtributosUsuario" bpelx:invokeAsDetail="no"
+                          partnerLink="ConsultarAtributosUsuarioService" portType="ns11:UsuarioPT"
+                          operation="consultarAtributosUsuario" inputVariable="consultarAtributosUsuario_InputVariable"
+                          outputVariable="consultarAtributosUsuario_OutputVariable"/>
+                  <if name="IfErrorConsultarAtributos">
+                    <documentation>
+                      <![CDATA[ERRORConsultar]]>
+                    </documentation>
+                    <condition>$consultarAtributosUsuario_OutputVariable.response/ns12:Resultado/ns5:result = 'ERROR'</condition>
+                    <sequence name="Sequence21">
+                      <assign name="Assign_ErrorAlConsultarAtributos">
+                        <copy>
+                          <from>'ERROR'</from>
+                          <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+                        </copy>
+                        <copy>
+                          <from>concat('Error al Consultar Atributos de Ejecutivo',' - ',$consultarAtributosUsuario_OutputVariable.response/ns12:Resultado/ns5:message)</from>
+                          <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+                        </copy>
+                      </assign>
+            <throw name="ThrowErrorConsultarAtributos" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[OKConsultar]]>
+                      </documentation>
+                      <assign name="Assign_ConsultarAtributosUsuarioOutput">
+                        <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                          <from>$consultarAtributosUsuario_OutputVariable.response/ns12:listaUsuarios/ns13:usuario/ns13:employeeNumber</from>
+                          <to>$consultarByIdCliente_OutputVariable.response/ns2:Cliente[1]/ns3:ejecutivo</to>
+                        </copy>
+                        <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                          <from>$consultarByIdCliente_OutputVariable.response/ns2:Cliente</from>
+                          <to>$inputVariable.request/ns2:Cliente</to>
+                        </copy>
+                      </assign>
+                    </else>
+                  </if>
+                </sequence>
+              </scope>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarOperacion">
+      <bpelx:skipCondition>string-length($inputVariable.request/ns2:idOperacion) &lt;= 0</bpelx:skipCondition>
+      <variables>
+        <variable name="ConsultarOperacionById_InputVariable" messageType="ns7:requestConsultarOperacionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <throw name="ThrowErrorConsulta" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence11">
+            <assign name="Assign_ErrorAlConsultarOperacion">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>'Error General al Consultar Operacion'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowErrorAlConsultarOperacion" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence19">
+        <assign name="Assign_ConsultarOperacionInput">
+          <copy>
+            <from>$inputVariable.request/ns2:idOperacion</from>
+            <to>$ConsultarOperacionById_InputVariable.request/ns8:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarOperacion" partnerLink="ConsultarOperacionService"
+                portType="ns7:ConsultarOperacionById12Port" operation="ConsultarOperacionById"
+                inputVariable="ConsultarOperacionById_InputVariable"
+                outputVariable="ConsultarOperacionById_OutputVariable" bpelx:invokeAsDetail="no"/>
+                     <if name="IfErrorConsultarOperacion">
+                    <documentation>
+            <![CDATA[ERRORConsultar]]>
+          </documentation>
+                    <condition>$ConsultarOperacionById_OutputVariable.response/ns8:Resultado/ns5:result = 'ERROR'</condition>
+                    <sequence name="Sequence21">
+                      <assign name="Assign_ErrorAlConsultarAtributos">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>concat('Error al Consultar Operación',' - ',$ConsultarOperacionById_OutputVariable.response/ns8:Resultado/ns5:message)</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowErrorAlConsultarOperacion" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[OKConsultar]]>
+                      </documentation>
+            <empty name="Continúa"/>
+          </else>
+                  </if>
+              
+      </sequence>
+    </scope>
+    <scope name="ScopeActualizarProspectoDefinitivo">
+      <variables>
+        <variable name="ErrorActualizar" messageType="bpelx:RuntimeFaultMessage"/>
+      </variables>
+      <sequence name="ActualizaProspectoSequence">
+        <scope name="ScopeActualizarClienteGecco">
+          <variables>
+            <variable name="inActualizarClienteGecco" messageType="ns1:requestCrearClienteMessage"/>
+            <variable name="outActualizarClienteGecco" messageType="ns1:responseCrearClienteMessage"/>
+          </variables>
+          <faultHandlers>
+            <catchAll>
+              <sequence name="Sequence11">
+                <assign name="Assign_ErrorGecco">
+                  <copy>
+                    <from>'ERROR'</from>
+                    <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+                  </copy>
+                  <copy>
+                    <from>concat('Error GENERAL al Actualizar Gecco','+ ',ora:getFaultAsString())</from>
+                    <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+                  </copy>
+                </assign>
+                <throw name="ThrowErrorGecco" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+              </sequence>
+            </catchAll>
+          </faultHandlers>
+          <compensationHandler>
+            <sequence name="Sequence22">
+              <assign name="Assign_CompensacionGeccoInput">
+                <copy>
+                  <from>$originalVariable.request/ns2:Cliente</from>
+                  <to>$inActualizarClienteGecco.request/ns2:Cliente</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeCompensarActualizarGecco" bpelx:invokeAsDetail="no"
+                      partnerLink="ActualizarClienteGecco_SB" portType="ns1:ClientePT" operation="crearCliente"
+                      inputVariable="inActualizarClienteGecco" outputVariable="outActualizarClienteGecco"/>
+            </sequence>
+          </compensationHandler>
+          <sequence>
+            <assign name="ActualizarGeccoAssign">
+              <copy>
+                <from>$inputVariable.request/ns2:Cliente</from>
+                <to>$inActualizarClienteGecco.request/ns2:Cliente</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeToActualizarClienteGecco" partnerLink="ActualizarClienteGecco_SB"
+                    portType="ns1:ClientePT" operation="crearCliente" inputVariable="inActualizarClienteGecco"
+                    outputVariable="outActualizarClienteGecco" bpelx:invokeAsDetail="no"/>
+            <if name="IfErrorActualizarGecco">
+              <documentation>
+                <![CDATA[ERRORConsultar]]>
+              </documentation>
+              <condition>$outActualizarClienteGecco.response/ns2:Resultado/ns5:result = 'ERROR'</condition>
+              <sequence name="Sequence21">
+                <assign name="Assign_ErrorAlConsultarAtributos">
+                  <copy>
+                    <from>'ERROR'</from>
+                    <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+                  </copy>
+                  <copy>
+                    <from>'Error al Consultar Atributos de Ejecutivo'</from>
+                    <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+                  </copy>
+                </assign>
+                <throw name="ThrowErrorConsultarAtributos" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[OKConsultar]]>
+                </documentation>
+                <empty name="ConsultaCorrecta"/>
+              </else>
+            </if>
+          </sequence>
+        </scope>
+        <scope name="ScopeActualizarCliente">
+          <variables>
+            <variable name="inActualizarCliente" messageType="ns1:requestActualizarClienteMessage"/>
+            <variable name="outActualizarCliente" messageType="ns1:responseActualizarClienteMessage"/>
+          </variables>
+          <faultHandlers>
+            <catch faultName="bpelx:remoteFault" faultVariable="faultvar" faultMessageType="bpelx:RuntimeFaultMessage">
+              <throw name="ThrowErrorActualizar" faultName="bpelx:remoteFault" faultVariable="faultvar"/>
+            </catch>
+            <catchAll>
+          <sequence name="Sequence11">
+            <assign name="Assign_ErrorActualizarFenix">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>'Error al Actualizar Cliente'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowErrorActualizarFenix" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+          </faultHandlers>
+          <compensationHandler>
+            <sequence name="Sequence23">
+              <assign name="ActualizarCompensarClienteInput">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$inputVariable.request/ns2:idOperacion</from>
+                  <to>$inActualizarCliente.request/ns2:idOperacion</to>
+                </copy>
+                <copy>
+                  <from>$originalVariable.request/ns2:Cliente</from>
+                  <to>$inActualizarCliente.request/ns2:Cliente</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeCompensarActualizar" bpelx:invokeAsDetail="no" partnerLink="ActualizarCliente_SB"
+                      portType="ns1:ActualizarClientePT" operation="actualizarCliente"
+                      inputVariable="inActualizarCliente" outputVariable="outActualizarCliente"/>
+            </sequence>
+          </compensationHandler>
+          <sequence>
+            <assign name="ActualizarClienteAssign">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$inputVariable.request/ns2:idOperacion</from>
+                <to>$inActualizarCliente.request/ns2:idOperacion</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.request/ns2:Cliente</from>
+                <to>$inActualizarCliente.request/ns2:Cliente</to>
+              </copy>
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$nombreEjecutivo</from>
+                <to>$inActualizarCliente.request/ns2:Cliente/ns3:ejecutivo</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeToActualizarCliente" partnerLink="ActualizarCliente_SB"
+                    portType="ns1:ActualizarClientePT" inputVariable="inActualizarCliente"
+                    outputVariable="outActualizarCliente" bpelx:invokeAsDetail="no" operation="actualizarCliente"/>
+                         <if name="IfErrorActualizarCliente">
+                    <documentation>
+                <![CDATA[ERRORConsultar]]>
+              </documentation>
+                    <condition> $outActualizarCliente.response/ns2:Resultado/ns5:result = 'ERROR'</condition>
+                    <sequence name="Sequence21">
+                      <assign name="Assign_ErrorAlActualizarFenix">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>'Error al Consultar Atributos de Ejecutivo'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowErrorActualizar" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[OKConsultar]]>
+                      </documentation>
+                <sequence>
+                  <assign name="ActualizarClienteResponse">
+                    <copy>
+                      <from>$outActualizarCliente.response/ns2:Resultado/ns5:result</from>
+                      <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+                    </copy>
+                    <copy>
+                      <from>$outActualizarCliente.response/ns2:Resultado/ns5:message</from>
+                      <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+                    </copy>
+                  </assign>
+                </sequence>
+              </else>
+                  </if>
+          </sequence>
+        </scope>
+      </sequence>
+    </scope>
+    <scope name="Scope_ActualizarClienteFlexcube">
+      <bpelx:skipCondition>$inputVariable.request/ns2:Cliente/ns3:tipoCliente != 2  or 1=1</bpelx:skipCondition>
+      <variables>
+        <variable name="actualizarClienteFLXCB_InputVariable" messageType="ns1:requestActualizarClienteFLXCBMessage"/>
+        <variable name="actualizarClienteFLXCB_OutputVariable" messageType="ns1:responseActualizarClienteFLXCBMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <throw name="ThrowRemoteFault" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence11">
+            <assign name="Assign_Error">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>'Error al Actualizar en FLEXCUBE'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence12">
+        <assign name="Assign_ActualizarClienteFlexcubeInput">
+          <copy>
+            <from>$inputVariable.request/ns2:Cliente</from>
+            <to>$actualizarClienteFLXCB_InputVariable.request/ns2:Cliente</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$ConsultarOperacionById_OutputVariable.response/ns8:Operacion/ns9:actividadEconomicaAsociada/ns4:codigoExterno</from>
+            <to>$actualizarClienteFLXCB_InputVariable.request/ns2:actividadEconomica</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$ConsultarOperacionById_OutputVariable.response/ns8:Operacion/ns9:ejeEstrategico/ns4:codigoExterno</from>
+            <to>$actualizarClienteFLXCB_InputVariable.request/ns2:ejeEstrategico</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$inputVariable.request/ns2:idOperacion</from>
+            <to>$actualizarClienteFLXCB_InputVariable.request/ns2:idOperacion</to>
+          </copy>
+        </assign>
+        <assign name="Assign_DefinitivoSinOperacion">
+          <bpelx:skipCondition>string-length($inputVariable.request/ns2:idOperacion) &gt; 0</bpelx:skipCondition>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>"ND"</from>
+            <to>$actualizarClienteFLXCB_InputVariable.request/ns2:actividadEconomica</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>"ND"</from>
+            <to>$actualizarClienteFLXCB_InputVariable.request/ns2:ejeEstrategico</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>"ND"</from>
+            <to>$actualizarClienteFLXCB_InputVariable.request/ns2:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ActualizarClienteFLEXCUBE"
+                partnerLink="ActualizarClienteFLEXCUBEService" portType="ns1:ActualizarClienteFLEXCUBEPT"
+                operation="actualizarCliente" inputVariable="actualizarClienteFLXCB_InputVariable"
+                outputVariable="actualizarClienteFLXCB_OutputVariable" bpelx:invokeAsDetail="no"/>
+        <if name="IfError">
+          <documentation>
+            <![CDATA[ErrorFlexcube]]>
+          </documentation>
+          <condition>$actualizarClienteFLXCB_OutputVariable.response/ns2:Resultado/ns5:result = 'ERROR'</condition>
+          <sequence name="Sequence17">
+            <assign name="Assign_ErrorFlexcube">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>concat('Error al Actualizar FLEXCUBE', ' - ',$actualizarClienteFLXCB_OutputVariable.response/ns2:Resultado/ns5:message)</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[OkFlexcube]]>
+            </documentation>
+            <empty name="NingunaAccion"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="Scope_ActualizarClienteFlexcube14">
+      <bpelx:skipCondition>$inputVariable.request/ns2:Cliente/ns3:tipoCliente != 2</bpelx:skipCondition>
+      <variables>
+        <variable name="actualizarClienteFLX14_InputVariable" messageType="ns15:requestActualizarClienteMessage"/>
+        <variable name="actualizarClienteFLX14_OutputVariable" messageType="ns15:responseActualizarClienteMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <throw name="ThrowRemoteFault" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence11">
+            <assign name="Assign_Error">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>'Error al Actualizar en FLEXCUBE14'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence24">
+        <sequence name="Sequence25">
+          <assign name="XQActualizarClienteFLX14">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/XQActualizarCliente_TO_ActualizarClienteFLX14.xqy', 'inputVariable.request', $inputVariable.request, 'ConsultarOperacionById_OutputVariable.response', $ConsultarOperacionById_OutputVariable.response)</from>
+              <to variable="actualizarClienteFLX14_InputVariable" part="requestActualizarCliente"/>
+            </copy>
+          </assign>
+          <assign name="AssignDatosDVMFLX14">
+            <copy>
+              <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioCliente/Cliente/V1/DVM/TipoPersonaFlexCube.dvm","idTipoPersona",$inputVariable.request/ns2:Cliente/ns3:tipoPersona/ns4:Id,"codigoFlexcube","")</from>
+              <to>$actualizarClienteFLX14_InputVariable.requestActualizarCliente/ns26:Cliente/ns26:Tipo_Persona</to>
+            </copy>
+            <copy>
+              <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioCliente/Cliente/V1/DVM/PaisGecco.dvm","Fenix",$inputVariable.request/ns2:Cliente/ns3:pais/ns4:Id,"Gecco","")</from>
+              <to>$actualizarClienteFLX14_InputVariable.requestActualizarCliente/ns26:Cliente/ns26:Pais</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeActualizarClienteFLX14" partnerLink="ActualizarClienteFLEXCUBE14"
+                  portType="ns15:actualizarClienteFLEXCUBE_V14_PT" operation="actualizarCliente"
+                  bpelx:invokeAsDetail="no" inputVariable="actualizarClienteFLX14_InputVariable"
+                  outputVariable="actualizarClienteFLX14_OutputVariable"/>
+          <if name="IfErrorActualizarClienteFLX14">
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <condition>$actualizarClienteFLX14_OutputVariable.responseActualizarCliente/ns26:Response/ns26:Resultado/ns27:result = 'ERROR'</condition>
+            <sequence name="Sequence26">
+              <assign name="Assign_ErrorFlexcube14">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+                </copy>
+                <copy>
+                  <from>concat('Error al Actualizar FLEXCUBE', ' - ',$actualizarClienteFLX14_OutputVariable.responseActualizarCliente/ns26:Response/ns26:Resultado/ns27:message)</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+                </copy>
+              </assign>
+              <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+            </sequence>
+            <else>
+              <documentation>
+                <![CDATA[SinErrores]]>
+              </documentation>
+              <empty name="Continua"/>
+            </else>
+          </if>
+        </sequence>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="ActualizarCliente" portType="ns1:ClientePT" operation="actualizarCliente" variable="outputVariable"/>
+  </sequence>
+</process>

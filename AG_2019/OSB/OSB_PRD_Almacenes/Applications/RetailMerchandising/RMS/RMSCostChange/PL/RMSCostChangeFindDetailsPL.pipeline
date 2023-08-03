@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <con:wsdl ref="Applications/RetailMerchandising/RMS/RMSCostChange/Resources/RMSCostChangeFindDetailsWSDL"/>
+            <con:binding>
+                <con:name>findCostChangeRMSDetailsBinding</con:name>
+                <con:namespace>http://mx.agarcia.ea/Applications/RetailMerchandising/RMS/CostChange/v1.0</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline name="PipelinePairRMSFindDetails_request" type="request">
+            <con:stage name="stage1">
+                <con:context>
+                    <con1:userNsDecl prefix="v1" namespace="http://mx.agarcia.ea/Canonical/Commons/ChangeCost/v1" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="cos" namespace="http://mx.agarcia.ea/Applications/RetailMerchandising/RMS/CostChange" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+                <con:actions>
+                    <con1:wsCallout xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.214fce79.e.16b290c9072.N7ffe</con2:id>
+                        <con1:service ref="Applications/RetailMerchandising/RMS/RMSCostChange/RMSDBFindDetails/PS/RMSCostChangeFindDetailsByIDPXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+                        <con1:operation>CostChangeFindDetailsByIDBSSelect</con1:operation>
+                        <con1:request>
+                            <con1:body wrapped="false">rmsFindDetailsRequest</con1:body>
+                            <con1:header/>
+                        </con1:request>
+                        <con1:response>
+                            <con1:body wrapped="false">rmsFindDetailsResponse</con1:body>
+                            <con1:header/>
+                        </con1:response>
+                        <con1:requestTransform>
+                            <con1:assign varName="rmsFindDetailsRequest">
+                                <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.214fce79.12.16b2bb395f6.N7fff</con2:id>
+                                <con1:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">&lt;cos:CostChangeFindDetailsByIDBSSelect_pCostChangeIdInputParameters xmlns:cos="http://xmlns.oracle.com/pcbpel/adapter/db/top/CostChangeFindDetailsByIDBS">
+    &lt;cos:pCostChangeId>{$body//*:event/*:id/text()}&lt;/cos:pCostChangeId>
+&lt;/cos:CostChangeFindDetailsByIDBSSelect_pCostChangeIdInputParameters></con:xqueryText>
+                                </con1:expr>
+                            </con1:assign>
+                        </con1:requestTransform>
+                        <con1:responseTransform>
+                            <con1:assign varName="body">
+                                <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.214fce79.17.16b2bc89cc5.N7ffe</con2:id>
+                                <con1:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<soapenv:Body xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ags="http://mx.agarcia.ea/Commons/Schemas/AGStandardHeader" xmlns:cos="http://mx.agarcia.ea/Applications/RetailMerchandising/RMS/CostChange" xmlns:v1="http://mx.agarcia.ea/Canonical/Commons/ChangeCost/v1" xmlns:v11="http://mx.agarcia.ea/Canonical/Commons/RetailStore/v1" xmlns:v12="http://mx.agarcia.ea/Canonical/Commons/Items/v1" xmlns:v13="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1">
+      <cos:findCostChangeEventDetailsResponse>
+         <cos:event>
+            <v1:id>{$rmsFindDetailsResponse//*:CostSuspSupHead/*:costChange/text()}</v1:id>
+            <v1:effectiveDate>{$rmsFindDetailsResponse//*:activeDate/text()}</v1:effectiveDate>
+
+            <v1:userRequestor>
+               <v1:id>{$rmsFindDetailsResponse//*:CostSuspSupHead/*:createId/text()}</v1:id>
+            </v1:userRequestor>
+
+            <v1:scope>{data($rmsFindDetailsResponse//*:CostSuspSupHead/*:costChangeOrigin)}</v1:scope>
+            <v1:cause>{data($rmsFindDetailsResponse//*:CostSuspSupHead/*:reason)}</v1:cause>
+
+            <v1:status>{data($rmsFindDetailsResponse//*:CostSuspSupHead/*:status)}</v1:status>
+
+            <v1:currency>MXN</v1:currency>
+{
+   let $costChangeItems :=  $rmsFindDetailsResponse//*:ItemSuppliers/*:CostSuspSupDetail
+       return 
+            <v1:changes>
+{
+          for $costChangeItem in ( $costChangeItems ) return
+               <v1:change>
+                  <v1:cost>{data($costChangeItem//*:unitCost)}</v1:cost>
+                  <v1:percentage>{data($costChangeItem//*:costChangeValue)}</v1:percentage>
+                  <v1:item>
+                     <v12:id>{data($costChangeItem//*:item)}</v12:id>
+                     <v12:countryOfOrigin>{data($costChangeItem//*:originCountryId)}</v12:countryOfOrigin>
+                  </v1:item>
+               </v1:change>
+}
+            </v1:changes>
+}
+            <v1:supplierID>
+               <v13:supplierID>{data($rmsFindDetailsResponse//*:ItemSuppliers/*:CostSuspSupDetail[1]/*:supplier)}</v13:supplierID>
+            </v1:supplierID>
+         </cos:event>
+      </cos:findCostChangeEventDetailsResponse>
+   </soapenv:Body>]]></con:xqueryText>
+                                </con1:expr>
+                            </con1:assign>
+                        </con1:responseTransform>
+                    </con1:wsCallout>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline name="PipelinePairRMSFindDetails_response" type="response"/>
+        <con:flow>
+            <con:pipeline-node name="PipelinePairRMSFindDetails">
+                <con:comment/>
+                <con:request>PipelinePairRMSFindDetails_request</con:request>
+                <con:response>PipelinePairRMSFindDetails_response</con:response>
+            </con:pipeline-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

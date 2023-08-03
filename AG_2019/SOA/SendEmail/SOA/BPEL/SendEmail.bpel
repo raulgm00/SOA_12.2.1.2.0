@@ -1,0 +1,151 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon May 27 10:36:36 GMT-06:00 2019
+  Author:  User
+  Type: BPEL 2.0 Process
+  Purpose: One Way BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="SendEmail"
+               targetNamespace="http://xmlns.oracle.com/SendEmailApp/SendEmail/SendEmail"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/SendEmailApp/SendEmail/SendEmail"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns1="http://xmlns.oracle.com/ias/pcbpel/NotificationService"
+         xmlns:ns2="http://xmlns.oracle.com/pcbpel/adapter/ums/PriceChangeProcessBackup/SendEmail/umsReference"
+         xmlns:ns3="http://platform.integration.oracle/blocks/adapter/fw/metadata/umsReference">
+
+  <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/SendEmailApp/SendEmail/SendEmail" location="../WSDLs/SendEmail.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="sendemail_client" partnerLinkType="client:SendEmail" myRole="SendEmailProvider"/>
+    <partnerLink name="NotificationService1" partnerLinkType="ns1:NotificationServiceLink"
+                 partnerRole="NotificationServiceProvider"/>
+    <partnerLink name="umsReference" partnerLinkType="ns2:SendNotification_plt" partnerRole="SendNotification_role"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:SendEmailRequestMessage"/>
+    <variable name="umsReference_SendNotification_InputVariable" messageType="ns2:SendNotification_msg"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in SendEmail.wsdl) -->
+    <receive name="receiveInput" partnerLink="sendemail_client" portType="client:SendEmail" operation="process" variable="inputVariable" createInstance="yes"/>
+    <scope name="Email1">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:email"></bpelx:pattern>
+      </bpelx:annotation>
+      <variables>
+        <variable name="varNotificationReq" messageType="ns1:EmailNotificationRequest"/>
+        <variable name="varNotificationResponse" messageType="ns1:ArrayOfResponse"/>
+        <variable name="NotificationServiceFaultVariable" messageType="ns1:NotificationServiceErrorMessage"/>
+      </variables>
+      <sequence name="Sequence1">
+        <assign name="EmailParamsAssign">
+          <copy>
+            <from>string('notificacionessoa@agarcia.com.mx')</from>
+            <to>$varNotificationReq.EmailPayload/ns1:FromAccountName</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.payload/client:Bcc</from>
+            <to>$varNotificationReq.EmailPayload/ns1:Bcc</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.payload/client:Cc</from>
+            <to>$varNotificationReq.EmailPayload/ns1:Cc</to>
+          </copy>
+          <copy>
+            <from>string('')</from>
+            <to>$varNotificationReq.EmailPayload/ns1:ReplyToAddress</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.payload/client:Subject</from>
+            <to>$varNotificationReq.EmailPayload/ns1:Subject</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.payload/client:To</from>
+            <to>$varNotificationReq.EmailPayload/ns1:To</to>
+          </copy>
+          <copy>
+            <from><literal><Content xmlns="http://xmlns.oracle.com/ias/pcbpel/NotificationService"><MimeType xmlns="http://xmlns.oracle.com/ias/pcbpel/NotificationService">multipart/mixed</MimeType><ContentBody xmlns="http://xmlns.oracle.com/ias/pcbpel/NotificationService"><MultiPart xmlns="http://xmlns.oracle.com/ias/pcbpel/NotificationService"> <BodyPart xmlns="http://xmlns.oracle.com/ias/pcbpel/NotificationService"><MimeType xmlns="http://xmlns.oracle.com/ias/pcbpel/NotificationService"/><ContentBody xmlns="http://xmlns.oracle.com/ias/pcbpel/NotificationService"/><BodyPartName xmlns="http://xmlns.oracle.com/ias/pcbpel/NotificationService"/></BodyPart> <BodyPart xmlns="http://xmlns.oracle.com/ias/pcbpel/NotificationService"><MimeType xmlns="http://xmlns.oracle.com/ias/pcbpel/NotificationService"/><ContentBody xmlns="http://xmlns.oracle.com/ias/pcbpel/NotificationService"/><BodyPartName xmlns="http://xmlns.oracle.com/ias/pcbpel/NotificationService"/></BodyPart></MultiPart></ContentBody></Content></literal></from>
+            <to>$varNotificationReq.EmailPayload/ns1:Content</to>
+          </copy>
+          <copy>
+            <from>string('text/html; charset=UTF-8')</from>
+            <to>$varNotificationReq.EmailPayload/ns1:Content/ns1:ContentBody/ns1:MultiPart/ns1:BodyPart[1]/ns1:MimeType</to>
+          </copy>
+          <copy>
+            <from>'Document with the price changes'</from>
+            <to>$varNotificationReq.EmailPayload/ns1:Content/ns1:ContentBody/ns1:MultiPart/ns1:BodyPart[1]/ns1:ContentBody</to>
+          </copy>
+          <copy>
+            <from>string('application/vnd.ms-excel;')</from>
+            <to>$varNotificationReq.EmailPayload/ns1:Content/ns1:ContentBody/ns1:MultiPart/ns1:BodyPart[2]/ns1:MimeType</to>
+          </copy>
+          <copy>
+            <from>'test.xls'</from>
+            <to>$varNotificationReq.EmailPayload/ns1:Content/ns1:ContentBody/ns1:MultiPart/ns1:BodyPart[2]/ns1:BodyPartName</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.payload/client:Body</from>
+            <to>$varNotificationReq.EmailPayload/ns1:Content/ns1:ContentBody/ns1:MultiPart/ns1:BodyPart[2]/ns1:ContentBody</to>
+          </copy>
+        </assign>
+        <assign name="Assign1">
+          <copy>
+            <from>'test'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$umsReference_SendNotification_InputVariable.body/ns3:payload</to>
+          </copy>
+        </assign>
+        <invoke name="umsReference" bpelx:invokeAsDetail="no" partnerLink="umsReference"
+                portType="ns2:SendNotification_ptt" operation="SendNotification"
+                inputVariable="umsReference_SendNotification_InputVariable"/>
+        <invoke name="InvokeNotificationService" portType="ns1:NotificationService" partnerLink="NotificationService1"
+                inputVariable="varNotificationReq" outputVariable="varNotificationResponse"
+                operation="sendEmailNotification"/>
+      </sequence>
+    </scope>
+  </sequence>
+</process>

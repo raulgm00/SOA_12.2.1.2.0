@@ -1,0 +1,847 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed May 22 15:15:32 CDT 2019
+  Author:  Sol4IT
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="JDACreateSupplierProcessBPEL"
+               targetNamespace="http://mx.agarcia.ea/SupplierJDA/JDACreateSupplierProcess/JDACreateSupplierProcessBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/SupplierJDA/JDACreateSupplierProcess/JDACreateSupplierProcessBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/Suppliers/JDACreateSupplierProcess"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://mx.agarcia.ea/Applications/JDA/Suppliers/CreateSupplier/v1.0"
+         xmlns:ns6="http://mx.agarcia.ea/Canonical/Commons/LocationsCommon/v1"
+         xmlns:ns4="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns7="http://mx.agarcia.ea/Applications/JDA/Supplier/CreateSupplier"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Foundation/Party/SupplierEntitySvc"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns8="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns9="http://mx.agarcia.ea/Applications/JDA/Suppliers/QuerySupplier/v1.0"
+         xmlns:ns10="http://mx.agarcia.ea/Applications/JDA/Suppliers/ModifySupplier/v1.0"
+         xmlns:ns11="http://mx.agarcia.ea/Applications/JDA/Supplier/QuerySupplier"
+         xmlns:ns12="http://mx.agarcia.ea/Applications/JDA/Supplier/ModifySupplier"
+         xmlns:ns13="http://mx.agarcia.ea/Applications/Governance"
+         xmlns:ns14="http://mx.agarcia.ea/Commons/Schemas/AGStandardHeader"
+         xmlns:ns15="http://xmlns.oracle.com/pcbpel/adapter/db/RMSSearchSupplier/RMSSearchSupplier/RMSSelectSupplierID"
+         xmlns:ns16="http://xmlns.oracle.com/pcbpel/adapter/db/top/RMSSelectSupplierID">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://mx.agarcia.ea/Applications/Governance"
+          location="http://172.16.19.26:7004/Applications/Governance/PS/GovernanceAPIPXY/v1.0?WSDL"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Suppliers/JDACreateSupplierProcess"
+          location="../WSDLs/JDACreateSupplierProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Suppliers/JDACreateSupplierProcess"
+          location="../WSDLs/JDACreateSupplierProcessWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="jdacreatesupplierprocessbpel_client" partnerLinkType="ns1:JDACreateSupplierProcessBPEL" myRole="CreateSupplierPType"/>
+    <partnerLink name="JDACreateSupplierAddressSrv" partnerLinkType="ns2:JDACreateSupplierAddressSrv"
+                 partnerRole="createSupplierPort"/>
+    <partnerLink name="JDACreateSupplierSrv" partnerLinkType="ns2:JDACreateSupplierSrv"
+                 partnerRole="createSupplierPort"/>
+    <partnerLink name="JDACreateSupplierMasterExtensionSrv" partnerLinkType="ns2:JDACreateSupplierMasterExtensionSrv"
+                 partnerRole="createSupplierPort"/>
+    <partnerLink name="JDAQuerySupplierPXY" partnerLinkType="ns9:JDAQuerySupplierPXY"
+                 partnerRole="findSupplierByIdPort"/>
+    <partnerLink name="JDAQuerySupplierAddressPXY" partnerLinkType="ns9:JDAQuerySupplierAddressPXY"
+                 partnerRole="findSupplierByIdPort"/>
+    <partnerLink name="JDAModifySupplierPXY" partnerLinkType="ns10:JDAModifySupplierPXY"
+                 partnerRole="modifySupplierPort"/>
+    <partnerLink name="JDAModifySupplierAddressPXY" partnerLinkType="ns10:JDAModifySupplierAddressPXY"
+                 partnerRole="modifySupplierPort"/>
+    <partnerLink name="GovernanceAPIPXY" partnerLinkType="ns13:GovernanceAPIPXY" partnerRole="GovernancePort"/>
+    <partnerLink name="RMSSelectSupplier" partnerLinkType="ns15:RMSSelectSupplierID_plt"
+                 partnerRole="RMSSelectSupplierID_role"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:createSupplierRequest"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:createSupplierResponse"/>
+    <variable name="Invoke_JDACreateSupplierAddress_InVar" messageType="ns2:createSupplierRequestMessage"/>
+    <variable name="Invoke_JDACreateSupplierAddress_OutVar" messageType="ns2:createSupplierResponseMessage"/>
+    <variable name="Invoke_JDACreateSupplier_InVar" messageType="ns2:createSupplierRequestMessage"/>
+    <variable name="Invoke_JDACreateSupplier_OutVar" messageType="ns2:createSupplierResponseMessage"/>
+    <variable name="Invoke_JDASupplierMasterExtension_InVar" messageType="ns2:createSupplierRequestMessage"/>
+    <variable name="Invoke_JDASupplierMasterExtension_OutVar" messageType="ns2:createSupplierResponseMessage"/>
+    <variable name="resultVar" type="xsd:string"/>
+    <variable name="resultVar1" type="xsd:string"/>
+    <variable name="ErrorVar" messageType="ns1:standardMessagefault"/>
+    <variable name="supplierId" type="xsd:boolean"/>
+    <variable name="Inv_QueryId_InVar" messageType="ns9:findSupplierByIdRequestMessage"/>
+    <variable name="Inv_QueryId_OutVar" messageType="ns9:findSupplierByIdResponseMessage"/>
+    <variable name="Inv_ModifySupplier_InpVar" messageType="ns10:modifySupplierRequestMessage"/>
+    <variable name="Inv_ModifySupplier_OutVar" messageType="ns10:modifySupplierResponseMessage"/>
+    <variable name="header" messageType="ns1:standardMessageHeader"/>
+    <variable name="interfaceId" type="xsd:string"/>
+    <variable name="activityId" type="xsd:string"/>
+    <variable name="traceID1" type="xsd:string"/>
+    <variable name="traceID2" type="xsd:string"/>
+    <variable name="traceID3" type="xsd:string"/>
+    <variable name="traceID4" type="xsd:string"/>
+    <variable name="registrationDate" type="xsd:string"/>
+    <variable name="IDSupplierParent" element="ns3:createSupplierRequest"/>
+    <variable name="InvokeRMSSupplier_Input" messageType="ns15:RMSSelectSupplierIDSelect_inputParameters"/>
+    <variable name="InvokeRMSSupplier_Output" messageType="ns15:SupsCollection_msg"/>
+    <variable name="InvokeRMSSupParent_Input" messageType="ns15:RMSSelectSupplierIDSelect_inputParameters"/>
+    <variable name="InvokeRMSSupParent_Output" messageType="ns15:SupsCollection_msg"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in JDACreateSupplierProcessBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="jdacreatesupplierprocessbpel_client" portType="ns1:CreateSupplierPType" operation="createSupplierPType" variable="inputVariable" createInstance="yes"
+             bpelx:headerVariable="header"/>
+    <flow name="Flow1">
+      <sequence name="traceId4"><assign name="getIdTrace"
+                                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+          <copy>
+            <from>oraext:sequence-next-val ("ID_SERV_SEC", "jdbc/MDMSOA")</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$traceID4</to>
+          </copy>
+        </assign></sequence>
+      <sequence name="traceId3"><assign name="getIdTrace"
+                                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+          <copy>
+            <from>oraext:sequence-next-val ("ID_SERV_SEC", "jdbc/MDMSOA")</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$traceID3</to>
+          </copy>
+        </assign></sequence>
+      <sequence name="traceId1"><assign name="getIdTrace"
+                                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+          <copy>
+            <from>oraext:sequence-next-val ("ID_SERV_SEC", "jdbc/MDMSOA")</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$traceID1</to>
+          </copy>
+        </assign></sequence>
+      <sequence name="traceId2"><assign name="getIdTrace"
+                                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+          <copy>
+            <from>oraext:sequence-next-val ("ID_SERV_SEC", "jdbc/MDMSOA")</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$traceID2</to>
+          </copy>
+        </assign></sequence>
+    </flow><flow name="GetGovernanceIds" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <sequence name="InterfaceId">
+         <if name="validateInterfaceId">
+            <documentation>
+               
+            <![CDATA[Recibe Id de interface]]></documentation>
+            <condition>$header.header/ns14:parameters/ns14:parameter[@Key='gov.interface.id']</condition>
+            <assign name="getInterfaceId">
+            <copy>
+              <from>$header.header/ns14:parameters/ns14:parameter[@Key='gov.interface.id']</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$interfaceId</to>
+            </copy>
+          </assign>
+            <else>
+               <documentation>
+                  <![CDATA[No recibe Id de interface]]>
+               </documentation>
+               <empty name="InterfaceIdNull"/>
+            </else>
+         </if>
+      </sequence>
+      <sequence name="ActivityId">
+         <if name="validateActicityId" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+            <documentation>
+               
+            <![CDATA[Recibe Id de actividad]]></documentation>
+            <condition>$header.header/ns14:parameters/ns14:parameter[@Key='gov.activity.id']</condition>
+            <assign name="getActivityId">
+            <copy>
+              <from>$header.header/ns14:parameters/ns14:parameter[@Key='gov.activity.id']</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$activityId</to>
+            </copy>
+          </assign>
+            <else>
+               <documentation>
+                  <![CDATA[No recibe Id de actividad]]>
+               </documentation>
+               <empty name="ActivityIdNull"/>
+            </else>
+         </if>
+      </sequence>
+   </flow>
+    <assign name="AssignIDQuery">
+      <copy>
+        <from>$inputVariable.part1/ns3:suppliers/ns4:supplier/ns4:supplierID</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeRMSSupplier_Input.RMSSelectSupplierIDSelect_inputParameters/ns16:IdSupp</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeRMSSupplier" bpelx:invokeAsDetail="no" partnerLink="RMSSelectSupplier"
+            portType="ns15:RMSSelectSupplierID_ptt" operation="RMSSelectSupplierIDSelect"
+            inputVariable="InvokeRMSSupplier_Input" outputVariable="InvokeRMSSupplier_Output"/>
+    <assign name="AssignIdPArent">
+      <copy>
+        <from>$InvokeRMSSupplier_Output.SupsCollection/ns16:Sups/ns16:supplierParent</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeRMSSupParent_Input.RMSSelectSupplierIDSelect_inputParameters/ns16:IdSupp</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeRMSSupParent" bpelx:invokeAsDetail="no" partnerLink="RMSSelectSupplier"
+            portType="ns15:RMSSelectSupplierID_ptt" operation="RMSSelectSupplierIDSelect"
+            inputVariable="InvokeRMSSupParent_Input" outputVariable="InvokeRMSSupParent_Output"/>
+    <if name="QueryId">
+      <condition>string-length($inputVariable.part1/ns3:suppliers/ns4:supplier/ns4:supplierID)=0</condition>
+      <sequence name="Sequence4">
+        <assign name="Transformation1">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:doXSLTransformForDoc("../Transformations/Trans_ModifySupplier.xsl", $inputVariable.part1)</from>
+            <to variable="Inv_ModifySupplier_InpVar" part="modifySupplierRequestMessage"/>
+          </copy>
+        </assign>
+        <assign name="registrationDate">
+          <copy>
+            <from>xp20:current-dateTime()</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$registrationDate</to>
+          </copy>
+        </assign>
+        <invoke name="Inv_ModifySupplier" bpelx:invokeAsDetail="no" partnerLink="JDAModifySupplierPXY"
+                portType="ns10:modifySupplierPort" operation="modify" inputVariable="Inv_ModifySupplier_InpVar"
+                outputVariable="Inv_ModifySupplier_OutVar"/><scope name="traceModifySupp"
+                                                                   xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <variables>
+            <variable name="sendMessageModSupp_audit_InputVariable" messageType="ns13:audit"/>
+            <variable name="sendMessageModSupp_audit_OutputVariable" messageType="ns13:auditResponse"/>
+            <variable name="Entry_1" messageType="ns13:audit"/>
+            <variable name="Entry_2" messageType="ns13:audit"/>
+            <variable name="Entry_3" messageType="ns13:audit"/>
+            <variable name="Entry_4" messageType="ns13:audit"/>
+            <variable name="Entry_5" messageType="ns13:audit"/>
+            <variable name="Entry_6" messageType="ns13:audit"/>
+            <variable name="Entry_7" messageType="ns13:audit"/>
+            <variable name="Entry_8" messageType="ns13:audit"/>
+            <variable name="Entry_9" messageType="ns13:audit"/>
+          </variables><faultHandlers>
+         <catchAll>
+            <empty name="faultGeneralData"/>
+         </catchAll>
+      </faultHandlers>
+      <sequence>
+         <assign name="sendMessage">
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+         <copy>
+               <from>"TraceActivity"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:operation</to>
+            </copy><copy>
+               <from>$interfaceId</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:interfaceId</to>
+            </copy><copy>
+               <from>$activityId</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:activityId</to>
+            </copy><copy>
+               <from>concat('Id:', $inputVariable.part1/ns3:suppliers/ns4:supplier/ns4:supplierID)</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:data</to>
+            </copy><copy>
+               <from>"id"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>$traceID1</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"registrationDate"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>$registrationDate</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"finishDate"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>xp20:current-dateTime()</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"component"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>"JDACreateSupplier"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"destinyComponent"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>"ModifySupplierProxy"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"message"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>"Modificando proveedor existente"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"level"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>1</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"status"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>"Finalizado"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"class"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_9.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>"Expert"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_9.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><extensionAssignOperation>
+                <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+              </extensionAssignOperation><extensionAssignOperation>
+                <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+              </extensionAssignOperation><extensionAssignOperation>
+                <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+              </extensionAssignOperation><extensionAssignOperation>
+                <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+              </extensionAssignOperation><extensionAssignOperation>
+                <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+              </extensionAssignOperation><extensionAssignOperation>
+                <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+              </extensionAssignOperation><extensionAssignOperation>
+                <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+              </extensionAssignOperation><extensionAssignOperation>
+                <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+              </extensionAssignOperation><extensionAssignOperation>
+                <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_9.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+              </extensionAssignOperation></assign>
+         
+      <invoke name="sendMessageModSupp" partnerLink="GovernanceAPIPXY"
+              portType="ns13:GovernancePort" operation="audit" inputVariable="sendMessageModSupp_audit_InputVariable"
+              outputVariable="sendMessageModSupp_audit_OutputVariable" bpelx:invokeAsDetail="no"/></sequence>
+   </scope></sequence>
+      <else>
+        <sequence>
+          <scope name="Scope2">
+            <faultHandlers>
+              <catch bpelx:name="catchRemote" faultName="bpelx:remoteFault" faultVariable="fault"
+                     faultMessageType="bpelx:RuntimeFaultMessage">
+                <sequence name="Sequence2">
+                  <assign name="Assign1">
+                    <copy>
+                      <from>$fault.code</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$ErrorVar.part1/ns8:errorCode</to>
+                    </copy>
+                    <copy>
+                      <from>$fault.detail</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$ErrorVar.part1/ns8:errorDescription</to>
+                    </copy>
+                  </assign>
+                </sequence>
+              </catch>
+            </faultHandlers>
+            <sequence>
+              <assign name="TransSupplierAddressReq">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:doXSLTransformForDoc("../Transformations/TransSupplierAddressReq.xsl", $inputVariable.part1)</from>
+                  <to variable="Invoke_JDACreateSupplierAddress_InVar" part="createSupplierRequestMessage"/>
+                </copy>
+              </assign><assign name="registrationDate" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>xp20:current-dateTime()</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$registrationDate</to>
+      </copy>
+   </assign>
+              <assign name="NameSupplierParent">
+                <copy>
+                  <from>$InvokeRMSSupParent_Output.SupsCollection/ns16:Sups/ns16:supName</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateSupplierAddress_InVar.createSupplierRequestMessage/ns7:supplier/ns4:name</to>
+                </copy>
+              </assign>
+              <invoke name="Invoke_JDACreateSupplierAddress" bpelx:invokeAsDetail="no"
+                      partnerLink="JDACreateSupplierAddressSrv" portType="ns2:createSupplierPort" operation="create"
+                      inputVariable="Invoke_JDACreateSupplierAddress_InVar"
+                      outputVariable="Invoke_JDACreateSupplierAddress_OutVar"/><scope name="traceCreateSupplierAddress"
+                                                                                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <variables><variable name="sendMessageModSupp_audit_InputVariable" messageType="ns13:audit"/><variable name="sendMessageModSupp_audit_OutputVariable"
+                                                                                                             messageType="ns13:auditResponse"/><variable name="Entry_1"
+                                                                                                                                                         messageType="ns13:audit"/><variable name="Entry_2"
+                                                                                                                                                                                             messageType="ns13:audit"/><variable name="Entry_3"
+                                                                                                                                                                                                                                 messageType="ns13:audit"/><variable name="Entry_4"
+                                                                                                                                                                                                                                                                     messageType="ns13:audit"/><variable name="Entry_5"
+                                                                                                                                                                                                                                                                                                         messageType="ns13:audit"/><variable name="Entry_6"
+                                                                                                                                                                                                                                                                                                                                             messageType="ns13:audit"/><variable name="Entry_7"
+                                                                                                                                                                                                                                                                                                                                                                                 messageType="ns13:audit"/><variable name="Entry_8"
+                                                                                                                                                                                                                                                                                                                                                                                                                     messageType="ns13:audit"/><variable name="Entry_9"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                         messageType="ns13:audit"/></variables><faultHandlers>
+         <catchAll>
+            <empty name="faultGeneralData"/>
+         </catchAll>
+      </faultHandlers>
+      <sequence>
+         <assign name="sendMessage">
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+         <copy>
+               <from>"TraceActivity"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:operation</to>
+            </copy><copy>
+               <from>$interfaceId</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:interfaceId</to>
+            </copy><copy>
+               <from>$activityId</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:activityId</to>
+            </copy><copy>
+               <from>concat('Id:', $inputVariable.part1/ns3:suppliers/ns4:supplier/ns4:supplierID)</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:data</to>
+            </copy><copy>
+               <from>"id"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>$traceID2</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"registrationDate"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>$registrationDate</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"finishDate"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>xp20:current-dateTime()</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"component"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>"JDACreateSupplier"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"destinyComponent"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>"CreateSupplierAddressProxy"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"message"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>"Creando direccion de proveedor en JDA"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"level"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>1</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"status"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>"Finalizado"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><copy>
+               <from>"class"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_9.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+            </copy><copy>
+               <from>"Expert"</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_9.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+            </copy><extensionAssignOperation>
+                      <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+                    </extensionAssignOperation><extensionAssignOperation>
+                      <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+                    </extensionAssignOperation><extensionAssignOperation>
+                      <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+                    </extensionAssignOperation><extensionAssignOperation>
+                      <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+                    </extensionAssignOperation><extensionAssignOperation>
+                      <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+                    </extensionAssignOperation><extensionAssignOperation>
+                      <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+                    </extensionAssignOperation><extensionAssignOperation>
+                      <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+                    </extensionAssignOperation><extensionAssignOperation>
+                      <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+                    </extensionAssignOperation><extensionAssignOperation>
+                      <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_9.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+               </bpelx:append>
+                    </extensionAssignOperation></assign>
+         
+      <invoke name="sendMessageModSupp" partnerLink="GovernanceAPIPXY" portType="ns13:GovernancePort" operation="audit"
+              inputVariable="sendMessageModSupp_audit_InputVariable"
+              outputVariable="sendMessageModSupp_audit_OutputVariable" bpelx:invokeAsDetail="no"
+              xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/></sequence>
+   </scope></sequence>
+          </scope>
+          <sequence>
+            <assign name="TransCreatSupplierReq">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:doXSLTransformForDoc("../Transformations/TransCreateSupplierReq.xsl", $inputVariable.part1)</from>
+                <to variable="Invoke_JDACreateSupplier_InVar" part="createSupplierRequestMessage"/>
+              </copy>
+            </assign><assign name="registrationDate" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>xp20:current-dateTime()</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$registrationDate</to>
+      </copy>
+   </assign>
+            <assign name="NameSupplierParent">
+              <copy>
+                <from>$InvokeRMSSupParent_Output.SupsCollection/ns16:Sups/ns16:supName</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateSupplier_InVar.createSupplierRequestMessage/ns7:supplier/ns4:name</to>
+              </copy>
+            </assign>
+            <invoke name="Invoke_JDACreateSupplier" bpelx:invokeAsDetail="no" partnerLink="JDACreateSupplierSrv"
+                    portType="ns2:createSupplierPort" operation="create" inputVariable="Invoke_JDACreateSupplier_InVar"
+                    outputVariable="Invoke_JDACreateSupplier_OutVar"/><scope name="traceCreateSupplier"
+                                                                             xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <variables><variable name="sendMessageModSupp_audit_InputVariable" messageType="ns13:audit"/><variable name="sendMessageModSupp_audit_OutputVariable"
+                                                                                                             messageType="ns13:auditResponse"/><variable name="Entry_1"
+                                                                                                                                                         messageType="ns13:audit"/><variable name="Entry_2"
+                                                                                                                                                                                             messageType="ns13:audit"/><variable name="Entry_3"
+                                                                                                                                                                                                                                 messageType="ns13:audit"/><variable name="Entry_4"
+                                                                                                                                                                                                                                                                     messageType="ns13:audit"/><variable name="Entry_5"
+                                                                                                                                                                                                                                                                                                         messageType="ns13:audit"/><variable name="Entry_6"
+                                                                                                                                                                                                                                                                                                                                             messageType="ns13:audit"/><variable name="Entry_7"
+                                                                                                                                                                                                                                                                                                                                                                                 messageType="ns13:audit"/><variable name="Entry_8"
+                                                                                                                                                                                                                                                                                                                                                                                                                     messageType="ns13:audit"/><variable name="Entry_9"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                         messageType="ns13:audit"/></variables><faultHandlers>
+         <catchAll>
+            <empty name="faultGeneralData"/>
+         </catchAll>
+      </faultHandlers>
+      <sequence>
+         <assign name="sendMessage">
+                  <copy>
+                    <from>"TraceActivity"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:operation</to>
+                  </copy>
+                  <copy>
+                    <from>$interfaceId</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:interfaceId</to>
+                  </copy>
+                  <copy>
+                    <from>$activityId</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:activityId</to>
+                  </copy>
+                  <copy>
+                    <from>concat('Id:', $inputVariable.part1/ns3:suppliers/ns4:supplier/ns4:supplierID)</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:data</to>
+                  </copy>
+                  <copy>
+                    <from>"id"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+                  </copy>
+                  <copy>
+                    <from>$traceID3</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+                  </copy>
+                  <copy>
+                    <from>"registrationDate"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+                  </copy>
+                  <copy>
+                    <from>$registrationDate</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+                  </copy>
+                  <copy>
+                    <from>"finishDate"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+                  </copy>
+                  <copy>
+                    <from>xp20:current-dateTime()</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+                  </copy>
+                  <copy>
+                    <from>"component"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+                  </copy>
+                  <copy>
+                    <from>"JDACreateSupplier"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+                  </copy>
+                  <copy>
+                    <from>"destinyComponent"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+                  </copy>
+                  <copy>
+                    <from>"CreateSupplierProxy"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+                  </copy>
+                  <copy>
+                    <from>"message"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+                  </copy>
+                  <copy>
+                    <from>"Creando proveedor en JDA "</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+                  </copy>
+                  <copy>
+                    <from>"level"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+                  </copy>
+                  <copy>
+                    <from>1</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+                  </copy>
+                  <copy>
+                    <from>"status"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+                  </copy>
+                  <copy>
+                    <from>"Finalizado"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+                  </copy>
+                  <copy>
+                    <from>"class"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_9.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:key</to>
+                  </copy>
+                  <copy>
+                    <from>"Expert"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_9.request/ns13:request/ns13:header/ns13:parameters/ns13:entry/ns13:value</to>
+                  </copy>
+                  <extensionAssignOperation>
+                    <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                      <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+                    </bpelx:append>
+                  </extensionAssignOperation>
+                  <extensionAssignOperation>
+                    <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                      <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+                    </bpelx:append>
+                  </extensionAssignOperation>
+                  <extensionAssignOperation>
+                    <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                      <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+                    </bpelx:append>
+                  </extensionAssignOperation>
+                  <extensionAssignOperation>
+                    <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                      <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+                    </bpelx:append>
+                  </extensionAssignOperation>
+                  <extensionAssignOperation>
+                    <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                      <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+                    </bpelx:append>
+                  </extensionAssignOperation>
+                  <extensionAssignOperation>
+                    <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                      <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+                    </bpelx:append>
+                  </extensionAssignOperation>
+                  <extensionAssignOperation>
+                    <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                      <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+                    </bpelx:append>
+                  </extensionAssignOperation>
+                  <extensionAssignOperation>
+                    <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                      <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+                    </bpelx:append>
+                  </extensionAssignOperation>
+                  <extensionAssignOperation>
+                    <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_9.request/ns13:request/ns13:header/ns13:parameters/ns13:entry</bpelx:from>
+                      <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$sendMessageModSupp_audit_InputVariable.request/ns13:request/ns13:header/ns13:parameters</bpelx:to>
+                    </bpelx:append>
+                  </extensionAssignOperation>
+                </assign>
+         
+      <invoke name="sendMessageModSupp" partnerLink="GovernanceAPIPXY" portType="ns13:GovernancePort" operation="audit"
+              inputVariable="sendMessageModSupp_audit_InputVariable"
+              outputVariable="sendMessageModSupp_audit_OutputVariable" bpelx:invokeAsDetail="no"
+              xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/></sequence>
+   </scope></sequence>
+        </sequence>
+      </else>
+    </if>
+    <scope name="Scope3">
+      <bpelx:skipCondition>1 = 1</bpelx:skipCondition>
+      <sequence>
+        <assign name="TransJDASupplierMasterExtension">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:doXSLTransformForDoc("../Transformations/TransJDASupplierMasterExtensionReq.xsl", $inputVariable.part1)</from>
+            <to variable="Invoke_JDASupplierMasterExtension_InVar" part="createSupplierRequestMessage"/>
+          </copy>
+        </assign><invoke name="Invoke_JDASupplierMasterExtension" bpelx:invokeAsDetail="no"
+                partnerLink="JDACreateSupplierMasterExtensionSrv" portType="ns2:createSupplierPort" operation="create"
+                inputVariable="Invoke_JDASupplierMasterExtension_InVar"
+                outputVariable="Invoke_JDASupplierMasterExtension_OutVar"/></sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="jdacreatesupplierprocessbpel_client" portType="ns1:CreateSupplierPType" operation="createSupplierPType" variable="outputVariable"/>
+  </sequence>
+</process>

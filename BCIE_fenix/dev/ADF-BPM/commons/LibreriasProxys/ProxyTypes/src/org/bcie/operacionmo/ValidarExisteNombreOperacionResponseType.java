@@ -1,0 +1,91 @@
+
+package org.bcie.operacionmo;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
+import org.bcie.resultbo.Resultado;
+
+
+/**
+ * <p>Clase Java para ValidarExisteNombreOperacionResponseType complex type.
+ * 
+ * <p>El siguiente fragmento de esquema especifica el contenido que se espera que haya en esta clase.
+ * 
+ * <pre>
+ * &lt;complexType name="ValidarExisteNombreOperacionResponseType">
+ *   &lt;complexContent>
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+ *       &lt;sequence>
+ *         &lt;element name="ExisteOperacion" type="{http://www.w3.org/2001/XMLSchema}boolean" minOccurs="0"/>
+ *         &lt;element name="Resultado" type="{http://www.bcie.org/ResultBO}Resultado" minOccurs="0"/>
+ *       &lt;/sequence>
+ *     &lt;/restriction>
+ *   &lt;/complexContent>
+ * &lt;/complexType>
+ * </pre>
+ * 
+ * 
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "ValidarExisteNombreOperacionResponseType", propOrder = {
+    "existeOperacion",
+    "resultado"
+})
+public class ValidarExisteNombreOperacionResponseType {
+
+    @XmlElement(name = "ExisteOperacion")
+    protected Boolean existeOperacion;
+    @XmlElement(name = "Resultado")
+    protected Resultado resultado;
+
+    /**
+     * Obtiene el valor de la propiedad existeOperacion.
+     * 
+     * @return
+     *     possible object is
+     *     {@link Boolean }
+     *     
+     */
+    public Boolean isExisteOperacion() {
+        return existeOperacion;
+    }
+
+    /**
+     * Define el valor de la propiedad existeOperacion.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link Boolean }
+     *     
+     */
+    public void setExisteOperacion(Boolean value) {
+        this.existeOperacion = value;
+    }
+
+    /**
+     * Obtiene el valor de la propiedad resultado.
+     * 
+     * @return
+     *     possible object is
+     *     {@link Resultado }
+     *     
+     */
+    public Resultado getResultado() {
+        return resultado;
+    }
+
+    /**
+     * Define el valor de la propiedad resultado.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link Resultado }
+     *     
+     */
+    public void setResultado(Resultado value) {
+        this.resultado = value;
+    }
+
+}

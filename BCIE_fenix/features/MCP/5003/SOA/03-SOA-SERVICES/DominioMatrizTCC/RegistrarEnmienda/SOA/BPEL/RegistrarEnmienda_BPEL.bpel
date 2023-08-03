@@ -1,0 +1,755 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Mar 11 18:13:06 CST 2016
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="RegistrarEnmienda_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioMatrizTCC/RegistrarEnmienda/RegistrarEnmienda_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioMatrizTCC/RegistrarEnmienda/RegistrarEnmienda_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/MatrizTCCService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/ComisionService"
+         xmlns:ns3="http://www.bcie.org/CondicionService" xmlns:ns4="http://www.bcie.org/TerminoService"
+         xmlns:ns5="http://www.bcie.org/MatrizTCCMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns6="http://www.bcie.org/MatrizTCCBO"
+         xmlns:ns7="http://www.bcie.org/ResultBO" xmlns:ns8="http://www.bcie.org/ErrorBO"
+         xmlns:ns9="http://www.bcie.org/ComisionMO" xmlns:ns11="http://www.bcie.org/TerminoBO"
+         xmlns:ns10="http://www.bcie.org/TerminoMO" xmlns:ns12="http://www.bcie.org/CondicionMO"
+         xmlns:ns16="http://www.bcie.org/OperacionBO" xmlns:ns18="http://www.bcie.org/ProductoBO"
+         xmlns:ns19="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns13="http://www.bcie.org/ComisionBO"
+         xmlns:ns14="http://www.bcie.org/CatalogoBO" xmlns:ns17="http://www.bcie.org/ClienteBO"
+         xmlns:ns15="http://www.bcie.org/AtributoBO" xmlns:ns20="http://www.bcie.org/CondicionBO"
+         xmlns:ns21="http://www.bcie.org/DocumentoBO" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <import namespace="http://www.bcie.org/MatrizTCCService" location="../WSDLs/RegistrarEnmiendaSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="RegistrarEnmienda" partnerLinkType="ns1:RegistrarEnmienda_BPEL" myRole="RegistrarEnmiendaPT"/>
+    <partnerLink name="ConsultarEnmiendaTCC" partnerLinkType="ns1:ConsultarEnmiendaTCC"
+                 partnerRole="ConsultarEnmiendasTCCPT"/>
+    <partnerLink name="ConsultarComision" partnerLinkType="ns2:ConsultarComision" partnerRole="ConsultarComisionPT"/>
+    <partnerLink name="ConsultarCondicion" partnerLinkType="ns3:ConsultarCondicion"
+                 partnerRole="ConsultarCondicionbyIdOperacionPT"/>
+    <partnerLink name="ConsultarTermino" partnerLinkType="ns4:ConsultarTermino" partnerRole="ConsultarTerminoPT"/>
+    <partnerLink name="MatrizTCC" partnerLinkType="ns1:MatrizTCC" partnerRole="MatrizTCCPT"/>
+    <partnerLink name="ActualizarTermino" partnerLinkType="ns4:ActualizarTermino" partnerRole="ActualizarTerminoPT"/>
+    <partnerLink name="ActualizarComision" partnerLinkType="ns2:ActualizarComision" partnerRole="ActualizarComisionPT"/>
+    <partnerLink name="ActualizarCondicion" partnerLinkType="ns3:ActualizarCondicion"
+                 partnerRole="ActualizarCondicionPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:RegistrarEnmiendaRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:RegistrarEnmiendaResponseMessage"/>
+       <variable name="consultarEnmiendasTCC_OutputVariable" messageType="ns1:ConsultarEnmiendasTCCResponseMessage"/>
+    <variable name="idEnmendado" type="xsd:long"/>
+    <variable name="fechaVencimiento" type="xsd:date"/>
+    <variable name="plazo" type="xsd:int"/>
+    <variable name="idTcaFrecuanciaPlazo" type="xsd:long"/>
+    <variable name="idTcaTipoFechaInicio" type="xsd:long"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence8">
+        <assign name="AssignError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns5:Resultado/ns7:result</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="RegistrarEnmienda"
+               portType="ns1:RegistrarEnmiendaPT" operation="registrarEnmienda"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in RegistrarEnmienda_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="RegistrarEnmienda" portType="ns1:RegistrarEnmiendaPT" operation="registrarEnmienda" variable="inputVariable" createInstance="yes"/>
+    <scope name="ScopeConsultarEnmiendaTCC">
+      <variables>
+        <variable name="consultarEnmiendasTCC_InputVariable" messageType="ns1:ConsultarEnmiendasTCCRequestMessage"/>
+      </variables>
+      <faultHandlers>
+        <catchAll>
+          <sequence name="Sequence20">
+            <assign name="Assign_OutputVar">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns5:Resultado/ns7:result</to>
+              </copy>
+              <copy>
+                <from>'Error general en la Consulta de Enmienda'</from>
+                <to>$outputVariable.response/ns5:Resultado/ns7:message</to>
+              </copy>
+              <copy>
+                <from>0</from>
+                <to>$outputVariable.response/ns5:Resultado/ns7:error/ns8:errorCode</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$outputVariable.response/ns5:Resultado/ns7:error/ns8:errorDescription</to>
+              </copy>
+            </assign>
+            <reply name="ReplyOutput" variable="outputVariable" partnerLink="RegistrarEnmienda"
+                   portType="ns1:RegistrarEnmiendaPT" operation="registrarEnmienda"/>
+            <exit name="ExitError"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence1">
+        <assign name="AssignConsultarEnmiendaTCCInput">
+          <copy>
+            <from>$inputVariable.request/ns5:idEnmienda</from>
+            <to>$consultarEnmiendasTCC_InputVariable.request/ns5:idEnmienda</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarEnmiendaTCC" bpelx:invokeAsDetail="no" partnerLink="ConsultarEnmiendaTCC"
+                portType="ns1:ConsultarEnmiendasTCCPT" operation="consultarEnmiendasTCC"
+                inputVariable="consultarEnmiendasTCC_InputVariable"
+                outputVariable="consultarEnmiendasTCC_OutputVariable"/>
+        <if name="IfError">
+          <documentation>
+            <![CDATA[Error]]>
+          </documentation>
+          <condition>$consultarEnmiendasTCC_OutputVariable.response/ns5:Resultado/ns7:result = 'ERROR'</condition>
+          <sequence name="Sequence22">
+            <assign name="AssignError">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$consultarEnmiendasTCC_OutputVariable.response/ns5:Resultado/ns7:result</from>
+                <to>$outputVariable.response/ns5:Resultado/ns7:result</to>
+              </copy>
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>concat('Error al Consultar Enmienda TCC',$consultarEnmiendasTCC_OutputVariable.response/ns5:Resultado/ns7:message)</from>
+                <to>$outputVariable.response/ns5:Resultado/ns7:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyErrorConsulta" variable="outputVariable" partnerLink="RegistrarEnmienda"
+                   portType="ns1:RegistrarEnmiendaPT" operation="registrarEnmienda"/>
+            <exit name="Exit"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[NoError]]>
+            </documentation>
+            <empty name="NoError"/>
+          </else>
+        </if>
+        <if name="IfConsultaCero">
+          <documentation>
+            <![CDATA[ConsultaCero]]>
+          </documentation>
+          <condition>string-length($consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:idEnmienda) = 0</condition>
+          <sequence name="Sequence21">
+            <assign name="AssignOutput">
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns5:Resultado/ns7:result</to>
+              </copy>
+              <copy>
+                <from>"Consulta de Enmienda sin resultados"</from>
+                <to>$outputVariable.response/ns5:Resultado/ns7:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyOutput" variable="outputVariable" partnerLink="RegistrarEnmienda"
+                   portType="ns1:RegistrarEnmiendaPT" operation="registrarEnmienda"/>
+            <exit name="Exit"/>
+          </sequence>
+          <else>
+            <documentation/>
+            <empty name="ConsultaConResultado"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <forEach parallel="no" counterName="tccCounter" name="ForEachTCC">
+      <bpelx:skipCondition>count($consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC)=0</bpelx:skipCondition>
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC)</finalCounterValue>
+      <scope name="ScopeForEachTCC">
+        <variables>
+          <variable name="actualizarEstadoTCC_InputVariable" messageType="ns1:ActualizarEstadoTCCRequestMessage"/>
+          <variable name="actualizarEstadoTCC_OutputVariable" messageType="ns1:ActualizarEstadoTCCResponseMessage"/>
+          <variable name="subestadoVar" type="xsd:int"/>
+        </variables>
+        <faultHandlers>
+          <catchAll>
+            <sequence>
+              <assign name="AssignErrorGeneral">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns5:Resultado/ns7:result</to>
+                </copy>
+                <copy>
+                  <from>'Error General al Iterar los Resultados de la Consulta de Enmienda'</from>
+                  <to>$outputVariable.response/ns5:Resultado/ns7:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyOutput" variable="outputVariable" partnerLink="RegistrarEnmienda"
+                     portType="ns1:RegistrarEnmiendaPT" operation="registrarEnmienda"/>
+              <exit name="Exit"/>
+            </sequence>
+          </catchAll>
+        </faultHandlers>
+        <sequence>
+          <assign name="AssignDefaultSubEstado">
+            <copy>
+              <from>0</from>
+              <to>$subestadoVar</to>
+            </copy>
+          </assign>
+          <if name="IfTipo">
+            <documentation>
+              <![CDATA[COMISION]]>
+            </documentation>
+            <condition>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:tipoTCC='COMISION'</condition>
+            <scope name="ScopeConsultarComision">
+              <variables>
+                <variable name="ConsultarComision_InputVariable" messageType="ns2:requestConsultarComisionMessage"/>
+                <variable name="ConsultarComision_OutputVariable" messageType="ns2:responseConsultarComisionMessage"/>
+              </variables>
+              <sequence name="Sequence3">
+                <assign name="AssignConsultarComision">
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:idTCC</from>
+                    <to>$ConsultarComision_InputVariable.request/ns9:idComision</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeConsultarComision" bpelx:invokeAsDetail="no" partnerLink="ConsultarComision"
+                        portType="ns2:ConsultarComisionPT" operation="ConsultarComision"
+                        inputVariable="ConsultarComision_InputVariable"
+                        outputVariable="ConsultarComision_OutputVariable"/>
+                <assign name="AssignConsultarComisionOutput">
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>$ConsultarComision_OutputVariable.response/ns9:Comision/ns13:estadoTCC/ns15:id</from>
+                    <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:estado</to>
+                  </copy>
+                  <copy>
+                    <from>$ConsultarComision_OutputVariable.response/ns9:Comision/ns13:idComision</from>
+                    <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:id</to>
+                  </copy>
+                  <copy>
+                    <from>$ConsultarComision_OutputVariable.response/ns9:Comision/ns13:subEstadoTCC/ns15:id</from>
+                    <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:subEstado</to>
+                  </copy>
+                  <copy>
+                    <from>'COMISION'</from>
+                    <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:tipo</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes">
+                    <from>$ConsultarComision_OutputVariable.response/ns9:Comision/ns13:comisionEnmendada</from>
+                    <to>$idEnmendado</to>
+                  </copy>
+                </assign>
+                <assign name="AssignSubEstado21">
+                      <bpelx:skipCondition>$ConsultarComision_OutputVariable.response/ns9:Comision[1]/ns13:tipoComision/ns13:requiereValidarCOFI = 'false'</bpelx:skipCondition>
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>21</from>
+                    <to>$subestadoVar</to>
+                  </copy>
+                </assign>
+              </sequence>
+            </scope>
+            <elseif>
+              <documentation>
+                <![CDATA[TERMINO]]>
+              </documentation>
+              <condition>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:tipoTCC='TERMINO'</condition>
+              <sequence>
+                <scope name="ScopeConsultarTermino">
+                  <variables>
+                    <variable name="consultarTermino_InputVariable" messageType="ns4:ConsultarTerminoRequestMessage"/>
+                    <variable name="consultarTermino_OutputVariable" messageType="ns4:ConsultarTerminoResponseMessage"/>
+                  </variables>
+                  <sequence name="Sequence4">
+                    <assign name="AssignConsultarTermino">
+                      <copy>
+                        <from>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:idTCC</from>
+                        <to>$consultarTermino_InputVariable.request/ns10:idTermino</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeConsultarTermino" bpelx:invokeAsDetail="no" partnerLink="ConsultarTermino"
+                            portType="ns4:ConsultarTerminoPT" operation="consultarTermino"
+                            inputVariable="consultarTermino_InputVariable"
+                            outputVariable="consultarTermino_OutputVariable"/>
+                    <assign name="AssignConsultarTerminoOutput">
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$consultarTermino_OutputVariable.response/ns10:Termino/ns11:idTermino</from>
+                        <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:id</to>
+                      </copy>
+                      <copy>
+                        <from>$consultarTermino_OutputVariable.response/ns10:Termino/ns11:tipoFechaInicio/ns14:Id</from>
+                        <to>$idTcaTipoFechaInicio</to>
+                      </copy>
+                      <copy>
+                        <from>$consultarTermino_OutputVariable.response/ns10:Termino/ns11:frecuenciaPlazo/ns14:Id</from>
+                        <to>$idTcaFrecuanciaPlazo</to>
+                      </copy>
+                      <copy>
+                        <from>$consultarTermino_OutputVariable.response/ns10:Termino/ns11:plazo</from>
+                        <to>$plazo</to>
+                      </copy>
+                      <copy>
+                        <from>$consultarTermino_OutputVariable.response/ns10:Termino/ns11:fechaVencimiento</from>
+                        <to>$fechaVencimiento</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$consultarTermino_OutputVariable.response/ns10:Termino/ns11:subEstadoTCC/ns15:id</from>
+                        <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:subEstado</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$consultarTermino_OutputVariable.response/ns10:Termino/ns11:estadoTCC/ns15:id</from>
+                        <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:estado</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>'TERMINO'</from>
+                        <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:tipo</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$consultarTermino_OutputVariable.response/ns10:Termino/ns11:terminoEnmendado</from>
+                        <to>$idEnmendado</to>
+                      </copy>
+                    </assign>
+                    <assign name="AssignSubEstado21">
+                      <bpelx:skipCondition>$consultarTermino_OutputVariable.response/ns10:Termino[1]/ns11:tipoTermino/ns11:requiereValidarCOFI='false'</bpelx:skipCondition>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>21</from>
+                        <to>$subestadoVar</to>
+                      </copy>
+                    </assign>
+                  </sequence>
+                </scope>
+              </sequence>
+            </elseif>
+            <elseif>
+              <documentation>
+                <![CDATA[CONDICION]]>
+              </documentation>
+              <condition>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:tipoTCC='CONDICION'</condition>
+              <scope name="ScopeConsultarCondicion">
+                <variables>
+                  <variable name="consultarCondicion_InputVariable"
+                            messageType="ns3:ConsultarCondicionbyIdOperacionRequestMessage"/>
+                  <variable name="consultarCondicion_OutputVariable"
+                            messageType="ns3:ConsultarCondicionbyIdOperacionResponseMessage"/>
+                </variables>
+                <sequence name="Sequence5">
+                  <assign name="AssignConsultarCondicion">
+                    <copy>
+                      <from>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:idTCC</from>
+                      <to>$consultarCondicion_InputVariable.request/ns12:idCondicion</to>
+                    </copy>
+                  </assign>
+                  <invoke name="InvokeConsultarCondicion" partnerLink="ConsultarCondicion"
+                          portType="ns3:ConsultarCondicionbyIdOperacionPT" operation="consultarCondicionbyIdOperacion"
+                          inputVariable="consultarCondicion_InputVariable" bpelx:invokeAsDetail="no"
+                          outputVariable="consultarCondicion_OutputVariable"/>
+                  <assign name="AssignConsultarCondicionOutput">
+                    <copy>
+                      <from>$consultarCondicion_OutputVariable.response/ns12:ListaCondiciones/ns20:Condicion[1]/ns20:estadoTCC/ns15:id</from>
+                      <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:estado</to>
+                    </copy>
+                    <copy>
+                      <from>$consultarCondicion_OutputVariable.response/ns12:ListaCondiciones/ns20:Condicion/ns20:idCondicion</from>
+                      <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:id</to>
+                    </copy>
+                    <copy>
+                      <from>$consultarCondicion_OutputVariable.response/ns12:ListaCondiciones/ns20:Condicion/ns20:subEstadoTCC/ns15:id</from>
+                      <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:subEstado</to>
+                    </copy>
+                    <copy>
+                      <from>'CONDICION'</from>
+                      <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:tipo</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes">
+                      <from>$consultarCondicion_OutputVariable.response/ns12:ListaCondiciones/ns20:Condicion/ns20:condicionEnmendada</from>
+                      <to>$idEnmendado</to>
+                    </copy>
+                  </assign>
+                  <assign name="AssignSubEstado21">
+                      <bpelx:skipCondition>$consultarCondicion_OutputVariable.response/ns12:ListaCondiciones/ns20:Condicion[1]/ns20:tipoCondicion/ns20:requiereValidarCOFI = 'false'</bpelx:skipCondition>
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>21</from>
+                      <to>$subestadoVar</to>
+                    </copy>
+                  </assign>
+                </sequence>
+              </scope>
+            </elseif>
+            <else>
+              <empty name="vacío"/>
+            </else>
+          </if>
+          <if name="IfEstado">
+            <documentation>
+              <![CDATA[ModificarAgregar]]>
+            </documentation>
+            <condition>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:accion = "AGREGAR" or $consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:accion = "MODIFICAR"</condition>
+            <assign name="Assig14">
+              <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                <from>14</from>
+                <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:estado</to>
+              </copy>
+            </assign>
+            <elseif>
+              <documentation>
+                <![CDATA[DISPENSAR]]>
+              </documentation>
+              <condition>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:accion = "DISPENSAR"</condition>
+              <assign name="Assign5">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>5</from>
+                  <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:estado</to>
+                </copy>
+              </assign>
+            </elseif>
+            <elseif>
+              <documentation>
+                <![CDATA[ELIMINAR]]>
+              </documentation>
+              <condition>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:accion = "ELIMINAR"</condition>
+              <assign name="Assign22">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>22</from>
+                  <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:estado</to>
+                </copy>
+              </assign>
+            </elseif>
+            <else>
+              <assign name="Assign0">
+                <copy>
+                  <from>0</from>
+                  <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:estado</to>
+                </copy>
+              </assign>
+            </else>
+          </if>
+          <scope name="ScopeActualizarEstado">
+            <bpelx:skipCondition>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:estado=0</bpelx:skipCondition>
+            <faultHandlers>
+              <catchAll>
+                <sequence name="Sequence11">
+                  <assign name="AssignErroValidar">
+                    <copy>
+                      <from>$actualizarEstadoTCC_OutputVariable.response/ns5:Resultado</from>
+                      <to>$outputVariable.response/ns5:Resultado</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplyOutput" variable="outputVariable" partnerLink="RegistrarEnmienda"
+                         portType="ns1:RegistrarEnmiendaPT" operation="registrarEnmienda"/>
+                  <exit name="Exit"/>
+                </sequence>
+              </catchAll>
+            </faultHandlers>
+            <sequence name="Sequence7">
+              <assign name="AssignsubEstado">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$subestadoVar</from>
+                  <to>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:subEstado</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeActualizarEstadoTCC" partnerLink="MatrizTCC" portType="ns1:MatrizTCCPT"
+                      operation="actualizarEstadoTCC" inputVariable="actualizarEstadoTCC_InputVariable"
+                      outputVariable="actualizarEstadoTCC_OutputVariable" bpelx:invokeAsDetail="no">
+                <bpelx:skipCondition>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:estado=0</bpelx:skipCondition>
+              </invoke>
+            </sequence>
+          </scope>
+          <if name="IfTipo">
+            <bpelx:skipCondition>$actualizarEstadoTCC_InputVariable.request/ns5:ListaTCC/ns6:TCC[1]/ns6:estado=0</bpelx:skipCondition>
+            <documentation>
+              <![CDATA[COMISION]]>
+            </documentation>
+            <condition>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:tipoTCC='COMISION'</condition>
+            <sequence name="Sequence12">
+              <scope name="ScopeComision">
+                <variables>
+                  <variable name="inInvokeActualizarComision" messageType="ns2:requestActualizarComisionMessage"/>
+                  <variable name="outInvokeActualizarComision" messageType="ns2:responseActualizarComisionMessage"/>
+                </variables>
+                <sequence name="Sequence14">
+                  <assign name="AssignActualizarComision">
+                    <copy>
+                      <from>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:idTCC</from>
+                      <to>$inInvokeActualizarComision.request/ns9:Comision/ns13:idComision</to>
+                    </copy>
+                    <copy>
+                      <from>true()</from>
+                      <to>$inInvokeActualizarComision.request/ns9:Comision/ns13:estado</to>
+                    </copy>
+                    <copy>
+                      <from>xp20:current-dateTime()</from>
+                      <to>$inInvokeActualizarComision.request/ns9:Comision/ns13:fechaEnmienda</to>
+                    </copy>
+                  </assign>
+                  <invoke name="InvokeActualizarComision" bpelx:invokeAsDetail="no" partnerLink="ActualizarComision"
+                          portType="ns2:ActualizarComisionPT" operation="ActualizarComision"
+                          inputVariable="inInvokeActualizarComision" outputVariable="outInvokeActualizarComision"/>
+                </sequence>
+              </scope>
+              <if name="IfComisionEnmendada">
+                <documentation>
+                  <![CDATA[Existe]]>
+                </documentation>
+                <condition>string($idEnmendado) != ''</condition>
+                <sequence name="Sequence">
+                  <scope name="ScopeActualizarComisionEnmendada">
+                    <variables>
+                      <variable name="inInvokeActualizarCondicionEnmendada"
+                                messageType="ns2:requestActualizarComisionMessage"/>
+                      <variable name="outInvokeActualizarComisionEnmendada"
+                                messageType="ns2:responseActualizarComisionMessage"/>
+                    </variables>
+                    <sequence>
+                      <assign name="AssignActualizarComisionEnmendada">
+                        <copy>
+                          <from>$idEnmendado</from>
+                          <to>$inInvokeActualizarCondicionEnmendada.request/ns9:Comision/ns13:idComision</to>
+                        </copy>
+                        <copy>
+                          <from>false()</from>
+                          <to>$inInvokeActualizarCondicionEnmendada.request/ns9:Comision/ns13:estado</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeActualizarComisionEnmendada"
+                              partnerLink="ActualizarComision" portType="ns2:ActualizarComisionPT"
+                              operation="ActualizarComision" inputVariable="inInvokeActualizarCondicionEnmendada"
+                              outputVariable="outInvokeActualizarComisionEnmendada" bpelx:invokeAsDetail="no"/>
+                    </sequence>
+                  </scope>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[NoExiste]]>
+                  </documentation><empty name="EmptyNoExiste"
+                                         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/></else>
+              </if>
+            </sequence>
+            <elseif>
+              <documentation>
+                <![CDATA[TERMINO]]>
+              </documentation>
+              <condition>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:tipoTCC='TERMINO'</condition>
+              <sequence name="Sequence9">
+                <scope name="ScopeActualizarTermino">
+                  <variables>
+                    <variable name="actualizarTermino_InputVariable" messageType="ns4:ActualizarTerminoRequestMessage"/>
+                    <variable name="actualizarTermino_OutputVariable"
+                              messageType="ns4:ActualizarTerminoResponseMessage"/>
+                    <variable name="consultarTermino_OutputVariable" messageType="ns4:ConsultarTerminoResponseMessage"/>
+                  </variables>
+                  <sequence name="Sequence10">
+                    <assign name="AssignActualizarTerminoInput">
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:idTCC</from>
+                        <to>$actualizarTermino_InputVariable.request/ns10:Termino/ns11:idTermino</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>true()</from>
+                        <to>$actualizarTermino_InputVariable.request/ns10:Termino/ns11:estado</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>xp20:current-dateTime()</from>
+                        <to>$actualizarTermino_InputVariable.request/ns10:Termino/ns11:fechaEnmienda</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeActualizarTermino" partnerLink="ActualizarTermino"
+                            portType="ns4:ActualizarTerminoPT" operation="actualizarTermino"
+                            inputVariable="actualizarTermino_InputVariable"
+                            outputVariable="actualizarTermino_OutputVariable" bpelx:invokeAsDetail="no"/>
+                  </sequence>
+                </scope>
+                <if name="IfTerminoEnmendado">
+                  <documentation>
+                    <![CDATA[Existe]]>
+                  </documentation>
+                  <condition>string($idEnmendado) != ''</condition>
+                  <sequence name="Sequence16">
+                    <scope name="ScopeActualizarTerminoEnmendado">
+                      <variables>
+                        <variable name="inInvokeActualizarTerminoEnmendado"
+                                  messageType="ns4:ActualizarTerminoRequestMessage"/>
+                        <variable name="outInvokeActualizarTerminoEnmendado"
+                                  messageType="ns4:ActualizarTerminoResponseMessage"/>
+                      </variables>
+                      <sequence>
+                        <assign name="AssignActualzarTerminoEnmendado">
+                          <copy>
+                            <from>$idEnmendado</from>
+                            <to>$inInvokeActualizarTerminoEnmendado.request/ns10:Termino/ns11:idTermino</to>
+                          </copy>
+                          <copy>
+                            <from>$fechaVencimiento</from>
+                            <to>$inInvokeActualizarTerminoEnmendado.request/ns10:Termino/ns11:fechaVencimiento</to>
+                          </copy>
+                          <copy>
+                            <from>$plazo</from>
+                            <to>$inInvokeActualizarTerminoEnmendado.request/ns10:Termino/ns11:plazo</to>
+                          </copy>
+                          <copy>
+                            <from>$idTcaFrecuanciaPlazo</from>
+                            <to>$inInvokeActualizarTerminoEnmendado.request/ns10:Termino/ns11:frecuenciaPlazo/ns14:Id</to>
+                          </copy>
+                          <copy>
+                            <from>$idTcaTipoFechaInicio</from>
+                            <to>$inInvokeActualizarTerminoEnmendado.request/ns10:Termino/ns11:tipoFechaInicio/ns14:Id</to>
+                          </copy>
+                          <copy>
+                            <from>false()</from>
+                            <to>$inInvokeActualizarTerminoEnmendado.request/ns10:Termino/ns11:estado</to>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeActualizarTerminoEnmendado"
+                                partnerLink="ActualizarTermino" portType="ns4:ActualizarTerminoPT"
+                                operation="actualizarTermino" inputVariable="inInvokeActualizarTerminoEnmendado"
+                                outputVariable="outInvokeActualizarTerminoEnmendado" bpelx:invokeAsDetail="no"/>
+                      </sequence>
+                    </scope>
+                  </sequence>
+                  <else>
+                    <documentation>
+                      <![CDATA[No Existe]]>
+                    </documentation>
+                    <empty name="EmptyNoExiste"/>
+                  </else>
+                </if>
+              </sequence>
+            </elseif>
+            <elseif>
+              <documentation>
+                <![CDATA[CONDICION]]>
+              </documentation>
+              <condition>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:tipoTCC='CONDICION'</condition>
+              <sequence name="Sequence13">
+                <scope name="ScopeCondicion">
+                  <variables>
+                    <variable name="inInvokeActualzarCondicion" messageType="ns3:ActualizarCondicionRequestMessage"/>
+                    <variable name="outInvokeActualzarCondicion" messageType="ns3:ActualizarCondicionResponseMessage"/>
+                  </variables>
+                  <sequence name="Sequence15">
+                    <assign name="AssignActualizarCondicion">
+                      <copy>
+                        <from>$consultarEnmiendasTCC_OutputVariable.response/ns5:enmiendaTCC/ns6:detalleEnmiendaTCC[$tccCounter]/ns6:idTCC</from>
+                        <to>$inInvokeActualzarCondicion.request/ns12:Condicion/ns20:idCondicion</to>
+                      </copy>
+                      <copy>
+                        <from>true()</from>
+                        <to>$inInvokeActualzarCondicion.request/ns12:Condicion/ns20:estado</to>
+                      </copy>
+                      <copy>
+                        <from>xp20:current-dateTime()</from>
+                        <to>$inInvokeActualzarCondicion.request/ns12:Condicion/ns20:fechaEnmienda</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeActualzarCondicion" bpelx:invokeAsDetail="no" partnerLink="ActualizarCondicion"
+                            portType="ns3:ActualizarCondicionPT" operation="actualizarCondicion"
+                            inputVariable="inInvokeActualzarCondicion" outputVariable="outInvokeActualzarCondicion"/>
+                  </sequence>
+                </scope>
+                <if name="IfCondicionEnmendada">
+                  <documentation>
+                    <![CDATA[Existe]]>
+                  </documentation>
+                  <condition>string($idEnmendado) != ''</condition>
+                  <sequence name="Sequence19">
+                    <scope name="ScopeActualizarCondicionEnmendada">
+                      <variables>
+                        <variable name="inInvokeActualizarCondicionEnmendada"
+                                  messageType="ns3:ActualizarCondicionRequestMessage"/>
+                        <variable name="outInvokeActualizarCondicionEnmendada"
+                                  messageType="ns3:ActualizarCondicionResponseMessage"/>
+                      </variables>
+                      <sequence>
+                        <assign name="AssignActualizarCondicionEnmendada">
+                          <copy>
+                            <from>$idEnmendado</from>
+                            <to>$inInvokeActualizarCondicionEnmendada.request/ns12:Condicion/ns20:idCondicion</to>
+                          </copy>
+                          <copy>
+                            <from>false()</from>
+                            <to>$inInvokeActualizarCondicionEnmendada.request/ns12:Condicion/ns20:estado</to>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeActualizarCondicionEnmendada"
+                                partnerLink="ActualizarCondicion" portType="ns3:ActualizarCondicionPT"
+                                operation="actualizarCondicion" inputVariable="inInvokeActualizarCondicionEnmendada"
+                                outputVariable="outInvokeActualizarCondicionEnmendada" bpelx:invokeAsDetail="no"/>
+                      </sequence>
+                    </scope>
+                  </sequence>
+                  <else>
+                    <documentation>
+                      <![CDATA[NoExiste]]>
+                    </documentation><empty name="EmptyNoExiste"
+                                           xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/></else>
+                </if>
+              </sequence>
+            </elseif>
+            <else>
+              <sequence name="Sequence17">
+                <empty name="OtroTipo"/>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+    </forEach>
+    <assign name="AssignOK">
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>'OK'</from>
+        <to>$outputVariable.response/ns5:Resultado/ns7:result</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>'Ejecución Exitosa'</from>
+        <to>$outputVariable.response/ns5:Resultado/ns7:message</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="RegistrarEnmienda" portType="ns1:RegistrarEnmiendaPT" operation="registrarEnmienda" variable="outputVariable"/>
+  </sequence>
+</process>

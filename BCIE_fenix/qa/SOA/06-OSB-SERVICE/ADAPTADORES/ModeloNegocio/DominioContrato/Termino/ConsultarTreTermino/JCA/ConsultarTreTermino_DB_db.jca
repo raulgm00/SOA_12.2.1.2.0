@@ -1,0 +1,31 @@
+<adapter-config name="ConsultarTreTermino_DB" adapter="db" wsdlLocation="../WSDL/ConsultarTreTermino_DB.wsdl" xmlns="http://platform.integration.oracle/blocks/adapter/fw/metadata">
+
+  <connection-factory UIConnectionName="DEVFENIX2" location="eis/DB/OperacionesDB"/>
+  <endpoint-interaction portType="ConsultarTreTermino_DB_ptt" operation="ConsultarTreTermino_DB">
+    <interaction-spec className="oracle.tip.adapter.db.DBPureSQLInteractionSpec">
+      <property name="SqlString" value="SELECT TER.ID,
+                                               TER.ID_OPERACION,
+                                               TER.ID_TCA_TERMINO
+                                         FROM TERMINO TER
+                                         INNER JOIN TCA_TERMINO TCATERMINO ON (TCATERMINO.ID = TER.ID_TCA_TERMINO)
+                                         WHERE TER.ID_OPERACION = ?
+                                         AND TER.BAN_ESTATUS    = 1
+                                         AND TER.ID_TCA_TERMINO = (SELECT TT.ID 
+                                                                   FROM TCA_TERMINO TT 
+                                                                   WHERE TT.DESCRIPCION_CORTA = ?)
+                                         AND TER.ID = (CASE WHEN :idLineaCredito IS NOT NULL THEN
+                                                                    (SELECT TERMINO.ID FROM TERMINO TERMINO
+                                                                    INNER JOIN TRE_LINEA_CREDITO_TCC TREL ON TREL.ID_TERMINO = TERMINO.ID
+                                                                    INNER JOIN TCA_TERMINO TET ON TET.ID=TERMINO.ID_TCA_TERMINO
+                                                                    WHERE TERMINO.ID_OPERACION = ? 
+                                                                    AND TET.DESCRIPCION_CORTA = ?
+                                                                    AND TREL.ID_LINEA_CREDITO= :idLineaCredito1 
+                                                                    GROUP BY TERMINO.ID)
+                                                        ELSE TER.ID
+                                                        END)
+                                         ORDER BY TER.ID DESC"/>
+      <property name="GetActiveUnitOfWork" value="false"/>
+    </interaction-spec>
+  </endpoint-interaction>
+
+</adapter-config>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <con:wsdl ref="Applications/RetailMerchandising/RMS/RMSCostChange/Resources/RMSCreateCostChangeWSDL"/>
+            <con:binding>
+                <con:name>createCostChangeEventBinding</con:name>
+                <con:namespace>http://mx.agarcia.ea/Applications/RetailMerchandising/RMS/CostChange/v1.0</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline name="PipelinePair_RMSIGS_response" type="response"/>
+        <con:pipeline name="PipelinePair_RMSIGS_request" type="request">
+            <con:stage name="stage1">
+                <con:context>
+                    <con1:userNsDecl prefix="v1" namespace="http://mx.agarcia.ea/Canonical/Commons/ChangeCost/v1" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:userNsDecl prefix="v11" namespace="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:userNsDecl prefix="v12" namespace="http://mx.agarcia.ea/Canonical/Commons/Items/v1" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="ags" namespace="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="cos" namespace="http://mx.agarcia.ea/Applications/RetailMerchandising/RMS/CostChange" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+                <con:actions>
+                    <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.24.16b94ff9133.N7ff5</con2:id>
+                        <con1:logLevel>warning</con1:logLevel>
+                        <con1:expr>
+                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$body</con:xqueryText>
+                        </con1:expr>
+                        <con1:message>[Body Request Create ChangeCost]</con1:message>
+                    </con1:log>
+                    <con:foreach xmlns:con="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con1:id xmlns:con1="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.214fce79.8.16b28e19278.N7fff</con1:id>
+                        <con:variable>body</con:variable>
+                        <con:expression>
+                            <con:xpathText xmlns:con="http://www.bea.com/wli/sb/stages/config">./cos:createCostChangeEventRequest/cos:event/v1:changes/v1:change</con:xpathText>
+                        </con:expression>
+                        <con:value-variable>vItemCostChange</con:value-variable>
+                        <con:index-variable>vItemCostChangeIndex</con:index-variable>
+                        <con:total-variable>vItemCostChangeTotal</con:total-variable>
+                        <con:actions>
+                            <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                                <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.214fce79.a.16b28fc61b8.N7ffd</con2:id>
+                                <con1:logLevel>warning</con1:logLevel>
+                                <con1:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">fn:concat($vItemCostChangeIndex, ' de ' ,$vItemCostChangeTotal, fn-bea:serialize( $vItemCostChange) )</con:xqueryText>
+                                </con1:expr>
+                                <con1:message>[RMS CHANGECOST vItemCostChange]</con1:message>
+                            </con1:log>
+                            <con:assign varName="xCostHeaderRequest">
+                                <con1:id xmlns:con1="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.214fce79.16.16b2bc5d5eb.N8000</con1:id>
+                                <con:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">&lt;soapenv:Header xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+xmlns:v1="http://www.oracle.com/retail/integration/bus/gateway/services/BusinessObjectId/v1" >
+
+      &lt;v1:BusinessObjectId>{fn:concat($body//*:supplierID/*:supplierID/text(), $vItemCostChange//*:item/*:id/text())}&lt;/v1:BusinessObjectId>
+
+
+      
+   &lt;/soapenv:Header></con:xqueryText>
+                                </con:expr>
+                            </con:assign>
+                            <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                                <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.1b.16b8a138456.N7fff</con2:id>
+                                <con1:logLevel>warning</con1:logLevel>
+                                <con1:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$xCostHeaderRequest</con:xqueryText>
+                                </con1:expr>
+                                <con1:message>[RMS CHANGECOST xCostHeaderRequest]</con1:message>
+                            </con1:log>
+                            <con:assign varName="xCostRequest">
+                                <con1:id xmlns:con1="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.214fce79.c.16b290ba7dd.N7ffe</con1:id>
+                                <con:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<v1:publishXCostChgModifyUsingXCostChgDesc xmlns:v1="http://www.oracle.com/retail/igs/integration/services/XCostChgPublishingService/v1" >
+         <v1:XCostChgDesc xmlns:v1="http://www.oracle.com/retail/integration/base/bo/XCostChgDesc/v1">
+         <v1:item>1502100</v1:item>
+<v1:supplier>2118</v1:supplier>
+<v1:origin_country_id>MX</v1:origin_country_id>
+<v1:unit_cost>125</v1:unit_cost>
+<v1:recalc_ord_ind>Y</v1:recalc_ord_ind>
+<v1:currency_code>MXN</v1:currency_code>
+
+         </v1:XCostChgDesc>
+      </v1:publishXCostChgModifyUsingXCostChgDesc>]]></con:xqueryText>
+                                </con:expr>
+                            </con:assign>
+                            <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                                <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.214fce79.17.16b2bc89cc5.N8000</con2:id>
+                                <con1:logLevel>warning</con1:logLevel>
+                                <con1:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">fn:concat($vItemCostChangeIndex, ' de ' ,$vItemCostChangeTotal, fn-bea:serialize( $xCostHeaderRequest) )</con:xqueryText>
+                                </con1:expr>
+                                <con1:message>[RMS CHANGECOST xCostHeaderRequest]</con1:message>
+                            </con1:log>
+                            <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                                <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.214fce79.f.16b2a37f3fd.N7fff</con2:id>
+                                <con1:logLevel>warning</con1:logLevel>
+                                <con1:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">fn:concat($vItemCostChangeIndex, ' de ' ,$vItemCostChangeTotal, fn-bea:serialize( $xCostRequest) )</con:xqueryText>
+                                </con1:expr>
+                                <con1:message>[RMS CHANGECOST xCostRequest]</con1:message>
+                            </con1:log>
+                            <con:wsCallout>
+                                <con1:id xmlns:con1="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.20.16b94eac34b.N7ff6</con1:id>
+                                <con:service ref="Applications/RetailMerchandising/IGS/XCostChgPublishingService/PS/XCostChgPublishingServicePXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+                                <con:operation>publishXCostChgModifyUsingXCostChgDesc</con:operation>
+                                <con:request>
+                                    <con:body wrapped="false">xCostRequest</con:body>
+                                    <con:header>xCostHeaderRequest</con:header>
+                                </con:request>
+                                <con:response>
+                                    <con:body wrapped="false">xCostResponse</con:body>
+                                    <con:header/>
+                                </con:response>
+                                <con:requestTransform>
+                                    <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.20.16b94eac34b.N7ff5</con2:id>
+                                        <con1:logLevel>warning</con1:logLevel>
+                                        <con1:expr>
+                                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$xCostRequest</con:xqueryText>
+                                        </con1:expr>
+                                        <con1:message>--------------------Request Change Cost-------------------------</con1:message>
+                                    </con1:log>
+                                </con:requestTransform>
+                                <con:responseTransform>
+                                    <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.20.16b94eac34b.N7ff4</con2:id>
+                                        <con1:logLevel>warning</con1:logLevel>
+                                        <con1:expr>
+                                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$xCostResponse</con:xqueryText>
+                                        </con1:expr>
+                                        <con1:message>[RMS CHANGECOST xCostResponse]</con1:message>
+                                    </con1:log>
+                                </con:responseTransform>
+                            </con:wsCallout>
+                        </con:actions>
+                    </con:foreach>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PipelinePair_RMSIGS">
+                <con:comment/>
+                <con:request>PipelinePair_RMSIGS_request</con:request>
+                <con:response>PipelinePair_RMSIGS_response</con:response>
+            </con:pipeline-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

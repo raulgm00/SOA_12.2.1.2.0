@@ -1,0 +1,285 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sun Dec 04 20:33:36 CST 2016
+  Author:  hugo-casarrubias
+  Type: BPEL 2.0 Process
+  Purpose: Empty BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CrearLineasCredito"
+               targetNamespace="http://xmlns.oracle.com/DominioLineaCredito/CrearLineaCredito/CrearLineasCredito"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioLineaCredito/CrearLineaCredito/CrearLineasCredito"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://xmlns.oracle.com/OSB_BCIE/MDS/CrearLineaCreditoSOR"
+         xmlns:ns2="http://xmlns.oracle.com/OSB_BCIE/MDS/CrearActualizarLineasCreditoSAD"
+         xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns3="urn:CrearTreLineaCreditoAprobacion" xmlns:ns4="urn:CrearLineaCreditoSAD"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ns18="http://www.bcie.org/TerminoBO" xmlns:ns14="http://www.bcie.org/ReglaBO"
+         xmlns:ns12="http://www.bcie.org/OperacionBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns20="http://www.bcie.org/ResultBO" xmlns:ns7="http://www.bcie.org/CommonBO"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ns19="http://www.bcie.org/MatrizTCCBO"
+         xmlns:ns6="http://www.bcie.org/LineaCreditoBO" xmlns:ns15="http://www.bcie.org/ProductoBO"
+         xmlns:ns9="http://www.bcie.org/CondicionBO"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns11="http://www.bcie.org/DocumentoBO" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ns16="http://www.bcie.org/HerramientaCEBO" xmlns:ns17="http://www.bcie.org/ComisionBO"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns8="http://www.bcie.org/CatalogoBO" xmlns:ns13="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns10="http://www.bcie.org/AtributoBO" xmlns:ns21="http://www.bcie.org/ErrorBO"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns5="http://www.bcie.org/LineaCreditoMO"
+         xmlns:ns22="urn:EliminarLineaCreditoByIdContrato" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns23="urn:ConsultarAprobacionByIdOperacion" xmlns:ns24="http://www.bcie.org/AprobacionMO"
+         xmlns:ns25="http://www.bcie.org/AprobacionBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.oracle.com/OSB_BCIE/MDS/CrearLineaCreditoSOR"
+          location="../WSDLs/CrearLineaCreditoSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <partnerLink name="CrearTreLineaCreditoAprobacionSAD" partnerLinkType="ns3:CrearTreLineaCreditoAprobacionSAD"
+                 partnerRole="CrearTreLineaCreditoAprobacionPT"/>
+    <partnerLink name="CrearLineasCreditoSAD" partnerLinkType="ns4:CrearLineasCreditoSAD"
+                 partnerRole="CrearLineaCreditoPT"/>
+    <partnerLink name="CrearLineaCredito_Direct" partnerLinkType="ns1:CrearLineaCredito_Direct"
+                 myRole="CrearLineaCredito_ptt"/>
+    <partnerLink name="EliminarLineasCreditoByIdContrato" partnerLinkType="ns22:EliminarLineasCreditoByIdContrato"
+                 partnerRole="EliminarLineaCreditoByIdContratoPT"/>
+    <partnerLink name="ConsultarAprobacionByIdOperacion" partnerLinkType="ns23:ConsultarAprobacionByIdOperacion"
+                 partnerRole="ConsultarAprobacionByIdOperacionPT"/>
+  </partnerLinks>
+  <variables>
+    <variable name="CrearLineaCredito_Input" messageType="ns1:requestMessage"/>
+    <variable name="CrearLineaCredito_Output" messageType="ns1:replyMessage"/>
+    <variable name="CrearLineaCredito_InputVariable" messageType="ns4:CrearLineaCreditoRequestMessage"/>
+    <variable name="CrearTreLineaCreditoAprobacion_InputVariable"
+              messageType="ns3:CrearTreLineaCreditoAprobacionRequestMessage"/>
+    <variable name="CrearTreLineaCreditoAprobacion_OutputVariable"
+              messageType="ns3:CrearTreLineaCreditoAprobacionResponseMessage"/>
+    <variable name="faultVariable" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="EliminarLineaCreditoByIdContrato_InputVariable"
+              messageType="ns22:EliminarLineaCreditoByIdContratoRequestMessage"/>
+    <variable name="EliminarLineaCreditoByIdContrato_OutputVariable"
+              messageType="ns22:EliminarLineaCreditoByIdContratoResponseMessage"/>
+    <variable name="CrearLineaCredito_OutputVariable" messageType="ns4:CrearLineaCreditoResponseMessage"/>
+    <variable name="setTitle" type="xsd:string"/>
+    <variable name="ConsultarAprobacionByIdOperacion_InputVariable"
+              messageType="ns23:ConsultarAprobacionByIdOperacionRequestMessage"/>
+    <variable name="ConsultarAprobacionByIdOperacion_OutputVariable"
+              messageType="ns23:ConsultarAprobacionByIdOperacionResponseMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SeqCatchAll">
+        <assign name="AssignError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$CrearLineaCredito_Output.CrearLineaCreditoOut/ns5:Resultado/ns20:result</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.detail</from>
+            <to>$CrearLineaCredito_Output.CrearLineaCreditoOut/ns5:Resultado/ns20:message</to>
+          </copy>
+        </assign>
+        <compensate name="Compensate"/>
+        <reply name="ReplyError" variable="CrearLineaCredito_Output" partnerLink="CrearLineaCredito_Direct"
+               portType="ns1:CrearLineaCredito_ptt" operation="CrearLineaCredito"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <sequence name="main">
+    <receive name="Receive" partnerLink="CrearLineaCredito_Direct" portType="ns1:CrearLineaCredito_ptt"
+             operation="CrearLineaCredito" variable="CrearLineaCredito_Input" createInstance="yes"/>
+    <assign name="setTitle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat('idContrato ',$CrearLineaCredito_Input.CrearLineaCreditoIn/ns5:LineaCredito[1]/ns6:idContrato))</from>
+        <to>$setTitle</to>
+      </copy>
+    </assign>
+    <scope name="ScopeCrearLineasCredito">
+      <compensationHandler>
+        <sequence name="SeqEliminarLineaCredito">
+          <assign name="AssignIdContrato">
+            <copy>
+              <from>$CrearLineaCredito_Input.CrearLineaCreditoIn/ns5:LineaCredito[1]/ns6:idContrato</from>
+              <to>$EliminarLineaCreditoByIdContrato_InputVariable.EliminarLineaContratoByIdContratoRequest/ns5:idContrato</to>
+            </copy>
+          </assign>
+          <invoke name="EliminarLineaCreditoByIdContrato" partnerLink="EliminarLineasCreditoByIdContrato"
+                  portType="ns22:EliminarLineaCreditoByIdContratoPT"
+                  operation="eliminarLineaCreditoByIdContratoResponse"
+                  inputVariable="EliminarLineaCreditoByIdContrato_InputVariable"
+                  outputVariable="EliminarLineaCreditoByIdContrato_OutputVariable" bpelx:invokeAsDetail="no"/>
+        </sequence>
+      </compensationHandler>
+      <sequence name="SeqCrearLineasCredito">
+        <sequence name="SeqLineasCredito">
+          <assign name="XQ_CrearLineasCredito">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/CrearLineasCreditoInput_To_CrearLineasCreditoRquest.xqy', 'CrearLineaCredito_Input.CrearLineaCreditoIn', $CrearLineaCredito_Input.CrearLineaCreditoIn)</from>
+              <to variable="CrearLineaCredito_InputVariable" part="CrearLineaCreditoRequest"/>
+            </copy>
+          </assign>
+          <invoke name="CrearLineasCredito" partnerLink="CrearLineasCreditoSAD" portType="ns4:CrearLineaCreditoPT"
+                  operation="crearLineaCredito" inputVariable="CrearLineaCredito_InputVariable" outputVariable="CrearLineaCredito_OutputVariable"
+                  bpelx:invokeAsDetail="no"/>
+          <if name="IfResultadoCrearLineas">
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>string($CrearLineaCredito_OutputVariable.CrearLineaCreditoResponse/ns5:Resultado/ns20:result) != 'ERROR'</condition>
+            <assign name="AssignOk">
+              <extensionAssignOperation>
+                <bpelx:copyList>
+                  <bpelx:from>$CrearLineaCredito_OutputVariable.CrearLineaCreditoResponse/ns5:LineaCredito</bpelx:from>
+                  <bpelx:to>$CrearLineaCredito_Output.CrearLineaCreditoOut/ns5:LineaCredito</bpelx:to>
+                </bpelx:copyList>
+              </extensionAssignOperation>
+              <copy>
+                <from>$CrearLineaCredito_OutputVariable.CrearLineaCreditoResponse/ns5:Resultado/ns20:result</from>
+                <to>$CrearLineaCredito_Output.CrearLineaCreditoOut/ns5:Resultado/ns20:result</to>
+              </copy>
+              <copy>
+                <from>$CrearLineaCredito_OutputVariable.CrearLineaCreditoResponse/ns5:Resultado/ns20:message</from>
+                <to>$CrearLineaCredito_Output.CrearLineaCreditoOut/ns5:Resultado/ns20:message</to>
+              </copy>
+            </assign>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <sequence name="SeqErrorCrearLineaCredito">
+                <assign name="AssignError">
+                  <copy>
+                    <from>-1</from>
+                    <to>$faultVariable.code</to>
+                  </copy>
+                  <copy>
+                    <from>'Error al crear las líneas de crédito'</from>
+                    <to>$faultVariable.detail</to>
+                  </copy>
+                  <copy>
+                    <from>$CrearLineaCredito_OutputVariable.CrearLineaCreditoResponse/ns5:Resultado/ns20:message</from>
+                    <to>$faultVariable.summary</to>
+                  </copy>
+                </assign>
+                <throw name="Throw" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+      </sequence>
+    </scope>
+    <scope name="ScopeCrearTreLineaCredito"><sequence name="SeqTreLineaCreditoAprobacion"
+                                   xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+        <sequence name="SeqAprobacion">
+          <bpelx:skipCondition>$CrearLineaCredito_Input.CrearLineaCreditoIn/ns5:idAprobacion != ''</bpelx:skipCondition>
+          <assign name="AssignIdOperacion">
+            <copy>
+              <from>$CrearLineaCredito_Input.CrearLineaCreditoIn/ns5:idOperacion</from>
+              <to>$ConsultarAprobacionByIdOperacion_InputVariable.ConsultarAprobacionByIdOperacionRequest/ns24:idOperacion</to>
+            </copy>
+          </assign>
+          <invoke name="ConsultarAprobacionByIdOperacion" bpelx:invokeAsDetail="no"
+                  partnerLink="ConsultarAprobacionByIdOperacion" portType="ns23:ConsultarAprobacionByIdOperacionPT"
+                  operation="consultarAprobacionByIdOperacion"
+                  inputVariable="ConsultarAprobacionByIdOperacion_InputVariable"
+                  outputVariable="ConsultarAprobacionByIdOperacion_OutputVariable"/>
+          <if name="If_Aprobacion">
+            <condition>$ConsultarAprobacionByIdOperacion_OutputVariable.ConsultarAprobacionByIdOperacionResponse/ns24:Resultado/ns20:result='OK' and $ConsultarAprobacionByIdOperacion_OutputVariable.ConsultarAprobacionByIdOperacionResponse/ns24:Aprobacion/ns25:idAprobacion !=''</condition>
+            <assign name="AssignAprobacion">
+              <copy bpelx:insertMissingToData="yes">
+                <from>$ConsultarAprobacionByIdOperacion_OutputVariable.ConsultarAprobacionByIdOperacionResponse/ns24:Aprobacion/ns25:idAprobacion</from>
+                <to>$CrearLineaCredito_Input.CrearLineaCreditoIn/ns5:idAprobacion</to>
+              </copy>
+            </assign>
+            <else>
+              <sequence name="SeqErrorConsultarAprobacion">
+                <assign name="Error">
+                  <copy>
+                    <from>'Error al consultar la aprobacion'</from>
+                    <to>$faultVariable.detail</to>
+                  </copy>
+                  <copy>
+                    <from>-1</from>
+                    <to>$faultVariable.code</to>
+                  </copy>
+                  <copy>
+                    <from>$ConsultarAprobacionByIdOperacion_OutputVariable.ConsultarAprobacionByIdOperacionResponse/ns24:Resultado/ns20:message</from>
+                    <to>$faultVariable.summary</to>
+                  </copy>
+                </assign>
+                <throw name="Throw" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+        <assign name="XQCrearTreLineasCreditoAprobacion">
+         <bpelx:annotation xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+         </bpelx:annotation>
+         <copy>
+            <from>ora:processXQuery10('../Transformations/CrearLineaCreditoInput_To_CrearTreLineaCreditoAprobacionRequest.xqy', 'CrearLineaCredito_Input.CrearLineaCreditoIn', $CrearLineaCredito_Input.CrearLineaCreditoIn, 'CrearLineaCredito_OutputVariable.CrearLineaCreditoResponse', $CrearLineaCredito_OutputVariable.CrearLineaCreditoResponse)</from>
+            <to variable="CrearTreLineaCreditoAprobacion_InputVariable" part="CrearTreLineaCreditoAprobacionRequest"/>
+         </copy>
+      </assign>
+      <invoke name="CrearTreLineaCreditoAprobacion" bpelx:invokeAsDetail="no"
+              partnerLink="CrearTreLineaCreditoAprobacionSAD" portType="ns3:CrearTreLineaCreditoAprobacionPT"
+              operation="crearTreLineaCreditoAprobacion" inputVariable="CrearTreLineaCreditoAprobacion_InputVariable"
+              outputVariable="CrearTreLineaCreditoAprobacion_OutputVariable"
+              xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/>
+      <if name="IfResultadoCrearTreLineas">
+         <documentation>
+            <![CDATA[OK]]>
+         </documentation>
+         <condition>string($CrearTreLineaCreditoAprobacion_OutputVariable.CrearTreLineaCreditoAprobacionResponseMessage/ns5:Resultado/ns20:result) != 'ERROR'</condition>
+         <empty name="DN"/>
+         <else>
+            <documentation>
+               <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SeqErrorCrearTreLineaCredito">
+               <assign name="AssignError">
+                  <copy>
+                     <from>'Error al crear la relación entre aprobación y líneas de crédito'</from>
+                     <to>$faultVariable.detail</to>
+                  </copy>
+                  <copy>
+                     <from>-1</from>
+                     <to>$faultVariable.code</to>
+                  </copy>
+                  <copy>
+                     <from>$CrearTreLineaCreditoAprobacion_OutputVariable.CrearTreLineaCreditoAprobacionResponseMessage/ns5:Resultado/ns20:message</from>
+                     <to>$faultVariable.summary</to>
+                  </copy>
+               </assign>
+              <throw name="Throw" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+            </sequence>
+         </else>
+      </if>
+   </sequence></scope>
+    <reply name="Reply" variable="CrearLineaCredito_Output" partnerLink="CrearLineaCredito_Direct"
+           portType="ns1:CrearLineaCredito_ptt" operation="CrearLineaCredito"/>
+  </sequence>
+</process>

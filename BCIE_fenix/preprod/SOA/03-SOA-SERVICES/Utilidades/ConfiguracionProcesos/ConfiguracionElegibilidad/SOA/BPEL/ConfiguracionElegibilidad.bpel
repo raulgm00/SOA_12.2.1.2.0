@@ -1,0 +1,293 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Sep 21 16:00:49 CST 2015
+  Author:  david-ramirez
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionElegibilidad"
+               targetNamespace="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionElegibilidad/ConfiguracionElegibilidad"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionElegibilidad/ConfiguracionElegibilidad"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/ProductoService"
+         xmlns:ns4="http://www.bcie.org/ConfiguracionProcesosMO" xmlns:ns3="http://www.bcie.org/ProductoMO"
+         xmlns:ns5="http://www.bcie.org/ProductoBO" xmlns:ns12="http://www.bcie.org/ConfiguracionProcesosBO"
+         xmlns:ns9="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns6="http://www.bcie.org/OperacionBO"
+         xmlns:ns10="http://www.bcie.org/ResultBO" xmlns:ns8="http://www.bcie.org/CatalogoBO"
+         xmlns:ns7="http://www.bcie.org/ClienteBO" xmlns:ns11="http://www.bcie.org/ErrorBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns13="http://www.bcie.com/ConsultarRolesPorProceso"
+         xmlns:ns14="http://www.bcie.org/ConsultarRolesPorProcesoMO"
+         xmlns:ns15="http://www.bcie.org/ConsultarRolesPorProcesoBO" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns16="http://xmlns.bcie.com/CuestionarioService" xmlns:ns21="http://www.bcie.org/TerminoBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns23="http://www.bcie.org/CommonBO"
+         xmlns:ns25="http://xmlns.bcie.com/CuestionarioMO" xmlns:ns19="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns20="http://www.bcie.org/CondicionBO" xmlns:ns24="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns22="http://www.bcie.org/ComisionBO" xmlns:ns17="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns18="http://www.bcie.org/ContratoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/ProductoService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioProducto/Producto/V1/Wsdl/Producto.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionElegibilidadSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <import namespace="http://www.bcie.com/ConsultarRolesPorProceso" location="WSDLs/ConsultarRolesPorProcesoWrapper.wsdl"
+          importType="wsdl"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configuracionelegibilidad_client" partnerLinkType="ns1:ConfiguracionElegibilidad" myRole="ConfiguracionElegibilidadPT"/>
+    <partnerLink name="ProductoService" partnerLinkType="ns2:ProductoService" partnerRole="ProductoPT"/>
+    <partnerLink name="ConsultarRol" partnerLinkType="ns13:ConsultarRol" partnerRole="ConsultarRolesPorProceso_ptt"/>
+    <partnerLink name="ObtenerRolesCuestionario" partnerLinkType="ns16:ObtenerRolesCuestionario"
+                 partnerRole="CuestionarioPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConfiguracionElegibilidadMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConfiguracionElegibilidadMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="inObtenerRolesCuestionario" messageType="ns16:ObtenerRolesCuestionarioRequestMessage"/>
+    <variable name="outObtenerRolesCuestionario" messageType="ns16:ObtenerRolesCuestionarioResponseMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence3">
+        <assign name="AssignERROR">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns10:result</to>
+          </copy>
+          <copy>
+            <from>'Error en ConfiguracionElegibilidad'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns10:message</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns4:Resultado/ns10:error/ns11:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyERROR" variable="outputVariable" partnerLink="configuracionelegibilidad_client"
+               portType="ns1:ConfiguracionElegibilidadPT" operation="configuracionElegibilidad"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionElegibilidad.wsdl) -->
+    <receive name="receiveInput" partnerLink="configuracionelegibilidad_client" portType="ns1:ConfiguracionElegibilidadPT" operation="configuracionElegibilidad" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignFlowName">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion= ", $inputVariable.request/ns4:idOperacion))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <scope name="Scope1">
+      <variables>
+        <variable name="inConsultarProductoByIdOperacion" messageType="ns2:requestConsultarByIdOperacionMessage"/>
+        <variable name="outConsultarProductoByIdOperacion" messageType="ns2:responseConsultarByIdOperacionMessage"/>
+      </variables>
+      <sequence name="Sequence1">
+        <assign name="AssignIdOperacion">
+          <copy>
+            <from>$inputVariable.request/ns4:idOperacion</from>
+            <to>$inConsultarProductoByIdOperacion.request/ns3:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarProductoByIdOperacion" bpelx:invokeAsDetail="no" partnerLink="ProductoService"
+                portType="ns2:ProductoPT" operation="consultarByIdOperacion"
+                inputVariable="inConsultarProductoByIdOperacion" outputVariable="outConsultarProductoByIdOperacion"/>
+        <assign name="AssignProducto">
+          <copy>
+            <from>$outConsultarProductoByIdOperacion.response/ns3:Operacion</from>
+            <to>$outputVariable.response/ns4:configuracionElegibilidad/ns12:operacion</to>
+          </copy>
+          <copy>
+            <from>$outConsultarProductoByIdOperacion.response/ns3:Producto</from>
+            <to>$outputVariable.response/ns4:configuracionElegibilidad/ns12:producto</to>
+          </copy>
+          <copy>
+            <from>$outConsultarProductoByIdOperacion.response/ns3:Resultado</from>
+            <to>$outputVariable.response/ns4:Resultado</to>
+          </copy>
+        </assign>
+        <scope name="Scope2">
+          <variables>
+            <variable name="InConsultarRol" messageType="ns13:requestMessage"/>
+            <variable name="OutConsultarRol" messageType="ns13:replyMessage"/>
+            <variable name="CountRol" type="xsd:unsignedInt"/>
+          </variables>
+          <sequence name="Sequence2">
+            <assign name="AssignConsultarRol">
+              <copy>
+                <from>1</from>
+                <to>$InConsultarRol.request/ns14:Proceso/ns15:idProceso</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarRol" partnerLink="ConsultarRol" portType="ns13:ConsultarRolesPorProceso_ptt"
+                    operation="ConsultarRolesPorProceso" inputVariable="InConsultarRol" outputVariable="OutConsultarRol"
+                    bpelx:invokeAsDetail="no"/>
+            <assign name="AssignCountRol">
+              <copy>
+                <from>count($OutConsultarRol.response/ns14:ListadoRoles/ns15:listadoRoles)</from>
+                <to>$CountRol</to>
+              </copy>
+            </assign>
+            <forEach parallel="no" counterName="CounterRoles" name="ForEach1Rol">
+              <bpelx:skipCondition>$CountRol=0</bpelx:skipCondition>
+              <startCounterValue>1</startCounterValue>
+              <finalCounterValue>$CountRol</finalCounterValue>
+              <scope name="Scope3">
+                <assign name="AssignOutRol">
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$OutConsultarRol.response/ns14:ListadoRoles/ns15:listadoRoles[$CounterRoles]/ns8:Id</from>
+                    <to>$outputVariable.response/ns4:configuracionElegibilidad/ns12:RolesEquipoTrabajo/ns12:Rol[$CounterRoles]/ns8:Id</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$OutConsultarRol.response/ns14:ListadoRoles/ns15:listadoRoles[$CounterRoles]/ns8:DescripcionCorta</from>
+                    <to>$outputVariable.response/ns4:configuracionElegibilidad/ns12:RolesEquipoTrabajo/ns12:Rol[$CounterRoles]/ns8:DescripcionCorta</to>
+                  </copy>
+                  <copy ignoreMissingFromData="no" bpelx:insertMissingToData="yes">
+                    <from>$OutConsultarRol.response/ns14:ListadoRoles/ns15:listadoRoles[$CounterRoles]/ns8:Descripcion</from>
+                    <to>$outputVariable.response/ns4:configuracionElegibilidad/ns12:RolesEquipoTrabajo/ns12:Rol[$CounterRoles]/ns8:Descripcion</to>
+                  </copy>
+                </assign>
+              </scope>
+            </forEach>
+          </sequence>
+        </scope>
+        <if name="IfRequiereAsjurElegibilidad">
+          <documentation>
+            <![CDATA[RequiereAsjurElegibilidad]]>
+          </documentation>
+          <condition>string($outConsultarProductoByIdOperacion.response/ns3:Operacion/ns6:cliente/ns7:tipoInstitucion/ns8:Id)='4'</condition>
+          <assign name="AssignRequiereAsjurElegibilidad">
+            <copy>
+              <from>false()</from>
+              <to>$outputVariable.response/ns4:configuracionElegibilidad/ns12:producto/ns5:reglas/ns5:requiereAsjurElegibilidad</to>
+            </copy>
+          </assign>
+        </if>
+        <sequence name="SequenceRolesCuestionario">
+          <assign name="AssignObtenerRolesCuestionario">
+            <copy>
+              <from>$inputVariable.request/ns4:idOperacion</from>
+              <to>$inObtenerRolesCuestionario.ObtenerRolesCuestionarioRequest/ns25:idOperacion</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeObtenerRolesCuestionario" bpelx:invokeAsDetail="no"
+                  partnerLink="ObtenerRolesCuestionario" portType="ns16:CuestionarioPT"
+                  operation="obtenerRolesCuestionario" inputVariable="inObtenerRolesCuestionario"
+                  outputVariable="outObtenerRolesCuestionario"/>
+          <assign name="AssignRolesRequiere">
+            <copy>
+              <from>false()</from>
+              <to>$outputVariable.response/ns4:configuracionElegibilidad/ns12:configuration/ns12:requiereAsjur</to>
+            </copy>
+            <copy>
+              <from>false()</from>
+              <to>$outputVariable.response/ns4:configuracionElegibilidad/ns12:configuration/ns12:requiereGeries</to>
+            </copy>
+            <copy>
+              <from>false()</from>
+              <to>$outputVariable.response/ns4:configuracionElegibilidad/ns12:configuration/ns12:requiereOej</to>
+            </copy>
+          </assign>
+          <forEach parallel="no" counterName="rolCounter" name="ForEachRol">
+            <startCounterValue>1</startCounterValue>
+            <finalCounterValue>count($outObtenerRolesCuestionario.ObtenerRolesCuestionarioResponse/ns25:Roles/ns25:Rol)</finalCounterValue>
+            <scope name="Scope4">
+              <if name="IfRolCuestionario">
+                <documentation>
+                  <![CDATA[ASJUR]]>
+                </documentation>
+                <condition>$outObtenerRolesCuestionario.ObtenerRolesCuestionarioResponse/ns25:Roles/ns25:Rol[$rolCounter] = 'FENIX_ASJUR'</condition>
+                <assign name="AssignAsjur">
+                  <copy>
+                    <from>true()</from>
+                    <to>$outputVariable.response/ns4:configuracionElegibilidad/ns12:configuration/ns12:requiereAsjur</to>
+                  </copy>
+                </assign>
+                <elseif>
+                  <documentation>
+                    <![CDATA[GERIES]]>
+                  </documentation>
+                  <condition>$outObtenerRolesCuestionario.ObtenerRolesCuestionarioResponse/ns25:Roles/ns25:Rol[$rolCounter] = 'FENIX_RIESGOS'</condition>
+                  <assign name="AssignGeries">
+                    <copy>
+                      <from>true()</from>
+                      <to>$outputVariable.response/ns4:configuracionElegibilidad/ns12:configuration/ns12:requiereGeries</to>
+                    </copy>
+                  </assign>
+                </elseif>
+                <elseif>
+                  <documentation>
+                    <![CDATA[OEJ]]>
+                  </documentation>
+                  <condition>$outObtenerRolesCuestionario.ObtenerRolesCuestionarioResponse/ns25:Roles/ns25:Rol[$rolCounter] = 'FENIX_ECONOMISTA_OEJ'</condition>
+                  <assign name="AssignOej">
+                    <copy>
+                      <from>true()</from>
+                      <to>$outputVariable.response/ns4:configuracionElegibilidad/ns12:configuration/ns12:requiereOej</to>
+                    </copy>
+                  </assign>
+                </elseif>
+                <else>
+                  <documentation>
+                    <![CDATA[Default]]>
+                  </documentation>
+                  <empty name="Continua"/>
+                </else>
+              </if>
+            </scope>
+          </forEach>
+        </sequence>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configuracionelegibilidad_client" portType="ns1:ConfiguracionElegibilidadPT" operation="configuracionElegibilidad" variable="outputVariable"/>
+  </sequence>
+</process>

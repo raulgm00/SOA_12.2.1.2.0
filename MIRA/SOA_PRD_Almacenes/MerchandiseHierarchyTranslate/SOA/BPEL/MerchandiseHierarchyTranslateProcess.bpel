@@ -1,0 +1,147 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue May 14 17:45:33 CDT 2019
+  Author:  offic
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="MerchandiseHierarchyTranslateProcess"
+               targetNamespace="http://mx.agarcia.ea/Capabilities/Support/Commons/MerchandiseHierarchyTranslateProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://mx.agarcia.ea/Capabilities/Support/Commons/MerchandiseHierarchyTranslateProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://xmlns.oracle.com/pcbpel/adapter/db/MerchandiseHierarchyTranslateApp/MerchandiseHierarchyTranslate/queryMerchadhierarTranslations"
+         xmlns:ns2="http://xmlns.oracle.com/pcbpel/adapter/coherence/MerchandiseHierarchyTranslateApp/MerchandiseHierarchyTranslate/MerchandiseHierarchyGet"
+         xmlns:ns3="http://xmlns.oracle.com/pcbpel/adapter/coherence/MerchandiseHierarchyTranslateApp/MerchandiseHierarchyTranslate/MerchandiseHierarchyPut"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns4="http://xmlns.oracle.com/pcbpel/adapter/db/top/queryMerchadhierarTranslations"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <import ui:processWSDL="true" namespace="http://mx.agarcia.ea/Capabilities/Support/Commons/MerchandiseHierarchyTranslateProcess" location="../WSDLs/MerchandiseHierarchyTranslateProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="MerchandiseHierarchyTranslateService" partnerLinkType="client:MerchandiseHierarchyTranslateProcess" myRole="MerchandiseHierarchyTranslateProcessProvider"/>
+    <partnerLink name="queryMerchadhierarTranslations" partnerLinkType="ns1:queryMerchadhierarTranslations_plt"
+                 partnerRole="queryMerchadhierarTranslations_role"/>
+    <partnerLink name="MerchandiseHierarchyGet" partnerLinkType="ns2:Get_plt" partnerRole="Get_role"/>
+    <partnerLink name="MerchandiseHierarchyPut" partnerLinkType="ns3:Put_plt" partnerRole="Put_role"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:MerchandiseHierarchyTranslateProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:MerchandiseHierarchyTranslateProcessResponseMessage"/>
+    <variable name="concat" type="xsd:string"/>
+    <variable name="getCoherence_Get_InputVariable" messageType="ns2:Get_msg"/>
+    <variable name="getCoherence_Get_OutputVariable" messageType="ns2:GetResponse_msg"/>
+    <variable name="getDB_queryMerchadhierarTranslationsSelect_InputVariable"
+              messageType="ns1:queryMerchadhierarTranslationsSelect_inputParameters"/>
+    <variable name="getDB_queryMerchadhierarTranslationsSelect_OutputVariable"
+              messageType="ns1:MdmMerchandhierarTranslationsCollection_msg"/>
+    <variable name="putData_Put_InputVariable" messageType="ns3:Put_msg"/>
+    <variable name="putData_Put_OutputVariable" messageType="ns3:PutResponse_msg"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in MerchandiseHierarchyTranslateProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="MerchandiseHierarchyTranslateService" portType="client:MerchandiseHierarchyTranslateProcess" operation="process" variable="inputVariable" createInstance="yes"/>
+    <assign name="concat">
+      <copy>
+        <from>concat(string($inputVariable.payload/ns4:pDivision),string($inputVariable.payload/ns4:pDepto),string($inputVariable.payload/ns4:pClase),string($inputVariable.payload/ns4:pTipo))</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$concat</to>
+      </copy>
+    </assign>
+    <invoke name="getCoherence" bpelx:invokeAsDetail="no" partnerLink="MerchandiseHierarchyGet" portType="ns2:Get_ptt"
+            operation="Get" inputVariable="getCoherence_Get_InputVariable"
+            outputVariable="getCoherence_Get_OutputVariable">
+      <bpelx:toProperties>
+        <bpelx:toProperty name="jca.coherence.Key" variable="concat"/>
+      </bpelx:toProperties>
+    </invoke>
+    <assign name="callDB">
+      <copy>
+        <from>$inputVariable.payload</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$getDB_queryMerchadhierarTranslationsSelect_InputVariable.queryMerchadhierarTranslationsSelect_inputParameters</to>
+      </copy>
+    </assign>
+    <if name="validation">
+      <condition>$getCoherence_Get_OutputVariable.body/ns4:MdmMerchandhierarTranslations</condition>
+      <assign name="getData">
+        <copy>
+          <from>$getCoherence_Get_OutputVariable.body</from>
+          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload</to>
+        </copy>
+      </assign>
+      <else>
+        <sequence name="Sequence1">
+          <invoke name="getDB" bpelx:invokeAsDetail="no" partnerLink="queryMerchadhierarTranslations"
+                  portType="ns1:queryMerchadhierarTranslations_ptt" operation="queryMerchadhierarTranslationsSelect"
+                  inputVariable="getDB_queryMerchadhierarTranslationsSelect_InputVariable"
+                  outputVariable="getDB_queryMerchadhierarTranslationsSelect_OutputVariable"/>
+          <assign name="PutData">
+            <copy>
+              <from>$getDB_queryMerchadhierarTranslationsSelect_OutputVariable.MdmMerchandhierarTranslationsCollection</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload</to>
+            </copy>
+            <copy>
+              <from>$getDB_queryMerchadhierarTranslationsSelect_OutputVariable.MdmMerchandhierarTranslationsCollection</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$putData_Put_InputVariable.body</to>
+            </copy>
+          </assign>
+          <invoke name="putData" bpelx:invokeAsDetail="no" partnerLink="MerchandiseHierarchyPut"
+                  portType="ns3:Put_ptt" operation="Put" inputVariable="putData_Put_InputVariable"
+                  outputVariable="putData_Put_OutputVariable">
+            <bpelx:toProperties>
+              <bpelx:toProperty name="jca.coherence.Key" variable="concat"/>
+            </bpelx:toProperties>
+          </invoke>
+        </sequence>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="MerchandiseHierarchyTranslateService" portType="client:MerchandiseHierarchyTranslateProcess" operation="process" variable="outputVariable"/>
+  </sequence>
+</process>

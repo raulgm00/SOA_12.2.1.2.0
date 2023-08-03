@@ -1,0 +1,256 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Jan 26 19:41:42 CST 2016
+  Author:  luis-morales
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ValidarUsuarioEnGrupo"
+               targetNamespace="http://xmlns.oracle.com/Prueba/ValidarUsuarioEnGrupo/ValidarUsuarioEnGrupo"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/Prueba/ValidarUsuarioEnGrupo/ValidarUsuarioEnGrupo"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/EsUsuarioEnGrupoService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/ConsultarRolUsuarioService"
+         xmlns:ns3="http://xmlns.bcie.com/UsuarioService" xmlns:ns5="http://www.bcie.org/ConsultarRolUsuarioMO"
+         xmlns:ns6="http://www.bcie.org/CatalogoBO" xmlns:ns4="http://www.bcie.org/UsuarioMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns7="http://www.bcie.org/ResultBO" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns8="http://www.bcie.org/ErrorBO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns9="http://www.bcie.org/UsuarioBO" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/EsUsuarioEnGrupoService" location="../WSDLs/EsUsuarioEnGrupoWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="validarusuarioengrupo_client" partnerLinkType="ns1:EsUsuarioEnGrupoPT_PLT"
+                 myRole="EsUsuarioEnGrupoPT_Role"/>
+    <partnerLink name="ConsultarRolUsuario_SB" partnerLinkType="ns2:ConsultarRolUsuario_SB"
+                 partnerRole="ConsultarRolUsuarioPT"/>
+    <partnerLink name="ConsultarAtributosUsuario_SB" partnerLinkType="ns3:ConsultarAtributosUsuario_SB"
+                 partnerRole="UsuarioPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:EsUsuarioEnGrupoRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:EsUsuarioEnGrupoResponseMessage"/>
+    <variable name="outConsultarRolUsuario" messageType="ns2:ConsultarRolUsuarioResponseMessage"/>
+    <variable name="esUsuarioEnGrupo" type="xsd:boolean"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ValidarUsuarioEnGrupo.wsdl) -->
+    <receive name="receiveInput" partnerLink="validarusuarioengrupo_client" portType="ns1:EsUsuarioEnGrupoPT" operation="esUsuarioEnGrupo" variable="inputVariable" createInstance="yes"/>
+    <scope name="ConsultarRolUsuarioSequence">
+      <variables>
+        <variable name="inConsultarRolUsuario" messageType="ns2:ConsultarRolUsuarioRequestMessage"/>
+      </variables>
+      <faultHandlers>
+        <catchAll>
+          <sequence name="ErrorConsultarRolUsuarioSequence">
+            <rethrow name="ErrorConsultarRolUsuario"/>
+            <assign name="ErrorConsultarRolUsuarioAssign">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+              </copy>
+              <copy>
+                <from>'No se pudo realizar la consulta del rol del usuario'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+              </copy>
+            </assign>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="ConsultarRolUsuarioSequence">
+        <assign name="AssignIdRol">
+          <copy>
+            <from>$inputVariable.request/ns4:idRolUsuario</from>
+            <to>$inConsultarRolUsuario.request/ns5:idRolUsuario/ns6:Id</to>
+          </copy>
+        </assign>
+        <invoke name="ConsultarRolUsuarioInvoke" bpelx:invokeAsDetail="no" partnerLink="ConsultarRolUsuario_SB"
+                portType="ns2:ConsultarRolUsuarioPT" operation="consultarRolUsuario"
+                inputVariable="inConsultarRolUsuario" outputVariable="outConsultarRolUsuario"/>
+        <if name="ERROR">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$outConsultarRolUsuario.response/ns5:Resultado/ns7:result = 'ERROR'</condition>
+          <throw name="ErrorConsultarRolUsuario" faultName="bpelx:remoteFault"/>
+          <else>
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <empty name="ConsultarAtributoUsuario"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ConsultarAtributoUsuarioScope">
+      <variables>
+        <variable name="inConsultarAtributoUsuario" messageType="ns3:requestConsultarAtributosUsuarioMessage"/>
+        <variable name="outConsultarAtributoUsuario" messageType="ns3:responseConsultarAtributosUsuarioMessage"/>
+      </variables>
+      <faultHandlers>
+        <catchAll>
+          <sequence name="ErrorConsultarAtributoUsuarioSequence">
+            <rethrow name="ErrorConsultarAtributoUsuario"/>
+            <assign name="ErrorConsultarAtributoUsuarioAssign">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+              </copy>
+              <copy>
+                <from>'Error al momento de consultar los grupso del usuario'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+              </copy>
+            </assign>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="ConsultarAtributoUsuarioSequence">
+        <assign name="ConsultarAtributoUsuarioAssign">
+          <copy>
+            <from>$inputVariable.request/ns4:Usuario</from>
+            <to>$inConsultarAtributoUsuario.request/ns4:listaNombres/ns9:nombreUsuario</to>
+          </copy>
+        </assign>
+        <invoke name="ConsultarAtributoUsuarioInvoke" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarAtributosUsuario_SB" portType="ns3:UsuarioPT"
+                operation="consultarAtributosUsuario" inputVariable="inConsultarAtributoUsuario"
+                outputVariable="outConsultarAtributoUsuario"/>
+        <if name="ERROR">
+          <documentation>
+            <![CDATA[Error]]>
+          </documentation>
+          <condition>$outConsultarAtributoUsuario.response/ns4:Resultado/ns7:result = 'ERROR'</condition>
+          <throw name="ErrorConsultarAtributoUsuario" faultName="bpelx:remoteFault"/>
+          <else>
+            <documentation>
+              <![CDATA[Ok]]>
+            </documentation>
+            <sequence name="Sequence1">
+              <forEach parallel="no" counterName="GrupoCounter" name="ConsultarGrupoUsuarioList">
+                <startCounterValue>1</startCounterValue>
+                <finalCounterValue>count($outConsultarAtributoUsuario.response/ns4:listaUsuarios/ns9:usuario/ns9:listaGrupos/ns9:grupo)</finalCounterValue>
+                <scope name="UsuarioEnGrupoScope">
+                  <if name="ExisteUsuario">
+                    <documentation>
+                      <![CDATA[Existe]]>
+                    </documentation>
+                    <condition>$outConsultarAtributoUsuario.response/ns4:listaUsuarios/ns9:usuario/ns9:listaGrupos/ns9:grupo[$GrupoCounter] = $outConsultarRolUsuario.response/ns5:Descripcion/ns6:DescripcionCorta</condition>
+                    <assign name="AssignTrue">
+                      <copy>
+                        <from>true()</from>
+                        <to>$esUsuarioEnGrupo</to>
+                      </copy>
+                      <copy>
+                        <from>'OK'</from>
+                        <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+                      </copy>
+                      <copy>
+                        <from>'Usuario Encontrado'</from>
+                        <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+                      </copy>
+                      <copy>
+                        <from>$outConsultarAtributoUsuario.response/ns4:listaUsuarios/ns9:usuario/ns9:listaGrupos/ns9:grupo[$GrupoCounter]</from>
+                        <to>$outputVariable.response/ns4:Usuario/ns9:listaGrupos/ns9:grupo</to>
+                      </copy>
+                    </assign>
+                    <else>
+                      <documentation>
+                        <![CDATA[NoExiste]]>
+                      </documentation>
+                      <empty name="SeguirSecuencia"/>
+                    </else>
+                  </if>
+                </scope>
+              </forEach>
+              <if name="UsuarioEncontrado">
+                <documentation>
+                  <![CDATA[UsuarioEncontrado]]>
+                </documentation>
+                <condition>$esUsuarioEnGrupo = 1</condition>
+                <sequence name="Sequence2">
+                  <assign name="UsuarioEncontradoAssign">
+                    <copy>
+                      <from>$esUsuarioEnGrupo</from>
+                      <to>$outputVariable.response/ns4:EsUsuario</to>
+                    </copy>
+                  </assign>
+                  <reply name="Success" variable="outputVariable" partnerLink="validarusuarioengrupo_client"
+                         portType="ns1:EsUsuarioEnGrupoPT" operation="esUsuarioEnGrupo"/>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[UsuarioNoEncontrado]]>
+                  </documentation>
+                  <sequence name="Sequence3">
+                    <assign name="UsuarioNoEncontradoAssign">
+                      <copy>
+                        <from>false()</from>
+                        <to>$outputVariable.response/ns4:EsUsuario</to>
+                      </copy>
+                      <copy>
+                        <from>'ERROR'</from>
+                        <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+                      </copy>
+                      <copy>
+                        <from>'El usuario  no es perteneciente al grupo'</from>
+                        <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+                      </copy>
+                    </assign>
+                    <reply name="Fail" variable="outputVariable" partnerLink="validarusuarioengrupo_client"
+                           portType="ns1:EsUsuarioEnGrupoPT" operation="esUsuarioEnGrupo"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="validarusuarioengrupo_client" portType="ns1:EsUsuarioEnGrupoPT" operation="esUsuarioEnGrupo" variable="outputVariable"/>
+  </sequence>
+</process>

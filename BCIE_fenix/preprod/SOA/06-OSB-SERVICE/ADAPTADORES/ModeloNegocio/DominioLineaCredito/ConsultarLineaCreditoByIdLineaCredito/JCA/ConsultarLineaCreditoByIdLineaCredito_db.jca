@@ -1,0 +1,88 @@
+<adapter-config name="ConsultarLineaCreditoByIdLineaCredito" adapter="db" wsdlLocation="../WSDL/ConsultarLineaCreditoByIdLineaCredito.wsdl" xmlns="http://platform.integration.oracle/blocks/adapter/fw/metadata">
+  
+  <connection-factory UIConnectionName="OperacionesDB" location="eis/DB/OperacionesDB"/>
+  <endpoint-interaction portType="ConsultarLineaCreditoByIdLineaCredito_ptt" operation="ConsultarLineaCreditoByIdLineaCredito">
+    <interaction-spec className="oracle.tip.adapter.db.DBPureSQLInteractionSpec">
+        <property name="SqlString" value="SELECT contrato.ID AS ID_CONTRATO,
+         lineacredito.ID AS ID_LINEA_CREDITO,
+         operacion.ID_OPERACION,
+         operacion.NOMBRE,
+         cliente.ID_CLIENTE,
+         cliente.ID_FLEXCUBE,
+         cliente.RAZON_SOCIAL,
+         cliente.EJECUTIVO RESPONSABLE_CLIENTE,
+         sector.ID AS SECTOR_INSTITUCIONAL,
+         actividad.COD_EXTERNO AS COD_EXTERNO_ACTIVIDAD,
+         actividad_asoc.COD_EXTERNO AS COD_EXTERNO_ACT_ASOC,
+         operacion.USUARIO EJECUTIVO,
+         catPaises.COD_EXTERNO AS COD_EXTERNO_PAIS,
+         ejeest.COD_EXTERNO AS COD_EXTERNO_EJE,
+         area.COD_EXTERNO AS COD_EXTERNO_AREA,
+         aprobacion.NUMERO_RESOLUCION,
+         aprobacion.FECHA_APROBACION,
+         lineacredito.NUMERO_LINEA_CREDITO,
+         lineacredito.ID_FLEXCUBE ID_FLEXCUBE_LINEA,
+         lineacredito.FONDO,
+         lineacredito.MONTO_LINEA,
+         lineacredito.FECHA_VALOR,
+         lineacredito.MONTO_AMPLIACION_LINEA AS MONTO_AMPLIACION,
+         montoOperacion.MONTO AS MONTO_ESCRITURADO,
+         (SELECT MONTO
+            FROM MONTO_OPERACION
+           WHERE ID_TCA_TIPO_MONTO = 3
+                 AND ID_OPERACION = operacion.ID_OPERACION) AS MONTO_APROBACION,
+         contrato.FECHA_FIRMA AS FICHA_ESCRITURACION,
+         contrato.CUENTA_CLIENTE,
+         lineacredito.ID_PRODUCTO_FLEXCUBE AS PRODUCTO_FINANCIERO,
+         lineacredito.ES_REVOLVENTE AS REVOLVENTE,
+         lineacredito.CONDICION_ESPECIAL AS TIENE_CONDICIONES_ESPECIALES,
+         lineacredito.DESCRIPCION_COND_ESPECIAL AS DESCRIPCION_COND_ESPECIAL,
+         lineacredito.CODIGO_ASIGNACION AS CODIGO_ASIGNACION,
+         Cliente.TIPO_PERSONA AS ID_TIPO_PERSONA,
+         CD.ID AS ID_DESEMBOLSO,
+         CD.FECHA_EFECTIVA AS FECHA_EFECTIVA,
+         CD.ID_TCA_ESTADO AS ESTADO_DESEMBOLSO,
+         operacion.ID_PRODUCTO,
+         lineacredito.TRATAMIENTO_DIAS_FERIADOS,
+         lineacredito.SE_PUEDE_MOVER_ENTRE_MESES,
+         lineacredito.ID_TCA_TIPO_MONEDA ID_TCA_TIPO_MONEDA,
+         moneda.DESCRIPCION	DESCRIPCION_MONEDA,
+         moneda.DESCRIPCION_CORTA DESCRIPCION_CORTA_MONEDA,
+         moneda.COD_EXTERNO   COD_EXTERNO_MONEDA
+    FROM LINEA_CREDITO lineacredito
+         INNER JOIN CONTRATO contrato
+            ON (lineacredito.ID_CONTRATO = CONTRATO.ID)
+       INNER JOIN OPERACION operacion
+         ON (contrato.ID_OPERACION = operacion.ID_OPERACION)
+       INNER JOIN CLIENTES cliente
+            ON (operacion.ID_CLIENTE = cliente.ID_CLIENTE)
+        INNER JOIN CAT_PAISES catPaises
+         ON (cliente.PAIS = catPaises.ID)
+      INNER JOIN CAT_SECTOR_INSTITUCIONAL sector
+            ON (sector.ID = cliente.SECTOR)
+         INNER JOIN CAT_ACTIVIDAD_ECONOMICA actividad
+            ON (actividad.ID = operacion.ACTIVIDAD_ECONOMICA)
+        INNER JOIN CAT_ACTIVIDAD_ECONOMICA actividad_asoc
+            ON (actividad_asoc.ID = operacion.ID_ACTIVIDAD_ECONOMICA_ASOC)
+         INNER JOIN CAT_AREA_FOCALIZACION area
+           ON (area.ID = operacion.AREA_FOCALIZACION)
+         INNER JOIN CAT_EJE_ESTRATEGICO ejeest
+            ON (ejeest.ID = operacion.EJE_ESTRATEGICO)
+         INNER JOIN TRE_LINEA_CREDITO_APROBACION lineaCreditoAprob
+          ON (lineaCreditoAprob.ID_LINEA_CREDITO = lineaCredito.ID)
+         INNER JOIN APROBACION aprobacion
+            ON (aprobacion.ID = lineaCreditoAprob.ID_APROBACION)
+         LEFT JOIN MONTO_OPERACION montoOperacion
+           ON (montoOperacion.ID = contrato.ID_MONTO_ESCRITURADO)
+         LEFT JOIN TRE_SOLICITUD_LINEA_CREDITO TSL
+           ON (lineacredito.ID = TSL.ID_LINEA)
+         LEFT JOIN CONTRATO_DESEMBOLSO CD
+           ON (TSL.ID_CONTRATO_DESEMBOLSO = CD.ID)
+         LEFT JOIN TCA_TIPO_MONEDA moneda
+           ON (lineacredito.ID_TCA_TIPO_MONEDA = moneda.ID)
+   WHERE lineacredito.ID = NVL(#idLineaCredito, lineacredito.ID) AND lineacredito.NUMERO_LINEA_CREDITO = NVL(#numeroLinea,lineacredito.NUMERO_LINEA_CREDITO)"/>
+      <property name="GetActiveUnitOfWork" value="false"/>
+    </interaction-spec>
+  </endpoint-interaction>
+
+</adapter-config>

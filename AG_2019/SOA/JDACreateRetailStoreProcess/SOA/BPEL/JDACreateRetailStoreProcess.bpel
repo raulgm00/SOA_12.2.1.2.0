@@ -1,0 +1,193 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Jun 07 08:10:14 CDT 2019
+  Author:  Sol4IT
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="JDACreateRetailStoreProcess"
+               targetNamespace="http://xmlns.oracle.com/AGSOA/JDACreateRetailStoreProcess/JDACreateRetailStoreProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/AGSOA/JDACreateRetailStoreProcess/JDACreateRetailStoreProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/RetailStore/WSDL/JDACreateRetailStoreProcess"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://mx.agarcia.ea/Applications/JDA/RetailStores/CreateRetailStore/v1.0"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/LocationsCommon/v1"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Core/RetailStore/RetailStoreEntitySvc/Schema"
+         xmlns:ns4="http://mx.agarcia.ea/Canonical/Commons/RetailStore/v1"
+         xmlns:ns6="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:ns7="http://mx.agarcia.ea/Applications/JDA/RetailStores/QueryRetailStore/v1.0"
+         xmlns:ns8="http://mx.agarcia.ea/Applications/JDA/RetailStores/QueryRetailStore"
+         xmlns:ns9="http://mx.agarcia.ea/Applications/JDA/RetailStores/CreateRetailStore"
+         xmlns:ns10="http://mx.agarcia.ea/Capabilities/Core/RetailStore/WSDL/ModifyRetailStoreProcess"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns11="http://mx.agarcia.ea/Capabilities/Core/RetailStore/TranslateRetailStoreTaskAction"
+         xmlns:ns12="http://mx.agarcia.ea/Commons/Schemas/AGStandardHeader">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/RetailStore/WSDL/JDACreateRetailStoreProcess"
+          location="../WSDLs/JDACreateRetailStoreProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/RetailStore/WSDL/JDACreateRetailStoreProcess"
+          location="../WSDLs/JDACreateRetailStoreProcessWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="jdacreateretailstoreprocess_client" partnerLinkType="ns1:JDACreateRetailStoreProcess" myRole="JDACreateRetailStorePType"/>
+    <partnerLink name="JDACreateRetailStore" partnerLinkType="ns2:JDACreateRetailStore"
+                 partnerRole="createRetailStorePort"/>
+    <partnerLink name="JDAQueryIdRetail" partnerLinkType="ns7:JDAQueryIdRetail" partnerRole="queryRetailStorePort"/>
+    <partnerLink name="ModifyRetailStorePXY" partnerLinkType="ns10:ModifyRetailStorePXY"
+                 partnerRole="ModifyRetailStorePType"/>
+    <partnerLink name="JDACreateTAX" partnerLinkType="ns2:JDACreateTAX" partnerRole="createRetailStorePort"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:JDACreateRetailStoreRequest"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:JDACreateRetailStoreResponse"/>
+    <variable name="InvokeJDA_InputVariable" messageType="ns2:createRetailStoreRequestMessage"/>
+    <variable name="InvokeJDA_OutputVariable" messageType="ns2:createRetailStoreResponseMessage"/>
+    <variable name="InvokeQueryId_Input" messageType="ns7:findByIDRetailStoreRequestMessage"/>
+    <variable name="InvokeQueryId_Output" messageType="ns7:filterRetailStoreResponseMessage"/>
+    <variable name="InvokeModifyRetail_Input" messageType="ns10:ModifyRetailStoreRequest"/>
+    <variable name="InvokeModifyRetail_Output" messageType="ns10:ModifyRetailStoreResponse"/>
+    <variable name="Id" type="xsd:integer"/>
+    <variable name="header" messageType="ns1:StandarHeaderMessage"/>
+    <variable name="InvokeTexJDA_Input" messageType="ns2:createRetailStoreRequestMessage"/>
+    <variable name="InvokeTexJDA_Output" messageType="ns2:createRetailStoreResponseMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in JDACreateRetailStoreProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="jdacreateretailstoreprocess_client" portType="ns1:JDACreateRetailStorePType" operation="JDACreateRetailStore" variable="inputVariable" createInstance="yes"
+             bpelx:headerVariable="header"/>
+    <assign name="QueryId">
+      <copy>
+        <from>$inputVariable.JDACreateRetailStoreRequest/ns3:retailStores/ns4:retailStore/ns4:store</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeQueryId_Input.payload/ns8:id</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeQueryId" partnerLink="JDAQueryIdRetail"
+            portType="ns7:queryRetailStorePort" operation="findById" inputVariable="InvokeQueryId_Input"
+            outputVariable="InvokeQueryId_Output" bpelx:invokeAsDetail="no" bpelx:inputHeaderVariable="header"/>
+    <assign name="ID">
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$InvokeQueryId_Output.payload/ns8:retailStores/ns4:retailStore/ns4:storeID</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Id</to>
+      </copy>
+    </assign>
+    <if name="IfQueryIdExists">
+      <documentation>
+        <![CDATA[Modify]]>
+      </documentation>
+      <condition>$inputVariable.JDACreateRetailStoreRequest/ns3:retailStores/ns4:retailStore/ns4:storeID = $InvokeQueryId_Output.payload/ns8:retailStores/ns4:retailStore/ns4:storeID</condition>
+      <sequence name="Sequence2">
+        <assign name="XSLTJDAModify">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:doXSLTransformForDoc("../Transformations/XSLTJDAModify_1.xsl", $inputVariable.JDACreateRetailStoreRequest)</from>
+            <to variable="InvokeModifyRetail_Input" part="ModifyRetailStoreRequest"/>
+          </copy>
+        </assign>
+        <invoke name="InvokeModifyRetail" partnerLink="ModifyRetailStorePXY"
+                portType="ns10:ModifyRetailStorePType" operation="modify" inputVariable="InvokeModifyRetail_Input"
+                outputVariable="InvokeModifyRetail_Output" bpelx:invokeAsDetail="no"
+                bpelx:inputHeaderVariable="header"/>
+        <assign name="ResponseModify">
+          <copy ignoreMissingFromData="yes">
+            <from>$InvokeModifyRetail_Output.ModifyRetailStoreResponse/ns6:result</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.JDACreateRetailStoreResponse/ns6:result</to>
+          </copy>
+          <copy ignoreMissingFromData="yes">
+            <from>$InvokeModifyRetail_Output.ModifyRetailStoreResponse/ns6:description</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.JDACreateRetailStoreResponse/ns6:description</to>
+          </copy>
+        </assign>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[Create]]>
+        </documentation>
+        <sequence>
+          <assign name="XSLTJDACreate">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:doXSLTransformForDoc("../Transformations/XSLTJDACreate_1.xsl", $inputVariable.JDACreateRetailStoreRequest)</from>
+              <to variable="InvokeJDA_InputVariable" part="createRetailStoreRequestMessage"/>
+            </copy>
+          </assign>
+          <invoke name="InvokeJDA" partnerLink="JDACreateRetailStore"
+                  portType="ns2:createRetailStorePort" operation="create" inputVariable="InvokeJDA_InputVariable"
+                  outputVariable="InvokeJDA_OutputVariable" bpelx:invokeAsDetail="no"
+                  bpelx:inputHeaderVariable="header"/>
+          <assign name="NumTax">
+            <copy>
+              <from>concat ("11",$inputVariable.JDACreateRetailStoreRequest/ns3:retailStores/ns4:retailStore/ns4:store)</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeTexJDA_Input.createRetailStoreRequestMessage/ns9:retailStores/ns4:retailStore/ns4:storeID</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeTexJDA" partnerLink="JDACreateTAX"
+                  portType="ns2:createRetailStorePort" operation="create" inputVariable="InvokeTexJDA_Input"
+                  outputVariable="InvokeTexJDA_Output" bpelx:invokeAsDetail="no"/>
+          <assign name="ResponseCreate">
+            <copy ignoreMissingFromData="yes">
+              <from>$InvokeJDA_OutputVariable.createRetailStoreResponseMessage/ns6:result</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.JDACreateRetailStoreResponse/ns6:result</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$InvokeJDA_OutputVariable.createRetailStoreResponseMessage/ns6:description</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.JDACreateRetailStoreResponse/ns6:description</to>
+            </copy>
+          </assign>
+        </sequence>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="jdacreateretailstoreprocess_client" portType="ns1:JDACreateRetailStorePType" operation="JDACreateRetailStore" variable="outputVariable"/>
+  </sequence>
+</process>

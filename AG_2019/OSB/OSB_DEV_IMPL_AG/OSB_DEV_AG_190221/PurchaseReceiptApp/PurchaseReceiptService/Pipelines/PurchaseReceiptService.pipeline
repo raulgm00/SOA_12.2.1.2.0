@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con4="http://www.bea.com/wli/sb/stages/routing/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="PurchaseReceiptApp/PurchaseReceiptService/Resources/WSDLs/PurchaseReceiptService"/>
+            <con:binding>
+                <con:name>PurchaseReceipt_bind</con:name>
+                <con:namespace>http://www.agarcia.mx/ServiceBus/PurchaseReceiptService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-afffa56.N7f1a3d84.0.175707773a0.N8000">
+        <con:pipeline type="request" name="request-N3f57c7ff.8baacc4.0.1751e207943.N7ebc">
+            <con:stage id="_StageId-N3f57c7ff.8baacc4.0.1751e207943.N7eba" name="StageRequest">
+                <con:context>
+                    <con2:userNsDecl prefix="com" namespace="http://www.agarcia.mx/EnterpriseObjects/Common"/>
+                    <con2:userNsDecl prefix="rec" namespace="http://www.agarcia.mx/EnterpriseObjects/Receipt"/>
+                </con:context>
+                <con:actions>
+                    <con3:report>
+                        <con2:id>_ActionId-N3f57c7ff.8baacc4.0.1751e207943.N7e86</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>$body/*</con2:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>In.TrackingID</con3:key>
+                            <con3:varName>body</con3:varName>
+                            <con3:value>
+                                <con2:xpathText>./rec:ProcessReceiptEBM/rec:Header/com:TrackingID</con2:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                    <con1:assign varName="UUID">
+                        <con2:id>_ActionId-N3f57c7ff.8baacc4.0.1751e207943.N7e83</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>fn-bea:uuid()</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:assign varName="TrackingID">
+                        <con2:id>_ActionId-N3f57c7ff.8baacc4.0.1751e207943.N7e7d</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body/rec:ProcessReceiptEBM/rec:Header/com:TrackingID</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:assign varName="Operation">
+                        <con2:id>_ActionId-afffa56.N7f1a3d84.0.175707773a0.N7fdb</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body/rec:ProcessReceiptEBM/rec:Header/com:Operation</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:assign varName="Source">
+                        <con2:id>_ActionId-afffa49.7c9b3f28.0.175b52a04eb.N7ffe</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body/rec:ProcessReceiptEBM/rec:Header/com:SourceID/text()</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:insert varName="body">
+                        <con2:id>_ActionId-afffa56.N7f1a3d84.0.175707773a0.N7fcd</con2:id>
+                        <con1:location>
+                            <con2:xpathText>./rec:ProcessReceiptEBM/rec:Header/com:TrackingID</con2:xpathText>
+                        </con1:location>
+                        <con1:where>after</con1:where>
+                        <con1:expr>
+                            <con2:xqueryText>&lt;com:InstanceID>{$UUID}&lt;/com:InstanceID></con2:xqueryText>
+                        </con1:expr>
+                    </con1:insert>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-afffa56.N7f1a3d84.0.175707773a0.N7fc9</con2:id>
+                        <con1:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="PurchaseReceiptApp/PurchaseReceiptService/Resources/XSLTs/xFormInvokeProcessPurchaseReceipt"/>
+                                <con2:input>$body/*:ProcessReceiptEBM</con2:input>
+                            </con2:xsltTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con1:validate>
+                        <con2:id>_ActionId-afffa56.N7f1a3d84.0.175707773a0.N7fc5</con2:id>
+                        <con2:disabled>true</con2:disabled>
+                        <con1:schema ref="MetaData/Components/EnterpriseObjectLibrary/EBO/Receipt/ReceiptEBM"/>
+                        <con1:schemaElement xmlns:rec="http://www.agarcia.mx/EnterpriseObjects/Receipt">rec:ProcessReceiptEBM</con1:schemaElement>
+                        <con1:varName>body</con1:varName>
+                        <con1:location>
+                            <con2:xpathText>./rec:ProcessReceiptEBM</con2:xpathText>
+                        </con1:location>
+                    </con1:validate>
+                    <con3:report>
+                        <con2:id>_ActionId-afffa56.N7f1a3d84.0.175707773a0.N7fc2</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>$body/*</con2:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>Request.TrackingID</con3:key>
+                            <con3:varName>body</con3:varName>
+                            <con3:value>
+                                <con2:xpathText>$TrackingID</con2:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-N3f57c7ff.8baacc4.0.1751e207943.N7ebb">
+            <con:stage id="_StageId-N3f57c7ff.8baacc4.0.1751e207943.N7eb9" name="StageResponse">
+                <con:context>
+                    <con2:userNsDecl prefix="com" namespace="http://www.agarcia.mx/EnterpriseObjects/Common"/>
+                    <con2:userNsDecl prefix="rec" namespace="http://www.agarcia.mx/EnterpriseObjects/Receipt"/>
+                </con:context>
+                <con:actions>
+                    <con3:report>
+                        <con2:id>_ActionId-afffa56.N7f1a3d84.0.175707773a0.N7fe3</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>$body/*</con2:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>In.TrackingID.Response</con3:key>
+                            <con3:varName>body</con3:varName>
+                            <con3:value>
+                                <con2:xpathText>$TrackingID</con2:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-afffa73.1f19da33.0.1759e8b4373.N7dd8</con2:id>
+                        <con1:case id="_BranchId-afffa73.1f19da33.0.1759e8b4373.N7dd7">
+                            <con1:condition>
+                                <con2:xqueryConditionExpr>
+                                    <con2:compExpr operator="=">
+                                        <con2:leftPath>$Source</con2:leftPath>
+                                        <con2:rightPath>"SAALMA"</con2:rightPath>
+                                    </con2:compExpr>
+                                </con2:xqueryConditionExpr>
+                            </con1:condition>
+                            <con1:actions/>
+                        </con1:case>
+                        <con1:default>
+                            <con1:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-afffa73.1f19da33.0.1759e8b4373.N7fd5</con2:id>
+                                <con1:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con1:location>
+                                <con1:expr>
+                                    <con2:xsltTransform>
+                                        <con2:resource ref="PurchaseReceiptApp/PurchaseReceiptService/Resources/XSLTs/xformPurchaseReceiptServiceResponse"/>
+                                        <con2:input>$body</con2:input>
+                                        <con2:param name="Code">
+                                            <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0000", "ERROR_CODE", "NOT FOUND")</con2:path>
+                                        </con2:param>
+                                        <con2:param name="Message">
+                                            <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0000", "USER_MESSAGE", "NOT FOUND")</con2:path>
+                                        </con2:param>
+                                        <con2:param name="Detail">
+                                            <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0000", "CATEGORY", "NOT FOUND")</con2:path>
+                                        </con2:param>
+                                        <con2:param name="InstanceID">
+                                            <con2:path>$UUID</con2:path>
+                                        </con2:param>
+                                        <con2:param name="TrackingID">
+                                            <con2:path>$TrackingID</con2:path>
+                                        </con2:param>
+                                        <con2:param name="Operation">
+                                            <con2:path>$Operation</con2:path>
+                                        </con2:param>
+                                    </con2:xsltTransform>
+                                </con1:expr>
+                            </con1:replace>
+                        </con1:default>
+                    </con1:ifThenElse>
+                    <con3:report>
+                        <con2:id>_ActionId-afffa73.1f19da33.0.1759e8b4373.N7ff0</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>$body/*</con2:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>Out.TrackingID</con3:key>
+                            <con3:varName>body</con3:varName>
+                            <con3:value>
+                                <con2:xpathText>$TrackingID</con2:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-afffa56.N7f1a3d84.0.175707773a0.N8000">
+            <con:stage id="_StageId-afffa56.N7f1a3d84.0.175707773a0.N7fff" name="StageError">
+                <con:context>
+                    <con2:userNsDecl prefix="rec" namespace="http://www.agarcia.mx/EnterpriseObjects/Receipt"/>
+                </con:context>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-afffa56.N7f1a3d84.0.175707773a0.N7fef</con2:id>
+                        <con1:case id="_BranchId-afffa56.N7f1a3d84.0.175707773a0.N7fee">
+                            <con1:condition>
+                                <con2:xqueryText>$fault/ctx:errorCode="OSB-382505"</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:replace varName="body" contents-only="true">
+                                    <con2:id>_ActionId-afffa56.N7f1a3d84.0.175707773a0.N7fdf</con2:id>
+                                    <con1:location>
+                                        <con2:xpathText>.</con2:xpathText>
+                                    </con1:location>
+                                    <con1:expr>
+                                        <con2:xsltTransform>
+                                            <con2:resource ref="PurchaseReceiptApp/PurchaseReceiptService/Resources/XSLTs/xformErrorHandlerResponse"/>
+                                            <con2:input>$body/*</con2:input>
+                                            <con2:param name="Code">
+                                                <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0010", "ERROR_CODE", "NOT FOUND")</con2:path>
+                                            </con2:param>
+                                            <con2:param name="Message">
+                                                <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0010", "USER_MESSAGE", "NOT FOUND")</con2:path>
+                                            </con2:param>
+                                            <con2:param name="Detail">
+                                                <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0010", "CATEGORY", "NOT FOUND")</con2:path>
+                                            </con2:param>
+                                            <con2:param name="InstanceID">
+                                                <con2:path>$UUID</con2:path>
+                                            </con2:param>
+                                            <con2:param name="TrackingID">
+                                                <con2:path>$TrackingID</con2:path>
+                                            </con2:param>
+                                            <con2:param name="Operation">
+                                                <con2:path>$Operation</con2:path>
+                                            </con2:param>
+                                        </con2:xsltTransform>
+                                    </con1:expr>
+                                </con1:replace>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:case id="_BranchId-afffa56.N7f1a3d84.0.175707773a0.N7fec">
+                            <con1:condition>
+                                <con2:xqueryText>fn:empty($body/soap-env:Fault)</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:replace varName="body" contents-only="true">
+                                    <con2:id>_ActionId-afffa56.N7f1a3d84.0.175707773a0.N7fd3</con2:id>
+                                    <con1:location>
+                                        <con2:xpathText>.</con2:xpathText>
+                                    </con1:location>
+                                    <con1:expr>
+                                        <con2:xsltTransform>
+                                            <con2:resource ref="PurchaseReceiptApp/PurchaseReceiptService/Resources/XSLTs/xformErrorHandlerResponse"/>
+                                            <con2:input>$body/*</con2:input>
+                                            <con2:param name="Code">
+                                                <con2:path>$fault/ctx:errorCode/text()</con2:path>
+                                            </con2:param>
+                                            <con2:param name="Message">
+                                                <con2:path>$fault/ctx:reason/text()</con2:path>
+                                            </con2:param>
+                                            <con2:param name="Detail">
+                                                <con2:path>fn-bea:serialize($fault/ctx:details)</con2:path>
+                                            </con2:param>
+                                            <con2:param name="InstanceID">
+                                                <con2:path>$UUID</con2:path>
+                                            </con2:param>
+                                            <con2:param name="TrackingID">
+                                                <con2:path>$TrackingID</con2:path>
+                                            </con2:param>
+                                            <con2:param name="Operation">
+                                                <con2:path>$Operation</con2:path>
+                                            </con2:param>
+                                        </con2:xsltTransform>
+                                    </con1:expr>
+                                </con1:replace>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con1:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-afffa56.N7f1a3d84.0.175707773a0.N7fd7</con2:id>
+                                <con1:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con1:location>
+                                <con1:expr>
+                                    <con2:xsltTransform>
+                                        <con2:resource ref="PurchaseReceiptApp/PurchaseReceiptService/Resources/XSLTs/xformErrorHandlerResponse"/>
+                                        <con2:input>$body/*</con2:input>
+                                        <con2:param name="Code">
+                                            <con2:path>$fault/ctx:errorCode</con2:path>
+                                        </con2:param>
+                                        <con2:param name="Message">
+                                            <con2:path>$fault/ctx:reason</con2:path>
+                                        </con2:param>
+                                        <con2:param name="Detail">
+                                            <con2:path>$fault/ctx:details</con2:path>
+                                        </con2:param>
+                                        <con2:param name="InstanceID">
+                                            <con2:path>$UUID</con2:path>
+                                        </con2:param>
+                                        <con2:param name="TrackingID">
+                                            <con2:path>$TrackingID</con2:path>
+                                        </con2:param>
+                                        <con2:param name="Operation">
+                                            <con2:path>$Operation</con2:path>
+                                        </con2:param>
+                                    </con2:xsltTransform>
+                                </con1:expr>
+                            </con1:replace>
+                        </con1:default>
+                    </con1:ifThenElse>
+                    <con3:report>
+                        <con2:id>_ActionId-afffa56.N7f1a3d84.0.175707773a0.N7fe9</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>$body/*</con2:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>Error.TrackingID</con3:key>
+                            <con3:varName>body</con3:varName>
+                            <con3:value>
+                                <con2:xpathText>$TrackingID</con2:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                    <con2:reply>
+                        <con2:id>_ActionId-afffa56.N7f1a3d84.0.175707773a0.N7fe6</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="Pipeline Pair PurchaseReceipt">
+                <con:request>request-N3f57c7ff.8baacc4.0.1751e207943.N7ebc</con:request>
+                <con:response>response-N3f57c7ff.8baacc4.0.1751e207943.N7ebb</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteNodeSourceSystem">
+                <con:context>
+                    <con2:userNsDecl prefix="com" namespace="http://www.agarcia.mx/EnterpriseObjects/Common"/>
+                    <con2:userNsDecl prefix="rec" namespace="http://www.agarcia.mx/EnterpriseObjects/Receipt"/>
+                </con:context>
+                <con:actions>
+                    <con4:routingTable>
+                        <con2:id>_ActionId-afffaf5.159baf93.0.17556824a3a.N7fb0</con2:id>
+                        <con4:expression>
+                            <con2:xqueryText>$Source</con2:xqueryText>
+                        </con4:expression>
+                        <con4:case id="_BranchId-afffaf5.159baf93.0.17556824a3a.N7faf">
+                            <con4:operator>equals</con4:operator>
+                            <con4:value>"JDA"</con4:value>
+                            <con4:route>
+                                <con2:id>_ActionId-afffaf5.159baf93.0.17556824a3a.N7fae</con2:id>
+                                <con4:service ref="PurchaseReceiptApp/PurchaseReceiptService/BusinessService/AIA_PurchaseReceiptTopic" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con4:operation>Produce_Message</con4:operation>
+                                <con4:outboundTransform/>
+                                <con4:responseTransform/>
+                            </con4:route>
+                        </con4:case>
+                        <con4:case id="_BranchId-afffaf5.159baf93.0.17556824a3a.N7f41">
+                            <con4:operator>equals</con4:operator>
+                            <con4:value>'SAALMA'</con4:value>
+                            <con4:route>
+                                <con2:id>_ActionId-afffaf5.159baf93.0.17556824a3a.N7f40</con2:id>
+                                <con4:service ref="PurchaseReceiptApp/PurchaseReceiptService/BusinessService/SOAP_PurchaseReceiptEBFRef" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con4:operation>process</con4:operation>
+                                <con4:outboundTransform/>
+                                <con4:responseTransform/>
+                            </con4:route>
+                        </con4:case>
+                    </con4:routingTable>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+        <con:shared-variables>
+            <con:variable>UUID</con:variable>
+            <con:variable>TrackingID</con:variable>
+            <con:variable>Operation</con:variable>
+            <con:variable>Source</con:variable>
+        </con:shared-variables>
+    </con:router>
+</con:pipelineEntry>

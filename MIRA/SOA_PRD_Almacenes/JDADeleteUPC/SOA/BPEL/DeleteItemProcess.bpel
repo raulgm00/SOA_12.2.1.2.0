@@ -1,0 +1,397 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Aug 15 11:59:06 CDT 2019
+  Author:  joseb
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="DeleteItemProcess"
+               targetNamespace="http://xmlns.oracle.com/JDADeleteUPC_v1/JDADeleteUPC/DeleteItemProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/JDADeleteUPC_v1/JDADeleteUPC/DeleteItemProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/Items/DeleteItemEntitySvc/v1.0"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://mx.agarcia.ea/Applications/JDA/Items/ModifyItem/v1.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns4="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Core/Items/CreateItemEntity"
+         xmlns:ns6="http://mx.agarcia.ea/Applications/JDA/Items/ModifyItem"
+         xmlns:ns7="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns8="http://mx.agarcia.ea/Applications/Governance"
+         xmlns:ns9="http://mx.agarcia.ea/Commons/Schemas/AGStandardHeader">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://mx.agarcia.ea/Applications/Governance"
+          location="http://172.16.19.26:7004/Applications/Governance/PS/GovernanceAPIPXY/v1.0?WSDL"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateItemEntity"
+          location="../Schemas/CreateItemEntitySchema.xsd" importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/DeleteItemEntitySvc/v1.0"
+          location="../WSDLs/DeleteItemEntity.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/DeleteItemEntitySvc/v1.0"
+          location="../WSDLs/DeleteItemEntityWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="deleteitemprocess_client" partnerLinkType="ns1:DeleteItemProcess" myRole="createItemPType"/>
+    <partnerLink name="JDADeleteUPCPXY" partnerLinkType="ns2:JDADeleteUPCPXY" partnerRole="modifyItemPort"/>
+    <partnerLink name="JDADeleteSKUUPCPXY" partnerLinkType="ns2:JDADeleteSKUUPCPXY" partnerRole="modifyItemPort"/>
+    <partnerLink name="GovernanceAPIPXY" partnerLinkType="ns8:GovernanceAPIPXY" partnerRole="GovernancePort"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:createItemRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:createItemResponseMessage"/>
+    <variable name="InvokeDeleteUPC_InputVariable" messageType="ns2:modifyItemRequestMessage"/>
+    <variable name="InvokeDeleteUPC_OutputVariable" messageType="ns2:modifyItemResponseMessage"/>
+    <variable name="InvokeDeleteSKUUPCPXY_InputVariable" messageType="ns2:modifyItemRequestMessage"/>
+    <variable name="InvokeDeleteSKUUPCPXY_OutputVariable" messageType="ns2:modifyItemResponseMessage"/>
+    <variable name="messageError" messageType="ns1:standardMessageFault"/>
+    <variable name="deleteInfoUPCVar" element="ns3:createItemRequest"/>
+    <variable name="UPCVar" type="xsd:string"/>
+    <variable name="SKUVar" type="xsd:string"/>
+    <variable name="startDate" type="xsd:dateTime"/>
+    <variable name="InvokeGovernance_InputVariable" messageType="ns8:audit"/>
+    <variable name="InvokeGovernance_OutputVariable" messageType="ns8:auditResponse"/>
+    <variable name="header" messageType="ns1:standardMessageHeader"/>
+  </variables>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in DeleteItemProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="deleteitemprocess_client" portType="ns1:createItemPType" operation="delete" variable="inputVariable" createInstance="yes"
+             bpelx:headerVariable="header"/>
+    <assign name="AssignStartDate">
+      <copy>
+        <from>xp20:current-dateTime()</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$startDate</to>
+      </copy>
+    </assign>
+    <assign name="InformacionDelete">
+      <copy>
+        <from>$inputVariable.createItemRequestMessage</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$deleteInfoUPCVar</to>
+      </copy>
+    </assign>
+    <scope name="Scope1">
+      <faultHandlers>
+        <catch bpelx:name="timeout" faultName="bpelx:timeout" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage"><assign name="AssigneError"
+                                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$Fault.detail</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns7:errorDescription</to>
+      </copy>
+      <copy>
+         <from>'DELUPC-001'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns7:errorCode</to>
+      </copy>
+   </assign></catch>
+        <catch bpelx:name="remoteFault" faultName="bpelx:remoteFault" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage"><assign name="AssigneError"
+                                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$Fault.detail</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns7:errorDescription</to>
+      </copy>
+      <copy>
+         <from>'DELUPC-001'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns7:errorCode</to>
+      </copy>
+   </assign></catch>
+        <catch bpelx:name="bindingFault" faultName="bpelx:bindingFault" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <assign name="AssigneError">
+            <copy>
+              <from>$Fault.detail</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns7:errorDescription</to>
+            </copy>
+            <copy>
+              <from>'DELUPC-001'</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns7:errorCode</to>
+            </copy>
+          </assign>
+        </catch>
+      </faultHandlers>
+      <sequence name="Sequence1">
+        <assign name="Transformation1">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:doXSLTransformForDoc("../Transformations/TransformReqUPC.xsl", $deleteInfoUPCVar)</from>
+            <to variable="InvokeDeleteUPC_InputVariable" part="payload"/>
+          </copy>
+        </assign>
+        <invoke name="InvokeDeleteUPC" partnerLink="JDADeleteUPCPXY"
+                portType="ns2:modifyItemPort" operation="modify" inputVariable="InvokeDeleteUPC_InputVariable"
+                outputVariable="InvokeDeleteUPC_OutputVariable" bpelx:invokeAsDetail="no"
+                bpelx:inputHeaderVariable="header"/>
+      </sequence>
+    </scope>
+    <scope name="Scope2">
+      <faultHandlers>
+        <catch bpelx:name="timeout" faultName="bpelx:timeout" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage"><assign name="AssignError"
+                                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$Fault.detail</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns7:errorDescription</to>
+      </copy>
+      <copy>
+         <from>'DELUPC-001'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns7:errorCode</to>
+      </copy>
+   </assign></catch>
+        <catch bpelx:name="remoteFault" faultName="bpelx:remoteFault" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage"><assign name="AssignError"
+                                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$Fault.detail</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns7:errorDescription</to>
+      </copy>
+      <copy>
+         <from>'DELUPC-001'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns7:errorCode</to>
+      </copy>
+   </assign></catch>
+        <catch bpelx:name="bindingFault" faultName="bpelx:bindingFault" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <assign name="AssignError">
+            <copy>
+              <from>$Fault.detail</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns7:errorDescription</to>
+            </copy>
+            <copy>
+              <from>'DELUPC-001'</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns7:errorCode</to>
+            </copy>
+          </assign>
+        </catch>
+      </faultHandlers>
+      <sequence name="Sequence2">
+        <assign name="Transformation2">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:doXSLTransformForDoc("../Transformations/TransformReqSKU.xsl", $deleteInfoUPCVar)</from>
+            <to variable="InvokeDeleteSKUUPCPXY_InputVariable" part="payload"/>
+          </copy>
+        </assign>
+        <invoke name="InvokeDeleteSKUUPCPXY" partnerLink="JDADeleteSKUUPCPXY"
+                portType="ns2:modifyItemPort" operation="modify" inputVariable="InvokeDeleteSKUUPCPXY_InputVariable"
+                outputVariable="InvokeDeleteSKUUPCPXY_OutputVariable" bpelx:invokeAsDetail="no"
+                bpelx:inputHeaderVariable="header"/>
+      </sequence>
+    </scope>
+    <scope name="Scope3">
+      <variables>
+        <variable name="Entry1" messageType="ns8:audit"/>
+        <variable name="Entry2" messageType="ns8:audit"/>
+        <variable name="Entry3" messageType="ns8:audit"/>
+        <variable name="Entry4" messageType="ns8:audit"/>
+        <variable name="Entry5" messageType="ns8:audit"/>
+        <variable name="Entry6" messageType="ns8:audit"/>
+        <variable name="Entry7" messageType="ns8:audit"/>
+        <variable name="Entry8" messageType="ns8:audit"/>
+      </variables>
+      <faultHandlers>
+        <catchAll>
+          <empty name="Empty1"/>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence3">
+        <assign name="Assign1">
+          <copy>
+            <from>'TraceActivity'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:operation</to>
+          </copy>
+          <copy>
+            <from>$header.header/ns9:parameters/ns9:parameter[@Key='gov.interface.id']</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:interfaceId</to>
+          </copy>
+          <copy>
+            <from>$header.header/ns9:parameters/ns9:parameter[@Key='gov.activity.id']</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:activityId</to>
+          </copy>
+          <copy>
+            <from>'id'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:key</to>
+          </copy>
+          <copy>
+            <from>'Eliminacion de UPC'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:value</to>
+          </copy>
+          <copy>
+            <from>'Eliminacion de UPC'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:data</to>
+          </copy>
+          <copy>
+            <from>'startDate'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry1.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:key</to>
+          </copy>
+          <copy>
+            <from>$startDate</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry1.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:value</to>
+          </copy>
+          <copy>
+            <from>'finishDate'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry2.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:key</to>
+          </copy>
+          <copy>
+            <from>xp20:current-dateTime()</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry2.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:value</to>
+          </copy>
+          <copy>
+            <from>'component'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry3.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:key</to>
+          </copy>
+          <copy>
+            <from>'JDADeleteUPC'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry3.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:value</to>
+          </copy>
+          <copy>
+            <from>'destinyComponent'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry4.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:key</to>
+          </copy>
+          <copy>
+            <from>'DeleteUPC'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry4.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:value</to>
+          </copy>
+          <copy>
+            <from>'message'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry5.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:key</to>
+          </copy>
+          <copy>
+            <from>concat('Elimnando UPC id: ', $InvokeDeleteUPC_InputVariable.payload/ns6:item/ns4:id)</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry5.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:value</to>
+          </copy>
+          <copy>
+            <from>'level'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry6.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:key</to>
+          </copy>
+          <copy>
+            <from>'1'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry6.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:value</to>
+          </copy>
+          <copy>
+            <from>'status'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry7.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:key</to>
+          </copy>
+          <copy>
+            <from>'finalizado'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry7.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:value</to>
+          </copy>
+          <copy>
+            <from>'class'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry8.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:key</to>
+          </copy>
+          <copy>
+            <from>'Expert'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry8.request/ns8:request/ns8:header/ns8:parameters/ns8:entry/ns8:value</to>
+          </copy>
+        </assign>
+        <assign name="Assign2">
+          <extensionAssignOperation>
+            <bpelx:append>
+              <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry1.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:from>
+              <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:to>
+            </bpelx:append>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:append>
+              <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry2.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:from>
+              <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:to>
+            </bpelx:append>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:append>
+              <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry3.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:from>
+              <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:to>
+            </bpelx:append>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:append>
+              <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry4.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:from>
+              <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:to>
+            </bpelx:append>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:append>
+              <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry5.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:from>
+              <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:to>
+            </bpelx:append>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:append>
+              <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry6.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:from>
+              <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:to>
+            </bpelx:append>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:append>
+              <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry7.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:from>
+              <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:to>
+            </bpelx:append>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:append>
+              <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry8.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:from>
+              <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernance_InputVariable.request/ns8:request/ns8:header/ns8:parameters/ns8:entry</bpelx:to>
+            </bpelx:append>
+          </extensionAssignOperation>
+        </assign>
+        <invoke name="InvokeGovernance" partnerLink="GovernanceAPIPXY"
+                portType="ns8:GovernancePort" operation="audit" inputVariable="InvokeGovernance_InputVariable"
+                outputVariable="InvokeGovernance_OutputVariable" bpelx:invokeAsDetail="no"
+                bpelx:inputHeaderVariable="header"/>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="deleteitemprocess_client" portType="ns1:createItemPType" operation="delete" variable="outputVariable"/>
+  </sequence>
+</process>

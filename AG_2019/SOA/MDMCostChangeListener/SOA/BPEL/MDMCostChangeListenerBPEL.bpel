@@ -1,0 +1,80 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sat Jun 15 18:27:32 GMT-06:00 2019
+  Author:  User
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="MDMCostChangeListenerBPEL"
+               targetNamespace="http://xmlns.oracle.com/AGSOABpelApplication/MDMCostChangeListener/MDMCostChangeListenerBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/AGSOABpelApplication/MDMCostChangeListener/MDMCostChangeListenerBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.oracle.com/pcbpel/adapter/db/AGSOABpelApplication/MDMCostChangeListener/MDMCostChangeListener"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/DistributeCostChangeRequestProcess/v1.0"
+         xmlns:ns3="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/CostChangeTaskSvc/v1.0">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.oracle.com/pcbpel/adapter/db/AGSOABpelApplication/MDMCostChangeListener/MDMCostChangeListener"
+          location="../WSDLs/MDMCostChangeListener.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="mdmcostchangelistenerbpel_client" partnerLinkType="ns1:MDMCostChangeListener_plt" myRole="MDMCostChangeListener_role"/>
+    <partnerLink name="SOAPReference" partnerLinkType="ns2:SOAPReference"
+                 partnerRole="DistributeCostChangeRequestProcessPType"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:CchEventsCollection_msg"/>
+    <variable name="distribute_distributeCostChange_InputVariable"
+              messageType="ns2:distributeApprovedCostChangeRequest"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in MDMCostChangeListenerBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="mdmcostchangelistenerbpel_client" portType="ns1:MDMCostChangeListener_ptt" operation="receive" variable="inputVariable" createInstance="yes"/>
+    <assign name="distribute">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/distribute_1.xsl", $inputVariable.CchEventsCollection)</from>
+        <to variable="distribute_distributeCostChange_InputVariable" part="distributeApprovedCostChangeRequest"/>
+      </copy>
+    </assign>
+    <invoke name="distribute" bpelx:invokeAsDetail="no" partnerLink="SOAPReference"
+            portType="ns2:DistributeCostChangeRequestProcessPType" operation="distributeCostChange"
+            inputVariable="distribute_distributeCostChange_InputVariable"/>
+  </sequence>
+</process>

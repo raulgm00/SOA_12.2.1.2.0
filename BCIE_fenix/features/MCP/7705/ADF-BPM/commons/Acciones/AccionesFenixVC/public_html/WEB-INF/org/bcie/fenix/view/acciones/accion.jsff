@@ -1,0 +1,747 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.1" xmlns:af="http://xmlns.oracle.com/adf/faces/rich"
+          xmlns:c="http://java.sun.com/jsp/jstl/core" xmlns:f="http://java.sun.com/jsf/core">
+  <c:set var="accionesfenixvcBundle" value="#{adfBundle['org.bcie.fenix.view.acciones.AccionesFenixVCBundle']}"/>
+  <af:panelGroupLayout id="pgl2" layout="vertical">
+    <af:spacer width="10" height="10" id="s5"/>
+    <af:panelGroupLayout id="pgl1" layout="horizontal">
+      <af:button text="#{accionesfenixvcBundle.CREAR_ACCION_BTN}" id="b1"
+                 actionListener="#{accionesActionBean.mostrarNuevoEditarAccion}"
+                 partialSubmit="false" immediate="true"
+                 visible="#{pageFlowScope.accionesBean.rolIngresador and pageFlowScope.pEscritura}"
+                 disabled="#{(pageFlowScope.accionesBean.esEstadoCompletado)}"/>
+      <af:spacer width="10" height="10" id="s1"/>
+      <af:button text="#{accionesfenixvcBundle.DETALLE_ACCION_BTN}" id="b2" immediate="true"
+                 actionListener="#{accionesActionBean.mostrarDetalleAccion}" partialSubmit="false"
+                 disabled='#{!(bindings.AccionesTablaVOIterator.estimatedRowCount>0) 
+                    or (pageFlowScope.accionesBean.esEstadoCompletado)}' partialTriggers="t1"/>
+      <af:spacer width="10" height="10" id="s2"
+                 visible="#{pageFlowScope.accionesBean.rolIngresador or pageFlowScope.pEscritura}"/>
+      <af:button text="#{accionesfenixvcBundle.MODFICAR_ACCION_BTN}" id="b3"
+                 disabled='#{!(bindings.IdEstadoAccion3.inputValue eq 2 or bindings.IdEstadoAccion3.inputValue eq 3 
+                    or bindings.IdEstadoAccion3.inputValue eq 1) or (pageFlowScope.accionesBean.esEstadoCompletado)}'
+                 actionListener="#{accionesActionBean.mostrarEditarAccion}"
+                 visible="#{pageFlowScope.accionesBean.rolIngresador and pageFlowScope.pEscritura}"
+                 partialTriggers="t1"/>
+    </af:panelGroupLayout>
+    <af:spacer width="10" height="10" id="s4"/>
+    <af:panelGroupLayout id="pgl3" layout="scroll"/>
+    <af:table value="#{bindings.AccionesTablaVO.collectionModel}" var="row"
+              rows="#{bindings.AccionesTablaVO.rangeSize}"
+              emptyText="#{bindings.AccionesTablaVO.viewable ? accionesfenixvcBundle.TABLA_VACIA : accionesfenixvcBundle.ACCES_DENIED}"
+              rowBandingInterval="0" selectedRowKeys="#{bindings.AccionesTablaVO.collectionModel.selectedRow}"
+              selectionListener="#{bindings.AccionesTablaVO.collectionModel.makeCurrent}" rowSelection="single"
+              fetchSize="#{bindings.AccionesTablaVO.rangeSize}"
+              filterModel="#{bindings.AccionesTablaVOQuery.queryDescriptor}"
+              queryListener="#{accionesActionBean.tableCustomProcessQuery}" filterVisible="true" varStatus="vs" id="t1"
+              columnStretching="multiple" partialTriggers="::b5 ::b6"
+              binding="#{accionesActionBean.accionesTablaUIC}">
+      <af:column sortProperty="#{bindings.AccionesTablaVO.hints.IdEstadoAccion.name}" filterable="true" sortable="true"
+                 headerText="#{accionesfenixvcBundle.ESTADO_ACCION_TXT}" id="c3" width="12%" align="center"
+                 inlineStyle="text-align:center;">
+        <af:image source="#{'/images/estadosacciones/'}#{row.IdEstadoAccion}#{'.png'}" id="i1"
+                  shortDesc="#{row.NombreEstadoAccion}"/>
+        <f:facet name="filter">
+          <af:panelGroupLayout id="pgl4fil" layout="horizontal">
+            <af:button id="b4" styleClass="headerLink" icon="#{'/images/tablefilter.png'}" inlineStyle="width: 40px"
+                       hoverIcon="#{'/images/tablefilter_hover.png'}"
+                       actionListener="#{accionesActionBean.resetTableFilter}"
+                       disabled="#{(pageFlowScope.accionesBean.esEstadoCompletado)}"/>
+            <af:selectOneChoice id="socfiles" value="#{vs.filterCriteria.IdEstadoAccion}" contentStyle="width: 110px"
+                                valueChangeListener="#{accionesActionBean.filtrarAccionPorTipoValueChangeListener}"
+                                autoSubmit="true" valuePassThru="true" shortDesc="" disabled="#{(pageFlowScope.accionesBean.esEstadoCompletado)}">
+              <af:forEach items="#{bindings.TcaEstadoAccionVO.rangeSet}" var="item">
+                <f:selectItem id="si2ds" itemLabel="#{item.DescripcionCorta}" itemValue="#{item.Id}"/>
+              </af:forEach>
+                <af:resource type="javascript">
+                        console.log("la marca de tiempo es: "+<c:out value="${accionesActionBean.tiempo}" />);
+                       <c:choose>
+                            <c:when test="${accionesActionBean.valorSelleccionadoInt != null}">
+                                var cboAcciones = document.getElementById('r1:1:pt1:r1:0:t1:socfiles::content');
+                                if(cboAcciones != null) {
+                                    document.getElementById('r1:1:pt1:r1:0:t1:socfiles::content').title = "";
+                                    <c:if test="${accionesActionBean.valorSelleccionadoInt != 0}">
+                                        if (document.getElementById('r1:1:pt1:r1:0:t1:socfiles::content')[0].value=="") {
+                                            document.getElementById('r1:1:pt1:r1:0:t1:socfiles::content').remove(0);
+                                        }
+                                        console.log("la marca de tiempo es: "+<c:out value="${accionesActionBean.tiempo}" />);
+                                        console.log("asignando "+<c:out value="${accionesActionBean.valorSelleccionadoInt}" />);
+                                        document.getElementById('r1:1:pt1:r1:0:t1:socfiles::content').value = <c:out value="${accionesActionBean.valorSelleccionadoInt}" />
+                                        console.log("asignado "+<c:out value="${accionesActionBean.valorSelleccionadoInt}" />);
+                                    </c:if>
+                                    <c:if test="${accionesActionBean.valorSelleccionadoInt == 0}">
+                                        console.log("la marca de tiempo es: "+<c:out value="${accionesActionBean.tiempo}" />);
+                                        console.log("asignando espacio por valorSelleccionadoInt=0 ");
+                                        document.getElementById('r1:1:pt1:r1:0:t1:socfiles::content').value = "";
+                                        console.log("asignado espacio por valorSelleccionadoInt=0  ");
+                                    </c:if>
+                                } else {
+                                    console.log("No existe combo y el bean si tiene valor");
+                                }
+                              </c:when>
+                              <c:otherwise>
+                                console.log("la marca de tiempo es: "+<c:out value="${accionesActionBean.tiempo}" />);
+                                var cboAcciones = document.getElementById('r1:1:pt1:r1:0:t1:socfiles::content');
+                                if(cboAcciones != null) {
+                                    document.getElementById('r1:1:pt1:r1:0:t1:socfiles::content').title = "";
+                                    console.log("asignando espacio por valorSelleccionadoInt = null ");
+                                    document.getElementById('r1:1:pt1:r1:0:t1:socfiles::content').value = ""
+                                    console.log("asignado espacio por valorSelleccionadoInt = null");
+                                } else {
+                                    console.log("No existe combo y el bean NO tiene valor");
+                                }
+                              </c:otherwise>
+                       </c:choose>
+                </af:resource>
+            </af:selectOneChoice>
+          </af:panelGroupLayout>
+        </f:facet>
+      </af:column>
+      <af:column sortProperty="#{bindings.AccionesTablaVO.hints.Accion.name}" filterable="true" sortable="true"
+                 headerText="#{accionesfenixvcBundle.ACCION_TXT}" id="c2" width="55%">
+        <af:outputText value="#{row.Accion}" shortDesc="#{bindings.AccionesTablaVO.hints.Accion.tooltip}" id="ot2"
+                       styleClass="PreWrap" rendered="false"/>
+        <af:inputText id="it11" rows="2" shortDesc="#{bindings.AccionesTablaVO.hints.Accion.tooltip}"
+                      value="#{row.Accion}" styleClass="PreWrap" readOnly="true" dimensionsFrom="parent"
+                      contentStyle='min-width:100%;'/>
+        <af:panelFormLayout id="pfl4">
+          <f:facet name="footer"/>
+          <af:panelGroupLayout id="pgl8" layout="vertical">
+            <af:panelLabelAndMessage label="#{accionesfenixvcBundle.CREADO_POR_TXT}" id="plam7"
+                                     rendered="#{row.NombreUsuarioRegistrado ne null}">
+              <af:panelGroupLayout id="pgl9" layout="horizontal">
+                <af:outputText value="#{row.NombreUsuarioRegistrado}"
+                               shortDesc="#{bindings.AccionesTablaVO.hints.NombreUsuarioRegistrado.tooltip}"
+                               id="ot12" inlineStyle="color:Black;"/>
+                <af:spacer width="5" height="10" id="s43"/>
+                <af:outputText id="ot6" value="#{accionesfenixvcBundle.EL_TXT}" inlineStyle="color:Black;"/>
+                <af:spacer width="5" height="10" id="s44"/>
+                <af:outputText value="#{row.FechaAccionRegistro}"
+                               shortDesc="#{bindings.AccionesTablaVO.hints.FechaAccionRegistro.tooltip}" id="ot13"
+                               inlineStyle="color:Black;">
+                  <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                </af:outputText>
+              </af:panelGroupLayout>
+            </af:panelLabelAndMessage>
+            <af:panelLabelAndMessage label="#{accionesfenixvcBundle.CREADO_POR_TXT}" id="plam8"
+                                     rendered="#{row.NombreUsuarioRegistrado eq null}">
+              <af:panelGroupLayout id="pgl10" layout="horizontal">
+                <af:outputText value="#{row.NombreUsuarioPorAtender}"
+                               shortDesc="#{bindings.AccionesTablaVO.hints.NombreUsuarioPorAtender.tooltip}" id="ot8"
+                               inlineStyle="color:Black;"/>
+                <af:spacer width="5" height="10" id="s41"/>
+                <af:outputText value="#{accionesfenixvcBundle.EL_TXT}" id="ot9" inlineStyle="color:Black;"/>
+                <af:spacer width="5" height="10" id="s42"/>
+                <af:outputText value="#{row.FechaRegistroPorAtender}"
+                               shortDesc="#{bindings.AccionesTablaVO.hints.FechaRegistroPorAtender.tooltip}" id="ot10"
+                               inlineStyle="color:Black;">
+                  <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                </af:outputText>
+              </af:panelGroupLayout>
+            </af:panelLabelAndMessage>
+            <af:panelLabelAndMessage label="#{accionesfenixvcBundle.ATENDIDO_POR_TXT}" id="plam9"
+                                     rendered="#{row.NombreUsuarioAtendida ne null}">
+              <af:panelGroupLayout id="pgl11" layout="horizontal">
+                <af:outputText value="#{row.NombreUsuarioAtendida}"
+                               shortDesc="#{bindings.AccionesTablaVO.hints.NombreUsuarioAtendida.tooltip}" id="ot15"
+                               inlineStyle="color:Black;"/>
+                <af:spacer width="5" height="10" id="s40"/>
+                <af:outputText value="#{accionesfenixvcBundle.EL_TXT}" id="ot11" inlineStyle="color:Black;"/>
+                <af:spacer width="5" height="10" id="s39"/>
+                <af:outputText value="#{row.FechaRegistroAtendida}"
+                               shortDesc="#{bindings.AccionesTablaVO.hints.FechaRegistroAtendida.tooltip}" id="ot16"
+                               inlineStyle="color:Black;">
+                  <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                </af:outputText>
+              </af:panelGroupLayout>
+            </af:panelLabelAndMessage>
+            <af:panelLabelAndMessage label="#{accionesfenixvcBundle.VALIDADO_POR_TXT}" id="plam10"
+                                     rendered="#{row.NombreUsuarioValidada ne null}">
+              <af:panelGroupLayout id="pgl13" layout="horizontal">
+                <af:outputText value="#{row.NombreUsuarioValidada}"
+                               shortDesc="#{bindings.AccionesTablaVO.hints.NombreUsuarioValidada.tooltip}" id="ot18"
+                               inlineStyle="color:Black;"/>
+                <af:spacer width="5" height="10" id="s37"/>
+                <af:outputText value="#{accionesfenixvcBundle.EL_TXT}" id="ot14" inlineStyle="color:Black;"/>
+                <af:spacer width="5" height="10" id="s38"/>
+                <af:outputText value="#{row.FechaRegistroValidada}"
+                               shortDesc="#{bindings.AccionesTablaVO.hints.FechaRegistroValidada.tooltip}" id="ot19"
+                               inlineStyle="color:Black;">
+                  <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                </af:outputText>
+              </af:panelGroupLayout>
+            </af:panelLabelAndMessage>
+            <af:panelLabelAndMessage label="#{accionesfenixvcBundle.DESESTIMADO_POR_TXT}" id="plam11"
+                                     rendered="#{row.NombreUsuarioDesestimada ne null}">
+              <af:panelGroupLayout id="pgl27" layout="horizontal">
+                <af:outputText value="#{row.NombreUsuarioDesestimada}"
+                               shortDesc="#{bindings.AccionesTablaVO.hints.NombreUsuarioDesestimada.tooltip}"
+                               id="ot28" inlineStyle="color:Black;"/>
+                <af:spacer width="5" height="10" id="s35"/>
+                <af:outputText value="#{accionesfenixvcBundle.EL_TXT}" id="ot17" inlineStyle="color:Black;"/>
+                <af:spacer width="5" height="10" id="s36"/>
+                <af:outputText value="#{row.FechaRegistroDesestimada}"
+                               shortDesc="#{bindings.AccionesTablaVO.hints.FechaRegistroDesestimada.tooltip}"
+                               id="ot64" inlineStyle="color:Black;">
+                  <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                </af:outputText>
+              </af:panelGroupLayout>
+            </af:panelLabelAndMessage>
+            <af:panelLabelAndMessage label="#{accionesfenixvcBundle.ELIMINADO_POR_TXT}" id="plam12"
+                                     rendered="#{row.NombreUsuarioEliminada ne null}">
+              <af:panelGroupLayout id="pgl28" layout="horizontal">
+                <af:outputText value="#{row.NombreUsuarioEliminada}"
+                               shortDesc="#{bindings.AccionesTablaVO.hints.NombreUsuarioEliminada.tooltip}" id="ot66"
+                               inlineStyle="color:Black;"/>
+                <af:spacer width="5" height="10" id="s33"/>
+                <af:outputText value="#{accionesfenixvcBundle.EL_TXT}" id="ot20" inlineStyle="color:Black;"/>
+                <af:spacer width="5" height="10" id="s34"/>
+                <af:outputText value="#{row.FechaRegistroEliminada}"
+                               shortDesc="#{bindings.AccionesTablaVO.hints.FechaRegistroEliminada.tooltip}" id="ot67"
+                               inlineStyle="color:Black;">
+                  <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                </af:outputText>
+              </af:panelGroupLayout>
+            </af:panelLabelAndMessage>
+            <af:panelGroupLayout id="pgl29" layout="horizontal">
+              <af:outputText value="#{accionesfenixvcBundle.RESPONSABLE2_TXT}" id="ot30"/>
+              <af:selectOneChoice value="#{row.bindings.IdTcaRolAsignado.inputValue}"
+                                  label="#{row.bindings.IdTcaRolAsignado.label}"
+                                  required="#{bindings.AccionesTablaVO.hints.IdTcaRolAsignado.mandatory}"
+                                  shortDesc="#{bindings.AccionesTablaVO.hints.IdTcaRolAsignado.tooltip}" readOnly="true"
+                                  id="soc3">
+                <f:selectItems value="#{row.bindings.IdTcaRolAsignado.items}" id="si3"/>
+                <f:validator binding="#{row.bindings.IdTcaRolAsignado.validator}"/>
+              </af:selectOneChoice>
+              <af:outputText value="#{row.FechaRegistro}"
+                             shortDesc="#{bindings.AccionesTablaVO.hints.FechaRegistro.tooltip}" id="ot4"
+                             rendered="false">
+                <af:convertDateTime pattern="#{bindings.AccionesTablaVO.hints.FechaRegistro.format}"/>
+              </af:outputText>
+            </af:panelGroupLayout>
+          </af:panelGroupLayout>
+        </af:panelFormLayout>
+        <f:facet name="filter">
+          <af:inputText id="it12" value="#{vs.filterCriteria.Accion}"
+                        valueChangeListener="#{accionesActionBean.filtrarAccionValueChangeListener}" autoSubmit="true"
+                        disabled="#{(pageFlowScope.accionesBean.esEstadoCompletado)}">
+          </af:inputText>
+        </f:facet>
+      </af:column>
+      <af:column sortProperty="#{bindings.AccionesTablaVO.hints.FechaAtencion.name}" filterable="true" sortable="true"
+                 headerText="#{accionesfenixvcBundle.FECHA_ATENCION_SUGERIDA_TXT}" id="c17" width="13%"
+                 inlineStyle="text-align:center;">
+        <f:facet name="filter">
+          <af:panelGroupLayout id="pgl5">
+            <af:inputDate value="#{bindings.AccionesTablaVOQuery.queryDescriptor.filterConjunctionCriterion.criterionMap.FechaAtencion.value}"
+                          id="id26" rendered="false" autoSubmit="true" 
+                          disabled="#{(pageFlowScope.accionesBean.esEstadoCompletado)}">
+              <af:convertDateTime pattern="dd/MMM/yyyy"/>
+            </af:inputDate>
+            <af:panelLabelAndMessage label="#{accionesfenixvcBundle.DE_TXT}" id="plam8sta">
+              <af:inputDate id="id2" value="#{bindings.attrStartDate.inputValue}" autoSubmit="true"
+                            valueChangeListener="#{accionesActionBean.filtrarFechaValueChangeListener}"
+                            disabled="#{(pageFlowScope.accionesBean.esEstadoCompletado)}">
+                <af:convertDateTime pattern="dd/MMM/yyyy"/>
+              </af:inputDate>
+            </af:panelLabelAndMessage>
+            <af:panelLabelAndMessage label="#{accionesfenixvcBundle.A_TXT}" id="plam9end">
+              <af:inputDate id="id4" value="#{bindings.attrEndDate.inputValue}" autoSubmit="true"
+                            valueChangeListener="#{accionesActionBean.filtrarFechaFinValueChangeListener}"
+                            disabled="#{(pageFlowScope.accionesBean.esEstadoCompletado)}">
+                <af:convertDateTime pattern="dd/MMM/yyyy"/>
+              </af:inputDate>
+            </af:panelLabelAndMessage>
+          </af:panelGroupLayout>
+        </f:facet>
+        <af:outputText value="#{row.FechaAtencion}" shortDesc="#{bindings.AccionesTablaVO.hints.FechaAtencion.tooltip}"
+                       id="ot5">
+          <af:convertDateTime pattern="dd/MMM/yyyy"/>
+        </af:outputText>
+      </af:column>
+      <af:column sortProperty="#{bindings.AccionesTablaVO.hints.IdTcaCategoriaAccion.name}" filterable="true"
+                 sortable="true" headerText="#{accionesfenixvcBundle.CATEGORIA_ACCION_TXT}" id="c7"
+                 width="20%" inlineStyle="text-align:center;">
+        <af:selectOneChoice value="#{row.bindings.IdTcaCategoriaAccion.inputValue}"
+                            label="#{row.bindings.IdTcaCategoriaAccion.label}"
+                            required="#{bindings.AccionesTablaVO.hints.IdTcaCategoriaAccion.mandatory}"
+                            shortDesc="#{bindings.AccionesTablaVO.hints.IdTcaCategoriaAccion.tooltip}" readOnly="true"
+                            id="soc2">
+          <f:selectItems value="#{row.bindings.IdTcaCategoriaAccion.items}" id="si2"/>
+          <f:validator binding="#{row.bindings.IdTcaCategoriaAccion.validator}"/>
+        </af:selectOneChoice>
+        <f:facet name="filter">
+          <af:selectOneChoice id="catfilter"
+                                valueChangeListener="#{accionesActionBean.filtrarAccionValueChangeListener}"
+                                autoSubmit="true" value="#{vs.filterCriteria.IdTcaCategoriaAccion}"
+                              valuePassThru="true" disabled="#{(pageFlowScope.accionesBean.esEstadoCompletado)}">
+              <af:forEach items="#{bindings.TcaCategoriaAccionVO.rangeSet}" var="item">
+                <f:selectItem id="si3ds" itemLabel="#{item.Descripcion}" itemValue="#{item.Id}"/>
+              </af:forEach>
+            </af:selectOneChoice>
+        </f:facet>
+      </af:column>
+    </af:table>
+    <af:spacer width="10" height="10" id="s46"/>
+    <af:outputText value="#{bindings.IdEstadoAccion3.inputValue}" shortDesc="#{bindings.IdEstadoAccion3.hints.tooltip}"
+                   id="ot36" partialTriggers="t1" visible="false">
+      <af:convertNumber groupingUsed="false" pattern="#{bindings.IdEstadoAccion3.format}"/>
+    </af:outputText>
+    <af:outputText value="#{bindings.IdAccionRegistrado.inputValue}"
+                   shortDesc="#{bindings.IdAccionRegistrado.hints.tooltip}" id="ot34" partialTriggers="t1"
+                   visible="false">
+      <af:convertNumber groupingUsed="false" pattern="#{bindings.IdAccionRegistrado.format}"/>
+    </af:outputText>
+    <af:outputText value="#{bindings.IdAccionPorAtender.inputValue}"
+                   shortDesc="#{bindings.IdAccionPorAtender.hints.tooltip}" id="ot35" partialTriggers="t1"
+                   visible="false">
+      <af:convertNumber groupingUsed="false" pattern="#{bindings.IdAccionPorAtender.format}"/>
+    </af:outputText>
+    <af:popup childCreation="deferred" autoCancel="disabled" id="p1" contentDelivery="lazyUncached"
+              binding="#{accionesActionBean.popupNuevoEditarAccion}" partialTriggers="b1 b3">
+      <af:dialog id="d1" type="none" title="#{pageFlowScope.accionesBean.tituloNuevoEditarAccion}"
+                 closeIconVisible="false">
+        <f:facet name="buttonBar">
+          <af:panelGroupLayout id="pgl14">
+            <af:button text="#{pageFlowScope.accionesBean.botonAccion}" id="b5"
+                       action="#{accionesActionBean.guardarAccion}" immediate="true"/>
+            <af:spacer width="10" height="10" id="s47"/>
+            <af:button text="#{accionesfenixvcBundle.CANCELAR_ACCION_TXT}" id="b6" immediate="true"
+                       action="#{accionesActionBean.cancelarGuardarAccion}"/>
+          </af:panelGroupLayout>
+        </f:facet>
+        <af:panelGroupLayout id="pgl15" layout="horizontal">
+          <af:selectOneChoice value="#{bindings.IdTcaCategoriaAccion1.inputValue}"
+                              label="#{accionesfenixvcBundle.CATEGORIA2_ACCION_TXT}"
+                              required="#{bindings.IdTcaCategoriaAccion1.hints.mandatory}"
+                              shortDesc="#{bindings.IdTcaCategoriaAccion1.hints.tooltip}" id="soc11" autoSubmit="true"
+                              valueChangeListener="#{accionesActionBean.cambioCategoria}"
+                              readOnly="#{pageFlowScope.accionesBean.botonCategoria}"
+                              visible="#{pageFlowScope.accionesBean.catalogo2}">
+            <f:selectItems value="#{bindings.IdTcaCategoriaAccion1.items}" id="si12"/>
+            <f:validator binding="#{bindings.IdTcaCategoriaAccion1.validator}"/>
+          </af:selectOneChoice>
+          <af:selectOneChoice value="#{bindings.IdTcaCategoriaAccion11.inputValue}"
+                              label="#{accionesfenixvcBundle.CATEGORIA2_ACCION_TXT}"
+                              required="#{bindings.IdTcaCategoriaAccion11.hints.mandatory}"
+                              shortDesc="#{bindings.IdTcaCategoriaAccion11.hints.tooltip}" id="soc7"
+                              visible="#{pageFlowScope.accionesBean.catalogo1}"
+                              readOnly="#{pageFlowScope.accionesBean.botonCategoria}">
+            <f:selectItems value="#{bindings.IdTcaCategoriaAccion11.items}" id="si7"/>
+            <f:validator binding="#{bindings.IdTcaCategoriaAccion11.validator}"/>
+          </af:selectOneChoice>
+          <af:spacer width="10" height="10" id="s45"/>
+          <af:selectOneChoice value="#{bindings.IdTcaRolAsignado1.inputValue}"
+                              label="#{accionesfenixvcBundle.RESPONSABLE_TXT}"
+                              required="#{bindings.IdTcaRolAsignado1.hints.mandatory}"
+                              shortDesc="#{bindings.IdTcaRolAsignado1.hints.tooltip}" id="soc12"
+                              valueChangeListener="#{accionesActionBean.cambioResponsable}" partialTriggers="soc11"
+                              autoSubmit="true" immediate="true" showRequired="true">
+            <f:selectItems value="#{bindings.IdTcaRolAsignado1.items}" id="si11"/>
+            <f:validator binding="#{bindings.IdTcaRolAsignado1.validator}"/>
+          </af:selectOneChoice>
+        </af:panelGroupLayout>
+        <af:panelFormLayout id="pfl5" labelAlignment="top">
+          <f:facet name="footer"/>
+          <af:inputText value="#{bindings.Accion.inputValue}"
+                        columns="100"
+                        shortDesc="#{bindings.Accion.hints.tooltip}" id="it1" rows="10"
+                        label="#{accionesfenixvcBundle.ACCION2_TXT}" placeholder="#{accionesfenixvcBundle.ACCION_TXT}"
+                        styleClass="PreWrap" autoSubmit="true" immediate="true">
+            <af:validateLength id="Fwq1" maximum="4000"
+                               messageDetailMaximum="#{'La acci&#243;n no debe exceder los 4000 caracteres'}"/>
+          </af:inputText>
+        </af:panelFormLayout>
+        <af:panelGroupLayout id="pgl31" layout="horizontal">
+          <af:inputDate value="#{bindings.FechaAtencion.inputValue}"
+                        label="#{accionesfenixvcBundle.FECHA_ATENCION_SUGERIDA2_TXT}"
+                        columns="#{bindings.FechaAtencion.hints.displayWidth}"
+                        shortDesc="#{bindings.FechaAtencion.hints.tooltip}" id="id5" autoSubmit="true" immediate="true">
+            <f:validator binding="#{bindings.FechaAtencion.validator}"/>
+            <af:convertDateTime pattern="dd/MMM/yyyy"/>
+          </af:inputDate>
+        </af:panelGroupLayout>
+        <af:panelFormLayout id="pfl1" labelAlignment="top">
+          <af:inputText value="#{bindings.BanEstatus.inputValue}" label="#{bindings.BanEstatus.hints.label}"
+                        required="#{bindings.BanEstatus.hints.mandatory}"
+                        columns="#{bindings.BanEstatus.hints.displayWidth}"
+                        maximumLength="#{bindings.BanEstatus.hints.precision}"
+                        shortDesc="#{bindings.BanEstatus.hints.tooltip}" id="it2" rendered="false">
+            <f:validator binding="#{bindings.BanEstatus.validator}"/>
+            <af:convertNumber groupingUsed="false" pattern="#{bindings.BanEstatus.format}"/>
+          </af:inputText>
+          <af:inputDate value="#{bindings.FechaRegistro.inputValue}" label="#{bindings.FechaRegistro.hints.label}"
+                        required="#{bindings.FechaRegistro.hints.mandatory}"
+                        columns="#{bindings.FechaRegistro.hints.displayWidth}"
+                        shortDesc="#{bindings.FechaRegistro.hints.tooltip}" id="id3" rendered="false">
+            <f:validator binding="#{bindings.FechaRegistro.validator}"/>
+            <af:convertDateTime pattern="#{bindings.FechaRegistro.format}"/>
+          </af:inputDate>
+          <af:inputText value="#{bindings.Id.inputValue}" label="#{bindings.Id.hints.label}"
+                        required="#{bindings.Id.hints.mandatory}" columns="#{bindings.Id.hints.displayWidth}"
+                        maximumLength="#{bindings.Id.hints.precision}" shortDesc="#{bindings.Id.hints.tooltip}" id="it3"
+                        rendered="false">
+            <f:validator binding="#{bindings.Id.validator}"/>
+            <af:convertNumber groupingUsed="false" pattern="#{bindings.Id.format}"/>
+          </af:inputText>
+          <af:inputText value="#{bindings.IdCliente.inputValue}" label="#{bindings.IdCliente.hints.label}"
+                        required="#{bindings.IdCliente.hints.mandatory}"
+                        columns="#{bindings.IdCliente.hints.displayWidth}"
+                        maximumLength="#{bindings.IdCliente.hints.precision}"
+                        shortDesc="#{bindings.IdCliente.hints.tooltip}" id="it4" rendered="false">
+            <f:validator binding="#{bindings.IdCliente.validator}"/>
+            <af:convertNumber groupingUsed="false" pattern="#{bindings.IdCliente.format}"/>
+          </af:inputText>
+          <af:inputText value="#{bindings.IdEstadoAccion.inputValue}" label="#{bindings.IdEstadoAccion.hints.label}"
+                        required="#{bindings.IdEstadoAccion.hints.mandatory}"
+                        columns="#{bindings.IdEstadoAccion.hints.displayWidth}"
+                        maximumLength="#{bindings.IdEstadoAccion.hints.precision}"
+                        shortDesc="#{bindings.IdEstadoAccion.hints.tooltip}" id="it5" rendered="false">
+            <f:validator binding="#{bindings.IdEstadoAccion.validator}"/>
+            <af:convertNumber groupingUsed="false" pattern="#{bindings.IdEstadoAccion.format}"/>
+          </af:inputText>
+          <af:inputText value="#{bindings.IdOperacion.inputValue}" label="#{bindings.IdOperacion.hints.label}"
+                        required="#{bindings.IdOperacion.hints.mandatory}"
+                        columns="#{bindings.IdOperacion.hints.displayWidth}"
+                        maximumLength="#{bindings.IdOperacion.hints.precision}"
+                        shortDesc="#{bindings.IdOperacion.hints.tooltip}" id="it6" rendered="false">
+            <f:validator binding="#{bindings.IdOperacion.validator}"/>
+            <af:convertNumber groupingUsed="false" pattern="#{bindings.IdOperacion.format}"/>
+          </af:inputText>
+        </af:panelFormLayout>
+      </af:dialog>
+    </af:popup>
+    <af:popup childCreation="deferred" autoCancel="disabled" id="p2" binding="#{accionesActionBean.popupDetalleAccion}"
+              contentDelivery="lazyUncached" partialTriggers="b2" >
+      <af:dialog id="d2" type="ok" title="#{accionesfenixvcBundle.DETALLE_ACCION_BTN}"
+                 affirmativeTextAndAccessKey="#{accionesfenixvcBundle.CERRAR_BTN}"
+                 dialogListener="#{accionesActionBean.cerrarPopupDetalle}">
+        <!--<f:facet name="buttonBar">
+          <af:button id="b17" text=""
+                     actionListener="#{accionesActionBean.cerrarPopupDetalle}" immediate="true"/>
+        </f:facet>-->
+        <af:panelGroupLayout id="pgl4" layout="scroll" inlineStyle="height: 500px;width: 760px;">
+        <af:panelFormLayout id="pfl2" labelAlignment="top">
+          <af:inputText value="#{bindings.Id1.inputValue}" label="#{bindings.Id1.hints.label}"
+                        required="#{bindings.Id1.hints.mandatory}" columns="#{bindings.Id1.hints.displayWidth}"
+                        maximumLength="#{bindings.Id1.hints.precision}" shortDesc="#{bindings.Id1.hints.tooltip}"
+                        id="it7" rendered="false">
+            <f:validator binding="#{bindings.Id1.validator}"/>
+            <af:convertNumber groupingUsed="false" pattern="#{bindings.Id1.format}"/>
+          </af:inputText>
+            <af:panelGroupLayout id="pgl16" layout="scroll" inlineStyle="max-height: 200px; width: 730px; text-align: justify;" halign="left">
+              <af:inputText label="#{accionesfenixvcBundle.ACCION2_TXT}" id="it13" showRequired="true" readOnly="true"/>
+              <af:inputText value="#{bindings.Accion1.inputValue}" readOnly="true"
+                            styleClass="PreWrap"
+                            required="#{bindings.Accion1.hints.mandatory}"
+                            maximumLength="#{bindings.Accion1.hints.precision}"
+                            shortDesc="#{bindings.Accion1.hints.tooltip}" id="it8" columns="100" rows="10">
+                <f:validator binding="#{bindings.Accion1.validator}"/>
+              </af:inputText>
+            </af:panelGroupLayout>
+          <af:panelGroupLayout id="pgl17" layout="vertical">
+              <af:panelLabelAndMessage id="plam14" label="#{accionesfenixvcBundle.REGISTRADO_POR_TXT}"
+                                       rendered="#{bindings.NombreUsuarioRegistrado.inputValue ne null}">
+                <af:panelGroupLayout id="pgl30" layout="horizontal">
+                  <af:inputText value="#{bindings.NombreUsuarioRegistrado.inputValue}"
+                                required="#{bindings.NombreUsuarioRegistrado.hints.mandatory}" readOnly="true"
+                                columns="#{bindings.NombreUsuarioRegistrado.hints.displayWidth}"
+                                maximumLength="#{bindings.NombreUsuarioRegistrado.hints.precision}"
+                                shortDesc="#{bindings.NombreUsuarioRegistrado.hints.tooltip}" id="it30">
+                    <f:validator binding="#{bindings.NombreUsuarioRegistrado.validator}"/>
+                  </af:inputText>
+                  <af:spacer width="5" height="10" id="s21"/>
+                  <af:outputText value="#{accionesfenixvcBundle.EL_TXT}" id="ot29" inlineStyle="color:Black;"/>
+                  <af:inputDate value="#{bindings.FechaAccionRegistro.inputValue}" readOnly="true"
+                                required="#{bindings.FechaAccionRegistro.hints.mandatory}"
+                                columns="#{bindings.FechaAccionRegistro.hints.displayWidth}"
+                                shortDesc="#{bindings.FechaAccionRegistro.hints.tooltip}" id="id6">
+                    <f:validator binding="#{bindings.FechaAccionRegistro.validator}"/>
+                    <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                  </af:inputDate>
+                  <af:spacer width="5" height="10" id="s22"/>
+                </af:panelGroupLayout>
+              </af:panelLabelAndMessage>
+              <af:panelLabelAndMessage label="#{accionesfenixvcBundle.CREADO_POR_TXT}" id="plam1"
+                                       rendered="#{bindings.NombreUsuarioRegistrado.inputValue eq null}">
+              <af:panelGroupLayout id="pgl18" layout="horizontal">
+                  <af:inputText value="#{bindings.NombreUsuarioPorAtender.inputValue}"
+                                required="#{bindings.NombreUsuarioPorAtender.hints.mandatory}" readOnly="true"
+                                columns="#{bindings.NombreUsuarioPorAtender.hints.displayWidth}"
+                                maximumLength="#{bindings.NombreUsuarioPorAtender.hints.precision}"
+                                shortDesc="#{bindings.NombreUsuarioPorAtender.hints.tooltip}" id="it28">
+                    <f:validator binding="#{bindings.NombreUsuarioPorAtender.validator}"/>
+                  </af:inputText>
+                  <af:spacer width="5" height="10" id="s23"/>
+                  <af:outputText value="#{accionesfenixvcBundle.EL_TXT}" id="ot21" inlineStyle="color:Black;"/>
+                  <af:spacer width="5" height="10" id="s24"/>
+                  <af:inputDate value="#{bindings.FechaRegistroPorAtender.inputValue}" readOnly="true"
+                                required="#{bindings.FechaRegistroPorAtender.hints.mandatory}"
+                                columns="#{bindings.FechaRegistroPorAtender.hints.displayWidth}"
+                                shortDesc="#{bindings.FechaRegistroPorAtender.hints.tooltip}" id="id9">
+                    <f:validator binding="#{bindings.FechaRegistroPorAtender.validator}"/>
+                    <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                  </af:inputDate>
+                </af:panelGroupLayout>
+              </af:panelLabelAndMessage>
+              <af:panelLabelAndMessage label="#{accionesfenixvcBundle.ATENDIDO_POR_TXT}" id="plam2"
+                                       rendered="#{bindings.NombreUsuarioAtendida.inputValue ne null}">
+              <af:panelGroupLayout id="pgl19" layout="horizontal">
+                  <af:inputText value="#{bindings.NombreUsuarioAtendida.inputValue}"
+                                required="#{bindings.NombreUsuarioAtendida.hints.mandatory}" readOnly="true"
+                                columns="#{bindings.NombreUsuarioAtendida.hints.displayWidth}"
+                                maximumLength="#{bindings.NombreUsuarioAtendida.hints.precision}"
+                                shortDesc="#{bindings.NombreUsuarioAtendida.hints.tooltip}" id="it31">
+                    <f:validator binding="#{bindings.NombreUsuarioAtendida.validator}"/>
+                  </af:inputText>
+                  <af:spacer width="5" height="10" id="s25"/>
+                  <af:outputText value="#{accionesfenixvcBundle.EL_TXT}" id="ot26" inlineStyle="color:Black;"/>
+                  <af:spacer width="5" height="10" id="s26"/>
+                  <af:inputDate value="#{bindings.FechaRegistroAtendida.inputValue}" readOnly="true"
+                                required="#{bindings.FechaRegistroAtendida.hints.mandatory}"
+                                columns="#{bindings.FechaRegistroAtendida.hints.displayWidth}"
+                                shortDesc="#{bindings.FechaRegistroAtendida.hints.tooltip}" id="id8">
+                    <f:validator binding="#{bindings.FechaRegistroAtendida.validator}"/>
+                    <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                  </af:inputDate>
+                </af:panelGroupLayout>
+              </af:panelLabelAndMessage>
+            <af:panelLabelAndMessage label="#{accionesfenixvcBundle.VALIDADO_POR_TXT}" id="plam3"
+                                     rendered="#{bindings.NombreUsuarioValidada.inputValue ne null}">
+              <af:panelGroupLayout id="pgl20" layout="horizontal">
+                  <af:inputText value="#{bindings.NombreUsuarioValidada.inputValue}"
+                                required="#{bindings.NombreUsuarioValidada.hints.mandatory}" readOnly="true"
+                                columns="#{bindings.NombreUsuarioValidada.hints.displayWidth}"
+                                maximumLength="#{bindings.NombreUsuarioValidada.hints.precision}"
+                                shortDesc="#{bindings.NombreUsuarioValidada.hints.tooltip}" id="it32">
+                    <f:validator binding="#{bindings.NombreUsuarioValidada.validator}"/>
+                  </af:inputText>
+                  <af:spacer width="5" height="10" id="s27"/>
+                  <af:outputText value="#{accionesfenixvcBundle.EL_TXT}" id="ot31" inlineStyle="color:Black;"/>
+                  <af:spacer width="5" height="10" id="s28"/>
+                  <af:inputDate value="#{bindings.FechaRegistroValidada.inputValue}" readOnly="true"
+                                required="#{bindings.FechaRegistroValidada.hints.mandatory}"
+                                columns="#{bindings.FechaRegistroValidada.hints.displayWidth}"
+                                shortDesc="#{bindings.FechaRegistroValidada.hints.tooltip}" id="id10">
+                    <f:validator binding="#{bindings.FechaRegistroValidada.validator}"/>
+                    <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                  </af:inputDate>
+                </af:panelGroupLayout>
+              </af:panelLabelAndMessage>
+              <af:panelLabelAndMessage label="#{accionesfenixvcBundle.DESESTIMADO_POR_TXT}" id="plam4"
+                                       rendered="#{bindings.NombreUsuarioDesestimada.inputValue ne null}">
+              <af:panelGroupLayout id="pgl21" layout="horizontal">
+                  <af:inputText value="#{bindings.NombreUsuarioDesestimada.inputValue}"
+                                required="#{bindings.NombreUsuarioDesestimada.hints.mandatory}" readOnly="true"
+                                columns="#{bindings.NombreUsuarioDesestimada.hints.displayWidth}"
+                                maximumLength="#{bindings.NombreUsuarioDesestimada.hints.precision}"
+                                shortDesc="#{bindings.NombreUsuarioDesestimada.hints.tooltip}" id="it33">
+                    <f:validator binding="#{bindings.NombreUsuarioDesestimada.validator}"/>
+                  </af:inputText>
+                  <af:spacer width="5" height="10" id="s29"/>
+                  <af:outputText value="#{accionesfenixvcBundle.EL_TXT}" id="ot32" inlineStyle="color:Black;"/>
+                  <af:spacer width="5" height="10" id="s30"/>
+                  <af:inputDate value="#{bindings.FechaRegistroDesestimada.inputValue}" readOnly="true"
+                                required="#{bindings.FechaRegistroDesestimada.hints.mandatory}"
+                                columns="#{bindings.FechaRegistroDesestimada.hints.displayWidth}"
+                                shortDesc="#{bindings.FechaRegistroDesestimada.hints.tooltip}" id="id12">
+                    <f:validator binding="#{bindings.FechaRegistroDesestimada.validator}"/>
+                    <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                  </af:inputDate>
+                </af:panelGroupLayout>
+              </af:panelLabelAndMessage>
+            <af:panelLabelAndMessage label="#{accionesfenixvcBundle.ELIMINADO_POR_TXT}" id="plam5"
+                                     rendered="#{bindings.NombreUsuarioEliminada.inputValue ne null}">
+              <af:panelGroupLayout id="pgl22" layout="horizontal">
+                  <af:inputText value="#{bindings.NombreUsuarioEliminada.inputValue}"
+                                required="#{bindings.NombreUsuarioEliminada.hints.mandatory}" readOnly="true"
+                                columns="#{bindings.NombreUsuarioEliminada.hints.displayWidth}"
+                                maximumLength="#{bindings.NombreUsuarioEliminada.hints.precision}"
+                                shortDesc="#{bindings.NombreUsuarioEliminada.hints.tooltip}" id="it34">
+                    <f:validator binding="#{bindings.NombreUsuarioEliminada.validator}"/>
+                  </af:inputText>
+                  <af:spacer width="5" height="10" id="s31"/>
+                  <af:outputText value="#{accionesfenixvcBundle.EL_TXT}" id="ot33" inlineStyle="color:Black;"/>
+                  <af:spacer width="5" height="10" id="s32"/>
+                  <af:inputDate value="#{bindings.FechaRegistroEliminada.inputValue}" readOnly="true"
+                                required="#{bindings.FechaRegistroEliminada.hints.mandatory}"
+                                columns="#{bindings.FechaRegistroEliminada.hints.displayWidth}"
+                                shortDesc="#{bindings.FechaRegistroEliminada.hints.tooltip}" id="id14">
+                    <f:validator binding="#{bindings.FechaRegistroEliminada.validator}"/>
+                    <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                  </af:inputDate>
+                </af:panelGroupLayout>
+              </af:panelLabelAndMessage>            
+            <af:selectOneChoice value="#{bindings.IdTcaRolAsignado.inputValue}"
+                                label="#{accionesfenixvcBundle.RESPONSABLE_TXT}:"
+                                required="#{bindings.IdTcaRolAsignado.hints.mandatory}"
+                                shortDesc="#{bindings.IdTcaRolAsignado.hints.tooltip}" id="soc6" readOnly="true">
+                <f:selectItems value="#{bindings.IdTcaRolAsignado.items}" id="si6"/>
+                <f:validator binding="#{bindings.IdTcaRolAsignado.validator}"/>
+            </af:selectOneChoice>
+            </af:panelGroupLayout>
+            <af:panelGroupLayout id="pgl23" layout="horizontal">
+              <af:selectOneChoice value="#{bindings.IdTcaCategoriaAccion.inputValue}"
+                                  label="#{accionesfenixvcBundle.CATEGORIA2_ACCION_TXT}"
+                                  required="#{bindings.IdTcaCategoriaAccion.hints.mandatory}"
+                                  shortDesc="#{bindings.IdTcaCategoriaAccion.hints.tooltip}" id="soc5" readOnly="true">
+                <f:selectItems value="#{bindings.IdTcaCategoriaAccion.items}" id="si5"/>
+                <f:validator binding="#{bindings.IdTcaCategoriaAccion.validator}"/>
+              </af:selectOneChoice>
+            <af:spacer width="10" height="10" id="s15"/>
+            <af:selectOneChoice value="#{bindings.IdEstadoAccion1.inputValue}"
+                                  label="#{accionesfenixvcBundle.ESTADO_ACCION_TXT}:"
+                                  required="#{bindings.IdEstadoAccion1.hints.mandatory}"
+                                  shortDesc="#{bindings.IdEstadoAccion1.hints.tooltip}" id="soc4" readOnly="true">
+                <f:selectItems value="#{bindings.IdEstadoAccion1.items}" id="si4"/>
+                <f:validator binding="#{bindings.IdEstadoAccion1.validator}"/>
+              </af:selectOneChoice>
+            <af:spacer width="10" height="10" id="s16"/>
+            <af:inputDate value="#{bindings.FechaAtencion1.inputValue}"
+                            label="#{accionesfenixvcBundle.FECHA_ATENCION_SUGERIDA2_TXT}"
+                            required="#{bindings.FechaAtencion1.hints.mandatory}"
+                            columns="#{bindings.FechaAtencion1.hints.displayWidth}"
+                            shortDesc="#{bindings.FechaAtencion1.hints.tooltip}" id="id7" readOnly="true">
+                <f:validator binding="#{bindings.FechaAtencion1.validator}"/>
+                <af:convertDateTime pattern="dd/MMM/yyyy"/>
+              </af:inputDate>          
+          </af:panelGroupLayout>
+          <af:spacer width="10" height="10" id="s7" rendered="#{bindings.IdEstadoAccion1.inputValue ne 2}"/>
+          <af:panelGroupLayout id="pgl24" layout="horizontal" rendered="#{bindings.IdEstadoAccion1.inputValue ne 2}">
+            <af:button text="#{accionesfenixvcBundle.DAR_COMO_ATENDIDA_BTN}" id="b9"
+                       rendered="#{(pageFlowScope.accionesBean.rolAsignadoAplica or pageFlowScope.accionesBean.rolProcessControl) and (bindings.IdEstadoAccion1.inputValue eq 3 or  bindings.IdEstadoAccion1.inputValue eq 1)}"
+                       actionListener="#{accionesActionBean.darComoAtendidaAccion}"/>
+            <af:spacer width="10" height="10" id="s8" 
+                       rendered="#{pageFlowScope.accionesBean.rolAsignadoAplica and (bindings.IdEstadoAccion1.inputValue eq 3 or bindings.IdEstadoAccion1.inputValue eq 1)}"/>
+            <af:button text="#{accionesfenixvcBundle.ATENDER_NUEVAMENTE_BTN}" id="b10" rendered="false"/>
+            <af:panelGroupLayout id="pgl7" layout="horizontal" rendered="#{pageFlowScope.accionesBean.rolValdiador and bindings.IdEstadoAccion1.inputValue eq 4}">
+                <af:spacer width="10" height="10" id="s9"/>
+                <af:button text="#{accionesfenixvcBundle.VALIDAR_BTN}" id="b11"
+                           actionListener="#{accionesActionBean.accionValidar}"/>
+                <af:spacer width="10" height="10" id="s10"/>
+                <af:button text="#{accionesfenixvcBundle.RETORNAR_BTN}" id="b12"
+                           actionListener="#{accionesActionBean.accionPorAtender}"/>
+                <af:spacer width="10" height="10" id="s11"/>
+            </af:panelGroupLayout>
+            <af:button text="#{accionesfenixvcBundle.DESESTIMAR_BTN}" id="b13"
+                       rendered="#{pageFlowScope.accionesBean.rolValdiador and
+                       (bindings.IdEstadoAccion1.inputValue ne 5 and bindings.IdEstadoAccion1.inputValue ne 6
+                       and bindings.IdEstadoAccion1.inputValue ne 7)}"
+                       actionListener="#{accionesActionBean.desestimarAccion}"/>
+            <af:spacer width="10" height="10" id="s12"
+                       rendered="#{pageFlowScope.accionesBean.rolValdiador and
+                       (bindings.IdEstadoAccion1.inputValue ne 5 and bindings.IdEstadoAccion1.inputValue ne 6
+                       and bindings.IdEstadoAccion1.inputValue ne 7)}"/>
+            <af:button text="#{accionesfenixvcBundle.ELIMINAR_BTN}" id="b15" rendered="#{pageFlowScope.accionesBean.rolProcessControl and bindings.IdEstadoAccion1.inputValue ne 7}"
+                       actionListener="#{accionesActionBean.eliminarAccion}"/>
+            <af:spacer width="10" height="10" id="s13" rendered="#{pageFlowScope.accionesBean.rolProcessControl and bindings.IdEstadoAccion1.inputValue ne 7}"/>
+            <af:button text="#{accionesfenixvcBundle.ACTIVAR_BTN}" id="b14"
+                       rendered="#{pageFlowScope.accionesBean.rolValdiador and (bindings.IdEstadoAccion1.inputValue eq 6 or bindings.IdEstadoAccion1.inputValue eq 7)}"
+                       actionListener="#{accionesActionBean.activarAccion}"/>
+          </af:panelGroupLayout>
+          <af:spacer width="10" height="10" id="s14"/>
+          <af:panelGroupLayout id="pfl3" layout="vertical">
+            <af:outputText value="*#{accionesfenixvcBundle.OBSERVACIONES_TXT}" id="ot27"/>
+            <af:inputText value="#{pageFlowScope.accionesBean.observacion}" simple="true"
+                          immediate="true" showRequired="true" id="it27" autoSubmit="true" 
+                          columns="108" rows="3" styleClass="AFStretchWidth PreWrap"
+                          binding="#{accionesActionBean.observacionInputUIC}">
+                <af:validateLength maximum="4000"
+                                   messageDetailMaximum="#{accionesfenixvcBundle.LONGITUD_MAXIMA_ERROR_MSG}"/>
+              </af:inputText>
+            <af:spacer width="10" height="10" id="s3"/>
+            <af:button text="#{accionesfenixvcBundle.AGREGAR_BTN}" id="b16"
+                       actionListener="#{accionesActionBean.guardarObservacionesAccion}"/>             
+          </af:panelGroupLayout>
+          <af:spacer width="10" height="10" id="s17"/>
+          <af:panelGroupLayout id="pgl6" layout="scroll" inlineStyle="height: 200.0px; width: 735px;">
+          <af:listView value="#{bindings.ObservacionAccionVO.collectionModel}" var="item"
+                       emptyText="#{bindings.ObservacionAccionVO.viewable ? accionesfenixvcBundle.TABLA_VACIA : accionesfenixvcBundle.ACCES_DENIED}"
+                       fetchSize="#{bindings.ObservacionAccionVO.rangeSize}" id="lv1"
+                       binding="#{accionesActionBean.observacionesListViewUIC}">
+            <af:listItem id="li1">
+              <af:panelGroupLayout layout="vertical" id="pgl25" inlineStyle="text-align: justify;" halign="left">
+                <af:inputText value="#{item.bindings.Observacion.inputValue}" id="of1" readOnly="true" 
+                              styleClass="PreWrap"/>
+                <af:spacer width="10" height="10" id="s20"/>
+                  <af:panelLabelAndMessage label="#{accionesfenixvcBundle.CREADO_POR_TXT}" id="plam6">
+                    <af:panelGroupLayout id="pgl26" layout="horizontal">
+                        <af:inputText value="#{item.bindings.NombreUsuario.inputValue}" id="of2" readOnly="true"/>
+                        <af:inputText value=" #{accionesfenixvcBundle.EL_TXT} " id="it29" readOnly="true"/>
+                        <af:inputText value="#{item.bindings.FechaRegistro.inputValue}" id="of3" readOnly="true">
+                          <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                        </af:inputText>
+                    </af:panelGroupLayout>
+                  </af:panelLabelAndMessage>
+                <af:spacer width="10" height="10" id="s19"/>
+              </af:panelGroupLayout>
+            </af:listItem>
+          </af:listView>
+          </af:panelGroupLayout>
+          <af:spacer width="10" height="10" id="s18"/>
+          <af:inputDate value="#{bindings.FechaRegistro1.inputValue}" label="#{bindings.FechaRegistro1.hints.label}"
+                        required="#{bindings.FechaRegistro1.hints.mandatory}"
+                        columns="#{bindings.FechaRegistro1.hints.displayWidth}"
+                        shortDesc="#{bindings.FechaRegistro1.hints.tooltip}" id="id1" rendered="false" readOnly="true">
+            <f:validator binding="#{bindings.FechaRegistro1.validator}"/>
+            <af:convertDateTime pattern="dd/MMM/yyyy"/>
+          </af:inputDate>
+          <af:inputText value="#{bindings.BanEstatus1.inputValue}" label="#{bindings.BanEstatus1.hints.label}"
+                        required="#{bindings.BanEstatus1.hints.mandatory}"
+                        columns="#{bindings.BanEstatus1.hints.displayWidth}"
+                        maximumLength="#{bindings.BanEstatus1.hints.precision}"
+                        shortDesc="#{bindings.BanEstatus1.hints.tooltip}" id="it9" rendered="false">
+            <f:validator binding="#{bindings.BanEstatus1.validator}"/>
+            <af:convertNumber groupingUsed="false" pattern="#{bindings.BanEstatus1.format}"/>
+          </af:inputText>
+          <af:inputText value="#{bindings.NombreRolAsignado.inputValue}"
+                        label="#{bindings.NombreRolAsignado.hints.label}"
+                        required="#{bindings.NombreRolAsignado.hints.mandatory}"
+                        columns="#{bindings.NombreRolAsignado.hints.displayWidth}"
+                        maximumLength="#{bindings.NombreRolAsignado.hints.precision}"
+                        shortDesc="#{bindings.NombreRolAsignado.hints.tooltip}" id="it10" rendered="false">
+            <f:validator binding="#{bindings.NombreRolAsignado.validator}"/>
+          </af:inputText>
+        </af:panelFormLayout>
+        </af:panelGroupLayout>
+      </af:dialog>
+    </af:popup>
+
+    <af:popup childCreation="deferred" autoCancel="disabled" id="p3"
+              binding="#{accionesActionBean.popupEliminarAccion}" contentDelivery="lazyUncached">
+      <af:dialog id="d3" type="none" title="#{accionesfenixvcBundle.ERROR}">
+        <f:facet name="buttonBar">
+          <af:panelGroupLayout id="pgl12" rendered="true">
+            <af:button text="#{accionesfenixvcBundle.ACEPTAR_ACCION_TXT}" id="b7" partialSubmit="false"
+                       immediate="true" action="#{accionesActionBean.cancelarEliminar}"/>
+            <af:button text="#{accionesfenixvcBundle.CANCELAR_ACCION_TXT}" id="b8" rendered="false"/>
+          </af:panelGroupLayout>
+        </f:facet>
+        <af:panelGroupLayout id="pgl32" layout="vertical">
+          <af:panelGroupLayout id="pgl33" layout="horizontal" rendered="#{pageFlowScope.accionesBean.catalogo4}">
+            <af:icon name="error" id="i2"/>
+            <af:spacer width="5" height="10" id="s48"/>
+            <af:outputText value="#{accionesfenixvcBundle.MSG_CAMPOS_REQUERIDO}" id="ot22"
+                           inlineStyle="color:Black;"/>
+          </af:panelGroupLayout>
+          <af:panelGroupLayout id="pgl34" rendered="#{pageFlowScope.accionesBean.catalogo3}" layout="horizontal">
+            <af:icon name="error" id="i3"/>
+            <af:spacer width="5" height="10" id="s49"/>
+            <af:outputText value="#{accionesfenixvcBundle.SE_REQUIERE_FECHA_DE_ATENCI_U00F3N_SUGERIDA_}" id="ot37"
+                           inlineStyle="color:Black;"/>
+          </af:panelGroupLayout>
+          <af:panelGroupLayout id="pgl35" rendered="#{pageFlowScope.accionesBean.catalogo5}" layout="horizontal">
+            <af:icon name="error" id="i4"/>
+            <af:spacer width="5" height="10" id="s6"/>
+            <af:outputText value="#{accionesfenixvcBundle.MSG_CUATRO_MIL}" id="ot23" inlineStyle="color:Black;"/>
+          </af:panelGroupLayout>
+          <af:panelGroupLayout id="pgl36" layout="horizontal" rendered="#{pageFlowScope.accionesBean.catalogo6}">
+            <af:icon name="error" id="i5"/>
+            <af:spacer width="10" height="10" id="s50"/>
+            <af:outputText value="#{accionesfenixvcBundle.ROL_REQUERIDO}" id="ot24" inlineStyle="color:Black;"/>
+          </af:panelGroupLayout>
+        </af:panelGroupLayout>
+      </af:dialog>
+    </af:popup>
+  </af:panelGroupLayout>
+</jsp:root>

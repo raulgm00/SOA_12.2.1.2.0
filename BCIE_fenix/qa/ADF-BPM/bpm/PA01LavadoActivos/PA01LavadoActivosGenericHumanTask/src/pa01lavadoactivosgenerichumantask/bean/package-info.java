@@ -1,0 +1,2 @@
+package pa01lavadoactivosgenerichumantask.bean;
+

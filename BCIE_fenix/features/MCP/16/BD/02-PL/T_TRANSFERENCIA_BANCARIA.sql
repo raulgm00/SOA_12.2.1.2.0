@@ -1,0 +1,1 @@
+create or replace Type T_TRANSFERENCIA_BANCARIA as table of T_LISTA_TRANSFERENCIA_BANCARIA;

@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="AdvancedShipmentNoticeApp/SyncAdvancedShipmentNoticeRIBAdapterService/Resources/WSDLs/SyncAdvancedShipmentNoticeRIBAdapterService"/>
+            <con:binding>
+                <con:name>sync_bind</con:name>
+                <con:namespace>http://www.agarcia.mx/EnterpriseObjects/AdvancedShipmentNotice</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-afffa48.79e3eed2.0.17450543983.N7d44">
+        <con:pipeline type="request" name="request-afffa48.79e3eed2.0.17450543983.N7db9">
+            <con:stage id="_StageId-afffa48.79e3eed2.0.17450543983.N7db7" name="StageRequest">
+                <con:context>
+                    <con1:userNsDecl prefix="com" namespace="http://www.agarcia.mx/EnterpriseObjects/Common"/>
+                    <con1:userNsDecl prefix="adv" namespace="http://www.agarcia.mx/EnterpriseObjects/AdvancedShipmentNotice"/>
+                    <con1:userNsDecl prefix="tns" namespace="http://www.oracle.com/retail/integration/base/bo/ASNOutDesc/v1"/>
+                    <con1:userNsDecl prefix="ns2" namespace="http://www.oracle.com/retail/integration/rib/RibMessages"/>
+                </con:context>
+                <con:actions>
+                    <con2:report>
+                        <con1:id>_ActionId-afffa75.34dc866f.0.1745a72fe23.N7edf</con1:id>
+                        <con2:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con2:expr>
+                        <con2:labels>
+                            <con2:key>In.TrackingID</con2:key>
+                            <con2:varName>body</con2:varName>
+                            <con2:value>
+                                <con1:xpathText>./adv:SyncAdvancedShipmentNoticeEBM/adv:Header/com:TrackingID</con1:xpathText>
+                            </con2:value>
+                        </con2:labels>
+                    </con2:report>
+                    <con3:assign varName="ASNMsg">
+                        <con1:id>_ActionId-afffa75.34dc866f.0.1745a72fe23.N7fe1</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-afffa48.79e3eed2.0.17450543983.N7c9b</con1:id>
+                        <con3:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con1:xsltTransform>
+                                <con1:resource ref="AdvancedShipmentNoticeApp/SyncAdvancedShipmentNoticeRIBAdapterService/Resources/XSLTs/XformEBMtoABM"/>
+                                <con1:input>$body/adv:SyncAdvancedShipmentNoticeEBM</con1:input>
+                            </con1:xsltTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con3:validate>
+                        <con1:id>_ActionId-afffa75.34dc866f.0.1745a72fe23.N7f14</con1:id>
+                        <con3:schema ref="MetaData/Components/Custom/Schemas/RMS_XSD/ASNOutDesc"/>
+                        <con3:schemaElement xmlns:v1="http://www.oracle.com/retail/integration/base/bo/ASNOutDesc/v1">v1:ASNOutDesc</con3:schemaElement>
+                        <con3:varName>body</con3:varName>
+                        <con3:location>
+                            <con1:xpathText>./tns:ASNOutDesc</con1:xpathText>
+                        </con3:location>
+                    </con3:validate>
+                    <con3:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-afffa48.79e3eed2.0.17450543983.N7c9e</con1:id>
+                        <con3:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con1:xsltTransform>
+                                <con1:resource ref="AdvancedShipmentNoticeApp/SyncAdvancedShipmentNoticeRIBAdapterService/Resources/XSLTs/XformABMtoWrapper"/>
+                                <con1:input>$body/tns:ASNOutDesc</con1:input>
+                            </con1:xsltTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:report>
+                        <con1:id>_ActionId-afffa75.34dc866f.0.1745a72fe23.N7f7c</con1:id>
+                        <con2:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con2:expr>
+                        <con2:labels>
+                            <con2:key>Request.TrackingID</con2:key>
+                            <con2:varName>ASNMsg</con2:varName>
+                            <con2:value>
+                                <con1:xpathText>./adv:SyncAdvancedShipmentNoticeEBM/adv:Header/com:TrackingID</con1:xpathText>
+                            </con2:value>
+                        </con2:labels>
+                    </con2:report>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-afffa48.79e3eed2.0.17450543983.N7db8">
+            <con:stage id="_StageId-afffa48.79e3eed2.0.17450543983.N7db6" name="StageResponse">
+                <con:context>
+                    <con1:userNsDecl prefix="com" namespace="http://www.agarcia.mx/EnterpriseObjects/Common"/>
+                    <con1:userNsDecl prefix="adv" namespace="http://www.agarcia.mx/EnterpriseObjects/AdvancedShipmentNotice"/>
+                </con:context>
+                <con:actions>
+                    <con3:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-afffa48.79e3eed2.0.17450543983.N7d76</con1:id>
+                        <con3:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con1:xsltTransform>
+                                <con1:resource ref="AdvancedShipmentNoticeApp/SyncAdvancedShipmentNoticeRIBAdapterService/Resources/XSLTs/XformEBMtoEBMResponse"/>
+                                <con1:input>$ASNMsg/adv:SyncAdvancedShipmentNoticeEBM</con1:input>
+                                <con1:param name="Code">
+                                    <con1:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm","CODE","GEN-0000","ERROR_CODE","Not Found")</con1:path>
+                                </con1:param>
+                                <con1:param name="Message">
+                                    <con1:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm","CODE","GEN-0000","USER_MESSAGE","Not Found")</con1:path>
+                                </con1:param>
+                                <con1:param name="Detail">
+                                    <con1:path>""</con1:path>
+                                </con1:param>
+                            </con1:xsltTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:report>
+                        <con1:id>_ActionId-afffa48.79e3eed2.0.17450543983.N7d79</con1:id>
+                        <con2:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con2:expr>
+                        <con2:labels>
+                            <con2:key>Response.TrackingID</con2:key>
+                            <con2:varName>ASNMsg</con2:varName>
+                            <con2:value>
+                                <con1:xpathText>./adv:SyncAdvancedShipmentNoticeEBM/adv:Header/com:TrackingID</con1:xpathText>
+                            </con2:value>
+                        </con2:labels>
+                    </con2:report>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-afffa48.79e3eed2.0.17450543983.N7d44">
+            <con:stage id="_StageId-afffa48.79e3eed2.0.17450543983.N7d43" name="FaultHandlerStage">
+                <con:context>
+                    <con1:userNsDecl prefix="com" namespace="http://www.agarcia.mx/EnterpriseObjects/Common"/>
+                    <con1:userNsDecl prefix="adv" namespace="http://www.agarcia.mx/EnterpriseObjects/AdvancedShipmentNotice"/>
+                </con:context>
+                <con:actions>
+                    <con3:ifThenElse>
+                        <con1:id>_ActionId-afffa3f.fe70729.0.176f8095c08.N7ffa</con1:id>
+                        <con3:case id="_BranchId-afffa3f.fe70729.0.176f8095c08.N7ff9">
+                            <con3:condition>
+                                <con1:xqueryText>$fault/ctx:errorCode="OSB-382505"</con1:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:replace varName="body" contents-only="true">
+                                    <con1:id>_ActionId-afffa48.79e3eed2.0.17450543983.N7ca2</con1:id>
+                                    <con3:location>
+                                        <con1:xpathText>.</con1:xpathText>
+                                    </con3:location>
+                                    <con3:expr>
+                                        <con1:xsltTransform>
+                                            <con1:resource ref="AdvancedShipmentNoticeApp/SyncAdvancedShipmentNoticeRIBAdapterService/Resources/XSLTs/XformEBMtoEBMResponse"/>
+                                            <con1:input>$ASNMsg/adv:SyncAdvancedShipmentNoticeEBM</con1:input>
+                                            <con1:param name="Code">
+                                                <con1:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm","CODE","GEN-0405","ERROR_CODE","Not Found")</con1:path>
+                                            </con1:param>
+                                            <con1:param name="Message">
+                                                <con1:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm","CODE","GEN-0405","USER_MESSAGE","Not Found")</con1:path>
+                                            </con1:param>
+                                            <con1:param name="Detail">
+                                                <con1:path>$fault/ctx:details</con1:path>
+                                            </con1:param>
+                                        </con1:xsltTransform>
+                                    </con3:expr>
+                                </con3:replace>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default>
+                            <con4:replace varName="body" contents-only="true" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                                <con2:id>_ActionId-afffa3f.fe70729.0.176f8095c08.N7fc3</con2:id>
+                                <con3:location>
+                                    <con2:xpathText>$body</con2:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con2:xsltTransform>
+                                        <con2:resource ref="AdvancedShipmentNoticeApp/SyncAdvancedShipmentNoticeRIBAdapterService/Resources/XSLTs/XformEBMtoEBMResponse"/>
+                                        <con2:input>$ASNMsg/adv:SyncAdvancedShipmentNoticeEBM</con2:input>
+                                        <con2:param name="Code">
+                                            <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm","CODE","GEN-0406","ERROR_CODE","Not Found")</con2:path>
+                                        </con2:param>
+                                        <con2:param name="Message">
+                                            <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm","CODE","GEN-0406","USER_MESSAGE","Not Found")</con2:path>
+                                        </con2:param>
+                                        <con2:param name="Detail">
+                                            <con2:path>$fault/ctx:reason</con2:path>
+                                        </con2:param>
+                                    </con2:xsltTransform>
+                                </con3:expr>
+                            </con4:replace>
+                        </con3:default>
+                    </con3:ifThenElse>
+                    <con2:report>
+                        <con1:id>_ActionId-afffa48.79e3eed2.0.17450543983.N7cd9</con1:id>
+                        <con2:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con2:expr>
+                        <con2:labels>
+                            <con2:key>Error.TrackingID</con2:key>
+                            <con2:varName>ASNMsg</con2:varName>
+                            <con2:value>
+                                <con1:xpathText>./adv:SyncAdvancedShipmentNoticeEBM/adv:Header/com:TrackingID</con1:xpathText>
+                            </con2:value>
+                        </con2:labels>
+                    </con2:report>
+                    <con1:reply>
+                        <con1:id>_ActionId-afffa48.79e3eed2.0.17450543983.N7d10</con1:id>
+                    </con1:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="Pipeline Pair Node Sync">
+                <con:request>request-afffa48.79e3eed2.0.17450543983.N7db9</con:request>
+                <con:response>response-afffa48.79e3eed2.0.17450543983.N7db8</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteNodeRIBReference" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                <con:context/>
+                <con:actions>
+                    <con1:route>
+                        <con2:id>_ActionId-afffa48.79e3eed2.0.17450543983.N7ca1</con2:id>
+                        <con1:service ref="AdvancedShipmentNoticeApp/SyncAdvancedShipmentNoticeRIBAdapterService/BusinessService/RIBMessageJMSTransport" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:outboundTransform>
+                            <con3:routing-options>
+                                <con2:id>_ActionId-afffa75.34dc866f.0.1745a72fe23.N7e9d</con2:id>
+                                <con3:mode>request</con3:mode>
+                                <con3:qualityOfService>exactly-once</con3:qualityOfService>
+                            </con3:routing-options>
+                            <con3:transport-headers>
+                                <con2:id>_ActionId-afffa75.34dc866f.0.1745a72fe23.N7e9a</con2:id>
+                                <con3:header-set>outbound-request</con3:header-set>
+                                <con3:header value="expression" name="threadValue">
+                                    <con2:xqueryText>dvm:lookup("MetaData/dvm/ADVANCEDSHIPMENTNOTICE_CONFIGURATION_PROPERTIES.dvm","COMMON","THREADVALUE","VALUE","Not Found")</con2:xqueryText>
+                                </con3:header>
+                            </con3:transport-headers>
+                        </con1:outboundTransform>
+                        <con1:responseTransform/>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+        <con:shared-variables>
+            <con:variable>ASNMsg</con:variable>
+        </con:shared-variables>
+    </con:router>
+</con:pipelineEntry>

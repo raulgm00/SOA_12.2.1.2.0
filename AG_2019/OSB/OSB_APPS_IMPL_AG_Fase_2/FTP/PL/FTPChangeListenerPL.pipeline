@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="FTP/Resources/FTPChangeListener-concrete"/>
+            <con:binding>
+                <con:name>Read_ptt-binding</con:name>
+                <con:namespace>http://xmlns.oracle.com/pcbpel/adapter/file/FTPCostChangeListener/FTPCostChangeListener/FTPCostChangeListener</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="response" name="response-N53e9bd10.444a2e2b.0.16ba0b2925c.N7fff"/>
+        <con:pipeline type="request" name="request-N53e9bd10.444a2e2b.0.16ba0b2925c.N8000">
+            <con:stage id="_StageId-N53e9bd10.444a2e2b.0.16ba0b2925c.N7ffe" name="Stage1">
+                <con:context>
+                    <con2:varNsDecl prefix="opaq" namespace="http://xmlns.oracle.com/pcbpel/adapter/opaque/"/>
+                </con:context>
+                <con:actions>
+                    <con3:assign varName="ChangeRequest" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3ffecd4d.N3401cdf0.29.16b9ed47256.N7fff</con2:id>
+                        <con3:expr>
+                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$body/*:opaqueElement/text()</con:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con1:log>
+                        <con2:id>_ActionId-N53e9bd10.444a2e2b.0.16ba0b2925c.N7ffa</con2:id>
+                        <con1:logLevel>warning</con1:logLevel>
+                        <con1:expr>
+                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$ChangeRequest</con:xqueryText>
+                        </con1:expr>
+                        <con1:message>---------------------------------[FTP Message Receive]-------------------</con1:message>
+                    </con1:log>
+                    <con1:log>
+                        <con2:id>_ActionId-N53efece6.60951989.8.16bb3b8288a.N8000</con2:id>
+                        <con1:logLevel>warning</con1:logLevel>
+                        <con1:expr>
+                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$header</con:xqueryText>
+                        </con1:expr>
+                        <con1:message>---------------------------------[FTP Header------------------------------- Message Receive]-------------------></con1:message>
+                    </con1:log>
+                    <con3:assign varName="typeFile" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N53efece6.60951989.a.16bb3bb21e3.N8000</con2:id>
+                        <con3:expr>
+                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">fn:substring($header//*:fileName, 0,5)</con:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="Pipeline Pair Node1">
+                <con:request>request-N53e9bd10.444a2e2b.0.16ba0b2925c.N8000</con:request>
+                <con:response>response-N53e9bd10.444a2e2b.0.16ba0b2925c.N7fff</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteChangeP_ChangeC">
+                <con:comment/>
+                <con:context>
+                    <con2:varNsDecl prefix="opaq" namespace="http://xmlns.oracle.com/pcbpel/adapter/opaque/"/>
+                </con:context>
+                <con:actions>
+                    <con3:routingTable xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id>_ActionId-N53efece6.60951989.9.16bb3badca4.N7fff</con2:id>
+                        <con3:expression>
+                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$typeFile</con:xqueryText>
+                        </con3:expression>
+                        <con3:case>
+                            <con3:operator>equals</con3:operator>
+                            <con3:value>'AGCC'</con3:value>
+                            <con3:route>
+                                <con2:id>_ActionId-N53efece6.60951989.9.16bb3badca4.N8000</con2:id>
+                                <con3:service ref="RetailOperations/Buy/CostChangeTaskSvc/PS/CostChangeTaskSvcPXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con3:operation>requestCostChange</con3:operation>
+                                <con3:outboundTransform>
+                                    <con4:replace varName="body" contents-only="true" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+                                        <con2:id>_ActionId-N53efece6.60951989.b.16bb3c26ad5.N8000</con2:id>
+                                        <con4:location>
+                                            <con:xpathText xmlns:con="http://www.bea.com/wli/sb/stages/config">.</con:xpathText>
+                                        </con4:location>
+                                        <con4:expr>
+                                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">&lt;cos:requestCostChangeRequest xmlns:cos="http://mx.agarcia.ea/Capabilities/Foundation/Party/CostChangeTask">
+   &lt;cos:file>{$ChangeRequest}&lt;/cos:file>
+&lt;/cos:requestCostChangeRequest></con:xqueryText>
+                                        </con4:expr>
+                                    </con4:replace>
+                                </con3:outboundTransform>
+                                <con3:responseTransform/>
+                            </con3:route>
+                        </con3:case>
+                        <con3:defaultCase>
+                            <con3:route>
+                                <con2:id>_ActionId-N53efece6.60951989.9.16bb3badca4.N7ffe</con2:id>
+                                <con3:service ref="RetailOperations/SellService/PriceChangeTaskSvc/PS/PriceChangeTaskSvcPXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con3:operation>requestPriceChange</con3:operation>
+                                <con3:outboundTransform>
+                                    <con4:assign varName="body" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+                                        <con2:id>_ActionId-N53efece6.60951989.c.16bb3c552f8.N7ffe</con2:id>
+                                        <con2:disabled>true</con2:disabled>
+                                        <con4:expr>
+                                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<soapenv:Body xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+
+<v1:requestPriceChange xmlns:v1="http://mx.agarcia.ea/RetailOperations/SellService/PriceChangeTaskSvc/v1">
+    <v1:excelFile>{$ChangeRequest}</v1:excelFile>
+</v1:requestPriceChange>
+
+   </soapenv:Body>]]></con:xqueryText>
+                                        </con4:expr>
+                                    </con4:assign>
+                                    <con4:replace varName="body" contents-only="true" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+                                        <con2:id>_ActionId-N53efece6.60951989.b.16bb3c26ad5.N7fff</con2:id>
+                                        <con4:location>
+                                            <con:xpathText xmlns:con="http://www.bea.com/wli/sb/stages/config">.</con:xpathText>
+                                        </con4:location>
+                                        <con4:expr>
+                                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">&lt;v1:requestPriceChange xmlns:v1="http://mx.agarcia.ea/RetailOperations/SellService/PriceChangeTaskSvc/v1">
+    &lt;v1:excelFile>{$ChangeRequest}&lt;/v1:excelFile>
+&lt;/v1:requestPriceChange></con:xqueryText>
+                                        </con4:expr>
+                                    </con4:replace>
+                                    <con1:report>
+                                        <con2:id>_ActionId-N53efece6.60951989.9.16bb3badca4.N7ffb</con2:id>
+                                        <con1:expr>
+                                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$body</con:xqueryText>
+                                        </con1:expr>
+                                    </con1:report>
+                                </con3:outboundTransform>
+                                <con3:responseTransform/>
+                            </con3:route>
+                        </con3:defaultCase>
+                    </con3:routingTable>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+    <aler:alertRules xsi:nil="true" xmlns:aler="http://xmlns.oracle.com/servicebus/monitoring/alert"/>
+</con:pipelineEntry>

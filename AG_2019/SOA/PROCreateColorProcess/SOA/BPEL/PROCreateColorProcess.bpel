@@ -1,0 +1,103 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Jul 24 15:33:08 CDT 2019
+  Author:  Marisol
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="PROCreateColorProcess"
+               targetNamespace="http://xmlns.oracle.com/RetailOperMK/PROCreateColorProcess/PROCreateColorProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/RetailOperMK/PROCreateColorProcess/PROCreateColorProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://xmlns.oracle.com/RetailOperMK/PROCreateColorProcess/PRODiffRest"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Items/CreateColorEntity"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns4="http://mx.agarcia.ea/Applications/Prototipos/CreateColorNXSD"
+         xmlns:ns3="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/RetailOperMK/PROCreateColorProcess/PROCreateColorProcess" location="../WSDLs/PROCreateColorProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="procreatecolorprocess_client" partnerLinkType="client:PROCreateColorProcess" myRole="PROCreateColorProcessProvider"/>
+    <partnerLink name="PRODiffRest" partnerLinkType="ns1:PRODiffRest" partnerRole="PRODiffRestProvider"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:PROCreateColorProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:PROCreateColorProcessResponseMessage"/>
+    <variable name="Invoke_CreateColorPRO_In" messageType="ns1:UpsertDiff_inputMessage"/>
+    <variable name="Invoke_CreateColorPRO_Out" messageType="ns1:UpsertDiff_outputMessage"/>
+    <variable name="idGrupoTodosColores" type="xsd:string">
+      <from>'10001'</from>
+    </variable>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in PROCreateColorProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="procreatecolorprocess_client" portType="client:PROCreateColorProcess" operation="create" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignCreateColor">
+      <copy>
+        <from>$inputVariable.payload/ns2:color/ns3:id</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_CreateColorPRO_In.request/ns4:DIFF_ARRAY/ns4:ID</to>
+      </copy>
+      <copy>
+        <from>number($idGrupoTodosColores)</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_CreateColorPRO_In.request/ns4:GRUPO_ID</to>
+      </copy>
+      <copy>
+        <from>$inputVariable.payload/ns2:color/ns3:name</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_CreateColorPRO_In.request/ns4:DIFF_ARRAY/ns4:VALUE</to>
+      </copy>
+    </assign>
+    <invoke name="Invoke_CreateColorPRO" bpelx:invokeAsDetail="no" partnerLink="PRODiffRest"
+            portType="ns1:PRODiffRest_ptt" operation="UpsertDiff" inputVariable="Invoke_CreateColorPRO_In"
+            outputVariable="Invoke_CreateColorPRO_Out"/>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="procreatecolorprocess_client" portType="client:PROCreateColorProcess" operation="create" variable="outputVariable"/>
+  </sequence>
+</process>

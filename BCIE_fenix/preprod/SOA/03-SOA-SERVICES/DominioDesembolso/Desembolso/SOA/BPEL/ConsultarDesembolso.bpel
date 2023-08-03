@@ -1,0 +1,334 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Oct 13 12:54:37 CDT 2016
+  Author:  perla-osorio
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConsultarDesembolso"
+               targetNamespace="http://xmlns.oracle.com/DominioDesembolso/Desembolso/ConsultarDesembolso"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioDesembolso/Desembolso/ConsultarDesembolso"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ConsultarDesembolsoSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/ConsultarDesembolsosByIdSAD"
+         xmlns:ns3="http://www.bcie.org/ValidarProgramacionSOR" xmlns:ns4="http://www.bcie.org/DesembolsoMO"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ns14="http://www.bcie.org/ResultBO" xmlns:ns7="http://www.bcie.org/CommonBO"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ns11="http://www.bcie.org/MatrizTCCBO"
+         xmlns:ns10="http://www.bcie.org/LineaCreditoBO" xmlns:ns6="http://www.bcie.org/ProductoBO"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath" xmlns:ns9="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns12="http://www.bcie.org/ComisionBO"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns8="http://www.bcie.org/CatalogoBO" xmlns:ns5="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns13="http://www.bcie.org/AtributoBO" xmlns:ns15="http://www.bcie.org/ErrorBO"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns16="http://xmlns.oracle.com/ObtenerDisponibilidadRecursos/ObtenerDisponibilidadRecursos_DecisionService_1"
+         xmlns:ns18="http://www.bcie.org" xmlns:ns17="http://xmlns.oracle.com/bpel"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ConsultarDesembolsoSOR" location="../WSDLs/ConsultarDesembolsoSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="consultardesembolso_client" partnerLinkType="ns1:ConsultarDesembolso" myRole="ConsultarDesembolso_PT"/>
+    <partnerLink name="ConsultarDesembolsoById_SB" partnerLinkType="ns2:ConsultarDesembolsoById_SB"
+                 partnerRole="ConsultarDesembolsosById_PT"/>
+    <partnerLink name="ValidarProgramacion_SB" partnerLinkType="ns3:ValidarProgramacion_SB"
+                 partnerRole="ValidarProgramacion_PT"/>
+    <partnerLink name="ObtenerDisponibilidadRecursos_SB" partnerLinkType="ns16:ObtenerDisponibilidadRecursos_SB"
+                 partnerRole="IDecisionService"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConsultarDesembolsoMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConsultarDesembolsoMessage"/>
+    <variable name="outConsultarDesembolsoById" messageType="ns2:responseConsultarDesembolsosByIdMessage"/>
+    <variable name="outValidarProgramacion" messageType="ns3:responseValidarProgramacionMessage"/>
+    <variable name="outObtenerDisponibilidad" messageType="ns16:callFunctionStatelessDecisionMessage"/>
+    <variable name="setInstanceVariable" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence6">
+        <assign name="FaultAll">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns14:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns4:Resultado/ns14:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyFaultAll" variable="outputVariable" partnerLink="consultardesembolso_client"
+               portType="ns1:ConsultarDesembolso_PT" operation="consultarDesembolso"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConsultarDesembolso.wsdl) -->
+    <receive name="receiveInput" partnerLink="consultardesembolso_client" portType="ns1:ConsultarDesembolso_PT" operation="consultarDesembolso" variable="inputVariable" createInstance="yes"/>
+    <scope name="ConsultarDesembolsoById">
+      <variables>
+        <variable name="inConsultarDesembolsoById" messageType="ns2:requestConsultarDesembolsosByIdMessage"/>
+      </variables>
+      <sequence name="Sequence1">
+        <assign name="setTitleInstance">
+          <copy>
+            <from>oraext:setFlowInstanceTitle(concat("idDesembolso: ",string($inputVariable.request/ns4:idDesembolso)))</from>
+            <to>$setInstanceVariable</to>
+          </copy>
+        </assign>
+        <assign name="requestConsultarDesembolsoById">
+          <copy>
+            <from>$inputVariable.request/ns4:idDesembolso</from>
+            <to>$inConsultarDesembolsoById.request/ns4:idContratoDesembolso</to>
+          </copy>
+        </assign>
+        <scope name="Scope1">
+          <faultHandlers>
+            <catchAll><sequence name="SequenceErrorRetry"
+                                xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <invoke name="InvokeConsultarDesembolsoById" portType="ns2:ConsultarDesembolsosById_PT"
+              partnerLink="ConsultarDesembolsoById_SB" operation="ConsultarDesembolsosById"
+              inputVariable="inConsultarDesembolsoById" outputVariable="outConsultarDesembolsoById"/>
+      
+   </sequence></catchAll>
+          </faultHandlers>
+          <sequence name="SequenceConsultarDesembolso">
+            <invoke name="InvokeConsultarDesembolsoById" bpelx:invokeAsDetail="no"
+                    partnerLink="ConsultarDesembolsoById_SB" portType="ns2:ConsultarDesembolsosById_PT"
+                    operation="ConsultarDesembolsosById" inputVariable="inConsultarDesembolsoById"
+                    outputVariable="outConsultarDesembolsoById"/>
+          </sequence>
+        </scope>
+        <if name="IfResultadoConsultarDesembolso">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outConsultarDesembolsoById.response/ns4:Resultado/ns14:result = 'OK'</condition>
+          <empty name="Continua"/>
+          <else>
+            <documentation>
+              <![CDATA[ERROR Retry]]>
+            </documentation>
+            <sequence name="SequenceErrorRetry">
+              <invoke name="InvokeConsultarDesembolsoById" portType="ns2:ConsultarDesembolsosById_PT"
+                      partnerLink="ConsultarDesembolsoById_SB" operation="ConsultarDesembolsosById"
+                      inputVariable="inConsultarDesembolsoById" outputVariable="outConsultarDesembolsoById"/>
+              <if name="IfResultadoConsultarDesembolso">
+                <documentation>
+                  <![CDATA[OK]]>
+                </documentation>
+                <condition>$outConsultarDesembolsoById.response/ns4:Resultado/ns14:result = 'OK'</condition>
+                <empty name="Continua"/>
+                <else>
+                  <documentation>
+                    <![CDATA[ERROR]]>
+                  </documentation>
+                  <sequence name="SequenceError">
+                    <assign name="errorConsultarDesembolsoById">
+                      <copy>
+                        <from>'ERROR'</from>
+                        <to>$outputVariable.response/ns4:Resultado/ns14:result</to>
+                      </copy>
+                    </assign>
+                    <reply name="ReplyErrorConsultarDesembolsoById" variable="outputVariable"
+                           partnerLink="consultardesembolso_client" portType="ns1:ConsultarDesembolso_PT"
+                           operation="consultarDesembolso"/>
+                    <exit name="Exit"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </else>
+        </if>
+        <if name="IfResultadoConsultarDesembolso">
+          <documentation>
+            <![CDATA[SinResultados]]>
+          </documentation>
+          <condition>$outConsultarDesembolsoById.response/ns4:Resultado/ns14:result = 'OK' and count($outConsultarDesembolsoById.response/ns4:ContratoDesembolso/ns5:idDesembolso) = 0</condition>
+          <assign name="SinResultados">
+            <copy>
+              <from>$outConsultarDesembolsoById.response/ns4:Resultado/ns14:result</from>
+              <to>$outputVariable.response/ns4:Resultado/ns14:result</to>
+            </copy>
+            <copy>
+              <from>$outConsultarDesembolsoById.response/ns4:Resultado/ns14:message</from>
+              <to>$outputVariable.response/ns4:Resultado/ns14:message</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$outConsultarDesembolsoById.response/ns4:Resultado/ns14:error</from>
+              <to>$outputVariable.response/ns4:Resultado/ns14:error</to>
+            </copy>
+          </assign>
+          <elseif>
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>$outConsultarDesembolsoById.response/ns4:Resultado/ns14:result = 'OK'</condition>
+            <sequence name="Sequence3">
+              <assign name="XQ_ConsultarDesembolsoResponse">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:processXQuery10('../Transformations/XQ_ConsultarDesembolsoResponse.xqy', 'outConsultarDesembolsoById.response', $outConsultarDesembolsoById.response)</from>
+                  <to variable="outputVariable" part="response"/>
+                </copy>
+              </assign>
+              <if name="IfResultadoConsultarDesembolso">
+                <documentation>
+                  <![CDATA[Registrado o Desembolsado]]>
+                </documentation>
+                <condition>$outConsultarDesembolsoById.response/ns4:ContratoDesembolso/ns5:estado/ns8:Id = 17 or $outConsultarDesembolsoById.response/ns4:ContratoDesembolso/ns5:estado/ns8:Id = 18</condition>
+                <empty name="Empty"/>
+                <else>
+                  <sequence>
+                    <scope name="ValidarProgramacion_SB">
+                      <variables>
+                        <variable name="inValidarProgramacion" messageType="ns3:requestValidarProgramacionMessage"/>
+                      </variables>
+                      <sequence name="Sequence4">
+                        <assign name="requestValidarProgramacion">
+                          <copy>
+                            <from>$inputVariable.request/ns4:idDesembolso</from>
+                            <to>$inValidarProgramacion.request/ns4:idDesembolso</to>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeValidarProgramacion_SB" bpelx:invokeAsDetail="no"
+                                partnerLink="ValidarProgramacion_SB" portType="ns3:ValidarProgramacion_PT"
+                                operation="ValidarProgramacion" inputVariable="inValidarProgramacion"
+                                outputVariable="outValidarProgramacion"/>
+                        <if name="IfResultadoValidarProgramacion">
+                          <documentation>
+                            <![CDATA[OK]]>
+                          </documentation>
+                          <condition>$outValidarProgramacion.response/ns4:Resultado/ns14:result = 'OK'</condition>
+                          <empty name="Continua"/>
+                          <else>
+                            <documentation>
+                              <![CDATA[ERROR Retry]]>
+                            </documentation>
+                            <sequence name="SequenceErrorRetry">
+                              <invoke name="InvokeValidarProgramacion_SB" portType="ns3:ValidarProgramacion_PT"
+                                      partnerLink="ValidarProgramacion_SB" operation="ValidarProgramacion"
+                                      inputVariable="inValidarProgramacion" outputVariable="outValidarProgramacion"/>
+                              <if name="IfResultadoValidarProgramacion">
+                                <documentation>
+                                  <![CDATA[OK]]>
+                                </documentation>
+                                <condition>$outValidarProgramacion.response/ns4:Resultado/ns14:result = 'OK'</condition>
+                                <empty name="Continua"/>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[ERROR]]>
+                                  </documentation>
+                                  <sequence>
+                                    <assign name="errorValidarProgramacion">
+                                      <copy>
+                                        <from>'ERROR'</from>
+                                        <to>$outputVariable.response/ns4:Resultado/ns14:result</to>
+                                      </copy>
+                                      <copy>
+                                        <from>concat("Error al ValidarProgramacion: ",$outValidarProgramacion.response/ns4:Resultado/ns14:message)</from>
+                                        <to>$outputVariable.response/ns4:Resultado/ns14:message</to>
+                                      </copy>
+                                    </assign>
+                                    <reply name="ReplyError" variable="outputVariable"
+                                           partnerLink="consultardesembolso_client"
+                                           portType="ns1:ConsultarDesembolso_PT" operation="consultarDesembolso"/>
+                                    <exit name="Exit"/>
+                                  </sequence>
+                                </else>
+                              </if>
+                            </sequence>
+                          </else>
+                        </if>
+                        <scope name="ObtenerDisponibilidadRecursos">
+                          <variables>
+                            <variable name="inObtenerDisponibilidad" messageType="ns16:callFunctionStatelessMessage"/>
+                          </variables>
+                          <sequence name="ObtenerDisponibilidadRecursos">
+                            <assign name="requestObtenerDisponibilidad">
+                              <copy>
+                                <from>$outConsultarDesembolsoById.response/ns4:ContratoDesembolso/ns5:monto[ns7:tipo/ns8:DescripcionCorta = 'DESEMBOLSO']/ns7:importe</from>
+                                <to>$inObtenerDisponibilidad.payload/ns16:parameterList/ns18:ObtenerDisponibilidadRecursosRequest/ns18:monto</to>
+                              </copy>
+                              <copy>
+                                <from>$outConsultarDesembolsoById.response/ns4:ContratoDesembolso/ns5:monto[ns7:tipo/ns8:DescripcionCorta = 'DESEMBOLSO']/ns7:moneda/ns8:codigoExterno</from>
+                                <to>$inObtenerDisponibilidad.payload/ns16:parameterList/ns18:ObtenerDisponibilidadRecursosRequest/ns18:moneda</to>
+                              </copy>
+                              <copy>
+                                <from>'ObtenerDisponibilidadRecursos_DecisionService_1'</from>
+                                <to>$inObtenerDisponibilidad.payload/@name</to>
+                              </copy>
+                            </assign>
+                            <invoke name="InvokeObtenerDisponibilidad_SB" bpelx:invokeAsDetail="no"
+                                    partnerLink="ObtenerDisponibilidadRecursos_SB" portType="ns16:IDecisionService"
+                                    operation="callFunctionStateless" inputVariable="inObtenerDisponibilidad"
+                                    outputVariable="outObtenerDisponibilidad"/>
+                            <assign name="XQ_ResponseConsultarDesembolso">
+                              <bpelx:annotation>
+                                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                              </bpelx:annotation>
+                              <copy>
+                                <from>ora:processXQuery10('../Transformations/XQ_ResponseConsultarDesembolso.xqy', 'outputVariable.response', $outputVariable.response, 'outObtenerDisponibilidad.payload', $outObtenerDisponibilidad.payload, 'outValidarProgramacion.response', $outValidarProgramacion.response)</from>
+                                <to variable="outputVariable" part="response"/>
+                              </copy>
+                            </assign>
+                          </sequence>
+                        </scope>
+                      </sequence>
+                    </scope>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </elseif>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="consultardesembolso_client" portType="ns1:ConsultarDesembolso_PT" operation="consultarDesembolso" variable="outputVariable"/>
+  </sequence>
+</process>

@@ -1,0 +1,241 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Jun 19 09:50:17 CDT 2019
+  Author:  offic
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="DistributePriceChangeProcess"
+         targetNamespace="http://xmlns.oracle.com/PriceChangeProcessBackup/DistributePriceChange/DistributePriceChangeProcess"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:client="http://xmlns.oracle.com/PriceChangeProcessBackup/DistributePriceChange/DistributePriceChangeProcess"
+         xmlns:ora="http://schemas.oracle.com/xpath/extension" xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://xmlns.oracle.com/pcbpel/adapter/db/PriceChangeProcessBackup/DistributePriceChange/QueryMDMPriceChangeEventDetDB"
+         xmlns:ns2="http://msoffice.utils.ea.agarcia.mx/"
+         xmlns:ns3="http://mx.agarcia.ea/RetailOperations/SellService/PriceChangeTaskSvc/PriceChangeProcess/BS/PriceChangeDistributeProcess"
+         xmlns:ns6="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns7="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/RetailStore/v1"
+         xmlns:ns8="http://xmlns.oracle.com/pcbpel/adapter/db/top/QueryMDMPriceChangeEventDetDB"
+         xmlns:ns4="http://mx.agarcia.ea/Canonical/Commons/ChangePrice/v1"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns9="http://mx.agarcia.ea/Applications/JDA/PriceChange/ProcessMicroTask"
+         xmlns:ns10="http://mx.agarcia.ea/Applications/JDA/PriceChange">
+  <import namespace="http://mx.agarcia.ea/Applications/JDA/PriceChange/ProcessMicroTask"
+          location="http://uat-osb.agarcia.com.mx:7004/Applications/JDA/JDAPriceChange/PS/JDAAPIPriceChangeSvc?WSDL"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import ui:processWSDL="true"
+          namespace="http://xmlns.oracle.com/PriceChangeProcessBackup/DistributePriceChange/DistributePriceChangeProcess"
+          location="../WSDLs/DistributePriceChangeProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="DistributePriceChangeService" partnerLinkType="client:DistributePriceChangeProcess"
+                 myRole="DistributePriceChangeProcessProvider"/>
+    <partnerLink name="QueryMDMPriceChangeEventDetDB" partnerLinkType="ns1:QueryMDMPriceChangeEventDetDB_plt"
+                 partnerRole="QueryMDMPriceChangeEventDetDB_role"/>
+    <partnerLink name="JDAAPIPriceChangeSvc" partnerLinkType="ns9:JDAAPIPriceChangeSvc" partnerRole="MicroTaskPort"/>
+  </partnerLinks>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:DistributePriceChangeProcessRequestMessage"/>
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:DistributePriceChangeProcessResponseMessage"/>
+    <variable name="QueryMDMPriceChangeEventDet_InputVariable"
+              messageType="ns1:QueryMDMPriceChangeEventDetDBSelect_inputParameters"/>
+    <variable name="QueryMDMPriceChangeEventDet_OutputVariable" messageType="ns1:PrcEventsDetailsCollection_msg"/>
+    <variable name="JDAPriceChangeMicroTask_InputVariable" messageType="ns9:processPriceChangeMessage"/>
+    <variable name="JDAAPIPriceChange_InputVariable" messageType="ns9:processPriceChangeMessage"/>
+    <variable name="store" messageType="ns9:processPriceChangeMessage"/>
+  </variables>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+    <!-- Receive input from requestor. (Note: This maps to operation defined in DistributePriceChangeProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="DistributePriceChangeService"
+             portType="client:DistributePriceChangeProcess" operation="process" variable="inputVariable"
+             createInstance="yes"/>
+    <assign name="AssignIdQuery">
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.payload/ns3:event/ns4:idType</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$QueryMDMPriceChangeEventDet_InputVariable.QueryMDMPriceChangeEventDetDBSelect_inputParameters/ns8:itemId</to>
+      </copy>
+    </assign>
+    <invoke name="QueryMDMPriceChangeEventDet" bpelx:invokeAsDetail="no" partnerLink="QueryMDMPriceChangeEventDetDB"
+            portType="ns1:QueryMDMPriceChangeEventDetDB_ptt" operation="QueryMDMPriceChangeEventDetDBSelect"
+            inputVariable="QueryMDMPriceChangeEventDet_InputVariable"
+            outputVariable="QueryMDMPriceChangeEventDet_OutputVariable"/>
+    <scope name="ValidateBussinesUnite">
+      <bpelx:skipCondition>1=1</bpelx:skipCondition>
+      <sequence>
+        <forEach parallel="no" counterName="ForEachCounterRetail" name="ForEachRetail">
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($QueryMDMPriceChangeEventDet_OutputVariable.PrcEventsDetailsCollection/ns8:PrcEventsDetails)</finalCounterValue>
+          <scope name="Scope1">
+            <variables>
+              <variable name="node" type="xsd:integer"/>
+            </variables>
+            <sequence name="Sequence2">
+              <if name="CountFirst">
+                <condition>string-length($QueryMDMPriceChangeEventDet_OutputVariable.PrcEventsDetailsCollection/ns8:PrcEventsDetails[$ForEachCounterRetail]/ns8:buId)&gt;0</condition>
+                <sequence name="Sequence3">
+                  <assign name="numberNode">
+                    <copy>
+                      <from>$ForEachCounterRetail</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$node</to>
+                    </copy>
+                  </assign>
+                  <if name="validateRetail">
+                    <condition>$ForEachCounterRetail!=$node</condition>
+                    <assign name="PutRetail">
+                      <extensionAssignOperation>
+                        <bpelx:append ignoreMissingFromData="no">
+                          <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$ForEachCounterRetail</bpelx:from>
+                          <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAPriceChangeMicroTask_InputVariable.payload/ns10:event/ns4:retailStores/ns4:retailStore</bpelx:to>
+                        </bpelx:append>
+                      </extensionAssignOperation>
+                      <extensionAssignOperation>
+                        <bpelx:append>
+                          <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$QueryMDMPriceChangeEventDet_OutputVariable.PrcEventsDetailsCollection/ns8:PrcEventsDetails[$ForEachCounterRetail]/ns8:buId</bpelx:from>
+                          <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAPriceChangeMicroTask_InputVariable.payload/ns10:event/ns4:retailStores/ns4:retailStore/ns5:storeID</bpelx:to>
+                        </bpelx:append>
+                      </extensionAssignOperation>
+                    </assign>
+                    <else>
+                      <if name="validateExist">
+                        <condition>$ForEachCounterRetail!=(count($QueryMDMPriceChangeEventDet_OutputVariable.PrcEventsDetailsCollection/ns8:PrcEventsDetails))</condition><assign name="PutRetail"
+                                                                                                                                                                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <extensionAssignOperation>
+         <bpelx:append ignoreMissingFromData="no" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$ForEachCounterRetail</bpelx:from>
+            <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAPriceChangeMicroTask_InputVariable.payload/ns10:event/ns4:retailStores/ns4:retailStore</bpelx:to>
+         </bpelx:append>
+      </extensionAssignOperation>
+      <extensionAssignOperation>
+         <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$QueryMDMPriceChangeEventDet_OutputVariable.PrcEventsDetailsCollection/ns8:PrcEventsDetails[$ForEachCounterRetail]/ns8:buId</bpelx:from>
+            <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAPriceChangeMicroTask_InputVariable.payload/ns10:event/ns4:retailStores/ns4:retailStore/ns5:storeID</bpelx:to>
+         </bpelx:append>
+      </extensionAssignOperation>
+   </assign><else>
+                          <empty name="Empty1"/>
+                        </else>
+                      </if>
+                    </else>
+                  </if>
+                </sequence>
+                <else>
+                  <sequence>
+                    <empty name="noRetail"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+        </forEach>
+      </sequence>
+    </scope>
+    <assign name="QueryToJDA">
+      <bpelx:skipCondition>1=1</bpelx:skipCondition>
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/QueryToJDA.xsl", $QueryMDMPriceChangeEventDet_OutputVariable.PrcEventsDetailsCollection)</from>
+        <to variable="JDAAPIPriceChange_InputVariable" part="payload"/>
+      </copy>
+    </assign>
+    <assign name="distinctElement">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/distinctElement.xsl", $QueryMDMPriceChangeEventDet_OutputVariable.PrcEventsDetailsCollection)</from>
+        <to variable="JDAAPIPriceChange_InputVariable" part="payload"/>
+      </copy>
+    </assign>
+    <assign name="eventDataAssing">
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>substring($inputVariable.payload/ns3:event/ns4:effectiveDate,0,11)</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAAPIPriceChange_InputVariable.payload/ns10:event/ns4:effectiveDate</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>substring($inputVariable.payload/ns3:event/ns4:expirationDate,0,11)</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAAPIPriceChange_InputVariable.payload/ns10:event/ns4:expirationDate</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.payload/ns3:event/ns4:idType</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAAPIPriceChange_InputVariable.payload/ns10:event/ns4:idType</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.payload/ns3:event/ns4:userRequestor</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAAPIPriceChange_InputVariable.payload/ns10:event/ns4:userRequestor</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.payload/ns3:event/ns4:scope</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAAPIPriceChange_InputVariable.payload/ns10:event/ns4:scope</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.payload/ns3:event/ns4:cause</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAAPIPriceChange_InputVariable.payload/ns10:event/ns4:cause</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.payload/ns3:event/ns4:status</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAAPIPriceChange_InputVariable.payload/ns10:event/ns4:status</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.payload/ns3:event/ns4:currency</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAAPIPriceChange_InputVariable.payload/ns10:event/ns4:currency</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.payload/ns3:event/ns4:percentage</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAAPIPriceChange_InputVariable.payload/ns10:event/ns4:percentage</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.payload/ns3:event/ns4:supplierID</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$JDAAPIPriceChange_InputVariable.payload/ns10:event/ns4:supplierID</to>
+      </copy>
+    </assign>
+    <invoke name="JDAAPIPriceChange" bpelx:invokeAsDetail="no" partnerLink="JDAAPIPriceChangeSvc"
+            portType="ns9:MicroTaskPort" operation="processEvent" inputVariable="JDAAPIPriceChange_InputVariable"/>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="DistributePriceChangeService" portType="client:DistributePriceChangeProcess"
+           operation="process" variable="outputVariable"/>
+  </sequence>
+</process>

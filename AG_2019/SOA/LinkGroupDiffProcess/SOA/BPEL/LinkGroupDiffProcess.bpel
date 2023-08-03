@@ -1,0 +1,384 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Aug 09 18:47:56 CDT 2019
+  Author:  Marisol
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="LinkGroupDiffProcess"
+               targetNamespace="http://xmlns.oracle.com/RetailOperMK/LinkGroupDiffProcess/LinkGroupDiffProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/RetailOperMK/LinkGroupDiffProcess/LinkGroupDiffProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://mx.agarcia.ea/RetailOperations/Make/ProductDevelopment/ItemCatalogTaskSvcWSD"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Items/PROCreateSizeProcess/v1.0"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Core/Items/LinkGroupDiffEntity"
+         xmlns:ns5="http://mx.agarcia.ea/RetailOperations/Make/ProductDevelopment/ItemCatalogTaskSvc"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns4="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns6="http://mx.agarcia.ea/Capabilities/Support/Commons/ItemsCatalogs"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns7="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSizeEntity"
+         xmlns:ns8="http://xmlns.oracle.com/pcbpel/adapter/db/RetailOperMK/LinkGroupDiffProcess/GetDiff"
+         xmlns:ns9="http://xmlns.oracle.com/pcbpel/adapter/db/RetailOperMK/LinkGroupDiffProcess/GetDiffDB"
+         xmlns:ns10="http://xmlns.oracle.com/pcbpel/adapter/db/top/GetDiffDB"
+         xmlns:ns11="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage">
+  <import namespace="http://mx.agarcia.ea/RetailOperations/Make/ProductDevelopment/ItemCatalogTaskSvcWSD"
+          location="http://uat-osb.agarcia.com.mx:7004/RetailOperations/Make/ProductDevelopment/ItemCatalogTaskSvc/PS/ItemCatalogTaskPXY?WSDL"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/RetailOperMK/LinkGroupDiffProcess/LinkGroupDiffProcess" location="../WSDLs/LinkGroupDiffProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="linkgroupdiffprocess_client" partnerLinkType="client:LinkGroupDiffProcess" myRole="LinkGroupDiffProcessProvider"/>
+    <partnerLink name="ItemCatalogTaskPXY" partnerLinkType="ns1:ItemCatalogTaskPXY"
+                 partnerRole="ItemCatalogEntitySvcPType"/>
+    <partnerLink name="PROCreateSizeProcessPXY" partnerLinkType="ns2:PROCreateSizeProcess"
+                 partnerRole="PROCreateSizeProcessProvider"/>
+    <partnerLink name="GetDiffDB" partnerLinkType="ns9:GetDiffDB_plt" partnerRole="GetDiffDB_role"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:LinkGroupDiffProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:LinkGroupDiffProcessResponseMessage"/>
+    <variable name="Invoke_GetGroup_in" messageType="ns1:findCatalogRequest"/>
+    <variable name="Invoke_GetGroup_out" messageType="ns1:findCatalogResponse"/>
+    <variable name="Invoke_GetDiff_in" messageType="ns1:findCatalogRequest"/>
+    <variable name="Invoke_GetDiff_out" messageType="ns1:findCatalogResponse"/>
+    <variable name="Invoke_deleteDiff_in" messageType="ns1:deleteRequest"/>
+    <variable name="Invoke_deleteDiff_out" messageType="ns1:deleteResponse"/>
+    <variable name="InvokeRegisterDiff_in" messageType="ns1:registerRequest"/>
+    <variable name="InvokeRegisterDiff_out" messageType="ns1:registerResponse"/>
+    <variable name="Invoke_PROCreateSize_in" messageType="ns2:PROCreateSizeProcessRequestMessage"/>
+    <variable name="Invoke_PROCreateSize_out" messageType="ns2:PROCreateSizeProcessResponseMessage"/>
+    <variable name="Invoke_GetDiffTranslated_in" messageType="ns1:findCatalogRequest"/>
+    <variable name="Invoke_GetDiffTranslated_out" messageType="ns1:findCatalogResponse"/>
+    <variable name="Invoke_DelDiffTranslated_in" messageType="ns1:deleteRequest"/>
+    <variable name="Invoke_DelDiffTranslated_out" messageType="ns1:deleteResponse"/>
+    <variable name="Invoke_RegisterDiffTranslated_in" messageType="ns1:registerRequest"/>
+    <variable name="Invoke_RegisterDiffTranslated_out" messageType="ns1:registerResponse"/>
+    <variable name="Invoke1_GetDiffDBSelect_InputVariable" messageType="ns9:GetDiffDBSelect_inputParameters"/>
+    <variable name="Invoke1_GetDiffDBSelect_OutputVariable" messageType="ns9:MdmItemsDiffsCollection_msg"/>
+    <variable name="Invoke_DiffTrans_In" messageType="ns9:GetDiffDBSelect_inputParameters"/>
+    <variable name="Invoke_DiffTrans_Out" messageType="ns9:MdmItemsDiffsCollection_msg"/>
+    <variable name="getGroupNms" messageType="ns1:findCatalogResponse"/>
+    <variable name="Invoke_GetDiffTranslatedJDA_In" messageType="ns9:GetDiffDBSelect_inputParameters"/>
+    <variable name="Invoke_GetDiffTranslatedJDA_Out" messageType="ns9:MdmItemsDiffsCollection_msg"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <throw name="ThrowRollback" faultName="bpelx:rollback"/>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in LinkGroupDiffProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="linkgroupdiffprocess_client" portType="client:LinkGroupDiffProcess" operation="process" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignGetGroup">
+      <copy>
+        <from>'RMS'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_GetGroup_in.findCatalogRequest/ns6:appCode</to>
+      </copy>
+    </assign>
+    <invoke name="Invoke_GetGroup" bpelx:invokeAsDetail="no" partnerLink="ItemCatalogTaskPXY"
+            portType="ns1:ItemCatalogEntitySvcPType" operation="findCatalog" inputVariable="Invoke_GetGroup_in"
+            outputVariable="Invoke_GetGroup_out"/>
+    <assign name="TrGetSpecificGroup">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/TrGetGroupById.xsl", $Invoke_GetGroup_out.findCatalogResponse, "inputVariable.payload", $inputVariable.payload)</from>
+        <to variable="getGroupNms" part="findCatalogResponse"/>
+      </copy>
+    </assign>
+    <if name="IfGroupIsValid">
+      <documentation>
+        <![CDATA[Group exists and is for Size?]]>
+      </documentation>
+      <condition>ora:countNodes($getGroupNms.findCatalogResponse/ns6:CatalogList) &gt; 0</condition>
+      <sequence>
+        <assign name="AssignGetDiff">
+          <copy>
+            <from>$inputVariable.payload/ns3:diff/ns4:id</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke1_GetDiffDBSelect_InputVariable.GetDiffDBSelect_inputParameters/ns10:vId</to>
+          </copy>
+          <copy>
+            <from>'RMS'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke1_GetDiffDBSelect_InputVariable.GetDiffDBSelect_inputParameters/ns10:vAppCode</to>
+          </copy>
+          <copy>
+            <from>'15'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke1_GetDiffDBSelect_InputVariable.GetDiffDBSelect_inputParameters/ns10:vCatDef</to>
+          </copy>
+          <copy>
+            <from>15</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke1_GetDiffDBSelect_InputVariable.GetDiffDBSelect_inputParameters/ns10:vCatDef</to>
+          </copy>
+          <copy>
+            <from>'SGTMP'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke1_GetDiffDBSelect_InputVariable.GetDiffDBSelect_inputParameters/ns10:vParentId</to>
+          </copy>
+          <copy>
+            <from>'13'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke1_GetDiffDBSelect_InputVariable.GetDiffDBSelect_inputParameters/ns10:vParentCatId</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeGetDiff" partnerLink="GetDiffDB" portType="ns9:GetDiffDB_ptt"
+                operation="GetDiffDBSelect" inputVariable="Invoke1_GetDiffDBSelect_InputVariable"
+                outputVariable="Invoke1_GetDiffDBSelect_OutputVariable" bpelx:invokeAsDetail="no"/>
+        <if name="IfValidIsDiff">
+          <documentation>
+            <![CDATA[DiffExistsAndIsSize]]>
+          </documentation>
+          <condition>ora:countNodes($Invoke1_GetDiffDBSelect_OutputVariable.MdmItemsDiffsCollection/ns10:MdmItemsDiffs) &gt; 0</condition>
+          <sequence>
+            <assign name="AssignDeleteDiff">
+              <copy>
+                <from>15</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_deleteDiff_in.deleteRequest/ns5:catalogId</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.payload/ns3:diff/ns4:id</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_deleteDiff_in.deleteRequest/ns5:id</to>
+              </copy>
+            </assign>
+            <invoke name="Invoke_deleteDiff" bpelx:invokeAsDetail="no" partnerLink="ItemCatalogTaskPXY"
+                    portType="ns1:ItemCatalogEntitySvcPType" operation="delete" inputVariable="Invoke_deleteDiff_in"
+                    outputVariable="Invoke_deleteDiff_out"/>
+            <assign name="AssignRegisterDiffMaestro">
+              <copy>
+                <from>$Invoke1_GetDiffDBSelect_OutputVariable.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:id</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeRegisterDiff_in.registerRequest/ns5:id</to>
+              </copy>
+              <copy>
+                <from>$Invoke1_GetDiffDBSelect_OutputVariable.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:appCode</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeRegisterDiff_in.registerRequest/ns5:appCode</to>
+              </copy>
+              <copy>
+                <from>$Invoke1_GetDiffDBSelect_OutputVariable.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:name</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeRegisterDiff_in.registerRequest/ns5:name</to>
+              </copy>
+              <copy>
+                <from>$Invoke1_GetDiffDBSelect_OutputVariable.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:catDef</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeRegisterDiff_in.registerRequest/ns5:catalogId</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.payload/ns3:diff/ns4:parent/ns4:id</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeRegisterDiff_in.registerRequest/ns5:parentId</to>
+              </copy>
+              <copy>
+                <from>13</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeRegisterDiff_in.registerRequest/ns5:parentCatid</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeRegisterDiff" bpelx:invokeAsDetail="no" partnerLink="ItemCatalogTaskPXY"
+                    portType="ns1:ItemCatalogEntitySvcPType" operation="register" inputVariable="InvokeRegisterDiff_in"
+                    outputVariable="InvokeRegisterDiff_out"/>
+            <assign name="AssignPROCreateDiff">
+              <copy>
+                <from>$getGroupNms.findCatalogResponse/ns6:CatalogList/ns6:id</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_PROCreateSize_in.payload/ns7:size/ns4:parent/ns4:id</to>
+              </copy>
+              <copy>
+                <from>$getGroupNms.findCatalogResponse/ns6:CatalogList/ns6:name</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_PROCreateSize_in.payload/ns7:size/ns4:parent/ns4:name</to>
+              </copy>
+              <copy>
+                <from>$Invoke1_GetDiffDBSelect_OutputVariable.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:id</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_PROCreateSize_in.payload/ns7:size/ns4:id</to>
+              </copy>
+              <copy>
+                <from>$Invoke1_GetDiffDBSelect_OutputVariable.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:name</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_PROCreateSize_in.payload/ns7:size/ns4:name</to>
+              </copy>
+            </assign>
+            <invoke name="Invoke_PROCreateSize" bpelx:invokeAsDetail="no" partnerLink="PROCreateSizeProcessPXY"
+                    portType="ns2:PROCreateSizeProcess" operation="create" inputVariable="Invoke_PROCreateSize_in"
+                    outputVariable="Invoke_PROCreateSize_out"/>
+            <scope name="RegisterTranslateJDA">
+              <sequence name="Sequence1">
+                <assign name="AssignGetDiffTranslated">
+                  <copy>
+                    <from>'SGTMP'</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_GetDiffTranslatedJDA_In.GetDiffDBSelect_inputParameters/ns10:vParentId</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.payload/ns3:diff/ns4:id</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_GetDiffTranslatedJDA_In.GetDiffDBSelect_inputParameters/ns10:vPrimaryId</to>
+                  </copy>
+                  <copy>
+                    <from>'RMS'</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_GetDiffTranslatedJDA_In.GetDiffDBSelect_inputParameters/ns10:vPrimAppcode</to>
+                  </copy>
+                  <copy>
+                    <from>'JDA'</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_GetDiffTranslatedJDA_In.GetDiffDBSelect_inputParameters/ns10:vAppCode</to>
+                  </copy>
+                </assign>
+                <invoke name="Invoke_GetDiffTranslatedJDA" partnerLink="GetDiffDB"
+                        portType="ns9:GetDiffDB_ptt" operation="GetDiffDBSelect"
+                        inputVariable="Invoke_GetDiffTranslatedJDA_In"
+                        outputVariable="Invoke_GetDiffTranslatedJDA_Out" bpelx:invokeAsDetail="no"/>
+                <assign name="AssignDeleteDiffTranslated">
+                  <copy>
+                    <from>$Invoke_GetDiffTranslatedJDA_Out.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:id</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_DelDiffTranslated_in.deleteRequest/ns5:id</to>
+                  </copy>
+                  <copy>
+                    <from>15</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_DelDiffTranslated_in.deleteRequest/ns5:catalogId</to>
+                  </copy>
+                </assign>
+                <invoke name="Invoke_DelDiffTranslated" bpelx:invokeAsDetail="no" partnerLink="ItemCatalogTaskPXY"
+                        portType="ns1:ItemCatalogEntitySvcPType" operation="delete"
+                        inputVariable="Invoke_DelDiffTranslated_in" outputVariable="Invoke_DelDiffTranslated_out"/>
+                <assign name="AssignRegisterDiffTranslated">
+                  <copy>
+                    <from>$Invoke_GetDiffTranslatedJDA_Out.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:id</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterDiffTranslated_in.registerRequest/ns5:id</to>
+                  </copy>
+                  <copy>
+                    <from>$Invoke_GetDiffTranslatedJDA_Out.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:appCode</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterDiffTranslated_in.registerRequest/ns5:appCode</to>
+                  </copy>
+                  <copy>
+                    <from>$Invoke_GetDiffTranslatedJDA_Out.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:name</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterDiffTranslated_in.registerRequest/ns5:name</to>
+                  </copy>
+                  <copy>
+                    <from>$Invoke_GetDiffTranslatedJDA_Out.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:catDef</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterDiffTranslated_in.registerRequest/ns5:catalogId</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.payload/ns3:diff/ns4:parent/ns4:id</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterDiffTranslated_in.registerRequest/ns5:parentId</to>
+                  </copy>
+                  <copy>
+                    <from>$Invoke_GetDiffTranslatedJDA_Out.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:primaryId</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterDiffTranslated_in.registerRequest/ns5:primaryId</to>
+                  </copy>
+                  <copy>
+                    <from>$Invoke_GetDiffTranslatedJDA_Out.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:primaryAppcode</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterDiffTranslated_in.registerRequest/ns5:primaryAppcode</to>
+                  </copy>
+                  <copy>
+                    <from>$Invoke_GetDiffTranslatedJDA_Out.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:parentCatid</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterDiffTranslated_in.registerRequest/ns5:parentCatid</to>
+                  </copy>
+                  <copy>
+                    <from>$Invoke_GetDiffTranslatedJDA_Out.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:primaryCatdef</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterDiffTranslated_in.registerRequest/ns5:primaryCatid</to>
+                  </copy>
+                  <copy>
+                    <from>$Invoke_GetDiffTranslatedJDA_Out.MdmItemsDiffsCollection/ns10:MdmItemsDiffs/ns10:catDef</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterDiffTranslated_in.registerRequest/ns5:primaryParnCatId</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.payload/ns3:diff/ns4:parent/ns4:id</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterDiffTranslated_in.registerRequest/ns5:primaryParnId</to>
+                  </copy>
+                  <copy>
+                    <from>13</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterDiffTranslated_in.registerRequest/ns5:primaryParnCatId</to>
+                  </copy>
+                </assign>
+                <invoke name="Invoke_RegisterDiffTranslated" bpelx:invokeAsDetail="no"
+                        partnerLink="ItemCatalogTaskPXY" portType="ns1:ItemCatalogEntitySvcPType" operation="register"
+                        inputVariable="Invoke_RegisterDiffTranslated_in"
+                        outputVariable="Invoke_RegisterDiffTranslated_out"/>
+              </sequence>
+            </scope>
+            <assign name="AssignOutputSuccess">
+              <copy>
+                <from>'Se ha asociado grupo y diferenciador exitosamente'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns11:description</to>
+              </copy>
+              <copy>
+                <from>true()</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns11:result</to>
+              </copy>
+            </assign>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[NoExistsOrNoSize]]>
+            </documentation>
+            <sequence name="Sequence2">
+              <assign name="AssignOutputNoSize">
+                <copy>
+                  <from>'No existe la talla o el diferenciador no es tipo talla'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns11:description</to>
+                </copy>
+                <copy>
+                  <from>false()</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns11:result</to>
+                </copy>
+              </assign>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[NoExistsGroup]]>
+        </documentation>
+        <sequence name="Sequence3">
+          <assign name="AssignOutputNoGroup">
+            <copy>
+              <from>'El grupo no es de tipo talla o no existe'</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns11:description</to>
+            </copy>
+            <copy>
+              <from>false()</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns11:result</to>
+            </copy>
+          </assign>
+        </sequence>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="linkgroupdiffprocess_client" portType="client:LinkGroupDiffProcess" operation="process" variable="outputVariable"/>
+  </sequence>
+</process>

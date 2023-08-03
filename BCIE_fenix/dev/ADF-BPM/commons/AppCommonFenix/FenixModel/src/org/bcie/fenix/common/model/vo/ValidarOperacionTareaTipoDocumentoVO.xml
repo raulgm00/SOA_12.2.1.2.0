@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="windows-1252" ?>
+<!DOCTYPE ViewObject SYSTEM "jbo_03_01.dtd">
+<!---->
+<ViewObject
+  xmlns="http://xmlns.oracle.com/bc4j"
+  Name="ValidarOperacionTareaTipoDocumentoVO"
+  Version="12.1.3.10.8"
+  InheritPersonalization="merge"
+  BindingStyle="OracleName"
+  CustomQuery="true"
+  ComponentClass="org.bcie.fenix.common.model.vo.ValidarOperacionTareaTipoDocumentoVOImpl"
+  PageIterMode="Full"
+  RowClass="org.bcie.fenix.common.model.vo.ValidarOperacionTareaTipoDocumentoVORowImpl"
+  ComponentInterface="org.bcie.fenix.common.model.vo.common.ValidarOperacionTareaTipoDocumentoVO"
+  ClientProxyName="org.bcie.fenix.common.model.vo.client.ValidarOperacionTareaTipoDocumentoVOClient">
+  <DesignTime>
+    <Attr Name="_codeGenFlag2" Value="Access|Coll|VarAccess"/>
+    <Attr Name="_isExpertMode" Value="true"/>
+    <Attr Name="_isCodegen" Value="true"/>
+  </DesignTime>
+  <Properties>
+    <SchemaBasedProperties>
+      <LABEL
+        ResId="org.bcie.fenix.common.model.vo.ValidarOperacionTareaTipoDocumentoVO_LABEL"/>
+    </SchemaBasedProperties>
+  </Properties>
+  <Variable
+    Name="idOperacion"
+    Kind="where"
+    Type="java.lang.Integer"/>
+  <Variable
+    Name="idTarea"
+    Kind="where"
+    Type="java.lang.Integer"/>
+  <Variable
+    Name="descripcionCorta"
+    Kind="where"
+    Type="java.lang.String"/>
+  <Variable
+    Name="instanciaProceso"
+    Kind="where"
+    Type="java.lang.String"/>
+  <SQLQuery><![CDATA[WITH DOCUMENTO_OPERACION AS 
+( 
+    SELECT OPER.ID_OPERACION, 
+           DOCS.ID_DOCUMENTOS, 
+           DOC.ID_TIPO_DOCUMENTO, 
+           DOC.ID_DOCUMENTO, 
+           DOC.ID_TAREA_BPM 
+    FROM OPERACION  OPER 
+    INNER JOIN DOCUMENTOS DOCS ON DOCS.ID_OPERACION = OPER.ID_OPERACION 
+    INNER JOIN DOCUMENTO DOC ON DOCS.ID_DOCUMENTO = DOC.ID_DOCUMENTO 
+    WHERE DOC.BAN_ESTATUS = 1 
+    AND DOC.INSTANCIA_PROCESO = NVL(:instanciaProceso, DOC.INSTANCIA_PROCESO)
+) 
+SELECT  TDT.ES_MANDATORIO,  
+        COUNT(DO.ID_DOCUMENTO) CANTIDAD_DOCUMENTOS, 
+        'Se requiere el tipo de documento ' || LISTAGG(TDOC.DESCRIPCION, ' o el tipo de documento ') WITHIN GROUP (ORDER BY TDOC.ID) || '.' MENSAJE 
+FROM TCO_DOCUMENTO_TAREA TDT 
+INNER JOIN TCA_DOCUMENTO TDOC ON TDT.ID_TCA_DOCUMENTO = TDOC.ID 
+LEFT JOIN DOCUMENTO_OPERACION DO ON TDT.ID_TCA_DOCUMENTO = DO.ID_TIPO_DOCUMENTO AND ID_OPERACION = :idOperacion 
+WHERE TDT.ID_TAREA_BPM = :idTarea 
+  AND (   TDT.ID_TCA_ACCION IS NULL  
+       OR TDT.ID_TCA_ACCION IN (SELECT ID  
+                               FROM TCA_ACCION_BPM  
+                               WHERE DESCRIPCION_CORTA = :descripcionCorta 
+                                 AND TDT.ID_TAREA_BPM = :idTarea) 
+      ) 
+  AND NVL(TDT.ES_MANDATORIO,0) > 0 
+  AND TDT.BAN_ESTATUS = 1 
+GROUP BY TDT.ES_MANDATORIO 
+HAVING COUNT(DO.ID_DOCUMENTO) = 0]]></SQLQuery>
+  <ViewAttribute
+    Name="EsMandatorio"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Type="java.math.BigDecimal"
+    ColumnType="NUMBER"
+    AliasName="ES_MANDATORIO"
+    Expression="ES_MANDATORIO"
+    SQLType="NUMERIC">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="39"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="CantidadDocumentos"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Type="java.math.BigDecimal"
+    ColumnType="NUMBER"
+    AliasName="CANTIDAD_DOCUMENTOS"
+    Expression="CANTIDAD_DOCUMENTOS"
+    SQLType="NUMERIC">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="39"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="Mensaje"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="4000"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="MENSAJE"
+    Expression="MENSAJE"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="4000"/>
+    </DesignTime>
+  </ViewAttribute>
+  <AttrArray Name="KeyAttributes">
+    <Item Value="EsMandatorio"/>
+  </AttrArray>
+  <ClientInterface
+    Name="__clientInterface">
+    <Method
+      Name="validarDocumentosTarea"
+      MethodName="validarDocumentosTarea">
+      <Return
+        Name="_return_type_"
+        Type="java.util.List"
+        IsGeneric="true">
+        <Element
+          Name="String"
+          Type="java.lang.String"/>
+      </Return>
+      <Parameter
+        Name="idTarea"
+        Type="java.lang.Integer"/>
+      <Parameter
+        Name="idOperacion"
+        Type="java.lang.Integer"/>
+      <Parameter
+        Name="descripcionCorta"
+        Type="java.lang.String"/>
+    </Method>
+    <Method
+      Name="validarDocumentosTarea1"
+      MethodName="validarDocumentosTarea">
+      <Return
+        Name="_return_type_"
+        Type="java.util.List"
+        IsGeneric="true">
+        <Element
+          Name="String"
+          Type="java.lang.String"/>
+      </Return>
+      <Parameter
+        Name="idTarea"
+        Type="java.lang.Integer"/>
+      <Parameter
+        Name="idOperacion"
+        Type="java.lang.Integer"/>
+      <Parameter
+        Name="descripcionCorta"
+        Type="java.lang.String"/>
+      <Parameter
+        Name="instanciaProceso"
+        Type="java.lang.String"/>
+    </Method>
+  </ClientInterface>
+  <ResourceBundle>
+    <PropertiesBundle
+      PropertiesFile="org.bcie.fenix.common.model.FenixModelBundle"/>
+  </ResourceBundle>
+</ViewObject>

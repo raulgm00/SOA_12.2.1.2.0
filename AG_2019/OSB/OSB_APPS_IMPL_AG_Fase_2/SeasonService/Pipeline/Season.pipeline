@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="SeasonService/Resources/SeasonPXY"/>
+            <con:binding>
+                <con:name>execute_bind</con:name>
+                <con:namespace>http://www.agarcia.mx/ServiceBus/SeasonPXY</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="request" name="request-afffa4b.6978dd19.0.174bd2d1e3b.N7ed1">
+            <con:stage id="_StageId-afffa4b.6978dd19.0.174bd2d1e3b.N7ecf" name="Stage1">
+                <con:context>
+                    <con1:userNsDecl prefix="seas" namespace="http://www.agarcia.mx/EnterpriseObjects/Season"/>
+                </con:context>
+                <con:actions>
+                    <con3:wsCallout xmlns:con1="http://www.bea.com/wli/sb/typesystem/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-afffa4b.6978dd19.0.174bd2d1e3b.N7e66</con2:id>
+                        <con3:service ref="SeasonService/BusinessService/DBSeasonRMS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>DBSeasonRMSSelect</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="true">body</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="true">body</con3:body>
+                        </con3:response>
+                        <con3:requestTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-afffa4b.6978dd19.0.174bd2d1e3b.N7e65</con2:id>
+                                <con3:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con2:xsltTransform>
+                                        <con2:resource ref="SeasonService/Resources/EBM_BD"/>
+                                        <con2:input>$body/seas:CreateSeasonEBM</con2:input>
+                                    </con2:xsltTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con3:requestTransform>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con2:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-afffa4b.6978dd19.0.174bd2d1e3b.N7e62</con1:id>
+                        <con2:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con2:location>
+                        <con2:expr>
+                            <con1:xsltTransform>
+                                <con1:resource ref="SeasonService/Resources/BD_EBM"/>
+                                <con1:input>$body</con1:input>
+                            </con1:xsltTransform>
+                        </con2:expr>
+                    </con2:replace>
+                    <con3:log>
+                        <con1:id>_ActionId-afffa4b.6978dd19.0.174bd2d1e3b.N7e5b</con1:id>
+                        <con3:logLevel>warning</con3:logLevel>
+                        <con3:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con3:expr>
+                        <con3:message>[[[[[[[[[[[[[[[[[Mensaje en EBM]]]]]]]]]]]]]]]]</con3:message>
+                    </con3:log>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-afffa4b.6978dd19.0.174bd2d1e3b.N7ed0">
+            <con:stage id="_StageId-afffa4b.6978dd19.0.174bd2d1e3b.N7ece" name="Stage1">
+                <con:context/>
+                <con:actions/>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="Pipeline Pair Node1">
+                <con:request>request-afffa4b.6978dd19.0.174bd2d1e3b.N7ed1</con:request>
+                <con:response>response-afffa4b.6978dd19.0.174bd2d1e3b.N7ed0</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteNode1" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                <con:context/>
+                <con:actions>
+                    <con1:route>
+                        <con2:id>_ActionId-afffa4b.6978dd19.0.174bd2d1e3b.N7e61</con2:id>
+                        <con1:service ref="SeasonService/BusinessService/Season_IN_JMSQ" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>Produce_Message</con1:operation>
+                        <con1:outboundTransform>
+                            <con3:log>
+                                <con2:id>_ActionId-afffa4b.6978dd19.0.174bd2d1e3b.N7e5e</con2:id>
+                                <con3:logLevel>warning</con3:logLevel>
+                                <con3:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con3:expr>
+                                <con3:message>[[[[[[[[[[[[[[[[[[[[Mensaje enviado a JMS]]]]]]]]]]]]]]</con3:message>
+                            </con3:log>
+                        </con1:outboundTransform>
+                        <con1:responseTransform/>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

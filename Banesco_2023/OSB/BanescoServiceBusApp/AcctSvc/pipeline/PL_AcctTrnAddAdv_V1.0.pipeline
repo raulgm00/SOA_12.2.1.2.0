@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con4="http://www.bea.com/wli/sb/stages/publish/config" xmlns:con5="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="Any SOAP" isSoap12="false" xsi:type="con:AnySoapBindingType"/>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-a01183b.Nceec257.0.1646138a655.N7e52">
+        <con:pipeline type="request" name="request-a01183b.Nceec257.0.1646138a655.N7ef8" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+            <con:stage id="_StageId-a01183b.Nceec257.0.1646138a655.N7ef7" name="stg_LoadDT" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                <con:context/>
+                <con:actions>
+                    <con3:assign varName="var_DR">
+                        <con2:id>_ActionId-a01183b.Nceec257.0.1646138a655.N7ef6</con2:id>
+                        <con3:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="AcctSvc/resources/xslt/DynamicTable"/>
+                                <con2:input>$body/*</con2:input>
+                            </con2:xsltTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:assign varName="varHeader" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con5:id xmlns:con5="http://www.bea.com/wli/sb/stages/config">_ActionId-a016235.524fd01d.0.165ab6bd828.N7789</con5:id>
+                        <con3:expr>
+                            <con1:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$header/*:MsgHdrRq</con1:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a01183e.3a696306.0.1647f9f5a8c.N7ed6" name="stg_AdviseType">
+                <con:context>
+                    <con1:userNsDecl prefix="eoStatus" namespace="http://xmlns.banesco.com/eo/Status_V1.0"/>
+                    <con1:userNsDecl prefix="appopt" namespace="http://xmlns.banesco.com/appopt/AOptCommon_V1.0"/>
+                    <con1:userNsDecl prefix="eoAcct" namespace="http://xmlns.banesco.com/eo/Acct_V1.0"/>
+                    <con1:userNsDecl prefix="eoptAcct345Adv" namespace="http://xmlns.banesco.com/eopt/Acct345Adv_V1.0"/>
+                    <con1:userNsDecl prefix="eoptAcctTrnAddAdvInq" namespace="http://xmlns.banesco.com/eopt/AcctTrnAddAdvInq_V1.0"/>
+                </con:context>
+                <con:actions>
+                    <con3:validate>
+                        <con1:id>_ActionId-a016235.N25fe51d2.0.165c50f36fd.N7edb</con1:id>
+                        <con3:schema ref="Commons/xsd/EOpt/Account/Acct345Adv/Acct345Adv_V1.0"/>
+                        <con3:schemaElement xmlns:acc="http://xmlns.banesco.com/eopt/Acct345Adv_V1.0">acc:Acct345AdvRq</con3:schemaElement>
+                        <con3:varName>body</con3:varName>
+                        <con3:location>
+                            <con1:xpathText>./*</con1:xpathText>
+                        </con3:location>
+                    </con3:validate>
+                    <con3:assign varName="bodyIN" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                        <con2:id>_ActionId-a00000a.44f5492d.0.1646a9a762d.N7fc6</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:assign varName="varOperation">
+                        <con1:id>_ActionId-a016235.5bbce387.0.1661b313492.N7f9c</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>data($varHeader/appopt:RqdOper)</con1:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:ifThenElse>
+                        <con1:id>_ActionId-a016235.3349c2c.0.1660c213dcd.N7f5b</con1:id>
+                        <con3:case id="_BranchId-a016235.3349c2c.0.1660c213dcd.N7f5a">
+                            <con3:condition>
+                                <con1:xqueryText>$varOperation = 'AcctTrnAddFTAdv'</con1:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:wsCallout>
+                                    <con1:id>_ActionId-a01183e.3a696306.0.1647f9f5a8c.N7ed3</con1:id>
+                                    <con3:service ref="AcctTS/proxy/PX_Acct_V1.0" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con3:operation>AcctTrnAddAdvFTInq</con3:operation>
+                                    <con3:request>
+                                        <con3:body wrapped="true">body</con3:body>
+                                        <con3:header>header</con3:header>
+                                    </con3:request>
+                                    <con3:response>
+                                        <con3:body wrapped="true">body</con3:body>
+                                        <con3:header>header</con3:header>
+                                    </con3:response>
+                                    <con3:requestTransform>
+                                        <con3:replace varName="body" contents-only="true">
+                                            <con1:id>_ActionId-N3f57fe67.27c40181.0.1658b843c4c.N7ffe</con1:id>
+                                            <con3:expr>
+                                                <con1:xsltTransform>
+                                                    <con1:resource ref="AcctSvc/resources/xslt/AcctTrnAddAdv/xslt_in_Acct345AdvRq_to_AcctTrnAddAdvFTInqRq"/>
+                                                    <con1:input>$body/*</con1:input>
+                                                </con1:xsltTransform>
+                                            </con3:expr>
+                                        </con3:replace>
+                                    </con3:requestTransform>
+                                    <con3:responseTransform/>
+                                </con3:wsCallout>
+                                <con2:ifThenElse xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                    <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-a00000a.44f5492d.0.1646a9a762d.N7f7e</con3:id>
+                                    <con2:case id="_BranchId-a00000a.44f5492d.0.1646a9a762d.N7f7d">
+                                        <con2:condition>
+                                            <con6:xqueryText xmlns:con6="http://www.bea.com/wli/sb/stages/config">fn:normalize-space($body/eoptAcctTrnAddAdvInq:AcctTrnAddAdvFTInqRs/eoptAcctTrnAddAdvInq:Status/eoStatus:StatusCode)='M0000'</con6:xqueryText>
+                                        </con2:condition>
+                                        <con2:actions>
+                                            <con2:replace varName="body" contents-only="true">
+                                                <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a016235.3349c2c.0.1660c213dcd.N7fc9</con6:id>
+                                                <con2:expr>
+                                                    <con6:xsltTransform xmlns:con6="http://www.bea.com/wli/sb/stages/config">
+                                                        <con6:resource ref="AcctSvc/resources/xslt/AcctTrnAddAdv/xslt_in_AcctTrnAddAdvFTInqRs_to_AcctTrnAddAdvRq"/>
+                                                        <con6:input>$body/*</con6:input>
+                                                        <con6:param name="varRq">
+                                                            <con6:path>$bodyIN</con6:path>
+                                                        </con6:param>
+                                                    </con6:xsltTransform>
+                                                </con2:expr>
+                                            </con2:replace>
+                                        </con2:actions>
+                                    </con2:case>
+                                    <con2:case id="_BranchId-a016235.N526c71cc.0.165a105107c.N7d79">
+                                        <con2:condition>
+                                            <con6:xqueryText xmlns:con6="http://www.bea.com/wli/sb/stages/config">fn:normalize-space($body/eoptAcctTrnAddAdvInq:AcctTrnAddAdvFTInqRs/eoptAcctTrnAddAdvInq:Status/eoStatus:StatusCode)='M0002'</con6:xqueryText>
+                                        </con2:condition>
+                                        <con2:actions>
+                                            <con2:Error>
+                                                <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a016235.N526c71cc.0.165a105107c.N7d76</con4:id>
+                                                <con2:errCode>M0006</con2:errCode>
+                                                <con2:message>CONSULTA DE ENRIQUECIMIENTO NO DEVUELVE REGISTROS</con2:message>
+                                            </con2:Error>
+                                        </con2:actions>
+                                    </con2:case>
+                                    <con2:default>
+                                        <con2:Error>
+                                            <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a016235.N526c71cc.0.165a105107c.N7d7e</con4:id>
+                                            <con2:errCode>M0006</con2:errCode>
+                                            <con2:message>FALLO EN CONSULTA DE ENRIQUECIMIENTO DE LA TRAMA</con2:message>
+                                        </con2:Error>
+                                    </con2:default>
+                                </con2:ifThenElse>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:case id="_BranchId-a016235.56e7e927.0.1660d2ef6b0.N7ff2">
+                            <con3:condition>
+                                <con1:xqueryText>$varOperation = 'AcctTrnAddTTAdv'</con1:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:wsCallout>
+                                    <con1:id>_ActionId-a016235.3331f854.0.16610cee546.N7f6f</con1:id>
+                                    <con3:service ref="AcctTS/proxy/PX_Acct_V1.0" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con3:operation>AcctTrnAddAdvTTInq</con3:operation>
+                                    <con3:request>
+                                        <con3:body wrapped="true">body</con3:body>
+                                        <con3:header>header</con3:header>
+                                    </con3:request>
+                                    <con3:response>
+                                        <con3:body wrapped="true">body</con3:body>
+                                        <con3:header>header</con3:header>
+                                    </con3:response>
+                                    <con3:requestTransform>
+                                        <con3:replace varName="body" contents-only="true">
+                                            <con1:id>_ActionId-a016235.3331f854.0.16610cee546.N7f6e</con1:id>
+                                            <con3:expr>
+                                                <con1:xsltTransform>
+                                                    <con1:resource ref="AcctSvc/resources/xslt/AcctTrnAddAdv/xslt_in_Acct345AdvRq_to_AcctTrnAddAdvTTInqRq"/>
+                                                    <con1:input>$body/*</con1:input>
+                                                </con1:xsltTransform>
+                                            </con3:expr>
+                                        </con3:replace>
+                                    </con3:requestTransform>
+                                    <con3:responseTransform/>
+                                </con3:wsCallout>
+                                <con2:ifThenElse xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                    <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a016235.3331f854.0.16610cee546.N7ef3</con6:id>
+                                    <con2:case id="_BranchId-a016235.3331f854.0.16610cee546.N7ef2">
+                                        <con2:condition>
+                                            <con6:xqueryText xmlns:con6="http://www.bea.com/wli/sb/stages/config">fn:normalize-space($body/eoptAcctTrnAddAdvInq:AcctTrnAddAdvTTInqRs/eoptAcctTrnAddAdvInq:Status/eoStatus:StatusCode)='M0000'</con6:xqueryText>
+                                        </con2:condition>
+                                        <con2:actions>
+                                            <con2:replace varName="body" contents-only="true">
+                                                <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a016235.3331f854.0.16610cee546.N7ef0</con6:id>
+                                                <con2:expr>
+                                                    <con6:xsltTransform xmlns:con6="http://www.bea.com/wli/sb/stages/config">
+                                                        <con6:resource ref="AcctSvc/resources/xslt/AcctTrnAddAdv/xslt_in_AcctTrnAddAdvTTInqRs_to_AcctTrnAddAdvRq"/>
+                                                        <con6:input>$body/*</con6:input>
+                                                        <con6:param name="varRq">
+                                                            <con6:path>$bodyIN</con6:path>
+                                                        </con6:param>
+                                                    </con6:xsltTransform>
+                                                </con2:expr>
+                                            </con2:replace>
+                                        </con2:actions>
+                                    </con2:case>
+                                    <con2:case id="_BranchId-a016235.3331f854.0.16610cee546.N7eef">
+                                        <con2:condition>
+                                            <con6:xqueryText xmlns:con6="http://www.bea.com/wli/sb/stages/config">fn:normalize-space($body/eoptAcctTrnAddAdvInq:AcctTrnAddAdvTTInqRs/eoptAcctTrnAddAdvInq:Status/eoStatus:StatusCode)='M0002'</con6:xqueryText>
+                                        </con2:condition>
+                                        <con2:actions>
+                                            <con2:Error>
+                                                <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a016235.3331f854.0.16610cee546.N7eee</con6:id>
+                                                <con2:errCode>M0006</con2:errCode>
+                                                <con2:message>CONSULTA DE ENRIQUECIMIENTO NO DEVUELVE REGISTROS</con2:message>
+                                            </con2:Error>
+                                        </con2:actions>
+                                    </con2:case>
+                                    <con2:default>
+                                        <con2:Error>
+                                            <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a016235.3331f854.0.16610cee546.N7eed</con6:id>
+                                            <con2:errCode>M0006</con2:errCode>
+                                            <con2:message>FALLO EN CONSULTA DE ENRIQUECIMIENTO DE LA TRAMA</con2:message>
+                                        </con2:Error>
+                                    </con2:default>
+                                </con2:ifThenElse>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:case id="_BranchId-a016235.3331f854.0.16610cee546.N7eac">
+                            <con3:condition>
+                                <con1:xqueryText>$varOperation = 'AcctTrnAddACHAdv'</con1:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:wsCallout>
+                                    <con1:id>_ActionId-a016235.3331f854.0.16610cee546.N7d97</con1:id>
+                                    <con1:disabled>true</con1:disabled>
+                                    <con3:service ref="AcctTS/proxy/PX_Acct_V1.0" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con3:operation>AcctTrnAddAdvACHInq</con3:operation>
+                                    <con3:request>
+                                        <con3:body wrapped="true">body</con3:body>
+                                        <con3:header>header</con3:header>
+                                    </con3:request>
+                                    <con3:response>
+                                        <con3:body wrapped="true">body</con3:body>
+                                        <con3:header>header</con3:header>
+                                    </con3:response>
+                                    <con3:requestTransform>
+                                        <con3:replace varName="body" contents-only="true">
+                                            <con1:id>_ActionId-a016235.3331f854.0.16610cee546.N7d96</con1:id>
+                                            <con3:expr>
+                                                <con1:xsltTransform>
+                                                    <con1:resource ref="AcctSvc/resources/xslt/AcctTrnAddAdv/xslt_in_Acct345AdvRq_to_AcctTrnAddAdvACRInqRq"/>
+                                                    <con1:input>$body/*</con1:input>
+                                                </con1:xsltTransform>
+                                            </con3:expr>
+                                        </con3:replace>
+                                    </con3:requestTransform>
+                                    <con3:responseTransform/>
+                                </con3:wsCallout>
+                                <con2:ifThenElse xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                    <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a016235.3331f854.0.16610cee546.N7cee</con6:id>
+                                    <con6:disabled xmlns:con6="http://www.bea.com/wli/sb/stages/config">true</con6:disabled>
+                                    <con2:case id="_BranchId-a016235.3331f854.0.16610cee546.N7ced">
+                                        <con2:condition>
+                                            <con6:xqueryText xmlns:con6="http://www.bea.com/wli/sb/stages/config">fn:normalize-space($body/eoptAcctTrnAddAdvInq:AcctTrnAddAdvACRInqRs/eoptAcctTrnAddAdvInq:Status/eoStatus:StatusCode)='M0000'</con6:xqueryText>
+                                        </con2:condition>
+                                        <con2:actions>
+                                            <con2:replace varName="body" contents-only="true">
+                                                <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a016235.3331f854.0.16610cee546.N7cec</con6:id>
+                                                <con2:expr>
+                                                    <con6:xsltTransform xmlns:con6="http://www.bea.com/wli/sb/stages/config">
+                                                        <con6:resource ref="AcctSvc/resources/xslt/AcctTrnAddAdv/xslt_in_AcctTrnAddAdvACRInqRs_to_AcctTrnAddAdvRq"/>
+                                                        <con6:input>$body/*</con6:input>
+                                                        <con6:param name="varRq">
+                                                            <con6:path>$bodyIN</con6:path>
+                                                        </con6:param>
+                                                    </con6:xsltTransform>
+                                                </con2:expr>
+                                            </con2:replace>
+                                        </con2:actions>
+                                    </con2:case>
+                                    <con2:case id="_BranchId-a016235.3331f854.0.16610cee546.N7ceb">
+                                        <con2:condition>
+                                            <con6:xqueryText xmlns:con6="http://www.bea.com/wli/sb/stages/config">fn:normalize-space($body/eoptAcctTrnAddAdvInq:AcctTrnAddAdvACRInqRs/eoptAcctTrnAddAdvInq:Status/eoStatus:StatusCode)='M0002'</con6:xqueryText>
+                                        </con2:condition>
+                                        <con2:actions>
+                                            <con2:Error>
+                                                <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a016235.3331f854.0.16610cee546.N7cea</con6:id>
+                                                <con2:errCode>M0006</con2:errCode>
+                                                <con2:message>CONSULTA DE ENRIQUECIMIENTO NO DEVUELVE REGISTROS</con2:message>
+                                            </con2:Error>
+                                        </con2:actions>
+                                    </con2:case>
+                                    <con2:default>
+                                        <con2:Error>
+                                            <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a016235.3331f854.0.16610cee546.N7ce9</con6:id>
+                                            <con2:errCode>M0006</con2:errCode>
+                                            <con2:message>FALLO EN CONSULTA DE ENRIQUECIMIENTO DE LA TRAMA</con2:message>
+                                        </con2:Error>
+                                    </con2:default>
+                                </con2:ifThenElse>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default/>
+                    </con3:ifThenElse>
+                    <con3:assign varName="varOperation">
+                        <con1:id>_ActionId-a00000a.44f5492d.0.1646a9a762d.N7f04</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>'AcctTrnAddAdv'</con1:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:replace varName="header" contents-only="true">
+                        <con1:id>_ActionId-a016235.N526c71cc.0.165a105107c.N7db8</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>$varHeader</con1:xqueryText>
+                        </con3:expr>
+                    </con3:replace>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a016235.524fd01d.0.165ab6bd828.N7ffd" name="Stg_AuditIn">
+                <con:context/>
+                <con:actions>
+                    <con3:ifThenElse>
+                        <con1:id>_ActionId-a016235.524fd01d.0.165ab6bd828.N7ff2</con1:id>
+                        <con3:case id="_BranchId-a016235.524fd01d.0.165ab6bd828.N7ff1">
+                            <con3:condition>
+                                <con1:xqueryText>data($var_DR/rule[@id=$varOperation]/auditRecord) = 'true'</con1:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con4:route>
+                                    <con1:id>_ActionId-a016235.524fd01d.0.165ab6bd828.N7ffe</con1:id>
+                                    <con4:service ref="Commons/proxy/PXL_AuditAdd_V1.0" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con4:outboundTransform/>
+                                </con4:route>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default/>
+                    </con3:ifThenElse>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-a01183b.Nceec257.0.1646138a655.N7eec" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config"/>
+        <con:pipeline type="error" name="error-a01183b.Nceec257.0.1646138a655.N7e52">
+            <con:stage id="_StageId-a016235.N526c71cc.0.165a105107c.N7e05" name="stg_ErrorHandler" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con1:ifThenElse xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a016235.N526c71cc.0.165a105107c.N7e04</con2:id>
+                        <con1:case id="_BranchId-a016235.N526c71cc.0.165a105107c.N7e03">
+                            <con1:condition>
+                                <con2:xqueryText>exists($body/soap-env:Fault//*:SystemFault)</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions/>
+                        </con1:case>
+                        <con1:default>
+                            <con1:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-a016235.N526c71cc.0.165a105107c.N7e02</con2:id>
+                                <con1:expr>
+                                    <con2:xqueryText><![CDATA[<soap-env:Fault>
+      <faultcode>{data($fault/ctx:errorCode)}</faultcode>
+      <faultstring>{data($fault/ctx:reason)}</faultstring>
+<detail>
+  <eoStatus:SystemFault xmlns:eoStatus="http://xmlns.banesco.com/eo/Status_V1.0">
+      <eoStatus:StatusCode>M0003</eoStatus:StatusCode>
+      <eoStatus:StatusDesc>ERROR TECNICO</eoStatus:StatusDesc>
+      {
+        if(not(fn:empty($fault/ctx:details/*:ReceivedFaultDetail))) then
+          <eoStatus:AdditionalStatus>
+            <eoStatus:StatusCode>{data($fault/ctx:details/*:ReceivedFaultDetail/*:faultcode)}</eoStatus:StatusCode>
+            <eoStatus:StatusDesc>{data($fault/ctx:details/*:ReceivedFaultDetail/*:faultstring)}</eoStatus:StatusDesc>
+          </eoStatus:AdditionalStatus>
+        else
+          <eoStatus:AdditionalStatus>
+            <eoStatus:StatusCode>{data($fault/ctx:errorCode)}</eoStatus:StatusCode>
+            <eoStatus:StatusDesc>{data($fault/ctx:reason)}</eoStatus:StatusDesc>
+          </eoStatus:AdditionalStatus>
+      }
+  </eoStatus:SystemFault>
+  <location>
+    <node>{data($fault/ctx:location/ctx:node)}</node>
+    <pipeline>{data($fault/ctx:location/ctx:pipeline)}</pipeline>
+    <stage>{data($fault/ctx:location/ctx:stage)}</stage>
+    <path>{data($fault/ctx:location/ctx:path)}</path>
+  </location>
+</detail>
+</soap-env:Fault>]]></con2:xqueryText>
+                                </con1:expr>
+                            </con1:replace>
+                            <con1:assign varName="header">
+                                <con2:id>_ActionId-a016235.N526c71cc.0.165a105107c.N7e01</con2:id>
+                                <con1:expr>
+                                    <con2:xqueryText>&lt;soap-env:Header>      
+&lt;/soap-env:Header></con2:xqueryText>
+                                </con1:expr>
+                            </con1:assign>
+                        </con1:default>
+                    </con1:ifThenElse>
+                    <con4:ifThenElse xmlns:con3="http://www.bea.com/wli/sb/stages/publish/config" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a016235.6ead1dfd.0.165a62b58d6.N7f74</con2:id>
+                        <con1:case id="_BranchId-a016235.6ead1dfd.0.165a62b58d6.N7f73">
+                            <con1:condition>
+                                <con2:xqueryText>data($var_DR/rule[@id=$varOperation]/auditRecord) = 'true'</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con3:route xmlns:con5="http://www.bea.com/wli/sb/stages/publish/config">
+                                    <con2:id>_ActionId-a016235.6ead1dfd.0.165a62b58d6.N7f72</con2:id>
+                                    <con3:service ref="Commons/proxy/PXL_AuditAdd_V1.0" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con3:outboundTransform/>
+                                </con3:route>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default/>
+                    </con4:ifThenElse>
+                    <con2:reply isError="true">
+                        <con2:id>_ActionId-a016235.N526c71cc.0.165a105107c.N7e00</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PPN_AcctTrnAddAdv" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+                <con:request>request-a01183b.Nceec257.0.1646138a655.N7ef8</con:request>
+                <con:response>response-a01183b.Nceec257.0.1646138a655.N7eec</con:response>
+            </con:pipeline-node>
+            <con:route-node name="Route_Branch">
+                <con:context/>
+                <con:actions>
+                    <con3:dynamic-route>
+                        <con1:id>_ActionId-a016235.3349c2c.0.1660c213dcd.N7fcc</con1:id>
+                        <con3:service>
+                            <con1:xqueryText><![CDATA[let $service := $var_DR/rule[@id=data($varOperation)]/component_target_tech
+let $operation := $varOperation
+return
+  <ctx:route>
+       <ctx:service isProxy='true'>{data($service)}</ctx:service>
+       <ctx:operation>{data($operation)}</ctx:operation>
+  </ctx:route>]]></con1:xqueryText>
+                        </con3:service>
+                        <con3:outboundTransform/>
+                        <con3:responseTransform/>
+                    </con3:dynamic-route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+        <con:shared-variables>
+            <con:variable>varOperation</con:variable>
+            <con:variable>varHeader</con:variable>
+        </con:shared-variables>
+    </con:router>
+</con:pipelineEntry>

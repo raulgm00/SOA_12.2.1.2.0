@@ -1,0 +1,2 @@
+@javax.xml.bind.annotation.XmlSchema(namespace = "http://www.bcie.org/herramientaOfismatica/ReciboPago", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
+package www.bcie.org.recibopago;

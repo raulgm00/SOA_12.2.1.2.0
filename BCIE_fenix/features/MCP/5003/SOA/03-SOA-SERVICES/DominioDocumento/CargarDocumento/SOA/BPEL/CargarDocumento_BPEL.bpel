@@ -1,0 +1,467 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<?audit suppress oracle.ide.audit.disabled-rules?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Aug 07 18:58:39 CDT 2015
+  Author:  caff
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="cargarDocumento"
+               targetNamespace="http://xmlns.oracle.com/DominioDocumento/CargarDocumento/cargarDocumento"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioDocumento/CargarDocumento/cargarDocumento"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/DocumentoService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+             xmlns:ns2="http://www.bcie.org/DocumentoMO" xmlns:ns3="http://www.bcie.org/DocumentoBO"
+              xmlns:ns4="http://www.bcie.org/ResultBO"
+         xmlns:ns5="http://www.bcie.org/ErrorBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns8="http://www.bcie.org/CuestionarioBO" xmlns:ns7="http://www.bcie.org/OperacionBO"
+         xmlns:ns9="http://www.bcie.org/PreguntaBO" xmlns:ns6="http://www.bcie.org/ClienteBO"
+         xmlns:ns10="http://xmlns.bcie.com/CorreoElectronicoService" xmlns:ns11="http://www.bcie.org/CorreoMO"
+         xmlns:ns12="http://www.bcie.org/CorreoBO" xmlns:ns14="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns13="http://www.bcie.org/CatalogoBO" xmlns:ns15="http://www.bcie.org/ProductoBO"
+         xmlns:ns22="http://www.bcie.org/TerminoBO" xmlns:ns19="http://www.bcie.org/CommonBO"
+         xmlns:ns18="http://www.bcie.org/LineaCreditoBO" xmlns:ns20="http://www.bcie.org/CondicionBO"
+         xmlns:ns24="http://www.bcie.org/HerramientaCEBO" xmlns:ns23="http://www.bcie.org/ComisionBO"
+         xmlns:ns16="http://www.bcie.org/DesembolsoBO" xmlns:ns17="http://www.bcie.org/ContratoBO"
+         xmlns:ns21="http://www.bcie.org/AtributoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/DocumentoService" location="../WSDLs/CargarDocumentoWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <import namespace="http://xmlns.bcie.com/DocumentoService"  location="oramds:/apps/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Wsdl/ADAPTER/CargarDocumentoOnBaseSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" />
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="cargardocumento_client" partnerLinkType="ns1:cargarDocumento" myRole="DocumentoPT"/>
+    <partnerLink name="EnviarCorreoElectronicoService" partnerLinkType="ns10:EnviarCorreoElectronicoService"
+                 partnerRole="CorreoElectronicoPT"/>
+    <partnerLink name="ConsultarAdjuntoService" partnerLinkType="ns1:ConsultarAdjuntoService"
+                 partnerRole="ConsultarAdjuntoPT"/>
+    <partnerLink name="ActualizarAdjuntoService" partnerLinkType="ns1:ActualizarAdjuntoService"
+                 partnerRole="ActualizarAdjuntoPT"/>
+    <partnerLink name="CargarDocumentoOnBase" partnerLinkType="ns1:CargarDocumentoOnBase"
+                 partnerRole="CargarDocumentoPT"/>
+    <partnerLink name="ModificarDocumentoOnBaseService" partnerLinkType="ns1:ModificarDocumentoOnBaseService"
+                 partnerRole="ModificarDocumentoPT"/>
+    <partnerLink name="ActualizarDocumentoService" partnerLinkType="ns1:ActualizarDocumentoService"
+                 partnerRole="ActualizarDocumentoPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestCargarDocumentoMessage"/>
+    <variable name="fault" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="globalCount" type="xsd:int"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence>
+     <scope name="ScopeCorreoElectronico">
+        <variables>
+          <variable name="enviarCorreoElectronico_InputVariable"
+                    messageType="ns10:requestEnviarCorreoElectronicoMessage"/>
+          <variable name="enviarCorreoElectronico_OutputVariable"
+                    messageType="ns10:responseEnviarCorreoElectronicoMessage"/>
+        </variables>
+        <sequence name="Sequence8">
+          <assign name="AssignEnviarCorreoElectronicoInputVariable">
+              <copy>
+                <from>2</from>
+                <to>$enviarCorreoElectronico_InputVariable.request/ns11:CorreoElectronico/ns12:id_plantilla</to>
+              </copy>
+              <copy>
+                <from>'carflores'</from>
+                <to>$enviarCorreoElectronico_InputVariable.request/ns11:CorreoElectronico/ns12:to/ns12:usuario</to>
+              </copy>
+              <copy bpelx:insertMissingToData="yes">
+                <from>'ADJUNTO'</from>
+                <to>$enviarCorreoElectronico_InputVariable.request/ns11:CorreoElectronico/ns12:parametros/ns12:tag</to>
+              </copy>
+              <copy>
+                <from>number($inputVariable.request/ns2:Documentos/ns3:Documento/ns3:idAdjunto)</from>
+                <to>$enviarCorreoElectronico_InputVariable.request/ns11:CorreoElectronico/ns12:parametros/ns12:valor</to>
+              </copy>
+            </assign>
+          <invoke name="Invoke_EnviarCorreoElectronico" bpelx:invokeAsDetail="no"
+                  partnerLink="EnviarCorreoElectronicoService" portType="ns10:CorreoElectronicoPT"
+                  operation="enviarCorreoElectronico" inputVariable="enviarCorreoElectronico_InputVariable"
+                  outputVariable="enviarCorreoElectronico_OutputVariable"/>
+            <rethrow name="RethrowError"/>
+        </sequence>
+      </scope>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in cargarDocumento.wsdl) -->
+    <receive name="receiveInput" partnerLink="cargardocumento_client" portType="ns1:DocumentoPT" operation="cargarDocumento" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignFlowName">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idAdjunto= ",string($inputVariable.request/ns2:Documentos/ns3:Documento[1]/ns3:idAdjunto)))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <forEach parallel="yes" counterName="ContadorAdjunto" name="ForEachAdjunto">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($inputVariable.request/ns2:Documentos/ns3:Documento)</finalCounterValue>
+      <scope name="ScopeForEachAdjunto">
+        <variables>
+             <variable name="consultarAdjuntoByIdAdjunto_OutputVariable"
+                        messageType="ns1:responseConsultarAdjuntoByIdAdjuntoMessage"/>
+                         <variable name="cargarDocumentoOnBase_OutputVariable"
+                        messageType="ns1:responseCargarDocumentoOnBaseMessage"/>
+        </variables>
+        <sequence name="Sequence1">
+          <assign name="AssignContadorGlobal">
+            <copy>
+              <from>$ContadorAdjunto</from>
+              <to>$globalCount</to>
+            </copy>
+          </assign>
+          <scope name="ScopeConsultarAdjunto">
+            <variables>
+              <variable name="consultarAdjuntoByIdAdjunto_InputVariable"
+                        messageType="ns1:requestConsultarAdjuntoByIdAdjuntoMessage"/>
+           
+            </variables>
+            <faultHandlers>
+              <catchAll>
+                <rethrow name="Rethrow"/>
+              </catchAll>
+            </faultHandlers>
+            <sequence name="Sequence2">
+              <assign name="Assign_ConsultarAdjuntoInputVariable">
+                <copy>
+                  <from>$inputVariable.request/ns2:Documentos/ns3:Documento[$ContadorAdjunto]/ns3:idAdjunto</from>
+                  <to>$consultarAdjuntoByIdAdjunto_InputVariable.request/ns2:idAdjunto</to>
+                </copy>
+              </assign>
+              <invoke name="Invoke_ConsultarAdjunto" partnerLink="ConsultarAdjuntoService" portType="ns1:ConsultarAdjuntoPT"
+                      operation="consultarAdjuntoByIdAdjunto" inputVariable="consultarAdjuntoByIdAdjunto_InputVariable"
+                      outputVariable="consultarAdjuntoByIdAdjunto_OutputVariable" bpelx:invokeAsDetail="no"/>
+              <if name="IfConsultarAdjunto">
+                <documentation>
+                  <![CDATA[ConsultaAdjunto Exitosa]]>
+                </documentation>
+                <condition>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Resultado/ns4:result = 'OK'  and $consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento/ns3:content !=''</condition>
+                <sequence name="Sequence11">
+                  <scope name="ScopeTipoArchivo">
+                    <sequence name="Sequence16">
+                      <assign name="Assign_TipoArchivo">
+                        <copy>
+                          <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioDocumento/Documento/V1/DVM/TipoArchivo.dvm","tipoArchivo",$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento/ns3:mime_type,"tipoOnBase","???")</from>
+                          <to>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento/ns3:mime_type</to>
+                        </copy>
+                      </assign>
+                      <if name="IfTipoNone">
+                        <documentation>
+                          <![CDATA[TipoNoEncontrado]]>
+                        </documentation>
+                        <condition>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento/ns3:mime_type = 'none'</condition>
+                        <sequence name="Sequence17">
+                            <scope name="ScopeCorreoElectronico">
+        <variables>
+          <variable name="enviarCorreoElectronico_InputVariable"
+                    messageType="ns10:requestEnviarCorreoElectronicoMessage"/>
+          <variable name="enviarCorreoElectronico_OutputVariable"
+                    messageType="ns10:responseEnviarCorreoElectronicoMessage"/>
+        </variables>
+        <sequence name="Sequence8">
+          <assign name="AssignEnviarCorreoElectronicoInputVariable">
+                                <copy>
+                                  <from>'carflores'</from>
+                                  <to>$enviarCorreoElectronico_InputVariable.request/ns11:CorreoElectronico/ns12:to</to>
+                                </copy>
+                                <copy>
+                                  <from>4</from>
+                                  <to>$enviarCorreoElectronico_InputVariable.request/ns11:CorreoElectronico/ns12:id_plantilla</to>
+                                </copy>
+                                <copy>
+                                  <from>'ADJUNTO'</from>
+                                  <to>$enviarCorreoElectronico_InputVariable.request/ns11:CorreoElectronico/ns12:parametros/ns12:tag</to>
+                                </copy>
+                                <copy>
+                                  <from>number($inputVariable.request/ns2:Documentos/ns3:Documento/ns3:idAdjunto)</from>
+                                  <to>$enviarCorreoElectronico_InputVariable.request/ns11:CorreoElectronico/ns12:parametros/ns12:valor</to>
+                                </copy>
+                              </assign>
+          <invoke name="Invoke_EnviarCorreoElectronico" bpelx:invokeAsDetail="no"
+                  partnerLink="EnviarCorreoElectronicoService" portType="ns10:CorreoElectronicoPT"
+                  operation="enviarCorreoElectronico" inputVariable="enviarCorreoElectronico_InputVariable"
+                  outputVariable="enviarCorreoElectronico_OutputVariable"/>
+          <exit name="Exit"/>
+        </sequence>
+      </scope>
+                      
+                        </sequence>
+                        <else>
+                          <documentation>
+                            <![CDATA[MimeTypeEncontrado]]>
+                          </documentation>
+                          <empty name="MimeTypeEncontrado"/>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                  <assign name="AssignIdDocumento">
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento/ns3:idDocumento</from>
+                      <to>$inputVariable.request/ns2:Documentos/ns3:Documento[$ContadorAdjunto]/ns3:idDocumento</to>
+                    </copy>
+                  </assign>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[ConsultaAdjunto Fallida]]>
+                  </documentation>
+                  <sequence name="Sequence19">
+                       <scope name="ScopeCorreoElectronico">
+        <variables>
+          <variable name="enviarCorreoElectronico_InputVariable"
+                    messageType="ns10:requestEnviarCorreoElectronicoMessage"/>
+          <variable name="enviarCorreoElectronico_OutputVariable"
+                    messageType="ns10:responseEnviarCorreoElectronicoMessage"/>
+        </variables>
+        <sequence name="Sequence8">
+          <assign name="AssignEnviarCorreoElectronicoInputVariable">
+                          <copy>
+                            <from>'carflores'</from>
+                            <to>$enviarCorreoElectronico_InputVariable.request/ns11:CorreoElectronico/ns12:to</to>
+                          </copy>
+                          <copy>
+                            <from>10</from>
+                            <to>$enviarCorreoElectronico_InputVariable.request/ns11:CorreoElectronico/ns12:id_plantilla</to>
+                          </copy>
+                          <copy>
+                            <from>'ADJUNTO'</from>
+                            <to>$enviarCorreoElectronico_InputVariable.request/ns11:CorreoElectronico/ns12:parametros/ns12:tag</to>
+                          </copy>
+                          <copy>
+                            <from>number($inputVariable.request/ns2:Documentos/ns3:Documento/ns3:idAdjunto)</from>
+                            <to>$enviarCorreoElectronico_InputVariable.request/ns11:CorreoElectronico/ns12:parametros/ns12:valor</to>
+                          </copy>
+                        </assign>
+          <invoke name="Invoke_EnviarCorreoElectronico" bpelx:invokeAsDetail="no"
+                  partnerLink="EnviarCorreoElectronicoService" portType="ns10:CorreoElectronicoPT"
+                  operation="enviarCorreoElectronico" inputVariable="enviarCorreoElectronico_InputVariable"
+                  outputVariable="enviarCorreoElectronico_OutputVariable"/>
+                        <throw name="ThrowErrorConsultaAdjunto" faultName="bpelx:remoteFault" faultVariable="fault"/>
+        </sequence>
+      </scope>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+          <scope name="ScopeCargarDocumento">
+            <variables>
+              <variable name="cargarDocumentoOnBase_InputVariable"
+                        messageType="ns1:requestCargarDocumentoOnBaseMessage"/>
+              <variable name="contadorIntentos" type="xsd:int"/>
+              <variable name="intentosMaximos" type="xsd:int"/>
+            </variables>
+            <faultHandlers>
+              <catchAll>
+                <rethrow name="Rethrow"/>
+              </catchAll>
+            </faultHandlers>
+            <sequence name="Sequence4">
+              <assign name="Assign_CargarDocumentoInputVariable">
+                <copy>
+                  <from>1</from>
+                  <to>$contadorIntentos</to>
+                </copy>
+                <copy>
+                  <from>'none'</from>
+                  <to>$cargarDocumentoOnBase_OutputVariable.response/ns2:Resultado/ns4:result</to>
+                </copy>
+                <copy>
+                  <from>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento</from>
+                  <to>$cargarDocumentoOnBase_InputVariable.request/ns2:Documentos/ns3:Documento</to>
+                </copy>
+                <copy>
+                  <from>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Cliente</from>
+                  <to>$cargarDocumentoOnBase_InputVariable.request/ns2:Cliente</to>
+                </copy>
+                <copy>
+                  <from>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Operacion</from>
+                  <to>$cargarDocumentoOnBase_InputVariable.request/ns2:Operacion</to>
+                </copy>
+              </assign>
+              <while name="WhileCargaDocumento">
+                <condition>$cargarDocumentoOnBase_OutputVariable.response/ns2:Resultado/ns4:result != 'OK' and $contadorIntentos &lt;= 2</condition>
+                <sequence>
+                  <assign name="AumentarContador">
+                    <copy>
+                      <from>$contadorIntentos+1</from>
+                      <to>$contadorIntentos</to>
+                    </copy>
+                  </assign>
+                  <scope name="ScopeInvokeCargar">
+                    <faultHandlers>
+                      <catchAll>
+                        <wait name="WaitCatch">
+                          <for>'PT8M'</for>
+                        </wait>
+                      </catchAll>
+                    </faultHandlers>
+                    <sequence name="Sequence20">
+                      <if name="IfError">
+                        <documentation>
+                          <![CDATA[ErrorCarga]]>
+                        </documentation>
+                        <condition>$cargarDocumentoOnBase_OutputVariable.response/ns2:Resultado/ns4:result='ERROR'</condition>
+                        <sequence name="Sequence21">
+                          <wait name="WaitError">
+                            <for>'PT5M'</for>
+                          </wait>
+                        </sequence>
+                        <else>
+                          <documentation>
+                            <![CDATA[Correcto]]>
+                          </documentation>
+                          <empty name="EjecucionCorrecta"/>
+                        </else>
+                      </if>
+                      <invoke name="Invoke_CargarDocumento" partnerLink="CargarDocumentoOnBase"
+                              portType="ns1:CargarDocumentoPT" operation="cargarDocumentoOnBase"
+                              inputVariable="cargarDocumentoOnBase_InputVariable"
+                              outputVariable="cargarDocumentoOnBase_OutputVariable" bpelx:invokeAsDetail="no"/>
+                    </sequence>
+                  </scope>
+                </sequence>
+              </while>
+              <if name="IfErrorCargarDocumento">
+                <documentation>
+                  <![CDATA[CargarDocumento Exitosa]]>
+                </documentation>
+                <condition>$cargarDocumentoOnBase_OutputVariable.response/ns2:Resultado/ns4:result = 'OK'</condition>
+                <empty name="CargaExitosa"/>
+                <else>
+                  <documentation>
+                    <![CDATA[CargaDocumento fallida]]>
+                  </documentation>
+                  <sequence name="Sequence7">
+                    <throw name="ThrowCargaDocumentoOnBase" faultName="bpelx:remoteFault"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+          <scope name="ScopeActualizarAdjunto">
+            <variables>
+              <variable name="actualizarAdjunto_InputVariable" messageType="ns1:requestActualizarAdjuntoMessage"/>
+              <variable name="actualizarAdjunto_OutputVariable" messageType="ns1:responseActualizarAdjuntoMessage"/>
+            </variables>
+            <faultHandlers>
+              <catchAll>
+                <rethrow name="Rethrow"/>
+              </catchAll>
+            </faultHandlers>
+            <sequence name="Sequence5">
+              <assign name="AssignActualizarAdjuntoInputVariable">
+                <copy>
+                  <from>$inputVariable.request/ns2:Documentos/ns3:Documento[$ContadorAdjunto]/ns3:idAdjunto</from>
+                  <to>$actualizarAdjunto_InputVariable.request/ns2:Documento/ns3:idAdjunto</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>'1'</from>
+                  <to>$actualizarAdjunto_InputVariable.request/ns2:Documento/ns3:content</to>
+                </copy>
+                <copy>
+                  <from>$cargarDocumentoOnBase_OutputVariable.response/ns2:Resultado/ns4:message</from>
+                  <to>$actualizarAdjunto_InputVariable.request/ns2:Documento/ns3:idExterno</to>
+                </copy>
+              </assign>
+              <invoke name="Invoke_ActualizarAdjunto" partnerLink="ActualizarAdjuntoService"
+                      portType="ns1:ActualizarAdjuntoPT" operation="actualizarAdjunto"
+                      inputVariable="actualizarAdjunto_InputVariable" outputVariable="actualizarAdjunto_OutputVariable"
+                      bpelx:invokeAsDetail="no"/>
+              <if name="IfActualizarAdjunto">
+                <documentation>
+                  <![CDATA[Actualizacion Exitosa]]>
+                </documentation>
+                <condition>$actualizarAdjunto_OutputVariable.response/ns2:Resultado/ns4:result = 'OK'</condition>
+                <empty name="ActualizacionExitosa"/>
+                <else>
+                  <documentation>
+                    <![CDATA[Actualizacion Fallida]]>
+                  </documentation>
+                  <sequence name="Sequence12">
+                    <throw name="ThrowActualizarAdjunto" faultName="bpelx:remoteFault" faultVariable="fault"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+          <scope name="ScopeActualizarAccion">
+            <variables>
+              <variable name="actualizarDocumento_InputVariable" messageType="ns1:requestActualizarDocumentoMessage"/>
+              <variable name="actualizarDocumento_OutputVariable" messageType="ns1:responseActualizarDocumentoMessage"/>
+            </variables>
+            <sequence name="Sequence9">
+              <assign name="Assign_ActualizarDocumentoInput">
+                <copy>
+                  <from>$inputVariable.request/ns2:Documentos/ns3:Documento[$ContadorAdjunto]/ns3:idDocumento</from>
+                  <to>$actualizarDocumento_InputVariable.request/ns2:Documento/ns3:idDocumento</to>
+                </copy>
+                <copy>
+                  <from>'4'</from>
+                  <to>$actualizarDocumento_InputVariable.request/ns2:Documento/ns3:accionARealizar</to>
+                </copy>
+              </assign>
+              <invoke name="Invoke_ActualizarDocumento" bpelx:invokeAsDetail="no"
+                      partnerLink="ActualizarDocumentoService" portType="ns1:ActualizarDocumentoPT"
+                      operation="actualizarDocumento" inputVariable="actualizarDocumento_InputVariable"
+                      outputVariable="actualizarDocumento_OutputVariable"/>
+            </sequence>
+          </scope>
+        </sequence>
+      </scope>
+    </forEach>
+  </sequence>
+</process>

@@ -1,0 +1,666 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Nov 21 10:39:18 CST 2016
+  Author:  dalia-reyes
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="InformeNoObjecionBPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/Adquisicion/InformeNoObjecionBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/Adquisicion/InformeNoObjecionBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/AdquisicionService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/ConsultarAdquisicion"
+         xmlns:ns3="http://www.bcie.org/CrearReporteNoObjecion" xmlns:ns4="http://www.bcie.org/AdquisicionMO"
+         xmlns:ns14="http://www.bcie.org/TerminoBO" xmlns:ns6="http://www.bcie.org/OperacionBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns19="http://www.bcie.org/ResultBO"
+         xmlns:ns17="http://www.bcie.org/CommonBO" xmlns:ns12="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns9="http://www.bcie.org/ProductoBO" xmlns:ns13="http://www.bcie.org/CondicionBO"
+         xmlns:ns10="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns18="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns15="http://www.bcie.org/ComisionBO" xmlns:ns8="http://www.bcie.org/CatalogoBO"
+         xmlns:ns16="http://www.bcie.org/DesembolsoBO" xmlns:ns5="http://www.bcie.org/AdquisicionBO"
+         xmlns:ns11="http://www.bcie.org/ContratoBO" xmlns:ns7="http://www.bcie.org/ClienteBO"
+         xmlns:ns20="http://www.bcie.org/ErrorBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns21="http://www.bcie.org/DocumentoBO"
+         xmlns:ns22="http://xmlns.oracle.com/DominioOperacion/Adquisicion/EventDefinition1"
+         xmlns:ns23="http://xmlns.oracle.com/DominioOperacion/Adquisicion/Publicar"
+         xmlns:ns24="http://xmlns.oracle.com/DominioOperacion/Adquisicion/PublicarInformeResultadosAdjudicado"
+         xmlns:ns25="http://xmlns.oracle.com/DominioOperacion/Adquisicion/PublicarAviso"
+         xmlns:ns26="http://xmlns.oracle.com/DominioOperacion/Adquisicion/PublicarInformeResultadosOtros"
+         xmlns:ns27="http://www.bcie.org/ConsultarNoObjecion"
+         xmlns:ns28="http://www.bcie.org/CrearActualizarNoObjecionSAD"
+         xmlns:ns29="http://xmlns.oracle.com/OSB_BCIE/MDS/AdquisicionAsync"
+         xmlns:ns30="http://xmlns.oracle.com/pcbpel/adapter/db/DominioOperacion/Adquisicion/dbConsultarAdquisicionWeb"
+         xmlns:ns31="urn:bcieBinding" xmlns:ns32="http://xmlns.oracle.com/pcbpel/adapter/db/dbConsultarAdquisicionWeb">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ConsultarAdquisicion"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Adquisicion/V1/Wsdl/ADAPTER/ConsultarAdquisicionSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/AdquisicionService" location="../WSDLs/InformeNoObjecionSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="ConsultarAdquisicion" partnerLinkType="ns2:ConsultarAdquisicion"
+                 partnerRole="ConsultarAdquisicionPT"/>
+    <partnerLink name="CrearReporteNoObjecion" partnerLinkType="ns3:CrearReporteNoObjecion"
+                 partnerRole="CrearReporteNoObjecionPT"/>
+    <partnerLink name="ConsultarNoObjecionById_PS" partnerLinkType="ns27:ConsultarNoObjecionById_PS"
+                 partnerRole="ConsultarNoObjecionPT"/>
+    <partnerLink name="CrearActualizarNoObjecion_PS" partnerLinkType="ns28:CrearActualizarNoObjecion_PS"
+                 partnerRole="CrearActualizarNoObjecionPT"/>
+    <partnerLink name="AdquisicionAsync" partnerLinkType="ns29:AdquisicionAsync" myRole="AdquisicionPT"/>
+    <partnerLink name="dbConsultarAdquisicionWeb" partnerLinkType="ns30:dbConsultarAdquisicionWeb_plt"
+                 partnerRole="dbConsultarAdquisicionWeb_role"/>
+    <partnerLink name="wsPublicarAdquisicionWeb" partnerLinkType="ns31:wsPublicarAdquisicionWeb"
+                 partnerRole="bciePortType"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseInformeNoObjecionMessage"/>
+    <variable name="inputVariable" messageType="ns29:requestMessage"/>
+    <variable name="Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_InputVariable"
+              messageType="ns30:dbConsultarAdquisicionWebInput_msg"/>
+    <variable name="Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable"
+              messageType="ns30:dbConsultarAdquisicionWebOutputCollection_msg"/>
+    <variable name="Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable" messageType="ns31:add_noticeRequest"/>
+    <variable name="Invoke_wsPublicarAdquisicionWeb_add_notice_OutputVariable" messageType="ns31:add_noticeResponse"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="faultAll">
+        <assign name="faultAll">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns19:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns4:Resultado/ns19:message</to>
+          </copy>
+        </assign>
+        <exit name="FaultAll"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in InformeNoObjecionBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="AdquisicionAsync" portType="ns29:AdquisicionPT"
+             operation="publicarNoObjecion" variable="inputVariable" createInstance="yes"/>
+    <scope name="ScopeConsultarAdquisicion">
+      <variables>
+        <variable name="inInvokeConsultarAdquisicion" messageType="ns2:requestConsultarAdquisicionMessage"/>
+        <variable name="inInvokePublicarAviso" element="ns4:PublicarAviso"/>
+        
+        <variable name="outInvokeConsultarAdquisicion" messageType="ns2:responseConsultarAdquisicionMessage"/>
+        <variable name="inInvokePublicarInformeOtros" element="ns4:PublicarInformeResultadosOtros"/>
+        <variable name="consultarNoObjecion_Input" messageType="ns27:requestConsultarNoObjecionMessage"/>
+        <variable name="consultarNoObjecion_Output" messageType="ns27:responseConsultarNoObjecionMessage"/>
+        <variable name="noObjecionCompleta" messageType="ns2:responseConsultarAdquisicionMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarAdquisicion">
+        <assign name="AssignConsultarAdquisicion">
+          <copy>
+            <from>$inputVariable.requestPublicarMessage/ns4:idAdquisicion</from>
+            <to>$inInvokeConsultarAdquisicion.request/ns4:idAdquisicion</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.requestPublicarMessage/ns4:idNoObjecion</from>
+            <to>$inInvokeConsultarAdquisicion.request/ns4:idNoObjecion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarAdquisicion" partnerLink="ConsultarAdquisicion"
+                portType="ns2:ConsultarAdquisicionPT" operation="consultarAdquisicion"
+                inputVariable="inInvokeConsultarAdquisicion" outputVariable="outInvokeConsultarAdquisicion"
+                bpelx:invokeAsDetail="no"/>
+        <if name="IfResultadoConsultarAdquisicion">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeConsultarAdquisicion.response/ns4:Resultado/ns19:result = 'OK'</condition>
+          <sequence name="SequenceOK">
+            <if name="NoObjecionRelacionada">
+              <documentation>
+                <![CDATA[Contrato]]>
+              </documentation>
+              <condition>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion/ns5:tipoNoObjecion/ns8:Id = 9 and count($outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion/ns5:tipoNoObjecion/ns5:NoObjecionRelacion) &gt; 0</condition>
+              <sequence name="Sequence1">
+                <assign name="SetAdquisicion">
+                  <copy>
+                    <from>$inputVariable.requestPublicarMessage/ns4:idAdquisicion</from>
+                    <to>$consultarNoObjecion_Input.request/ns4:idAquisicion</to>
+                  </copy>
+                </assign>
+                <invoke name="ConsultarNoObjecion" partnerLink="ConsultarNoObjecionById_PS"
+                        portType="ns27:ConsultarNoObjecionPT" operation="consultarNoObjecion"
+                        inputVariable="consultarNoObjecion_Input" outputVariable="consultarNoObjecion_Output"
+                        bpelx:invokeAsDetail="no"/>
+                <assign name="setInformeResultado">
+                  <bpelx:annotation>
+                    <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+                  </bpelx:annotation>
+                  <copy>
+                    <from>ora:doXSLTransformForDoc("../Transformations/CreaNoObjecionCompleta.xsl", $outInvokeConsultarAdquisicion.response, "consultarNoObjecion_Output.response", $consultarNoObjecion_Output.response)</from>
+                    <to variable="noObjecionCompleta" part="response"/>
+                  </copy>
+                </assign>
+              </sequence>
+              <else>
+                <empty name="SinContrato"/>
+              </else>
+            </if>
+            <if name="IfRequierePublicacion">
+              <documentation>
+                <![CDATA[SI]]>
+              </documentation>
+              <condition>$inputVariable.requestPublicarMessage/ns4:requierePublicacion = 1</condition>
+              <sequence name="SequenceSI"><if name="IfTipoNoObjecion">
+                  <documentation>
+                    <![CDATA[Aviso]]>
+                  </documentation>
+                  <condition>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion/ns5:tipoNoObjecion/ns8:Id = 2</condition>
+                  <sequence name="SequenceAviso">
+                    <assign name="AssignPublicarAviso">
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion[1]/ns5:idNoObjecion</from>
+                        <to>$inInvokePublicarAviso/ns5:idNoObjecion</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:cliente/ns7:pais/ns8:codigoExterno</from>
+                        <to>$inInvokePublicarAviso/ns5:nombrePais</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion[1]/ns5:fechaPublicacion</from>
+                        <to>$inInvokePublicarAviso/ns4:fechaPublicacion</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion[1]/ns5:fechaRecepcionPropuesta</from>
+                        <to>$inInvokePublicarAviso/ns4:fechaRecepcionPropuesta</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:operacion/ns6:unidadEjecutora</from>
+                        <to>$inInvokePublicarAviso/ns4:nombreOrganismoEjecutor</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:operacion/ns6:idOperacion</from>
+                        <to>$inInvokePublicarAviso/ns5:numeroOperacion</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:operacion/ns6:nombre</from>
+                        <to>$inInvokePublicarAviso/ns5:nombreOperacion</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:titulo</from>
+                        <to>$inInvokePublicarAviso/ns5:tituloProceso</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:numero</from>
+                        <to>$inInvokePublicarAviso/ns5:numeroProceso</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:tipoModalidad/ns8:Descripcion</from>
+                        <to>$inInvokePublicarAviso/ns5:modalidadProceso</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:objetivo</from>
+                        <to>$inInvokePublicarAviso/ns4:objetivo</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion[1]/ns5:lugarObtenerDoctoBase</from>
+                        <to>$inInvokePublicarAviso/ns4:lugarOnBase</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion[1]/ns5:fechaInicioDoctoBase</from>
+                        <to>$inInvokePublicarAviso/ns4:fechaInicioOnBase</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion[1]/ns5:fechaFinDoctoBase</from>
+                        <to>$inInvokePublicarAviso/ns4:fechaFinOnBase</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion[1]/ns5:correoInfoAdicional</from>
+                        <to>$inInvokePublicarAviso/ns4:direccionElectronica</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion[1]/ns5:fechaRecepcionPropuesta</from>
+                        <to>$inInvokePublicarAviso/ns4:fechaRecepcionPropuesta</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion[1]/ns5:direccionPresentacionPropuesta</from>
+                        <to>$inInvokePublicarAviso/ns4:direccionPresentarPropuesta</to>
+                      </copy>
+                    </assign>
+                    <assign name="Assign_dbConsultarAdquisicionWeb">
+                      <copy>
+                        <from>$inputVariable.requestPublicarMessage/ns4:idNoObjecion</from>
+                        <to>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_InputVariable.dbConsultarAdquisicionWebInput_msg/ns32:IdNoObjecionVar</to>
+                      </copy>
+                    </assign>
+                    <invoke name="Invoke_dbConsultarAdquisicionWeb" bpelx:invokeAsDetail="no"
+                            partnerLink="dbConsultarAdquisicionWeb" portType="ns30:dbConsultarAdquisicionWeb_ptt"
+                            operation="dbConsultarAdquisicionWeb"
+                            inputVariable="Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_InputVariable"
+                            outputVariable="Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable"/>
+                    <assign name="Assign_wsPublicarAdquisicionWeb">
+                      <copy>
+                        <from>number($Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:ID_NO_OBJECION)</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.id</to>
+                      </copy>
+                      <copy>
+                        <from>dvm:lookupValue("DVM/ListaPaises.dvm","PaisISO",$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:ISO_PAIS,"PaisCodigo","")</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.country</to>
+                      </copy>
+                      <copy>
+                        <from>1</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.priority</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:FECHA_PUBLICACION</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.date_adjudication</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:FECHA_RECEPCION_PROPUESTA</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.reception_date</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:LUGAR_OBTENER_DOCTO_BASE</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.documentation_place</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:DIR_PRESENTACION_PROPUESTA</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.address</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:CORREO_INFORMACION_ADICIONAL</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.website</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:FECHA_INICIO</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.start_date_sale</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:FECHA_FIN</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.end_date_sale</to>
+                      </copy>
+                      <copy>
+                        <from>string($Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:LINEA_CREDITO)</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.current_credit_line</to>
+                      </copy>
+                      <copy>
+                        <from>string($Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:LINEA_CREDITO)</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.parent_credit_line</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:DESCRIPCION_AREA_FOCALIZACION</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.focus_area</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:DESCRIPCION_MODALIDAD</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.modality_description</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:NUMERO_PROCESO</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.process_number</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:TITULO_PROCESO</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.title_project</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:OBJETIVO_ADQUISICION</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.object</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:DESCRIPCION_OPERACION</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.name</to>
+                      </copy>
+                      <copy>
+                        <from>$Invoke_dbConsultarAdquisicionWeb_dbConsultarAdquisicionWeb_OutputVariable.dbConsultarAdquisicionWebOutputCollection/ns32:dbConsultarAdquisicionWebOutput/ns32:EJECUTOR</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.executor</to>
+                      </copy>
+                      <copy>
+                        <from>1390</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.category</to>
+                      </copy>
+                      <copy>
+                        <from>'4OsbYCpP'</from>
+                        <to>$Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable.token</to>
+                      </copy>
+                    </assign>
+                    <invoke name="Invoke_wsPublicarAdquisicionWeb" bpelx:invokeAsDetail="no"
+                            partnerLink="wsPublicarAdquisicionWeb" portType="ns31:bciePortType" operation="add_notice"
+                            inputVariable="Invoke_wsPublicarAdquisicionWeb_add_notice_InputVariable"
+                            outputVariable="Invoke_wsPublicarAdquisicionWeb_add_notice_OutputVariable"/><assign name="AssignResponse"
+                                                                           xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>'OK'</from>
+         <to>$outputVariable.response/ns4:Resultado/ns19:result</to>
+      </copy>
+      <copy>
+         <from>'Operación Exitosa'</from>
+         <to>$outputVariable.response/ns4:Resultado/ns19:message</to>
+      </copy>
+   </assign></sequence>
+                  <elseif>
+                    <documentation>
+                      <![CDATA[InformeResultadosAdjudicado]]>
+                    </documentation>
+                    <condition>($outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion/ns5:tipoNoObjecion/ns8:Id = 9  and $outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion/ns5:otorgoNoObjecion = 'true')</condition>
+                    <sequence name="SequenceInformeResultadosAdjudicado">
+                      <forEach parallel="no" counterName="noObjecionIndex" name="ForEachNoObjecion">
+                        <startCounterValue>1</startCounterValue>
+                        <finalCounterValue>count($noObjecionCompleta.response/ns4:Adquisicion/ns5:noObjecion[ns5:publicado = 'false'])</finalCounterValue>
+                        <scope name="Scope1">
+                          <variables>
+                          <variable name="inInvokePublicarInformeAdjudicado" element="ns4:PublicarInformeResultadosAdjudicado"/>
+                            <variable name="AdquisicionInforme" messageType="ns2:responseConsultarAdquisicionMessage"/>
+                            <variable name="crearActualizarNoObjecion_Input"
+                                      messageType="ns28:requestCrearActualizarNoObjecionMessage"/>
+                            <variable name="crearActualizarNoObjecion_Output"
+                                      messageType="ns28:responseCrearActualizarNoObjecionMessage"/>
+                          </variables>
+                          <sequence name="SequenceporInformedeResultados">
+                            <assign name="setAdquisicionInforme">
+                              <copy>
+                                <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion</from>
+                                <to>$AdquisicionInforme.response/ns4:Adquisicion</to>
+                              </copy>
+                              <extensionAssignOperation>
+                                <bpelx:remove>
+                                  <bpelx:target>$AdquisicionInforme.response/ns4:Adquisicion/ns5:noObjecion</bpelx:target>
+                                </bpelx:remove>
+                              </extensionAssignOperation>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$noObjecionCompleta.response/ns4:Adquisicion/ns5:noObjecion[ns5:publicado = 'false'][$noObjecionIndex]</from>
+                                <to>$AdquisicionInforme.response/ns4:Adquisicion/ns5:noObjecion</to>
+                              </copy>
+                            </assign>
+                            <assign name="XQPublicarInformeAdjudicado">
+                              <bpelx:annotation>
+                                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                              </bpelx:annotation>
+                              <copy>
+                                <from>ora:processXQuery10('../Transformations/ConsultarAdquisicion_TO_PublicarInformeReporteAdjudicado.xqy', 'outInvokeConsultarAdquisicion.response', $AdquisicionInforme.response)</from>
+                                <to variable="inInvokePublicarInformeAdjudicado"/>
+                              </copy>
+                            </assign>
+                            <invoke name="InvokePublicarInformeAdjudicado" bpelx:invokeAsDetail="no"
+                                    bpelx:eventName="ns24:InformeResultadosAdjudicado"
+                                    inputVariable="inInvokePublicarInformeAdjudicado"/>
+                            <assign name="SetActualizaNoObjecion">
+                              <copy>
+                                <from>$AdquisicionInforme.response/ns4:Adquisicion/ns5:noObjecion/ns5:idNoObjecion</from>
+                                <to>$crearActualizarNoObjecion_Input.request/ns4:NoObjecion/ns5:idNoObjecion</to>
+                              </copy>
+                              <copy>
+                                <from>true()</from>
+                                <to>$crearActualizarNoObjecion_Input.request/ns4:NoObjecion/ns5:publicado</to>
+                              </copy>
+                            </assign>
+                            <invoke name="ActualizaNoObjecion"
+                                    partnerLink="CrearActualizarNoObjecion_PS"
+                                    portType="ns28:CrearActualizarNoObjecionPT" operation="crearActualizarNoObjecion"
+                                    inputVariable="crearActualizarNoObjecion_Input"
+                                    outputVariable="crearActualizarNoObjecion_Output" bpelx:invokeAsDetail="no"/>
+                          </sequence>
+                        </scope>
+                      </forEach>
+                      <assign name="AssignResponse" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                        <copy>
+                          <from>'OK'</from>
+                          <to>$outputVariable.response/ns4:Resultado/ns19:result</to>
+                        </copy>
+                        <copy>
+                          <from>'Operación Exitosa'</from>
+                          <to>$outputVariable.response/ns4:Resultado/ns19:message</to>
+                        </copy>
+                      </assign>
+                    </sequence>
+                  </elseif>
+                  <elseif>
+                    <documentation>
+                      <![CDATA[InformeResultadosOtros]]>
+                    </documentation>
+                    <condition>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion/ns5:tipoNoObjecion/ns8:Id = 7 and $outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion/ns5:resultadoProceso/ns8:Id !=1</condition>
+                    <sequence name="SequencePublicarInformeOtros">
+                      <assign name="AssignPublicarInformeOtros">
+                        <copy>
+                          <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:cliente/ns7:pais/ns8:codigoExterno</from>
+                          <to>$inInvokePublicarInformeOtros/ns5:nombrePais</to>
+                        </copy>
+                        <copy>
+                          <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:operacion/ns6:idOperacion</from>
+                          <to>$inInvokePublicarInformeOtros/ns5:numeroOperacion</to>
+                        </copy>
+                        <copy>
+                          <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:operacion/ns6:nombre</from>
+                          <to>$inInvokePublicarInformeOtros/ns5:nombreOperacion</to>
+                        </copy>
+                        <copy>
+                          <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:titulo</from>
+                          <to>$inInvokePublicarInformeOtros/ns5:tituloProceso</to>
+                        </copy>
+                        <copy>
+                          <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:numero</from>
+                          <to>$inInvokePublicarInformeOtros/ns5:numeroProceso</to>
+                        </copy>
+                        <copy>
+                          <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:tipoModalidad/ns8:Descripcion</from>
+                          <to>$inInvokePublicarInformeOtros/ns5:modalidadProceso</to>
+                        </copy>
+                        <copy>
+                          <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion/ns5:idNoObjecion</from>
+                          <to>$inInvokePublicarInformeOtros/ns5:idNoObjecion</to>
+                        </copy>
+                        <copy>
+                          <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion/ns5:resultadoProceso/ns8:Descripcion</from>
+                          <to>$inInvokePublicarInformeOtros/ns4:resultadoProceso</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokePublicarInformeOtros" bpelx:invokeAsDetail="no"
+                              bpelx:eventName="ns26:InformeResultadosOtros"
+                              inputVariable="inInvokePublicarInformeOtros"/><assign name="AssignResponse"
+                                                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>'OK'</from>
+         <to>$outputVariable.response/ns4:Resultado/ns19:result</to>
+      </copy>
+      <copy>
+         <from>'Operación Exitosa'</from>
+         <to>$outputVariable.response/ns4:Resultado/ns19:message</to>
+      </copy>
+   </assign></sequence>
+                  </elseif>
+                  <else>
+                    <documentation>
+                      <![CDATA[InformeResultado]]>
+                    </documentation>
+                    <assign name="AssignResponse" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+   <copy>
+         <from>'ERROR'</from>
+         <to>$outputVariable.response/ns4:Resultado/ns19:result</to>
+      </copy><copy>
+         <from>'Este tipo de no objecion no se publica'</from>
+         <to>$outputVariable.response/ns4:Resultado/ns19:message</to>
+      </copy></assign>
+                  </else>
+                </if>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[NO]]>
+                </documentation>
+                <scope name="ScopeCrearReporteNoObjecion">
+                  <variables>
+                    <variable name="inInvokeCrearReporteNoObjecion"
+                              messageType="ns3:requestCrearReporteNoObjecionMessage"/>
+                    <variable name="outInvokeCrearReporteNoObjecion"
+                              messageType="ns3:responseCrearReporteNoObjecionMessage"/>
+                  </variables>
+                  <sequence name="SequenceCrearReporteNoObjecion">
+                    <if name="TipoNoObjecion">
+                      <condition>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion/ns5:noObjecion/ns5:tipoNoObjecion/ns8:Id = 9 </condition><assign name="setAdquisicionInforme"
+                                                                                                                                                                                                                                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                        <copy>
+                          <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion</from>
+                          <to>$inInvokeCrearReporteNoObjecion.request/ns4:Adquisicion</to>
+                        </copy>
+                        <extensionAssignOperation>
+                          <bpelx:remove xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                            <bpelx:target>$inInvokeCrearReporteNoObjecion.request/ns4:Adquisicion/ns5:noObjecion</bpelx:target>
+                          </bpelx:remove>
+                        </extensionAssignOperation>
+                        <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                          <from>$noObjecionCompleta.response/ns4:Adquisicion/ns5:noObjecion[1]</from>
+                          <to>$inInvokeCrearReporteNoObjecion.request/ns4:Adquisicion/ns5:noObjecion</to>
+                        </copy>
+                      </assign><else>
+                        <assign name="AssignCrearReporteNoObjecion">
+                          <copy>
+                            <from>$outInvokeConsultarAdquisicion.response/ns4:Adquisicion</from>
+                            <to>$inInvokeCrearReporteNoObjecion.request/ns4:Adquisicion</to>
+                          </copy>
+                        </assign>
+                      </else>
+                    </if>
+                    <invoke name="InvokeCrearReporteNoObjecion" bpelx:invokeAsDetail="no"
+                            partnerLink="CrearReporteNoObjecion" portType="ns3:CrearReporteNoObjecionPT"
+                            operation="crearReporteNoObjecion" inputVariable="inInvokeCrearReporteNoObjecion"
+                            outputVariable="outInvokeCrearReporteNoObjecion"/>
+                    <if name="IfResultadoCrearReporte">
+                      <documentation>
+                        <![CDATA[OK]]>
+                      </documentation>
+                      <condition>$outInvokeCrearReporteNoObjecion.response/ns4:Resultado/ns19:result = 'OK'</condition>
+                      <sequence name="SequenceOK">
+                        <assign name="AssignInformeNoObjecion">
+                          <copy>
+                            <from>$outInvokeCrearReporteNoObjecion.response/ns4:Documento[2]</from>
+                            <to>$outputVariable.response/ns4:documento</to>
+                          </copy>
+                          <copy>
+                            <from>'OK'</from>
+                            <to>$outputVariable.response/ns4:Resultado/ns19:result</to>
+                          </copy>
+                          <copy>
+                            <from>'Operación Exitosa'</from>
+                            <to>$outputVariable.response/ns4:Resultado/ns19:message</to>
+                          </copy>
+                        </assign>
+                      </sequence>
+                      <else>
+                        <documentation>
+                          <![CDATA[ERROR]]>
+                        </documentation>
+                        <sequence name="SequenceERROR" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                          <assign name="AssignError">
+                            <copy>
+                              <from>$outInvokeCrearReporteNoObjecion.response/ns4:Resultado/ns19:result</from>
+                              <to>$outputVariable.response/ns4:Resultado/ns19:result</to>
+                            </copy>
+                            <copy>
+                              <from>'Error al crear el reporte de No Objecion'</from>
+                              <to>$outputVariable.response/ns4:Resultado/ns19:message</to>
+                            </copy>
+                            <copy>
+                              <from>$outInvokeCrearReporteNoObjecion.response/ns4:Resultado/ns19:error/ns20:errorCode</from>
+                              <to>$outputVariable.response/ns4:Resultado/ns19:error/ns20:errorCode</to>
+                            </copy>
+                            <copy>
+                              <from>$outInvokeCrearReporteNoObjecion.response/ns4:Resultado/ns19:error/ns20:errorDescription</from>
+                              <to>$outputVariable.response/ns4:Resultado/ns19:error/ns20:errorDescription</to>
+                            </copy>
+                            <copy>
+                              <from>$outInvokeCrearReporteNoObjecion.response/ns4:Resultado/ns19:error/ns20:errorType</from>
+                              <to>$outputVariable.response/ns4:Resultado/ns19:error/ns20:errorType</to>
+                            </copy>
+                          </assign>
+                          <exit name="ExitConsultarAdquisicion"/>
+                        </sequence>
+                      </else>
+                    </if>
+                  </sequence>
+                </scope>
+              </else>
+            </if>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceERROR">
+              <assign name="AssignError">
+                <copy>
+                  <from>$outInvokeConsultarAdquisicion.response/ns4:Resultado/ns19:result</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns19:result</to>
+                </copy>
+                <copy>
+                  <from>'Error al consultar la Adquisición'</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns19:message</to>
+                </copy>
+                <copy>
+                  <from>$outInvokeConsultarAdquisicion.response/ns4:Resultado/ns19:error/ns20:errorCode</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns19:error/ns20:errorCode</to>
+                </copy>
+                <copy>
+                  <from>$outInvokeConsultarAdquisicion.response/ns4:Resultado/ns19:error/ns20:errorDescription</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns19:error/ns20:errorDescription</to>
+                </copy>
+                <copy>
+                  <from>$outInvokeConsultarAdquisicion.response/ns4:Resultado/ns19:error/ns20:errorType</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns19:error/ns20:errorType</to>
+                </copy>
+              </assign>
+              <exit name="ExitConsultarAdquisicion"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+  </sequence>
+</process>

@@ -1,0 +1,275 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Jun 06 13:25:48 CDT 2019
+  Author:  offic
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="RetailStoreTranslationProcess"
+               targetNamespace="http://xmlns.oracle.com/RetailStoreApp/RetailStoreTranslate/RetailStoreTranslationProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/RetailStoreApp/RetailStoreTranslate/RetailStoreTranslationProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://xmlns.oracle.com/pcbpel/adapter/db/RetailStoreApp/RetailStoreTranslate/caseOneDb"
+         xmlns:ns2="http://xmlns.oracle.com/pcbpel/adapter/coherence/RetailStoreApp/RetailStoreTranslate/getCoherence"
+         xmlns:ns3="http://xmlns.oracle.com/pcbpel/adapter/coherence/RetailStoreApp/RetailStoreTranslate/putCoherence"
+         xmlns:ns4="http://xmlns.oracle.com/pcbpel/adapter/db/RetailStoreApp/RetailStoreTranslate/caseThreeDb"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ns5="http://xmlns.oracle.com/pcbpel/adapter/db/top/caseOneDb"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns6="http://xmlns.oracle.com/pcbpel/adapter/db/top/caseTwoDb"
+         xmlns:ns7="http://xmlns.oracle.com/pcbpel/adapter/db/RetailStoreApp/RetailStoreTranslate/caseTwoPrimary"
+         xmlns:ns8="http://xmlns.oracle.com/pcbpel/adapter/db/top/caseTwoPrimary"
+         xmlns:ns9="http://xmlns.oracle.com/pcbpel/adapter/db/top/caseThreeDb">
+
+    <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/RetailStoreApp/RetailStoreTranslate/RetailStoreTranslationProcess" location="../WSDLs/RetailStoreTranslationProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="RetailStoreTranslationService" partnerLinkType="client:RetailStoreTranslationProcess" myRole="RetailStoreTranslationProcessProvider"/>
+    <partnerLink name="caseOneDb" partnerLinkType="ns1:caseOneDb_plt" partnerRole="caseOneDb_role"/>
+    <partnerLink name="getCoherence" partnerLinkType="ns2:Get_plt" partnerRole="Get_role"/>
+    <partnerLink name="putCoherence" partnerLinkType="ns3:Put_plt" partnerRole="Put_role"/>
+    <partnerLink name="caseTwoPrimary" partnerLinkType="ns7:caseTwoPrimary_plt" partnerRole="caseTwoPrimary_role"/>
+    <partnerLink name="caseThreeDb" partnerLinkType="ns4:caseThreeDb_plt" partnerRole="caseThreeDb_role"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:RetailStoreTranslationProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:RetailStoreTranslationProcessResponseMessage"/>
+    <variable name="concat" type="xsd:string"/>
+    <variable name="getCoherence_Get_InputVariable" messageType="ns2:Get_msg"/>
+    <variable name="getCoherence_Get_OutputVariable" messageType="ns2:GetResponse_msg"/>
+    <variable name="oneCase_caseOneDbSelect_InputVariable" messageType="ns1:caseOneDbSelect_inputParameters"/>
+    <variable name="oneCase_caseOneDbSelect_OutputVariable" messageType="ns1:MdmRetailstoresCollection_msg"/>
+    <variable name="putCoherence_Put_InputVariable" messageType="ns3:Put_msg"/>
+    <variable name="putCoherence_Put_OutputVariable" messageType="ns3:PutResponse_msg"/>
+    <variable name="casePrimary_caseTwoPrimarySelect_InputVariable"
+              messageType="ns7:caseTwoPrimarySelect_inputParameters"/>
+    <variable name="casePrimary_caseTwoPrimarySelect_OutputVariable" messageType="ns7:MdmRetailstoresCollection_msg"/>
+    <variable name="caseThree_caseThreeDbSelect_InputVariable" messageType="ns4:caseThreeDbSelect_inputParameters"/>
+    <variable name="caseThree_caseThreeDbSelect_OutputVariable" messageType="ns4:MdmRetailstoresCollection_msg"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in RetailStoreTranslationProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="RetailStoreTranslationService" portType="client:RetailStoreTranslationProcess" operation="translate" variable="inputVariable" createInstance="yes"/>
+    <assign name="concat">
+      <copy>
+        <from>concat(string($inputVariable.payload/ns5:idC1),string($inputVariable.payload/ns5:appCodeC1),string($inputVariable.payload/ns5:targetAppCodeC1))</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$concat</to>
+      </copy>
+    </assign>
+    <invoke name="getCoherence" bpelx:invokeAsDetail="no" partnerLink="getCoherence" portType="ns2:Get_ptt"
+            operation="Get" inputVariable="getCoherence_Get_InputVariable"
+            outputVariable="getCoherence_Get_OutputVariable">
+      <bpelx:toProperties>
+        <bpelx:toProperty name="jca.coherence.Key" variable="concat"/>
+      </bpelx:toProperties>
+    </invoke>
+    <if name="validateCase">
+      <condition>$inputVariable.payload/ns5:appCodeC1='RMS'</condition>
+      <sequence name="caseOne">
+        <if name="validationCoherence">
+          <condition>$getCoherence_Get_OutputVariable.body/ns5:MdmRetailstores</condition>
+          <assign name="getCoherence">
+            <copy>
+              <from>$getCoherence_Get_OutputVariable.body</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload</to>
+            </copy>
+          </assign>
+          <else>
+            <sequence name="Sequence1">
+              <assign name="getDbCaseOne">
+                <copy>
+                  <from>$inputVariable.payload/ns5:idC1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_caseOneDbSelect_InputVariable.caseOneDbSelect_inputParameters/ns5:idC1</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.payload/ns5:appCodeC1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_caseOneDbSelect_InputVariable.caseOneDbSelect_inputParameters/ns5:appCodeC1</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.payload/ns5:targetAppCodeC1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_caseOneDbSelect_InputVariable.caseOneDbSelect_inputParameters/ns5:targetAppCodeC1</to>
+                </copy>
+              </assign>
+              <invoke name="oneCase" bpelx:invokeAsDetail="no" partnerLink="caseOneDb" portType="ns1:caseOneDb_ptt"
+                      operation="caseOneDbSelect" inputVariable="oneCase_caseOneDbSelect_InputVariable"
+                      outputVariable="oneCase_caseOneDbSelect_OutputVariable"/>
+              <assign name="OutputC1">
+                <copy>
+                  <from>$oneCase_caseOneDbSelect_OutputVariable.MdmRetailstoresCollection</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload</to>
+                </copy>
+                <copy>
+                  <from>$oneCase_caseOneDbSelect_OutputVariable.MdmRetailstoresCollection</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$putCoherence_Put_InputVariable.body</to>
+                </copy>
+              </assign>
+              <invoke name="putCoherence" bpelx:invokeAsDetail="no" partnerLink="putCoherence" portType="ns3:Put_ptt"
+                      operation="Put" inputVariable="putCoherence_Put_InputVariable"
+                      outputVariable="putCoherence_Put_OutputVariable">
+                <bpelx:toProperties>
+                  <bpelx:toProperty name="jca.coherence.Key" variable="concat"/>
+                </bpelx:toProperties>
+              </invoke>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+      <else>
+        <sequence name="caseThree">
+          <assign name="getCaseThreeDb">
+            <copy>
+              <from>$inputVariable.payload/ns5:idC1</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$caseThree_caseThreeDbSelect_InputVariable.caseThreeDbSelect_inputParameters/ns9:idC3</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.payload/ns5:appCodeC1</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$caseThree_caseThreeDbSelect_InputVariable.caseThreeDbSelect_inputParameters/ns9:appCodeC3</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.payload/ns5:targetAppCodeC1</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$caseThree_caseThreeDbSelect_InputVariable.caseThreeDbSelect_inputParameters/ns9:targeAppCodeC3</to>
+            </copy>
+          </assign>
+          <invoke name="caseThree" bpelx:invokeAsDetail="no" partnerLink="caseThreeDb" portType="ns4:caseThreeDb_ptt"
+                  operation="caseThreeDbSelect" inputVariable="caseThree_caseThreeDbSelect_InputVariable"
+                  outputVariable="caseThree_caseThreeDbSelect_OutputVariable"/>
+          <if name="validationCaseThree">
+            <condition>string-length(string($caseThree_caseThreeDbSelect_OutputVariable.MdmRetailstoresCollection/ns9:MdmRetailstores/ns9:primaryId))=0 and string($inputVariable.payload/ns5:targetAppCodeC1)!='RMS'</condition>
+            <sequence name="caseTwo">
+              <if name="validationCoherence" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <condition>$getCoherence_Get_OutputVariable.body/ns5:MdmRetailstores</condition>
+      <assign name="getCoherence" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$getCoherence_Get_OutputVariable.body</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload</to>
+      </copy>
+   </assign><else>
+                  <sequence name="Sequence4">
+                    <sequence name="Sequence3">
+                      <assign name="getPrimary">
+                        <copy>
+                          <from>$inputVariable.payload/ns5:idC1</from>
+                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$casePrimary_caseTwoPrimarySelect_InputVariable.caseTwoPrimarySelect_inputParameters/ns8:idC2</to>
+                        </copy>
+                        <copy>
+                          <from>$inputVariable.payload/ns5:appCodeC1</from>
+                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$casePrimary_caseTwoPrimarySelect_InputVariable.caseTwoPrimarySelect_inputParameters/ns8:appCodeC2</to>
+                        </copy>
+                      </assign>
+                      <invoke name="casePrimary" bpelx:invokeAsDetail="no" partnerLink="caseTwoPrimary"
+                              portType="ns7:caseTwoPrimary_ptt" operation="caseTwoPrimarySelect"
+                              inputVariable="casePrimary_caseTwoPrimarySelect_InputVariable"
+                              outputVariable="casePrimary_caseTwoPrimarySelect_OutputVariable"/>
+                      <assign name="getCaseTwo">
+                        <copy>
+                          <from>$casePrimary_caseTwoPrimarySelect_OutputVariable.MdmRetailstoresCollection/ns8:MdmRetailstores/ns8:primaryId</from>
+                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_caseOneDbSelect_InputVariable.caseOneDbSelect_inputParameters/ns5:idC1</to>
+                        </copy>
+                        <copy>
+                          <from>$casePrimary_caseTwoPrimarySelect_OutputVariable.MdmRetailstoresCollection/ns8:MdmRetailstores/ns8:primaryAppcode</from>
+                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_caseOneDbSelect_InputVariable.caseOneDbSelect_inputParameters/ns5:appCodeC1</to>
+                        </copy>
+                        <copy>
+                          <from>$inputVariable.payload/ns5:targetAppCodeC1</from>
+                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_caseOneDbSelect_InputVariable.caseOneDbSelect_inputParameters/ns5:targetAppCodeC1</to>
+                        </copy>
+                      </assign>
+                      <invoke name="oneCase" bpelx:invokeAsDetail="no" partnerLink="caseOneDb"
+                              portType="ns1:caseOneDb_ptt" operation="caseOneDbSelect"
+                              inputVariable="oneCase_caseOneDbSelect_InputVariable"
+                              outputVariable="oneCase_caseOneDbSelect_OutputVariable"
+                              xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                              xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/>
+                      <assign name="OutputC2">
+                        <copy>
+                          <from>$oneCase_caseOneDbSelect_OutputVariable.MdmRetailstoresCollection</from>
+                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload</to>
+                        </copy>
+                        <copy>
+                          <from>$oneCase_caseOneDbSelect_OutputVariable.MdmRetailstoresCollection</from>
+                          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$putCoherence_Put_InputVariable.body</to>
+                        </copy>
+                      </assign>
+                      <invoke name="putCoherence" bpelx:invokeAsDetail="no" partnerLink="putCoherence"
+                              portType="ns3:Put_ptt" operation="Put" inputVariable="putCoherence_Put_InputVariable"
+                              outputVariable="putCoherence_Put_OutputVariable"
+                              xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                              xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <bpelx:toProperties>
+         <bpelx:toProperty name="jca.coherence.Key" variable="concat"/>
+      </bpelx:toProperties>
+   </invoke>
+                    </sequence>
+                  </sequence>
+                </else>
+   </if>
+            </sequence>
+            <else>
+              <sequence name="Sequence5">
+                <assign name="OutputC3">
+                  <copy>
+                    <from>$caseThree_caseThreeDbSelect_OutputVariable.MdmRetailstoresCollection/ns9:MdmRetailstores/ns9:primaryId</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns5:MdmRetailstores/ns5:id</to>
+                  </copy>
+                  <copy>
+                    <from>$caseThree_caseThreeDbSelect_OutputVariable.MdmRetailstoresCollection/ns9:MdmRetailstores/ns9:primaryAppcode</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns5:MdmRetailstores/ns5:appCode</to>
+                  </copy>
+                </assign>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="RetailStoreTranslationService" portType="client:RetailStoreTranslationProcess" operation="translate" variable="outputVariable"/>
+  </sequence>
+</process>

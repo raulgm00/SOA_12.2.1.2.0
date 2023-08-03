@@ -1,0 +1,930 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Dec 14 15:10:08 CST 2015
+  Author:  dalia-reyes
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ActualizarAprobacionBPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/ActualizarAprobacion/ActualizarAprobacionBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/ActualizarAprobacion/ActualizarAprobacionBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="urn:ActualizarAprobacionSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bice.org/ActualizarLineaCreditoService"
+         xmlns:ns3="urn:EliminarLineaCreditoSAD" xmlns:ns4="urn:CrearLineaCreditoSAD"
+         xmlns:ns5="http://xmlns.bcie.com/AprobacionService" xmlns:ns6="urn:CrearTreLineaCreditoAprobacion"
+         xmlns:ns7="urn:EliminarTreLineaCreditoAprobacionByIdLineaCreditoIdAprobacion"
+         xmlns:ns12="http://www.bcie.org/CondicionBO" xmlns:ns8="http://www.bcie.org/AprobacionMO"
+         xmlns:ns13="http://www.bcie.org/TerminoBO" xmlns:ns14="http://www.bcie.org/ComisionBO"
+         xmlns:ns9="http://www.bcie.org/AprobacionBO" xmlns:ns11="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns10="http://www.bcie.org/CatalogoBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns15="http://www.bcie.org/LineaCreditoMO" xmlns:ns16="http://www.bcie.org/ResultBO"
+         xmlns:ns17="http://www.bcie.org/ErrorBO" xmlns:ns18="http://xmlns.bcie.com/OperacionService"
+         xmlns:ns20="http://www.bcie.org/OperacionBO" xmlns:ns19="http://www.bcie.org/OperacionMO"
+         xmlns:ns21="urn:ConsultarAprobacionById" xmlns:ns22="urn:ActualizarLineaCreditoAprobacion"
+         xmlns:ns24="http://www.bcie.org/DocumentoBO" xmlns:ns23="http://www.bcie.org/AtributoBO"
+         xmlns:ns25="http://www.bcie.org/TerminoService" xmlns:ns26="http://www.bcie.org/TerminoMO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <!--import namespace="urn:CrearLineaCreditoSAD"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioLineaCredito/LineaCredito/V1/Wsdl/ADAPTER/CrearLineaCreditoSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/-->
+  <import namespace="http://www.bcie.org/AprobacionMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Aprobacion/V1/Schema/AprobacionMO.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="urn:ActualizarAprobacionSOR" location="../WSDLs/ActualizarAprobacionSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="actualizaraprobacionbpel_client" partnerLinkType="ns1:ActualizarAprobacionBPEL" myRole="ActualizarAprobacionPT"/>
+    <partnerLink name="ActualizarAprobacionService" partnerLinkType="ns5:ActualizarAprobacionService"
+                 partnerRole="ActualizarAprobacionPT"/>
+    <partnerLink name="ActualizarMontoOperacion" partnerLinkType="ns18:ActualizarMontoOperacion"
+                 partnerRole="ActualizarMontoOperacionTP"/>
+    <partnerLink name="ConsultarAprobacionById" partnerLinkType="ns21:ConsultarAprobacionById"
+                 partnerRole="ConsultarAprobacionById"/>
+    <partnerLink name="ActualizarLineasCreditoAprobacion" partnerLinkType="ns22:ActualizarLineasCreditoAprobacion"
+                 partnerRole="ActualizarLineaCreditoAprobacionPT"/>
+    <partnerLink name="ActualizarTermino" partnerLinkType="ns25:ActualizarTermino" partnerRole="TerminoPT"/>
+    <partnerLink name="ConsultarTermino" partnerLinkType="ns25:ConsultarTermino" partnerRole="ConsultarTerminoPT"/>
+    <partnerLink name="CalcularFechaVencimiento_SP" partnerLinkType="ns25:CalcularFechaVencimiento_SP"
+                 partnerRole="CalcularFechaVencimientoPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ActualizarAprobacionRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ActualizarAprobacionResponseMessage"/>
+    <variable name="faultVariable" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="Aprobacion"
+              messageType="ns1:ActualizarAprobacionRequestMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="MontoOrig" type="xsd:decimal"/>
+    <variable name="FechaOrig" type="xsd:date"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceCatchAll">
+        <assign name="AssignError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.ActualizarAprobacionResponse/ns8:Resultado/ns16:result</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.code</from>
+            <to>$outputVariable.ActualizarAprobacionResponse/ns8:Resultado/ns16:error/ns17:errorCode</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.summary</from>
+            <to>$outputVariable.ActualizarAprobacionResponse/ns8:Resultado/ns16:message</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.detail</from>
+            <to>$outputVariable.ActualizarAprobacionResponse/ns8:Resultado/ns16:error/ns17:errorDescription</to>
+          </copy>
+        </assign>
+        <compensate name="Compensate"/>
+        <reply name="Reply" variable="outputVariable" partnerLink="actualizaraprobacionbpel_client"
+               portType="ns1:ActualizarAprobacionPT" operation="ActualizarAprobacion"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ActualizarAprobacionBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="actualizaraprobacionbpel_client" portType="ns1:ActualizarAprobacionPT" operation="ActualizarAprobacion" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignSetTitle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat('idOperacion ', $inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idOperacion))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarAprobacion">
+      <variables>
+        <variable name="inInvokeConsultarAprobacion" messageType="ns21:ConsultarAprobacionByIdRequestMessage"/>
+        <variable name="outInvokeConsultarAprobacion" messageType="ns21:ConsultarAprobacionByIdResponseMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVariable" faultMessageType="bpelx:RuntimeFaultMessage">
+          <rethrow name="RethrowConsultarAprobacion"/>
+        </catch>
+        <catchAll>
+          <sequence name="SequenceCatchAll">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-1'</from>
+                <to>$faultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error general al consultar la aprobación'</from>
+                <to>$faultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$faultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="SequenceConsultarAprobacion">
+        <assign name="AssignConsultarAprobacion">
+          <copy>
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idAprobacion</from>
+            <to>$inInvokeConsultarAprobacion.ConsultarAprobacionByIdRequest/ns8:idAprobacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarAprobacion" bpelx:invokeAsDetail="no" partnerLink="ConsultarAprobacionById"
+                portType="ns21:ConsultarAprobacionById" operation="consultarAprobacionByIdRequest"
+                inputVariable="inInvokeConsultarAprobacion" outputVariable="outInvokeConsultarAprobacion"/>
+        <if name="IfResultadoConsultaAprob">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeConsultarAprobacion.ConsultarAprobacionByIdResponse/ns8:Resultado/ns16:result = 'OK'</condition>
+          <assign name="AssignAprobacion">
+            <copy>
+              <from>$outInvokeConsultarAprobacion.ConsultarAprobacionByIdResponse/ns8:Aprobacion/ns9:idAprobacion</from>
+              <to>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idAprobacion</to>
+            </copy>
+            <copy>
+              <from>$outInvokeConsultarAprobacion.ConsultarAprobacionByIdResponse/ns8:Aprobacion/ns9:idReunionAprobacion</from>
+              <to>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idReunionAprobacion</to>
+            </copy>
+            <copy>
+              <from>$outInvokeConsultarAprobacion.ConsultarAprobacionByIdResponse/ns8:Aprobacion/ns9:fechaAprobacion</from>
+              <to>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:fechaAprobacion</to>
+            </copy>
+            <copy>
+              <from>$outInvokeConsultarAprobacion.ConsultarAprobacionByIdResponse/ns8:Aprobacion/ns9:numeroResolucion</from>
+              <to>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:numeroResolucion</to>
+            </copy>
+            <copy>
+              <from>$outInvokeConsultarAprobacion.ConsultarAprobacionByIdResponse/ns8:Aprobacion/ns9:resumen</from>
+              <to>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:resumen</to>
+            </copy>
+            <copy>
+              <from>$outInvokeConsultarAprobacion.ConsultarAprobacionByIdResponse/ns8:Aprobacion/ns9:idMontoAprobacion</from>
+              <to>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idMontoAprobacion</to>
+            </copy>
+            <copy>
+              <from>$outInvokeConsultarAprobacion.ConsultarAprobacionByIdResponse/ns8:Aprobacion/ns9:MontoAprobacion</from>
+              <to>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:MontoAprobacion</to>
+            </copy>
+          </assign>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceError">
+              <assign name="AssignFault">
+                <copy>
+                  <from>'-1'</from>
+                  <to>$faultVariable.code</to>
+                </copy>
+                <copy>
+                  <from>'Error al consultar la aprobación'</from>
+                  <to>$faultVariable.summary</to>
+                </copy>
+                <copy>
+                  <from>$outInvokeConsultarAprobacion.ConsultarAprobacionByIdResponse/ns8:Resultado/ns16:message</from>
+                  <to>$faultVariable.detail</to>
+                </copy>
+              </assign>
+              <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeActualizarAprobacion">
+      <variables>
+        <variable name="inInvokeActualizarAprobacion" messageType="ns5:requestActualizarAprobacionMessage"/>
+        <variable name="outInvokeActualizarAprobacion" messageType="ns5:responseActualizarAprobacionMessage"/>
+        <variable name="inErrorInvokeActualizarAprobacion" messageType="ns5:requestActualizarAprobacionMessage"/>
+        <variable name="outErrorInvokeActualizarAprobacion" messageType="ns5:responseActualizarAprobacionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVariable" faultMessageType="bpelx:RuntimeFaultMessage">
+          <rethrow name="RethrowActualizarAprobacion"/>
+        </catch>
+        <catchAll>
+          <sequence name="SequenceCatchAll">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-1'</from>
+                <to>$faultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error general al actualizar la aprobación'</from>
+                <to>$faultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$faultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <compensationHandler>
+        <sequence name="SequenceErrorActualizarAprobacion">
+          <assign name="AssignErrorActualizarAprobacion">
+            <copy>
+              <from>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idAprobacion</from>
+              <to>$inErrorInvokeActualizarAprobacion.request/ns8:Aprobacion/ns9:idAprobacion</to>
+            </copy>
+            <copy>
+              <from>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idReunionAprobacion</from>
+              <to>$inErrorInvokeActualizarAprobacion.request/ns8:Aprobacion/ns9:idReunionAprobacion</to>
+            </copy>
+            <copy>
+              <from>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:fechaAprobacion</from>
+              <to>$inErrorInvokeActualizarAprobacion.request/ns8:Aprobacion/ns9:fechaAprobacion</to>
+            </copy>
+            <copy>
+              <from>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:numeroResolucion</from>
+              <to>$inErrorInvokeActualizarAprobacion.request/ns8:Aprobacion/ns9:numeroResolucion</to>
+            </copy>
+            <copy>
+              <from>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:resumen</from>
+              <to>$inErrorInvokeActualizarAprobacion.request/ns8:Aprobacion/ns9:resumen</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeActualizarAprobacion" bpelx:invokeAsDetail="no"
+                  partnerLink="ActualizarAprobacionService" portType="ns5:ActualizarAprobacionPT"
+                  operation="ActualizarAprobacion" inputVariable="inErrorInvokeActualizarAprobacion"
+                  outputVariable="outErrorInvokeActualizarAprobacion"/>
+        </sequence>
+      </compensationHandler>
+      <sequence name="SequenceActualizarAprobacion">
+        <assign name="AssignActualizarAprobacion">
+          <copy>
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idAprobacion</from>
+            <to>$inInvokeActualizarAprobacion.request/ns8:Aprobacion/ns9:idAprobacion</to>
+          </copy>
+          <copy ignoreMissingFromData="yes">
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idReunionAprobacion</from>
+            <to>$inInvokeActualizarAprobacion.request/ns8:Aprobacion/ns9:idReunionAprobacion</to>
+          </copy>
+          <copy ignoreMissingFromData="yes">
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:fechaAprobacion</from>
+            <to>$inInvokeActualizarAprobacion.request/ns8:Aprobacion/ns9:fechaAprobacion</to>
+          </copy>
+          <copy ignoreMissingFromData="yes">
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:numeroResolucion</from>
+            <to>$inInvokeActualizarAprobacion.request/ns8:Aprobacion/ns9:numeroResolucion</to>
+          </copy>
+          <copy ignoreMissingFromData="yes">
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:resumen</from>
+            <to>$inInvokeActualizarAprobacion.request/ns8:Aprobacion/ns9:resumen</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeActualizarAprobacion" partnerLink="ActualizarAprobacionService"
+                portType="ns5:ActualizarAprobacionPT" operation="ActualizarAprobacion"
+                inputVariable="inInvokeActualizarAprobacion" outputVariable="outInvokeActualizarAprobacion"
+                bpelx:invokeAsDetail="no"/>
+        <if name="IfResultadoActualizarAprobacion">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeActualizarAprobacion.response/ns8:Resultado/ns16:result = 'OK'</condition>
+          <empty name="OK"/>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceError">
+              <assign name="AssignFault">
+                <copy>
+                  <from>'-1'</from>
+                  <to>$faultVariable.code</to>
+                </copy>
+                <copy>
+                  <from>'Error al actualizar la aprobación'</from>
+                  <to>$faultVariable.summary</to>
+                </copy>
+                <copy>
+                  <from>$outInvokeActualizarAprobacion.response/ns8:Resultado/ns16:message</from>
+                  <to>$faultVariable.detail</to>
+                </copy>
+              </assign>
+              <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeActualizarMonto">
+      <bpelx:skipCondition>string-length($inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:MontoAprobacion)=0</bpelx:skipCondition>
+      <variables>
+        <variable name="inInvokeActualizarMonto" messageType="ns18:requestActualizarMontoOperacionMessages"/>
+        <variable name="outInvokeActualizarMonto" messageType="ns18:responseActualizarOperacionMessages"/>
+        <variable name="inInvokeErrorActualizarMonto" messageType="ns18:requestActualizarMontoOperacionMessages"/>
+        <variable name="outInvokeErrorActualizarMonto" messageType="ns18:responseActualizarOperacionMessages"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVariable" faultMessageType="bpelx:RuntimeFaultMessage">
+          <rethrow name="RethrowActualizarMonto"/>
+        </catch>
+        <catchAll>
+          <sequence name="SequenceCatchAll">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-1'</from>
+                <to>$faultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error general al actualizar el monto de operación'</from>
+                <to>$faultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$faultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <compensationHandler bpelx:name="CompensacionActualizarMonto">
+        <sequence name="SequenceErrorActualizarMonto">
+          <assign name="AssignErrorActualizarMonto">
+            <copy>
+              <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idOperacion</from>
+              <to>$inInvokeErrorActualizarMonto.request/ns19:MontoOperacion/ns20:idOperacion</to>
+            </copy>
+            <copy>
+              <from>$Aprobacion.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:MontoAprobacion</from>
+              <to>$inInvokeErrorActualizarMonto.request/ns19:MontoOperacion/ns20:monto</to>
+            </copy>
+            <copy>
+              <from>3</from>
+              <to>$inInvokeErrorActualizarMonto.request/ns19:MontoOperacion/ns20:IdTcaTipoMonto</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeErrorActualizarMonto" bpelx:invokeAsDetail="no" partnerLink="ActualizarMontoOperacion"
+                  portType="ns18:ActualizarMontoOperacionTP" operation="ActualizarMontoOperacion"
+                  inputVariable="inInvokeErrorActualizarMonto" outputVariable="outInvokeErrorActualizarMonto"/>
+        </sequence>
+      </compensationHandler>
+      <sequence name="SequenceActualizarMonto">
+        <assign name="AssignActualizarMonto">
+          <copy>
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idOperacion</from>
+            <to>$inInvokeActualizarMonto.request/ns19:MontoOperacion/ns20:idOperacion</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idTipoMonedaMontoAprobacion</from>
+            <to>$inInvokeActualizarMonto.request/ns19:MontoOperacion/ns20:idTcaTipoMonedaMontoOperacion</to>
+          </copy>
+          <copy>
+            <from>3</from>
+            <to>$inInvokeActualizarMonto.request/ns19:MontoOperacion/ns20:IdTcaTipoMonto</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:MontoAprobacion</from>
+            <to>$inInvokeActualizarMonto.request/ns19:MontoOperacion/ns20:monto</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeActualizarMonto" bpelx:invokeAsDetail="no" partnerLink="ActualizarMontoOperacion"
+                portType="ns18:ActualizarMontoOperacionTP" operation="ActualizarMontoOperacion"
+                inputVariable="inInvokeActualizarMonto" outputVariable="outInvokeActualizarMonto"/>
+        <if name="IfResultadoActualizarMonto">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeActualizarMonto.response/ns19:Resultado/ns16:result = 'Ok'</condition>
+          <sequence name="OK">
+            <empty name="OK"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceError">
+              <assign name="AssignFault">
+                <copy>
+                  <from>'-1'</from>
+                  <to>$faultVariable.code</to>
+                </copy>
+                <copy>
+                  <from>'Error al actualizar el monto operación'</from>
+                  <to>$faultVariable.summary</to>
+                </copy>
+                <copy>
+                  <from>$outInvokeActualizarMonto.response/ns19:Resultado/ns16:message</from>
+                  <to>$faultVariable.detail</to>
+                </copy>
+              </assign>
+              <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope><scope name="ScopeConsultarTerminos" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <bpelx:skipCondition>$inputVariable.ActualizarAprobacionRequest/ns8:actualizarTermino='false'</bpelx:skipCondition>
+      <variables>
+        <variable name="inInvokeConsultarTerminoMonto" messageType="ns25:ConsultarTerminoRequestMessage"/>
+        <variable name="outInvokeConsultarTerminoMonto" messageType="ns25:ConsultarTerminoResponseMessage"/>
+        <variable name="inInvokeConsultarTerminoFecha" messageType="ns25:ConsultarTerminoRequestMessage"/>
+        <variable name="outInvokeConsultarTerminoFecha" messageType="ns25:ConsultarTerminoResponseMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarTerminos">
+         <assign name="AssignConsultarTerminoMonto">
+          <copy>
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idOperacion</from>
+            <to>$inInvokeConsultarTerminoMonto.request/ns26:idOperacion</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="no">
+            <from>'11'</from>
+            <to>$inInvokeConsultarTerminoMonto.request/ns26:tipoTermino/ns13:idCatTermino</to>
+          </copy>
+        </assign>
+         <invoke name="InvokeConsultarTerminoMonto" bpelx:invokeAsDetail="no" partnerLink="ConsultarTermino"
+                 portType="ns25:ConsultarTerminoPT" operation="consultarTermino"
+                 inputVariable="inInvokeConsultarTerminoMonto" outputVariable="outInvokeConsultarTerminoMonto"
+                 xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/>
+        <assign name="AssignConsultarTerminoFecha">
+          <copy>
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idOperacion</from>
+            <to>$inInvokeConsultarTerminoFecha.request/ns26:idOperacion</to>
+          </copy>
+          <copy ignoreMissingFromData="no" bpelx:insertMissingToData="yes">
+            <from>'29'</from>
+            <to>$inInvokeConsultarTerminoFecha.request/ns26:tipoTermino/ns13:idCatTermino</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarTerminoFecha" bpelx:invokeAsDetail="no" partnerLink="ConsultarTermino"
+                portType="ns25:ConsultarTerminoPT" operation="consultarTermino"
+                inputVariable="inInvokeConsultarTerminoFecha" outputVariable="outInvokeConsultarTerminoFecha"/>
+        <assign name="AssignMonto">
+          <copy ignoreMissingFromData="yes">
+            <from>$outInvokeConsultarTerminoMonto.response/ns26:Termino[1]/ns13:monto</from>
+            <to>$MontoOrig</to>
+          </copy>
+          <copy ignoreMissingFromData="yes">
+            <from>$outInvokeConsultarTerminoFecha.response/ns26:Termino[1]/ns13:fecha</from>
+            <to>$FechaOrig</to>
+          </copy>
+        </assign>
+      </sequence>
+   </scope><scope name="ScopeActualizarTerminoMonto">
+      <bpelx:skipCondition>$inputVariable.ActualizarAprobacionRequest/ns8:actualizarTermino='false' or string-length($inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:MontoAprobacion)=0</bpelx:skipCondition>
+      <variables>
+        <variable name="inInvokeActualizarTerminoMonto" messageType="ns25:CrearTerminoRequestMessage"/>
+        <variable name="outInvokeActualizarTerminoMonto" messageType="ns25:CrearTerminoResponseMessage"/>
+        <variable name="inInvokeErrorActualizarTerminoMonto" messageType="ns25:CrearTerminoRequestMessage"/>
+        <variable name="outInvokeErrorActualizarTerminoMonto" messageType="ns25:CrearTerminoResponseMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVariable" faultMessageType="bpelx:RuntimeFaultMessage">
+          <rethrow name="RethrowActualizarTermino"/>
+        </catch>
+        <catchAll>
+          <sequence name="SequenceCatchAll">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-1'</from>
+                <to>$faultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error al actualizar el termino monto'</from>
+                <to>$faultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$faultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <compensationHandler>
+        <sequence name="SequenceErrorActualizarTermino">
+          <assign name="AssignErrorActualizarTermino">
+            <copy>
+              <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idOperacion</from>
+              <to>$inInvokeErrorActualizarTerminoMonto.request/ns26:Termino/ns13:operacion</to>
+            </copy>
+            <copy>
+              <from>'true'</from>
+              <to>$inInvokeErrorActualizarTerminoMonto.request/ns26:esUnico</to>
+            </copy>
+            <copy>
+              <from>14</from>
+              <to>$inInvokeErrorActualizarTerminoMonto.request/ns26:Termino/ns13:estadoTCC/ns23:id</to>
+            </copy>
+            <copy>
+              <from>11</from>
+              <to>$inInvokeErrorActualizarTerminoMonto.request/ns26:Termino/ns13:tipoTermino/ns13:idCatTermino</to>
+            </copy>
+            <copy>
+              <from>$MontoOrig</from>
+              <to>$inInvokeErrorActualizarTerminoMonto.request/ns26:Termino/ns13:monto</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeErrorActualizarTermino" bpelx:invokeAsDetail="no" partnerLink="ActualizarTermino"
+                  portType="ns25:TerminoPT" operation="crearTermino"
+                  inputVariable="inInvokeErrorActualizarTerminoMonto"
+                  outputVariable="outInvokeErrorActualizarTerminoMonto"/>
+        </sequence>
+      </compensationHandler>
+      <sequence name="SequenceActualizarTerminoMonto">
+        <assign name="AssignActualizarTerminoMonto">
+          <copy>
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:MontoAprobacion</from>
+            <to>$inInvokeActualizarTerminoMonto.request/ns26:Termino/ns13:monto</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idTipoMonedaMontoAprobacion</from>
+            <to>$inInvokeActualizarTerminoMonto.request/ns26:Termino/ns13:moneda/ns10:Id</to>
+          </copy>
+          <copy>
+            <from>'true'</from>
+            <to>$inInvokeActualizarTerminoMonto.request/ns26:esUnico</to>
+          </copy>
+          <copy>
+            <from>14</from>
+            <to>$inInvokeActualizarTerminoMonto.request/ns26:Termino/ns13:estadoTCC/ns23:id</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idOperacion</from>
+            <to>$inInvokeActualizarTerminoMonto.request/ns26:Termino/ns13:operacion</to>
+          </copy>
+          <copy>
+            <from>11</from>
+            <to>$inInvokeActualizarTerminoMonto.request/ns26:Termino/ns13:tipoTermino/ns13:idCatTermino</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeActualizarTerminoMonto" partnerLink="ActualizarTermino"
+                portType="ns25:TerminoPT" operation="crearTermino" inputVariable="inInvokeActualizarTerminoMonto"
+                outputVariable="outInvokeActualizarTerminoMonto" bpelx:invokeAsDetail="no"/>
+        <if name="IfActualizarTermminoMonto">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeActualizarTerminoMonto.response/ns26:Resultado/ns16:result = 'OK'</condition>
+          <empty name="OK"/>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceError">
+              <assign name="AssignFault">
+                <copy>
+                  <from>'-1'</from>
+                  <to>$faultVariable.code</to>
+                </copy>
+                <copy>
+                  <from>'Error al actualizar el termino monto'</from>
+                  <to>$faultVariable.summary</to>
+                </copy>
+                <copy>
+                  <from>$outInvokeActualizarTerminoMonto.response/ns26:Resultado/ns16:message</from>
+                  <to>$faultVariable.detail</to>
+                </copy>
+              </assign>
+              <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeActualizarTerminoFecha">
+      <bpelx:skipCondition>$inputVariable.ActualizarAprobacionRequest/ns8:actualizarTermino='false' or string-length($inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:fechaAprobacion)=0</bpelx:skipCondition>
+      <variables>
+        <variable name="inInvokeActualizarTerminoFecha" messageType="ns25:CrearTerminoRequestMessage"/>
+        <variable name="outInvokeActualizarTerminoFecha" messageType="ns25:CrearTerminoResponseMessage"/>
+        <variable name="inInvokeErrorActualizarTerminoFecha" messageType="ns25:CrearTerminoRequestMessage"/>
+        <variable name="outInvokeErrorActualizarTerminoFecha" messageType="ns25:CrearTerminoResponseMessage"/>
+        <variable name="inInvokeCalcularFechaVencimiento" messageType="ns25:CalcularFechaVencimientoRequestMessage"/>
+        <variable name="outInvokeCalcularFechaVencimiento" messageType="ns25:CalcularFechaVencimientoResponseMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVariable" faultMessageType="bpelx:RuntimeFaultMessage">
+          <rethrow name="RethrowActualizarTerminoFecha"/>
+        </catch>
+        <catchAll>
+          <sequence name="SequenceCatchAll">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-1'</from>
+                <to>$faultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error al actualizar el termino fecha'</from>
+                <to>$faultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$faultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <compensationHandler>
+        <sequence name="SequenceErrorActualizarTerminoFecha">
+          <assign name="AssignErrorActualizarTerminoFecha">
+            <copy>
+              <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idOperacion</from>
+              <to>$inInvokeErrorActualizarTerminoFecha.request/ns26:Termino/ns13:operacion</to>
+            </copy>
+            <copy>
+              <from>14</from>
+              <to>$inInvokeErrorActualizarTerminoFecha.request/ns26:Termino/ns13:estadoTCC/ns23:id</to>
+            </copy>
+            <copy>
+              <from>'true'</from>
+              <to>$inInvokeErrorActualizarTerminoFecha.request/ns26:esUnico</to>
+            </copy>
+            <copy>
+              <from>29</from>
+              <to>$inInvokeErrorActualizarTerminoFecha.request/ns26:Termino/ns13:tipoTermino/ns13:idCatTermino</to>
+            </copy>
+            <copy>
+              <from>$FechaOrig</from>
+              <to>$inInvokeErrorActualizarTerminoFecha.request/ns26:Termino/ns13:fecha</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeErrorActualizarTerminoFecha" bpelx:invokeAsDetail="no" partnerLink="ActualizarTermino"
+                  portType="ns25:TerminoPT" operation="crearTermino"
+                  inputVariable="inInvokeErrorActualizarTerminoFecha"
+                  outputVariable="outInvokeErrorActualizarTerminoFecha"/>
+        </sequence>
+      </compensationHandler>
+      <sequence name="SequenceActualizarTerminoFecha">
+        <assign name="AssignActualizarTerminoFecha">
+          <copy>
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idOperacion</from>
+            <to>$inInvokeActualizarTerminoFecha.request/ns26:Termino/ns13:operacion</to>
+          </copy>
+          <copy>
+            <from>'Fecha-Aprobación'</from>
+            <to>$inInvokeActualizarTerminoFecha.request/ns26:Termino/ns13:nombre</to>
+          </copy>
+          <copy>
+            <from>'true'</from>
+            <to>$inInvokeActualizarTerminoFecha.request/ns26:esUnico</to>
+          </copy>
+          <copy>
+            <from>14</from>
+            <to>$inInvokeActualizarTerminoFecha.request/ns26:Termino/ns13:estadoTCC/ns23:id</to>
+          </copy>
+          <copy>
+            <from>29</from>
+            <to>$inInvokeActualizarTerminoFecha.request/ns26:Termino/ns13:tipoTermino/ns13:idCatTermino</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:fechaAprobacion</from>
+            <to>$inInvokeActualizarTerminoFecha.request/ns26:Termino/ns13:fecha</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeActualizarTerminoFecha" bpelx:invokeAsDetail="no" partnerLink="ActualizarTermino"
+                portType="ns25:TerminoPT" operation="crearTermino" inputVariable="inInvokeActualizarTerminoFecha"
+                outputVariable="outInvokeActualizarTerminoFecha"/>
+        <if name="IfResultadoActualizarTerminoFecha">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeActualizarTerminoFecha.response/ns26:Resultado/ns16:result = 'OK'</condition>
+          <sequence name="SequenceCalcularFecha">
+            <assign name="AssignCalcularFechaVencimiento">
+              <copy>
+                <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:idOperacion</from>
+                <to>$inInvokeCalcularFechaVencimiento.request/ns26:idOperacion</to>
+              </copy>
+              <copy>
+                <from>29</from>
+                <to>$inInvokeCalcularFechaVencimiento.request/ns26:idTcaTermino</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:fechaAprobacion</from>
+                <to>$inInvokeCalcularFechaVencimiento.request/ns26:FechaInicio</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeCalcularFechaVencimiento" bpelx:invokeAsDetail="no"
+                    partnerLink="CalcularFechaVencimiento_SP" portType="ns25:CalcularFechaVencimientoPT"
+                    operation="calcularFechaVencimiento" inputVariable="inInvokeCalcularFechaVencimiento"
+                    outputVariable="outInvokeCalcularFechaVencimiento"/>
+            <if name="IfResultadoCalculoFecha">
+              <documentation>
+                <![CDATA[OK]]>
+              </documentation>
+              <condition>$outInvokeCalcularFechaVencimiento.response/ns26:Resultado/ns16:result = 'OK'</condition>
+              <empty name="OK"/>
+              <else>
+                <documentation>
+                  <![CDATA[ERROR]]>
+                </documentation><sequence name="SequenceErrorCalcular"><assign name="AssignFault"
+                                                                   xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+      
+   <copy>
+         <from>'-2'</from>
+         <to>$faultVariable.code</to>
+      </copy><copy>
+         <from>'Error al calcular la fecha de vencimiento'</from>
+         <to>$faultVariable.summary</to>
+      </copy><copy>
+                      <from>$outInvokeCalcularFechaVencimiento.response/ns26:Resultado/ns16:message</from>
+                      <to>$faultVariable.detail</to>
+                    </copy></assign><throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"
+                   xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/></sequence></else>
+            </if>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceError">
+              <assign name="AssignFault">
+                <copy>
+                  <from>'-1'</from>
+                  <to>$faultVariable.code</to>
+                </copy>
+                <copy>
+                  <from>'Error al actualizar el termino fecha'</from>
+                  <to>$faultVariable.summary</to>
+                </copy>
+                <copy>
+                  <from>$outInvokeActualizarTerminoFecha.response/ns26:Resultado/ns16:message</from>
+                  <to>$faultVariable.detail</to>
+                </copy>
+              </assign>
+              <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <if name="IfvalidaLinea">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>count($inputVariable.ActualizarAprobacionRequest/ns8:Aprobacion/ns9:LineaCredito)&gt;0</condition>
+      <scope name="ScopeActualizarLineasCredito">
+        <variables>
+          <variable name="inInvokeActualizarLineasCredito"
+                    messageType="ns22:ActualizarLineaCreditoAprobacionRequestMessage"/>
+          <variable name="outInvokeActualizarLineasCredito"
+                    messageType="ns22:ActualizarLineaCreditoAprobacionResponseMessage"/>
+        </variables>
+        <faultHandlers>
+          <catch faultName="bpelx:remoteFault" faultVariable="faultVariable"
+                 faultMessageType="bpelx:RuntimeFaultMessage">
+            <rethrow name="RethrowActualizarLineasCredito"/>
+          </catch>
+          <catchAll>
+            <sequence name="SequenceCatchAll">
+              <assign name="AssignFault">
+                <copy>
+                  <from>'-1'</from>
+                  <to>$faultVariable.code</to>
+                </copy>
+                <copy>
+                  <from>'Error general al actualizar las líneas de crédito'</from>
+                  <to>$faultVariable.summary</to>
+                </copy>
+                <copy>
+                  <from>ora:getFaultAsString()</from>
+                  <to>$faultVariable.detail</to>
+                </copy>
+              </assign>
+              <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+            </sequence>
+          </catchAll>
+        </faultHandlers>
+        <sequence name="SequenceActualizarLineasCredito">
+          <assign name="ActualizarLineasCredito">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/CrearLineasCreditoSP_Request.xqy', 'inputVariable.ActualizarAprobacionRequest', $inputVariable.ActualizarAprobacionRequest)</from>
+              <to variable="inInvokeActualizarLineasCredito" part="ActualizarLineaCreditoAprobacionRequest"/>
+            </copy>
+          </assign>
+          <invoke name="InvokeActualizarLineasCredito" bpelx:invokeAsDetail="no"
+                  partnerLink="ActualizarLineasCreditoAprobacion" portType="ns22:ActualizarLineaCreditoAprobacionPT"
+                  operation="actualizarLineaCreditoAprobacion" inputVariable="inInvokeActualizarLineasCredito"
+                  outputVariable="outInvokeActualizarLineasCredito"/>
+          <if name="IfResultadoActualizarLineas">
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>$outInvokeActualizarLineasCredito.ActualizarLineaCreditoAprobacionResponse/ns15:Resultado/ns16:result = 'OK'</condition>
+            <assign name="AssignResult">
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.ActualizarAprobacionResponse/ns8:Resultado/ns16:result</to>
+              </copy>
+              <copy>
+                <from>'La actualización se ha realizado exitosamente'</from>
+                <to>$outputVariable.ActualizarAprobacionResponse/ns8:Resultado/ns16:message</to>
+              </copy>
+              <extensionAssignOperation>
+                <bpelx:remove>
+                  <bpelx:target>$outputVariable.ActualizarAprobacionResponse/ns8:Resultado/ns16:error</bpelx:target>
+                </bpelx:remove>
+              </extensionAssignOperation>
+            </assign>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <sequence name="SequenceError">
+                <assign name="AssignFault">
+                  <copy>
+                    <from>'-1'</from>
+                    <to>$faultVariable.code</to>
+                  </copy>
+                  <copy>
+                    <from>'Error al actualizar las líneas de crédito'</from>
+                    <to>$faultVariable.summary</to>
+                  </copy>
+                  <copy>
+                    <from>$outInvokeActualizarLineasCredito.ActualizarLineaCreditoAprobacionResponse/ns15:Resultado/ns16:message</from>
+                    <to>$faultVariable.detail</to>
+                  </copy>
+                </assign>
+                <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+      <else>
+        <documentation>
+          <![CDATA[OK-S/NLC]]>
+        </documentation><sequence name="Sequence1"><assign name="AssignResult"
+                                                                     xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+      
+   <copy>
+         <from>'OK'</from>
+         <to>$outputVariable.ActualizarAprobacionResponse/ns8:Resultado/ns16:result</to>
+      </copy><copy>
+         <from>'La actualización se ha realizado exitosamente'</from>
+         <to>$outputVariable.ActualizarAprobacionResponse/ns8:Resultado/ns16:message</to>
+      </copy><extensionAssignOperation>
+              <bpelx:remove xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <bpelx:target>$outputVariable.ActualizarAprobacionResponse/ns8:Resultado/ns16:error</bpelx:target>
+         </bpelx:remove>
+            </extensionAssignOperation></assign></sequence></else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="actualizaraprobacionbpel_client" portType="ns1:ActualizarAprobacionPT" operation="ActualizarAprobacion" variable="outputVariable"/>
+  </sequence>
+</process>

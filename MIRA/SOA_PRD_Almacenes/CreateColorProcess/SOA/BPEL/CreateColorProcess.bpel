@@ -1,0 +1,144 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Jul 19 17:59:07 CDT 2019
+  Author:  Marisol
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CreateColorProcess"
+               targetNamespace="http://xmlns.oracle.com/RetailOperMK/CreateColorProcess/CreateColorProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/RetailOperMK/CreateColorProcess/CreateColorProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://xmlns.oracle.com/RetailOperMK/CreateColorProcess/PROUpsertDiffRest"
+         xmlns:ns2="http://mx.agarcia.ea/Applications/JDA/Catalogs/ColorSize/v1.0"
+         xmlns:ns3="http://xmlns.oracle.com/RetailOperMK/CreateColorProcess/MDMItemCatalogRest"
+         xmlns:ns4="http://mx.agarcia.ea/Capabilities/Core/Items/CreateColorEntity"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns6="http://mx.agarcia.ea/Applications/JDA/Catalogs/ColorSize"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns7="http://mx.agarcia.ea/Applications/Prototipos/CreateColorNXSD"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns8="http://mx.agarcia.ea/RetailOperations/Make/ProductDevelopment/ItemCatalogTaskSvc"
+         xmlns:ns9="http://mx.agarcia.ea/Capabilities/Support/Commons/ItemsCatalogs"
+         xmlns:ns10="http://mx.agarcia.ea/RetailOperations/Make/ProductDevelopment/ItemCatalogTaskSvcWSD"
+         xmlns:ns11="http://xmlns.oracle.com/RetailOperMK/JDACreateColorProcess/JDACreateColorProcess"
+         xmlns:ns12="http://xmlns.oracle.com/RetailOperMK/PROCreateColorProcess/PROCreateColorProcess"
+         xmlns:ns13="http://mx.agarcia.ea/Capabilities/Core/Items/CreateColorEntity"
+         xmlns:ns14="hhttp://mx.agarcia.ea/Capabilities/Core/Items/CreateColorEntity"
+         xmlns:ns15="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage">
+
+    <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/RetailOperMK/CreateColorProcess/CreateColorProcess" location="../WSDLs/CreateColorProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="createcolorprocess_client" partnerLinkType="client:CreateColorProcess" myRole="CreateColorProcessProvider"/>
+    <partnerLink name="JDACreateColorProcessPXY" partnerLinkType="ns11:JDACreateColorProcess"
+                 partnerRole="JDACreateColorProcessProvider"/>
+    <partnerLink name="PROCreateColorProcessPXY" partnerLinkType="ns12:PROCreateColorProcess"
+                 partnerRole="PROCreateColorProcessProvider"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:CreateColorProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:CreateColorProcessResponseMessage"/>
+    <variable name="Invoke_PROCreateColor_In" messageType="ns12:PROCreateColorProcessRequestMessage"/>
+    <variable name="Invoke_PROCreateColor_Out" messageType="ns12:PROCreateColorProcessResponseMessage"/>
+    <variable name="Invoke_JDACreateColor_In" messageType="ns11:JDACreateColorProcessRequestMessage"/>
+    <variable name="Invoke_JDACreateColor_Out" messageType="ns11:JDACreateColorProcessResponseMessage"/>
+  </variables>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CreateColorProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="createcolorprocess_client" portType="client:CreateColorProcess" operation="create" variable="inputVariable" createInstance="yes"/>
+    <flow name="Flow1">
+      <sequence name="Sequence">
+        <assign name="Assign1">
+          <copy>
+            <from>$inputVariable.payload/ns13:color/ns5:id</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_PROCreateColor_In.payload/ns4:color/ns5:id</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.payload/ns13:color/ns5:name</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_PROCreateColor_In.payload/ns4:color/ns5:name</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_PROCreateColor" bpelx:invokeAsDetail="no" partnerLink="PROCreateColorProcessPXY"
+                portType="ns12:PROCreateColorProcess" operation="process" inputVariable="Invoke_PROCreateColor_In"
+                outputVariable="Invoke_PROCreateColor_Out"/>
+      </sequence>
+      <sequence name="Sequence1">
+        <assign name="Assign2">
+          <copy>
+            <from>$inputVariable.payload/ns13:color/ns5:id</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateColor_In.payload/ns4:color/ns5:id</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.payload/ns13:color/ns5:name</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateColor_In.payload/ns4:color/ns5:name</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.payload/ns13:color/ns5:parent/ns5:id</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateColor_In.payload/ns4:color/ns5:parent/ns5:id</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_JDACreateColor" bpelx:invokeAsDetail="no" partnerLink="JDACreateColorProcessPXY"
+                portType="ns11:JDACreateColorProcess" operation="process" inputVariable="Invoke_JDACreateColor_In"
+                outputVariable="Invoke_JDACreateColor_Out"/>
+      </sequence>
+    </flow>
+    <assign name="Assign3">
+      <copy>
+        <from>'Registros creados exitosamente'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns15:description</to>
+      </copy>
+      <copy>
+        <from>true()</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns15:result</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="createcolorprocess_client" portType="client:CreateColorProcess" operation="create" variable="outputVariable"/>
+  </sequence>
+</process>

@@ -1,0 +1,409 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sun Oct 09 13:17:47 CDT 2016
+  Author:  dalia-reyes
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="GenerarReciboPagoProceso"
+               targetNamespace="http://xmlns.oracle.com/DominioCliente/Recuperacion/GenerarReciboPagoProceso"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioCliente/Recuperacion/GenerarReciboPagoProceso"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/GestionCobroMO"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://xmlns.oracle.com/OSB_BCIE/MDS/CrearReciboPagoSAD"
+         xmlns:ns3="http://xmlns.oracle.com/bpmn/bpmnProcess/ProcesosPrincipales"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns8="http://www.bcie.org/ProductoBO"
+         xmlns:ns9="http://www.bcie.org/CommonBO" xmlns:ns10="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns12="http://www.bcie.org/ComisionBO" xmlns:ns4="http://www.bcie.org/GestionCobroBO"
+         xmlns:ns11="http://www.bcie.org/LineaCreditoBO" xmlns:ns6="http://www.bcie.org/CatalogoBO"
+         xmlns:ns7="http://www.bcie.org/DesembolsoBO" xmlns:ns5="http://www.bcie.org/ClienteBO"
+         xmlns:ns13="http://www.bcie.org/AtributoBO" xmlns:ns14="http://www.bcie.org/ValidarClienteProcesoMO"
+         xmlns:ns15="http://www.bcie.org/ResultBO" xmlns:ns16="http://www.bcie.org/ErrorBO"
+         xmlns:ns17="http://www.bcie.org/ValidarClienteProcesoBO" xmlns:ns18="http://xmlns.bcie.com/DocumentoService"
+         xmlns:ns19="http://www.bcie.org/DocumentoBO" 
+         xmlns:ns20="http://www.bcie.org/DocumentoMO"
+         xmlns:ns21="http://xmlns.oracle.com/bpmn/bpmnProcess/GestionCobroProcess"
+         xmlns:ns27="http://xmlns.bcie.org/ObjetoProceso/Comun/Parameter/V1"
+         xmlns:ns23="http://xmlns.bcie.org/ObjetoProceso/Comun/Operacion/V1"
+         xmlns:ns26="http://xmlns.bcie.org/ObjetoProceso/Comun/Proceso/V1"
+         xmlns:ns22="http://xmlns.bcie.org/ObjetoProceso/Comun/Header/V1"
+         xmlns:ns25="http://xmlns.bcie.org/ObjetoProceso/Comun/Tarea/V1"
+         xmlns:ns24="http://xmlns.bcie.org/ObjetoProceso/Comun/Cliente/V1" xmlns:ns28="http://www.bcie.org/MatrizTCCBO"
+         xmlns:ns29="http://www.bcie.org/GenerarArchivo">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/GenerarArchivo" location="../XSD/Recuperacion.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://www.bcie.org/GestionCobroMO" location="../WSDLs/GenerarReciboPagoProcesoSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="generarrecibopagoproceso_client" partnerLinkType="ns1:GenerarReciboPagoProceso" myRole="GenerarReciboPagoProcesoPT"/>
+    <partnerLink name="CrearReciboPago" partnerLinkType="ns2:CrearReciboPago" partnerRole="CrearReciboPago_ptt"/>
+    <partnerLink name="InsertarDetalleGestionCobro" partnerLinkType="ns1:InsertarDetalleGestionCobro"
+                 partnerRole="InsertarGenerarDetalleGestionCobroPT"/>
+    <partnerLink name="ConsultarDetalleGestionCobro" partnerLinkType="ns1:ConsultarDetalleGestionCobro"
+                 partnerRole="ConsultarDetalleAvisoCobroPT"/>
+    <partnerLink name="IniciarGestionCobro" partnerLinkType="ns3:IniciarGestionCobro"
+                 partnerRole="ProcesosPrincipalesPortType"/>
+    <partnerLink name="CargarDocumentoFenix" partnerLinkType="ns18:CargarDocumentoFenix"
+                 partnerRole="CargarDocumentoFPT"/>
+    <partnerLink name="EliminarDocumentoFenix" partnerLinkType="ns18:EliminarDocumentoFenix"
+                 partnerRole="EliminarDocumentoFenix"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:GenerarReciboPagoProcesoRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:GenerarReciboPagoProcesoResponseMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="inInvokeActualizarDetalleLote" messageType="ns1:InsertarGenerarDetalleGestionCobroRequestMessage"/>
+    <variable name="ListaAdjuntos" type="ns29:ListaAdjuntosType"/>
+    <variable name="idAdjunto" type="xsd:long"/>
+    <variable name="ListaDocumentosAdjuntos" messageType="ns18:requestCargarDocumentoFenixMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in GenerarReciboPagoProceso.wsdl) -->
+    <receive name="receiveInput" partnerLink="generarrecibopagoproceso_client" portType="ns1:GenerarReciboPagoProcesoPT" operation="generarReciboPagoProceso" variable="inputVariable" createInstance="yes"/><assign name="AssignTitle"
+                                                                                                                                                                                                                     xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat('GenerarReciboPagoProceso, ', 'IdCliente:',$inputVariable.GenerarReciboPagoProcesoRequest/ns1:ReciboPago/ns4:recibo/ns4:Cliente/ns5:idCliente))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign><scope name="ScopeConsultarDetalleLote">
+      <variables>
+        <variable name="inInvokeConsultarDetalleLote" messageType="ns1:ConsultarDetalleAvisoCobroRequestMessage"/>
+        <variable name="outInvokeConsultarDetalleLote" messageType="ns1:ConsultarDetalleAvisoCobroResponseMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarDetalleLote">
+        <assign name="AssignConsultarDetalleLote">
+          <copy bpelx:insertMissingToData="yes">
+            <from>$inputVariable.GenerarReciboPagoProcesoRequest/ns1:ReciboPago/ns4:recibo[1]/ns4:Recibo</from>
+            <to>$inInvokeConsultarDetalleLote.ConsultarDetalleAvisoCobroRequest/ns1:Responsable</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarDetalleLote" partnerLink="ConsultarDetalleGestionCobro"
+                portType="ns1:ConsultarDetalleAvisoCobroPT" operation="consultarDetalleAvisoCobro"
+                inputVariable="inInvokeConsultarDetalleLote" bpelx:invokeAsDetail="no"
+                outputVariable="outInvokeConsultarDetalleLote"/>
+        <assign name="AssignIdDetalle">
+          <copy>
+            <from>$outInvokeConsultarDetalleLote.ConsultarDetalleAvisoCobroResponse/ns1:DetalleAviso[ns4:Estado = 'PROCESO']/ns4:id</from>
+            <to>$inInvokeActualizarDetalleLote.request/ns1:DetalleLote/ns4:id</to>
+          </copy>
+        </assign>
+      </sequence>
+    </scope>
+    <scope name="ScopeCrearReciboPago">
+      <variables>
+        <variable name="ExitFor" type="xsd:int"/>
+        <variable name="inInvokeCrearReciboPago" messageType="ns2:requestMessage"/>
+        <variable name="outInvokeCrearReciboPago" messageType="ns2:replyMessage"/>
+      </variables>
+      <sequence name="SequenceCrearReciboPago">
+        <assign name="AssignCrearReciboPago">
+          <copy>
+            <from>$inputVariable.GenerarReciboPagoProcesoRequest/ns1:ReciboPago/ns4:recibo[1]</from>
+            <to>$inInvokeCrearReciboPago.CrearReciboPagoRequestMessage/ns1:ReciboPago</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeCrearReciboPago" partnerLink="CrearReciboPago"
+                portType="ns2:CrearReciboPago_ptt" operation="CrearReciboPago" inputVariable="inInvokeCrearReciboPago"
+                outputVariable="outInvokeCrearReciboPago" bpelx:invokeAsDetail="no"/>
+        <if name="IfResultadoCrearReciboPago">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeCrearReciboPago.CrearReciboPagoResponseMessage/ns1:Resultado/ns15:result = 'OK'</condition>
+          <sequence name="SequenceOK">
+            <forEach parallel="no" counterName="DocumentoCounter" name="ForEachDocumentos">
+              <startCounterValue>1</startCounterValue>
+              <finalCounterValue>count($outInvokeCrearReciboPago.CrearReciboPagoResponseMessage/ns1:Documento)</finalCounterValue>
+              <scope name="Scopefor">
+                <scope name="ScopeCargarDocumentoFenix">
+                  <bpelx:skipCondition>$ExitFor = 1</bpelx:skipCondition>
+                  <variables>
+                    <variable name="inInvokeCargarDocumentoFenix"
+                              messageType="ns18:requestCargarDocumentoFenixMessage"/>
+                    <variable name="outInvokeCargarDocumentoFenix"
+                              messageType="ns18:responseCargarDocumentoFenixMessage"/>
+                  </variables>
+                  <sequence name="SequenceCargarDocumentoFenix">
+                    <assign name="AssignCargarDocumentoFenix"
+                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                      <copy>
+                        <from>1</from>
+                        <to>$inInvokeCargarDocumentoFenix.request/ns20:Documentos/ns19:Documento/ns19:idExterno</to>
+                      </copy>
+                      <copy>
+                        <from>$inputVariable.GenerarReciboPagoProcesoRequest/ns1:ReciboPago/ns4:recibo/ns4:Cliente/ns5:idCliente</from>
+                        <to>$inInvokeCargarDocumentoFenix.request/ns20:Documentos/ns19:Documento/ns19:idCliente</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeCrearReciboPago.CrearReciboPagoResponseMessage/ns1:Documento[$DocumentoCounter]/ns19:mime_type</from>
+                        <to>$inInvokeCargarDocumentoFenix.request/ns20:Documentos/ns19:Documento/ns19:mime_type</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeCrearReciboPago.CrearReciboPagoResponseMessage/ns1:Documento[$DocumentoCounter]/ns19:idTipoDocumento</from>
+                        <to>$inInvokeCargarDocumentoFenix.request/ns20:Documentos/ns19:Documento/ns19:idTipoDocumento</to>
+                      </copy>
+                      <copy>
+                        <from>$outInvokeCrearReciboPago.CrearReciboPagoResponseMessage/ns1:Documento[$DocumentoCounter]/ns19:content</from>
+                        <to>$inInvokeCargarDocumentoFenix.request/ns20:Documentos/ns19:Documento/ns19:content</to>
+                      </copy>
+                      <copy>
+                        <from>concat('RECIBO DE PAGO-',$inputVariable.GenerarReciboPagoProcesoRequest/ns1:ReciboPago/ns4:recibo/ns4:Cliente[1]/ns5:abreviatura, '-',xp20:format-dateTime(xp20:current-date(), '[MN,*-3]-[Y0001]'),'.',$outInvokeCrearReciboPago.CrearReciboPagoResponseMessage/ns1:Documento[$DocumentoCounter]/ns19:nombreTipoDocumento)</from>
+                        <to>$inInvokeCargarDocumentoFenix.request/ns20:Documentos/ns19:Documento/ns19:filename</to>
+                      </copy>
+                      <copy>
+                        <from>xp20:current-date()</from>
+                        <to>$inInvokeCargarDocumentoFenix.request/ns20:Documentos/ns19:Documento/ns19:fechaRegistro</to>
+                      </copy>
+                      <copy>
+                        <from>1</from>
+                        <to>$inInvokeCargarDocumentoFenix.request/ns20:Documentos/ns19:Documento/ns19:status</to>
+                      </copy>
+                      <copy>
+                        <from>0</from>
+                        <to>$inInvokeCargarDocumentoFenix.request/ns20:Documentos/ns19:Documento/ns19:esJustificacion</to>
+                      </copy>
+                      <copy>
+                        <from>142</from>
+                        <to>$inInvokeCargarDocumentoFenix.request/ns20:Documentos/ns19:Documento/ns19:idtarea</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeCargarDocumentoFenix" bpelx:invokeAsDetail="no"
+                            partnerLink="CargarDocumentoFenix" portType="ns18:CargarDocumentoFPT"
+                            operation="cargarDocumentoFenix" inputVariable="inInvokeCargarDocumentoFenix"
+                            outputVariable="outInvokeCargarDocumentoFenix"/>
+                    <if name="IfResultadoCargarDocumento">
+                      <documentation>
+                        <![CDATA[OK]]>
+                      </documentation>
+                      <condition>$outInvokeCargarDocumentoFenix.response/ns20:Resultado/ns15:result = 'OK'</condition>
+                      <sequence name="SequenceOK">
+                        <assign name="AssignIdAdjunto">
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$outInvokeCargarDocumentoFenix.response/ns20:Adjunto</from>
+                            <to>$ListaAdjuntos/ns29:idAdjunto[$DocumentoCounter]</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$inInvokeCargarDocumentoFenix.request/ns20:Documentos/ns19:Documento</from>
+                            <to>$ListaDocumentosAdjuntos.request/ns20:Documentos/ns19:Documento[$DocumentoCounter]</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$outInvokeCargarDocumentoFenix.response/ns20:Adjunto</from>
+                            <to>$ListaDocumentosAdjuntos.request/ns20:Documentos/ns19:Documento[$DocumentoCounter]/ns19:idAdjunto</to>
+                          </copy>
+                        </assign>
+                      </sequence>
+                      <else>
+                        <documentation>
+                          <![CDATA[ERROR]]>
+                        </documentation>
+                        <sequence name="SequenceERROR">
+                          <scope name="ScopeEliminarDocumentoFenix">
+                            <variables>
+                              <variable name="inInvokeEliminarDocumentoFenix"
+                                        messageType="ns18:EliminarDocumentoFenixRequestMessage"/>
+                              <variable name="outInvokeEliminarDocumentoFenix"
+                                        messageType="ns18:EliminarDocumentoFenixResponseMessage"/>
+                            </variables>
+                            <sequence name="SequenceEliminarDocumentoFenix">
+                              <assign name="AssignEliminarDocumentoFenix">
+                                <copy>
+                                  <from>$ListaAdjuntos/ns29:idAdjunto[1]</from>
+                                  <to>$inInvokeEliminarDocumentoFenix.EliminarDocumentoFenixRequest/ns20:idAdjunto[1]</to>
+                                </copy>
+                              </assign>
+                              <invoke name="InvokeEliminarDocumentoFenix" bpelx:invokeAsDetail="no"
+                                      partnerLink="EliminarDocumentoFenix" portType="ns18:EliminarDocumentoFenix"
+                                      operation="eliminarDocumentoFenix" inputVariable="inInvokeEliminarDocumentoFenix"
+                                      outputVariable="outInvokeEliminarDocumentoFenix"/>
+                            </sequence>
+                          </scope>
+                          <assign name="AssignExit">
+                            <copy>
+                              <from>1</from>
+                              <to>$ExitFor</to>
+                            </copy>
+                          </assign>
+                          <assign name="AssignErrorDetalle"
+                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                            <copy>
+                              <from>'ERROR'</from>
+                              <to>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:result</to>
+                            </copy>
+                            <copy>
+                              <from>'No se puede insertar el documento en Fenix'</from>
+                              <to>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:message</to>
+                            </copy>
+                            <copy>
+                              <from>'8'</from>
+                              <to>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:error/ns16:errorCode</to>
+                            </copy>
+                          </assign>
+                        </sequence>
+                      </else>
+                    </if>
+                  </sequence>
+                </scope>
+              </scope>
+            </forEach>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <assign name="AssignErrorDetalle">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:result</to>
+              </copy>
+              <copy>
+                <from>'No se puede generar el reporte'</from>
+                <to>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:message</to>
+              </copy>
+              <copy>
+                <from>'3'</from>
+                <to>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:error/ns16:errorCode</to>
+              </copy>
+            </assign>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <if name="IfResultadoCrearRecibo">
+      <documentation>
+        <![CDATA[ERROR]]>
+      </documentation>
+      <condition>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:result = 'ERROR'</condition>
+      <empty name="EmptyERROR"/>
+      <else>
+        <documentation>
+          <![CDATA[OK]]>
+        </documentation>
+        <sequence name="SequenceOK">
+          <scope name="ScopeIniciarSeguimientoCobro">
+            <variables>
+              <variable name="inInvokeIniciarSeguimientoCobro" messageType="ns3:InicioSeguimientoCobro"/>
+              <variable name="outInvokeIniciarSeguimientoCobro" messageType="ns3:InicioProcesoResponse"/>
+            </variables>
+            <sequence name="SequenceIniciarSeguimientoCobro">
+              <assign name="XQIniciarSegummientoCobro">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:processXQuery10('../Transformations/XQIniciarSegummientoCobro.xqy', 'inputVariable.GenerarReciboPagoProcesoRequest', $inputVariable.GenerarReciboPagoProcesoRequest, 'ListaDocumentosAdjuntos.request', $ListaDocumentosAdjuntos.request)</from>
+                  <to variable="inInvokeIniciarSeguimientoCobro" part="parameters"/>
+                </copy>
+              </assign>
+              <invoke name="InvokeIniciarSeguimientoCobro" bpelx:invokeAsDetail="no" partnerLink="IniciarGestionCobro"
+                      portType="ns3:ProcesosPrincipalesPortType" operation="InicioSeguimientoCobro"
+                      inputVariable="inInvokeIniciarSeguimientoCobro"
+                      outputVariable="outInvokeIniciarSeguimientoCobro"/>
+              <if name="IfResultadoIniciarSeguimiento">
+                <documentation>
+                  <![CDATA[OK]]>
+                </documentation>
+                <condition>$outInvokeIniciarSeguimientoCobro.resultado/ns3:resultado/ns15:result = 'OK'</condition>
+                <assign name="AssignOKDetalle">
+                  <copy>
+                    <from>'OK'</from>
+                    <to>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:result</to>
+                  </copy>
+                </assign>
+                <else>
+                  <documentation>
+                    <![CDATA[ERROR]]>
+                  </documentation>
+                  <assign name="AssignErrorDetalle" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                    <copy>
+                      <from>'ERROR'</from>
+                      <to>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:result</to>
+                    </copy>
+                    <copy>
+                      <from>'No se pudo iniciar el proceso'</from>
+                      <to>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:message</to>
+                    </copy>
+                    <copy>
+                      <from>'10'</from>
+                      <to>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:error/ns16:errorCode</to>
+                    </copy>
+                  </assign>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+        </sequence>
+      </else>
+    </if>
+    <scope name="ScopeActualizarDetalleLote">
+      <variables>
+        <variable name="outInvokeActualizarDetalleLote" messageType="ns1:InsertarGenerarDetalleGestionCobroResponse"/>
+      </variables>
+      <sequence name="SequenceActualizarDetalleLote">
+        <assign name="AssignActualizarDetalle">
+          <copy>
+            <from>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:result</from>
+            <to>$inInvokeActualizarDetalleLote.request/ns1:DetalleLote/ns4:Estado</to>
+          </copy>
+          <copy ignoreMissingFromData="yes">
+            <from>$outputVariable.GenerarReciboPagoProcesoResponse/ns1:Resultado/ns15:error/ns16:errorCode</from>
+            <to>$inInvokeActualizarDetalleLote.request/ns1:DetalleLote/ns4:Mensaje_Error/ns6:Id</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeActualizarDetalleLote" partnerLink="InsertarDetalleGestionCobro"
+                portType="ns1:InsertarGenerarDetalleGestionCobroPT" operation="InsertarGenerarDetalleGestionCobro"
+                inputVariable="inInvokeActualizarDetalleLote" outputVariable="outInvokeActualizarDetalleLote"
+                bpelx:invokeAsDetail="no"/>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="generarrecibopagoproceso_client" portType="ns1:GenerarReciboPagoProcesoPT" operation="generarReciboPagoProceso" variable="outputVariable"/>
+  </sequence>
+</process>

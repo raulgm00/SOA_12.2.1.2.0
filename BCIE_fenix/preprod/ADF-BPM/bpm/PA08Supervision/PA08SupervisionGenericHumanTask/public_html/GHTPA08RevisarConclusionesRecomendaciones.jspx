@@ -1,0 +1,689 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.1" xmlns:f="http://java.sun.com/jsf/core"
+          xmlns:af="http://xmlns.oracle.com/adf/faces/rich" xmlns:c="http://java.sun.com/jsp/jstl/core"
+          xmlns:trh="http://myfaces.apache.org/trinidad/html"
+          xmlns:wf="http://xmlns.oracle.com/bpel/workflow/workflow-taglib.tld"
+          xmlns:wlc="http://xmlns.oracle.com/bpel/workflow/worklist">
+    <c:set var="pa08supervisionghtBundle" value="#{adfBundle['pa08supervisionght.PA08SupervisionGHTBundle']}"/>
+    <jsp:directive.page contentType="text/html;charset=UTF-8"/>
+    <f:view>
+        <af:document title="GHTPA08RevisarConclusionesRecomendaciones.jspx" id="d1">
+            <af:messages id="m1"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:resource type="javascript" source="/jsLibs/taskDetailsWithTemplate.js"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:form id="f1" usesUpload="true">
+                <af:pageTemplate viewId="/templates/bcieTaskTemplate.jspx" id="pageTemplateID">
+                    <f:facet name="action">
+                        <af:toolbar visible="#{actionAvailable.toolbarAvailable}" id="actionTlb">
+                            <af:switcher id="customActionButtons" facetName="#{actionAvailable.isCustomActionButtons}">
+                                <f:facet name="true">
+                                    <af:panelGroupLayout layout="horizontal" id="pgl6">
+                                        <af:button text="#{pa08supervisionghtBundle.SOLICITAR_AJUSTES_BTN_TXT}"
+                                                   disabled="#{!bindings.MASINFORMACION.enabled}"
+                                                   action="#{supervisionActionBean.invocarMasInformacion}"
+                                                   partialSubmit="false"
+                                                   visible="#{wf:isCustomActionAvailable('MASINFORMACION', 'bindings.customActions')}"
+                                                   id="b3" styleClass="headerLink"
+                                                   rendered="#{!pageFlowScope.supervisionBean.esEstadoCompletado}"/>
+                                        <af:button text="#{pa08supervisionghtBundle.FINALIZAR_TAREA_BTN_TXT}"
+                                                   disabled="#{!bindings.FINALIZARTAREA.enabled}" partialSubmit="false"
+                                                   visible="#{wf:isCustomActionAvailable('FINALIZARTAREA', 'bindings.customActions')}"
+                                                   id="b1" styleClass="headerLink"
+                                                   action="#{supervisionActionBean.invocarFinalizarTarea}"
+                                                   rendered="#{!pageFlowScope.supervisionBean.esEstadoCompletado}"></af:button>
+                                    </af:panelGroupLayout>
+                                </f:facet>
+                            </af:switcher>
+                            <!--Atiende incidencia FNXII-5586
+                            <af:button actionListener="#{invokeActionBean.setOperation}" text="#{resources.CLAIM}"
+                                       id="Claim" action="#{invokeActionBean.invokeOperation}" partialSubmit="false"
+                                       visible="#{actionAvailable.claimAvailable}" styleClass="headerLink">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Claim"/>
+                            </af:button>
+                            -->
+                            <af:button id="acknowledge" actionListener="#{invokeActionBean.setOperation}"
+                                       text="#{resources.ACKNOWLEDGE}" action="#{invokeActionBean.invokeOperation}"
+                                       partialSubmit="false" visible="#{actionAvailable.isFyiTask}"
+                                       styleClass="headerLink">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Acknowledge"/>
+                            </af:button>
+                            <af:button id="resume" actionListener="#{invokeActionBean.setOperation}"
+                                       text="#{resources.RESUME}" action="#{invokeActionBean.invokeOperation}"
+                                       partialSubmit="false" visible="#{actionAvailable.resumeAvailable}"
+                                       styleClass="headerLink">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Resume"/>
+                            </af:button>
+                            <af:panelGroupLayout layout="horizontal" id="pgl1" rendered="false">
+                                <af:group rendered="#{!((empty actionAvailable.customActions) and (empty actionAvailable.redirectActions) and (empty actionAvailable.otherActions)) || bindings.update.enabled}"
+                                          id="g5">
+                                    <af:menuBar id="mb1">
+                                        <af:menu id="acts" text="#{resources.TASK_ACTIONS}"
+                                                 visible="#{actionAvailable.actionsAvailable || bindings.update.enabled}">
+                                            <af:group id="g1">
+                                                <af:forEach var="childNode1" items="#{actionAvailable.customActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{childNode1.displayName}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi2">
+                                                        <f:attribute name="ACTION_MENU_ITEM"
+                                                                     value="#{childNode1.action}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g4">
+                                                <af:forEach var="childNode2" items="#{actionAvailable.redirectActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode2]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="true" id="cmi1">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode2}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g3">
+                                                <af:forEach var="childNode3" items="#{actionAvailable.otherActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode3]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi4">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode3}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g2">
+                                                <af:commandMenuItem id="save" textAndAccessKey="#{resources.SAVE}"
+                                                                    actionListener="#{invokeActionBean.setAction}"
+                                                                    action="#{invokeActionBean.action}"
+                                                                    partialSubmit="false"
+                                                                    rendered="#{actionAvailable.updateAvailable}">
+                                                    <f:attribute name="ACTION_MENU_ITEM" value="bindings.update"/>
+                                                </af:commandMenuItem>
+                                            </af:group>
+                                        </af:menu>
+                                    </af:menuBar>
+                                </af:group>
+                            </af:panelGroupLayout>
+                            <af:spacer width="10" id="s3"/>
+                            <af:link shortDesc="#{resources.PREVIOUS_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/nexttraversalarrow_ena.png'  : '/hw_images/previoustraversalarrow_ena.png'}"
+                                     action="fetchPreviousTask"
+                                     visible="#{pageFlowScope.enableNavigationButton != null}" id="l2"/>
+                            <af:spacer width="10" id="s6"/>
+                            <af:link shortDesc="#{resources.NEXT_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/previoustraversalarrow_ena.png' : '/hw_images/nexttraversalarrow_ena.png'}"
+                                     action="fetchNextTask" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l3"/>
+                            <af:spacer width="10" id="s4"/>
+                            <af:link shortDesc="#{resources.SHORT_DESC_CLOSE}" icon="/hw_images/close_ena.png"
+                                     action="closeTaskFlow" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l1"/>
+                            <af:popup id="reassignPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog id="reAsDg" dialogListener="#{invokeActionBean.reassignAction}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           title="#{resources.REASSIGNPAGE}">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="reAsIdB" mode="REASSIGN" showActionButtons="false"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="requestInfoPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.INFOREQUESTEDPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.requestInfoAction}" id="reqIfD">
+                                    <wlc:requestInfoDialog workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                           id="rqIDgC"
+                                                           selectedTaskId="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds[0]}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="routePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.ROUTEPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.routeTaskAction}" id="rteDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="rteIdB" mode="ROUTE"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="decomposePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{pageFlowScope.ADFHumanTaskBean.decomposeDialogTitle}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.decomposeTaskAction}" id="dcmpDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.ADFHumanTaskBean.workflowContext}"
+                                                         id="dcmpIdB" mode="DECOMPOSE"
+                                                         selectedTaskObject="#{pageFlowScope.ADFHumanTaskBean.task}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="popupEnterPasswordDialog" contentDelivery="lazyUncached"
+                                      childCreation="deferred">
+                                <af:dialog title="#{resources.ENTER_PASSWORD}"
+                                           dialogListener="#{invokeActionBean.validatePassword}" type="okCancel"
+                                           modal="true" cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}" closeIconVisible="false"
+                                           id="pwdDlg">
+                                    <af:panelGroupLayout id="pgl4">
+                                        <af:panelFormLayout id="pfl1">
+                                            <af:inputText id="pwdBox" rows="1" columns="50"
+                                                          value="#{invokeActionBean.password}"
+                                                          label="#{resources.PASSWORD}" secret="true" required="true"/>
+                                        </af:panelFormLayout>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="helpPopup" childCreation="deferred">
+                                <af:switcher facetName="#{pageFlowScope.taskDocumentationBean.isTaskDoc}" id="s5">
+                                    <f:facet name="true">
+                                        <af:panelGroupLayout layout="vertical" id="pgl3">
+                                            <af:link text="#{resources.OPEN_IN_WINDOW}"
+                                                     destination="#{pageFlowScope.taskDocumentationBean.docURL}"
+                                                     targetFrame="help" id="help"
+                                                     rendered="#{!empty bindings.activityId.inputValue}"/>
+                                            <af:outputFormatted value="#{pageFlowScope.taskDocumentationBean.taskDoc}"
+                                                                id="of1"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <f:facet name="false">
+                                        <af:outputText value="#{resources.TASK_DOC_NOT_AVAILABLE}" id="ot6"/>
+                                    </f:facet>
+                                </af:switcher>
+                            </af:popup>
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="p1"
+                                      binding="#{supervisionActionBean.popupFinalizarTarea}">
+                                <af:dialog id="d2" type="none">
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl5">
+                                            <af:button text="#{pa08supervisionghtBundle.ACEPTAR_BTN_TXT}" id="b2"
+                                                       action="#{supervisionActionBean.aceptarFinalizarTarea}"
+                                                       actionListener="#{invokeActionBean.setOperation}">
+                                                <f:attribute name="DC_OPERATION_BINDING"
+                                                             value="bindings.FINALIZARTAREA"/>
+                                            </af:button>
+                                            <af:button text="#{pa08supervisionghtBundle.CANCELAR_BTN_TXT}" id="b4"
+                                                       action="#{supervisionActionBean.cancelarFinalizarTarea}"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <af:panelGroupLayout id="pglFinalizarTarea" layout="vertical">
+                                        <af:outputText value="#{pa08supervisionghtBundle.CONFIRMAR_FINALIZAR_TAREA_REVISAR_BTN_TXT}"
+                                                       id="ot1"/>
+                                        <af:region value="#{bindings.MensajesFinalizarTareaBTF.regionModel}" id="r9"/>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="p2"
+                                      binding="#{supervisionActionBean.popupMasInformacion}">
+                                <af:dialog id="d3" type="none">
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl7">
+                                            <af:button id="b5" text="#{pa08supervisionghtBundle.ACEPTAR_BTN_TXT}"
+                                                       action="#{supervisionActionBean.aceptarMasInformacion}"
+                                                       actionListener="#{invokeActionBean.setOperation}">
+                                                <f:attribute name="DC_OPERATION_BINDING"
+                                                             value="bindings.MASINFORMACION"/>
+                                            </af:button>
+                                            <af:button text="#{pa08supervisionghtBundle.CANCELAR_BTN_TXT}" id="b6"
+                                                       action="#{supervisionActionBean.cancelarmasInformacion}"></af:button>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <af:panelGroupLayout id="pglMasInformacion" layout="vertical">
+                                        <af:outputText value="#{pa08supervisionghtBundle.CONFIRMAR_SOLICITAR_AJUSTES_BTN_TXT}"
+                                                       id="ot2"/>
+                                        <af:region value="#{bindings.MensajesMasInformacionBTF.regionModel}" id="r10"/>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                        </af:toolbar>
+                    </f:facet>
+                    <f:facet name="header">
+                        <af:panelGroupLayout id="pglHeader" layout="vertical">
+                            <af:region value="#{bindings.MensajesCintaBTF1.regionModel}" id="r8"/>
+                            <af:region value="#{bindings.encabezadoBTF1.regionModel}" id="r1"/>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:facet name="body">
+                        <af:panelGroupLayout layout="vertical" inlineStyle="padding:5px;" id="pglBody">
+                            <af:panelAccordion discloseMany="true" id="pa1" styleClass="secctionAccordion"
+                                               discloseNone="true">
+                                <af:showDetailItem id="pane1"
+                                                   text="#{pa08supervisionghtBundle.DETALLE_OPERACION_PAL_TXT}"
+                                                   inlineStyle="margin-left: 10px; margin-right: 10px;" immediate="true"
+                                                   disclosureListener="#{pageFlowScope.supervisionBean.panelDetalleOperacionDisclosureListener}">
+                                    <af:region value="#{bindings.detalleOperacionBTF1.regionModel}" id="r2"/>
+                                </af:showDetailItem>
+                                  <af:showDetailItem id="paneCA"
+                                               text="#{pa08supervisionghtBundle.LBL_CLASIFICACION_AMBIENTAL}"
+                                               immediate="true">
+                                    <af:region value="#{bindings.editarClasificacionAmbientalBTF1.regionModel}"
+                                               id="r7"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="pane2" text="#{pa08supervisionghtBundle.DOCUMENTOS_PAL_TXT}"
+                                                   inlineStyle="margin-left: 10px; margin-right: 10px;" immediate="true"
+                                                   disclosureListener="#{pageFlowScope.supervisionBean.panelDocumentosDisclosureListener}">
+                                    <af:region value="#{bindings.gestorDocumentosBTF1.regionModel}" id="r3"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="pane3" text="#{pa08supervisionghtBundle.MATRIZ_TCC_PAL_TXT}"
+                                                   inlineStyle="margin-left: 10px; margin-right: 10px;" immediate="true"
+                                                   disclosureListener="#{pageFlowScope.supervisionBean.panelMatrizTccDisclosureListener}">
+                                    <af:region value="#{bindings.matriztccBTF1.regionModel}" id="r5"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="pane4" text="#{pa08supervisionghtBundle.ACCIONES_PAL_TXT}"
+                                                   inlineStyle="margin-left: 10px; margin-right: 10px;" immediate="true">
+                                    <af:region value="#{bindings.accionesBTF1.regionModel}" id="r6"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="pane5" text="#{pa08supervisionghtBundle.DATOS_TAREA_PAL_TXT}"
+                                                   inlineStyle="margin-left: 10px; margin-right: 10px;" disclosed="true" immediate="true">
+                                    <af:spacer width="10" height="10" id="s1"/>
+                                    <af:panelGroupLayout id="pgl2" layout="vertical">
+                                        <af:selectBooleanCheckbox value="#{bindings.EsProyectoEnOperacion.inputValue}"
+                                                                  label="#{pa08supervisionghtBundle.LBL_PROYECTO_EN_OPERACION}"
+                                                                  shortDesc="#{bindings.EsProyectoEnOperacion.hints.tooltip}"
+                                                                  id="sbc1" disabled="true"
+                                                                  rendered="#{(pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false)}"
+                                                                  autoSubmit="true"/>
+                                        <af:panelGridLayout id="pgl19" partialTriggers="sbc1">
+                                            <af:gridRow marginTop="5px" height="auto" id="gr5">
+                                                <af:gridCell marginStart="5px" width="330px" id="gc7"
+                                                             rendered="#{((pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false) &amp;&amp; (bindings.EsProyectoEnOperacion.inputValue eq null || bindings.EsProyectoEnOperacion.inputValue eq false))}"
+                                                             valign="middle">
+                                                    <af:panelGroupLayout id="pgl13" layout="horizontal"
+                                                                         partialTriggers="sbc1"
+                                                                         rendered="#{((pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false) &amp;&amp; (bindings.EsProyectoEnOperacion.inputValue eq null || bindings.EsProyectoEnOperacion.inputValue eq false))}">
+                                                        <af:inputText value="#{bindings.CalificacionFinal.inputValue}"
+                                                                      label="#{pa08supervisionghtBundle.LBL_CALIFICACION_FINAL_DEL_PROYECTO}"
+                                                                      required="#{bindings.CalificacionFinal.hints.mandatory}"
+                                                                      columns="#{bindings.CalificacionFinal.hints.displayWidth}"
+                                                                      maximumLength="#{bindings.CalificacionFinal.hints.precision}"
+                                                                      shortDesc="#{bindings.CalificacionFinal.hints.tooltip}"
+                                                                      id="it5" showRequired="true" readOnly="true"
+                                                                      autoSubmit="true"
+                                                                      valueChangeListener="#{supervisionActionBean.cambioCalificacion}"
+                                                                      rendered="#{((pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false) &amp;&amp; (bindings.EsProyectoEnOperacion.inputValue eq null || bindings.EsProyectoEnOperacion.inputValue eq false))}"
+                                                                      partialTriggers="sbc1" contentStyle="width:65px"
+                                                                      disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                            <f:validator binding="#{bindings.CalificacionFinal.validator}"/>
+                                                            <af:convertNumber groupingUsed="false"
+                                                                              pattern="#{bindings.CalificacionFinal.format}"/>
+                                                        </af:inputText>
+                                                        <af:spacer width="5" height="5" id="s7"/>
+                                                        <af:outputText value="#{pa08supervisionghtBundle.SIMBOLO_PORCENTAJE}"
+                                                                       id="ot18" inlineStyle="color:Black;"/>
+                                                    </af:panelGroupLayout>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="350px" id="gc8"
+                                                             rendered="#{((pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false) &amp;&amp; (bindings.EsProyectoEnOperacion.inputValue eq null || bindings.EsProyectoEnOperacion.inputValue eq false))}"
+                                                             valign="middle">
+                                                    <af:panelGroupLayout id="pgl14" layout="horizontal"
+                                                                         partialTriggers="sbc1"
+                                                                         rendered="#{((pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false) &amp;&amp; (bindings.EsProyectoEnOperacion.inputValue eq null || bindings.EsProyectoEnOperacion.inputValue eq false))}">
+                                                        <af:selectOneChoice value="#{bindings.IdTcaSct.inputValue}"
+                                                                            required="#{bindings.IdTcaSct.hints.mandatory}"
+                                                                            shortDesc="#{bindings.IdTcaSct.hints.tooltip}"
+                                                                            id="soc2" readOnly="true"
+                                                                            partialTriggers="it5 sbc1"
+                                                                            rendered="#{((pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false) &amp;&amp; (bindings.EsProyectoEnOperacion.inputValue eq null || bindings.EsProyectoEnOperacion.inputValue eq false))}"
+                                                                            contentStyle="#{bindings.ColorCalificacion.inputValue}"
+                                                                            autoSubmit="true"
+                                                                            disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                            <f:selectItems value="#{bindings.IdTcaSct.items}" id="si2"/>
+                                                            <f:validator binding="#{bindings.IdTcaSct.validator}"/>
+                                                        </af:selectOneChoice>
+                                                    </af:panelGroupLayout>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="300px" marginEnd="5px" id="gc9"
+                                                             valign="middle">
+                                                    <af:inputDate value="#{bindings.FechaVisita.inputValue}"
+                                                                  label="#{pa08supervisionghtBundle.LBL_FECHA_DE_VISITA}"
+                                                                  required="#{bindings.FechaVisita.hints.mandatory}"
+                                                                  columns="#{bindings.FechaVisita.hints.displayWidth}"
+                                                                  shortDesc="#{bindings.FechaVisita.hints.tooltip}"
+                                                                  id="id1" readOnly="true" autoSubmit="true"
+                                                                  disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                        <f:validator binding="#{bindings.FechaVisita.validator}"/>
+                                                        <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                    </af:inputDate>
+                                                </af:gridCell>
+                                            </af:gridRow>
+                                            <af:gridRow marginTop="5px" height="auto" marginBottom="5px" id="gr6">
+                                                <af:gridCell marginStart="5px" width="330px" id="gc10"
+                                                             rendered="#{((pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false) &amp;&amp; (bindings.EsProyectoEnOperacion.inputValue eq null || bindings.EsProyectoEnOperacion.inputValue eq false))}"
+                                                             valign="middle">
+                                                    <af:panelGroupLayout id="pgl17" layout="horizontal"
+                                                                         rendered="#{((pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false) &amp;&amp; (bindings.EsProyectoEnOperacion.inputValue eq null || bindings.EsProyectoEnOperacion.inputValue eq false))}"
+                                                                         partialTriggers="sbc1">
+                                                        <af:inputText value="#{bindings.AvanceFisico.inputValue}"
+                                                                      label="#{pa08supervisionghtBundle.LBL_AVANCE_FISICO_DEL_PROYECTO}"
+                                                                      required="#{bindings.AvanceFisico.hints.mandatory}"
+                                                                      columns="#{bindings.AvanceFisico.hints.displayWidth}"
+                                                                      maximumLength="#{bindings.AvanceFisico.hints.precision}"
+                                                                      shortDesc="#{bindings.AvanceFisico.hints.tooltip}"
+                                                                      id="it6" showRequired="true" readOnly="true"
+                                                                      rendered="#{((pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false) &amp;&amp; (bindings.EsProyectoEnOperacion.inputValue eq null || bindings.EsProyectoEnOperacion.inputValue eq false))}"
+                                                                      partialTriggers="sbc1" autoSubmit="true"
+                                                                      disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                            <f:validator binding="#{bindings.AvanceFisico.validator}"/>
+                                                            <af:convertNumber groupingUsed="false"
+                                                                              pattern="#{bindings.AvanceFisico.format}"
+                                                                              minFractionDigits="2"
+                                                                              maxFractionDigits="2" locale="EN"
+                                                                              type="number"/>
+                                                        </af:inputText>
+                                                        <af:spacer width="5" height="5" id="s9"/>
+                                                        <af:outputText value="#{pa08supervisionghtBundle.SIMBOLO_PORCENTAJE}"
+                                                                       id="ot19" inlineStyle="color: Black;"/>
+                                                    </af:panelGroupLayout>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="350px" id="gc11"
+                                                             rendered="#{((pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false) &amp;&amp; (bindings.EsProyectoEnOperacion.inputValue eq null || bindings.EsProyectoEnOperacion.inputValue eq false))}"
+                                                             valign="middle">
+                                                    <af:panelGroupLayout id="pgl18" layout="horizontal"
+                                                                         rendered="#{((pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false) &amp;&amp; (bindings.EsProyectoEnOperacion.inputValue eq null || bindings.EsProyectoEnOperacion.inputValue eq false))}"
+                                                                         partialTriggers="sbc1">
+                                                        <af:inputText value="#{bindings.AvanceFinanciero.inputValue}"
+                                                                      label="#{pa08supervisionghtBundle.LBL_AVANCE_FINANCIERO_DEL_PROYECTO}"
+                                                                      required="#{bindings.AvanceFinanciero.hints.mandatory}"
+                                                                      columns="#{bindings.AvanceFinanciero.hints.displayWidth}"
+                                                                      maximumLength="#{bindings.AvanceFinanciero.hints.precision}"
+                                                                      shortDesc="#{bindings.AvanceFinanciero.hints.tooltip}"
+                                                                      id="it7" showRequired="true" readOnly="true"
+                                                                      rendered="#{((pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false) &amp;&amp; (bindings.EsProyectoEnOperacion.inputValue eq null || bindings.EsProyectoEnOperacion.inputValue eq false))}"
+                                                                      partialTriggers="sbc1" autoSubmit="true"
+                                                                      disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                            <f:validator binding="#{bindings.AvanceFinanciero.validator}"/>
+                                                            <af:convertNumber groupingUsed="false"
+                                                                              pattern="#{bindings.AvanceFinanciero.format}"
+                                                                              minFractionDigits="2"
+                                                                              maxFractionDigits="2" locale="EN"
+                                                                              type="number"/>
+                                                        </af:inputText>
+                                                        <af:spacer width="5" height="5" id="s8"/>
+                                                        <af:outputText value="#{pa08supervisionghtBundle.SIMBOLO_PORCENTAJE}"
+                                                                       id="ot20" inlineStyle="color: Black;"/>
+                                                    </af:panelGroupLayout>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="300px" marginEnd="5px" id="gc12"
+                                                             valign="middle">
+                                                    <af:inputDate value="#{bindings.FechaAvance.inputValue}"
+                                                                  label="#{pa08supervisionghtBundle.LBL_AL}"
+                                                                  required="#{bindings.FechaAvance.hints.mandatory}"
+                                                                  columns="#{bindings.FechaAvance.hints.displayWidth}"
+                                                                  shortDesc="#{bindings.FechaAvance.hints.tooltip}"
+                                                                  id="id2" showRequired="true" readOnly="true"
+                                                                  autoSubmit="true"
+                                                                  disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                        <f:validator binding="#{bindings.FechaAvance.validator}"/>
+                                                        <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                    </af:inputDate>
+                                                </af:gridCell>
+                                            </af:gridRow>
+                                        </af:panelGridLayout>
+                                        <af:panelFormLayout id="pfl2" rendered="false">
+                                            <af:inputText value="#{bindings.Id.inputValue}"
+                                                          label="#{bindings.Id.hints.label}"
+                                                          required="#{bindings.Id.hints.mandatory}"
+                                                          columns="#{bindings.Id.hints.displayWidth}"
+                                                          maximumLength="#{bindings.Id.hints.precision}"
+                                                          shortDesc="#{bindings.Id.hints.tooltip}" id="it1"
+                                                          disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                <f:validator binding="#{bindings.Id.validator}"/>
+                                                <af:convertNumber groupingUsed="false" pattern="#{bindings.Id.format}"/>
+                                            </af:inputText>
+                                            <af:inputText value="#{bindings.IdOperacion.inputValue}"
+                                                          label="#{bindings.IdOperacion.hints.label}"
+                                                          required="#{bindings.IdOperacion.hints.mandatory}"
+                                                          columns="#{bindings.IdOperacion.hints.displayWidth}"
+                                                          maximumLength="#{bindings.IdOperacion.hints.precision}"
+                                                          shortDesc="#{bindings.IdOperacion.hints.tooltip}" id="it2"
+                                                          disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                <f:validator binding="#{bindings.IdOperacion.validator}"/>
+                                                <af:convertNumber groupingUsed="false"
+                                                                  pattern="#{bindings.IdOperacion.format}"/>
+                                            </af:inputText>
+                                            <af:inputText value="#{bindings.InstanciaProceso.inputValue}"
+                                                          label="#{bindings.InstanciaProceso.hints.label}"
+                                                          required="#{bindings.InstanciaProceso.hints.mandatory}"
+                                                          columns="#{bindings.InstanciaProceso.hints.displayWidth}"
+                                                          maximumLength="#{bindings.InstanciaProceso.hints.precision}"
+                                                          shortDesc="#{bindings.InstanciaProceso.hints.tooltip}"
+                                                          id="it3"
+                                                          disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                <f:validator binding="#{bindings.InstanciaProceso.validator}"/>
+                                            </af:inputText>
+                                            <af:inputText value="#{bindings.BanEstatus.inputValue}"
+                                                          label="#{bindings.BanEstatus.hints.label}"
+                                                          required="#{bindings.BanEstatus.hints.mandatory}"
+                                                          columns="#{bindings.BanEstatus.hints.displayWidth}"
+                                                          maximumLength="#{bindings.BanEstatus.hints.precision}"
+                                                          shortDesc="#{bindings.BanEstatus.hints.tooltip}" id="it4"
+                                                          disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                <f:validator binding="#{bindings.BanEstatus.validator}"/>
+                                                <af:convertNumber groupingUsed="false"
+                                                                  pattern="#{bindings.BanEstatus.format}"/>
+                                            </af:inputText>
+                                            <af:inputText value="#{bindings.ColorCalificacion.inputValue}"
+                                                          label="#{bindings.ColorCalificacion.hints.label}"
+                                                          required="#{bindings.ColorCalificacion.hints.mandatory}"
+                                                          columns="#{bindings.ColorCalificacion.hints.displayWidth}"
+                                                          maximumLength="#{bindings.ColorCalificacion.hints.precision}"
+                                                          shortDesc="#{bindings.ColorCalificacion.hints.tooltip}"
+                                                          id="it8" autoSubmit="true"
+                                                          disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                <f:validator binding="#{bindings.ColorCalificacion.validator}"/>
+                                            </af:inputText>
+                                            <af:inputText value="#{bindings.FechaInforme.inputValue}"
+                                                          label="#{bindings.FechaInforme.hints.label}"
+                                                          required="#{bindings.FechaInforme.hints.mandatory}"
+                                                          columns="#{bindings.FechaInforme.hints.displayWidth}"
+                                                          maximumLength="#{bindings.FechaInforme.hints.precision}"
+                                                          shortDesc="#{bindings.FechaInforme.hints.tooltip}" id="it9"
+                                                          disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                <f:validator binding="#{bindings.FechaInforme.validator}"/>
+                                                <af:convertDateTime pattern="#{bindings.FechaInforme.format}"/>
+                                            </af:inputText>
+                                        </af:panelFormLayout>
+                                        <af:panelHeader text="#{pa08supervisionghtBundle.HISTORIAL_DE_SUPERVISIONES_REALIZADAS_PNH_TXT}"
+                                                        id="ph1">
+                                            <f:facet name="context"/>
+                                            <f:facet name="menuBar"/>
+                                            <f:facet name="toolbar"/>
+                                            <f:facet name="legend"/>
+                                            <f:facet name="info"/>
+                                            <af:panelGroupLayout id="pgl8" halign="center" layout="horizontal">
+                                                <af:table value="#{bindings.SupervisionesRealizadasVO.collectionModel}"
+                                                          var="row"
+                                                          rows="#{bindings.SupervisionesRealizadasVO.rangeSize}"
+                                                          emptyText="#{bindings.SupervisionesRealizadasVO.viewable ? pa08supervisionghtBundle.TABLA_VACIA : pa08supervisionghtBundle.ACCESS_DENIED}"
+                                                          rowBandingInterval="0"
+                                                          fetchSize="#{bindings.SupervisionesRealizadasVO.rangeSize}"
+                                                          id="t1">
+                                                    <af:column headerText="#{bindings.SupervisionesRealizadasVO.hints.Id.label}"
+                                                               id="c1" rendered="false">
+                                                        <af:outputText value="#{row.Id}"
+                                                                       shortDesc="#{bindings.SupervisionesRealizadasVO.hints.Id.tooltip}"
+                                                                       id="ot3">
+                                                            <af:convertNumber groupingUsed="false"
+                                                                              pattern="#{bindings.SupervisionesRealizadasVO.hints.Id.format}"/>
+                                                        </af:outputText>
+                                                    </af:column>
+                                                    <af:column headerText="#{bindings.SupervisionesRealizadasVO.hints.IdOperacion.label}"
+                                                               id="c2" rendered="false">
+                                                        <af:outputText value="#{row.IdOperacion}"
+                                                                       shortDesc="#{bindings.SupervisionesRealizadasVO.hints.IdOperacion.tooltip}"
+                                                                       id="ot4">
+                                                            <af:convertNumber groupingUsed="false"
+                                                                              pattern="#{bindings.SupervisionesRealizadasVO.hints.IdOperacion.format}"/>
+                                                        </af:outputText>
+                                                    </af:column>
+                                                    <af:column headerText="#{bindings.SupervisionesRealizadasVO.hints.InstanciaProceso.label}"
+                                                               id="c3" rendered="false">
+                                                        <af:outputText value="#{row.InstanciaProceso}"
+                                                                       shortDesc="#{bindings.SupervisionesRealizadasVO.hints.InstanciaProceso.tooltip}"
+                                                                       id="ot5"/>
+                                                    </af:column>
+                                                    <af:column headerText="#{bindings.SupervisionesRealizadasVO.hints.BanEstatus.label}"
+                                                               id="c4" rendered="false">
+                                                        <af:outputText value="#{row.BanEstatus}"
+                                                                       shortDesc="#{bindings.SupervisionesRealizadasVO.hints.BanEstatus.tooltip}"
+                                                                       id="ot7">
+                                                            <af:convertNumber groupingUsed="false"
+                                                                              pattern="#{bindings.SupervisionesRealizadasVO.hints.BanEstatus.format}"/>
+                                                        </af:outputText>
+                                                    </af:column>
+                                                    <af:column headerText="#{pa08supervisionghtBundle.FECHA_DE_VISITA_TXT}"
+                                                               id="c5" width="120" inlineStyle="text-align:center;">
+                                                        <af:outputText value="#{row.FechaVisita}"
+                                                                       shortDesc="#{bindings.SupervisionesRealizadasVO.hints.FechaVisita.tooltip}"
+                                                                       id="ot8">
+                                                            <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                        </af:outputText>
+                                                    </af:column>
+                                                    <af:column headerText="#{pa08supervisionghtBundle.FECHA_DE_INFORME_TXT}"
+                                                               id="c6" width="130" inlineStyle="text-align:center;">
+                                                        <af:outputText value="#{row.FechaInforme}"
+                                                                       shortDesc="#{bindings.SupervisionesRealizadasVO.hints.FechaInforme.tooltip}"
+                                                                       id="ot9">
+                                                            <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                        </af:outputText>
+                                                    </af:column>
+                                                    <af:column headerText="#{pa08supervisionghtBundle.SCT_OTORGADO_TXT}"
+                                                               id="c7" width="180" inlineStyle="text-align:center;"
+                                                               rendered="#{(pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false)}">
+                                                        <af:selectOneChoice value="#{row.bindings.IdTcaSct.inputValue}"
+                                                                            label="#{row.bindings.IdTcaSct.label}"
+                                                                            required="#{bindings.SupervisionesRealizadasVO.hints.IdTcaSct.mandatory}"
+                                                                            shortDesc="#{bindings.SupervisionesRealizadasVO.hints.IdTcaSct.tooltip}"
+                                                                            readOnly="true" id="soc1"
+                                                                            contentStyle="#{row.ColorCalificacion}"
+                                                                            disabled="#{pageFlowScope.supervisionBean.esEstadoCompletado}">
+                                                            <f:selectItems value="#{row.bindings.IdTcaSct.items}"
+                                                                           id="si1"/>
+                                                            <f:validator binding="#{row.bindings.IdTcaSct.validator}"/>
+                                                        </af:selectOneChoice>
+                                                    </af:column>
+                                                    <af:column headerText="#{bindings.SupervisionesRealizadasVO.hints.ColorCalificacion.label}"
+                                                               id="c16" rendered="false">
+                                                        <af:outputText value="#{row.ColorCalificacion}"
+                                                                       shortDesc="#{bindings.SupervisionesRealizadasVO.hints.ColorCalificacion.tooltip}"
+                                                                       id="ot21"/>
+                                                    </af:column>
+                                                </af:table>
+                                            </af:panelGroupLayout>
+                                        </af:panelHeader>
+                                        <af:panelHeader text="#{pa08supervisionghtBundle.HISTORIAL_DE_AVANCES_PNH_TXT}"
+                                                        id="ph2">
+                                            <f:facet name="context"/>
+                                            <f:facet name="menuBar"/>
+                                            <f:facet name="toolbar"/>
+                                            <f:facet name="legend"/>
+                                            <f:facet name="info"/>
+                                            <af:panelGroupLayout id="pgl9" layout="horizontal" halign="center">
+                                                <af:table value="#{bindings.AvancesSupervisionesVO.collectionModel}"
+                                                          var="row" rows="#{bindings.AvancesSupervisionesVO.rangeSize}"
+                                                          emptyText="#{bindings.AvancesSupervisionesVO.viewable ? pa08supervisionghtBundle.TABLA_VACIA : pa08supervisionghtBundle.ACCESS_DENIED}"
+                                                          rowBandingInterval="0"
+                                                          fetchSize="#{bindings.AvancesSupervisionesVO.rangeSize}"
+                                                          id="t2">
+                                                    <af:column headerText="#{bindings.AvancesSupervisionesVO.hints.Id.label}"
+                                                               id="c8" rendered="false">
+                                                        <af:outputText value="#{row.Id}"
+                                                                       shortDesc="#{bindings.AvancesSupervisionesVO.hints.Id.tooltip}"
+                                                                       id="ot10">
+                                                            <af:convertNumber groupingUsed="false"
+                                                                              pattern="#{bindings.AvancesSupervisionesVO.hints.Id.format}"/>
+                                                        </af:outputText>
+                                                    </af:column>
+                                                    <af:column headerText="#{bindings.AvancesSupervisionesVO.hints.IdOperacion.label}"
+                                                               id="c9" rendered="false">
+                                                        <af:outputText value="#{row.IdOperacion}"
+                                                                       shortDesc="#{bindings.AvancesSupervisionesVO.hints.IdOperacion.tooltip}"
+                                                                       id="ot11">
+                                                            <af:convertNumber groupingUsed="false"
+                                                                              pattern="#{bindings.AvancesSupervisionesVO.hints.IdOperacion.format}"/>
+                                                        </af:outputText>
+                                                    </af:column>
+                                                    <af:column headerText="#{bindings.AvancesSupervisionesVO.hints.InstanciaProceso.label}"
+                                                               id="c10" rendered="false">
+                                                        <af:outputText value="#{row.InstanciaProceso}"
+                                                                       shortDesc="#{bindings.AvancesSupervisionesVO.hints.InstanciaProceso.tooltip}"
+                                                                       id="ot12"/>
+                                                    </af:column>
+                                                    <af:column headerText="#{bindings.AvancesSupervisionesVO.hints.BanEstatus.label}"
+                                                               id="c11" rendered="false">
+                                                        <af:outputText value="#{row.BanEstatus}"
+                                                                       shortDesc="#{bindings.AvancesSupervisionesVO.hints.BanEstatus.tooltip}"
+                                                                       id="ot13">
+                                                            <af:convertNumber groupingUsed="false"
+                                                                              pattern="#{bindings.AvancesSupervisionesVO.hints.BanEstatus.format}"/>
+                                                        </af:outputText>
+                                                    </af:column>
+                                                    <af:column headerText="#{pa08supervisionghtBundle.TIPO_DE_ACTUALIZACION_TXT}"
+                                                               id="c12" inlineStyle="text-align:center;" width="160">
+                                                        <af:outputText value="#{row.TipoActualizacion}"
+                                                                       shortDesc="#{bindings.AvancesSupervisionesVO.hints.TipoActualizacion.tooltip}"
+                                                                       id="ot14"/>
+                                                    </af:column>
+                                                    <af:column headerText="#{pa08supervisionghtBundle.FECHA_DE_ACTUALIZACION_TXT}"
+                                                               id="c13" width="160" inlineStyle="text-align:center;">
+                                                        <af:outputText value="#{row.FechaAvance}"
+                                                                       shortDesc="#{bindings.AvancesSupervisionesVO.hints.FechaAvance.tooltip}"
+                                                                       id="ot15">
+                                                            <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                        </af:outputText>
+                                                    </af:column>
+                                                    <af:column headerText="#{pa08supervisionghtBundle.AVANCE_FISICO_DEL_PROYECTO}"
+                                                               id="c14" inlineStyle="text-align:center;" width="170"
+                                                               rendered="#{(pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false)}">
+                                                        <af:outputText value="#{row.AvanceFisico}"
+                                                                       shortDesc="#{bindings.AvancesSupervisionesVO.hints.AvanceFisico.tooltip}"
+                                                                       id="ot16">
+                                                            <af:convertNumber groupingUsed="false"
+                                                                              pattern="#{bindings.AvancesSupervisionesVO.hints.AvanceFisico.format}"
+                                                                              minFractionDigits="2"
+                                                                              maxFractionDigits="2" locale="EN"
+                                                                              type="number"/>
+                                                        </af:outputText>
+                                                    </af:column>
+                                                    <af:column headerText="#{pa08supervisionghtBundle.AVANCE_FINANCIERO_DEL_PROYECTO}"
+                                                               id="c15" inlineStyle="text-align:center;" width="200"
+                                                               rendered="#{(pageFlowScope.supervisionBean.esIFI eq null ||  pageFlowScope.supervisionBean.esIFI eq false)}">
+                                                        <af:outputText value="#{row.AvanceFinanciero}"
+                                                                       shortDesc="#{bindings.AvancesSupervisionesVO.hints.AvanceFinanciero.tooltip}"
+                                                                       id="ot17">
+                                                            <af:convertNumber groupingUsed="false"
+                                                                              pattern="#{bindings.AvancesSupervisionesVO.hints.AvanceFinanciero.format}"
+                                                                              minFractionDigits="2"
+                                                                              maxFractionDigits="2" type="number"
+                                                                              locale="EN"/>
+                                                        </af:outputText>
+                                                    </af:column>
+                                                </af:table>
+                                            </af:panelGroupLayout>
+                                        </af:panelHeader>
+                                    </af:panelGroupLayout>
+                                    <af:spacer width="10" height="10" id="s2"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="pane6" text="#{pa08supervisionghtBundle.COMENTARIOS_PAL_TXT}"
+                                                   inlineStyle="margin-left: 10px; margin-right: 10px;" immediate="true"
+                                                   disclosureListener="#{pageFlowScope.supervisionBean.panelComentariosDisclosureListener}">
+                                    <af:region value="#{bindings.comentariosBTF1.regionModel}" id="r4"/>
+                                </af:showDetailItem>
+                            </af:panelAccordion>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:facet name="comment"/>
+                    <f:facet name="attachment"/>
+                    <f:facet name="history"/>
+                    <f:attribute name="title"
+                                 value="#{bindings.NombreTarea == '' ? 'PA08 GHT' : bindings.NombreTarea}"/>
+                </af:pageTemplate>
+            </af:form>
+        </af:document>
+    </f:view>
+</jsp:root>

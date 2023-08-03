@@ -1,0 +1,383 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Nov 28 11:43:12 CST 2016
+  Author:  ismael-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="DuplicarEvaluacion"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/DuplicarEvaluacion/DuplicarEvaluacion"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/DuplicarEvaluacion/DuplicarEvaluacion"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/EvaluacionService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns3="http://www.bcie.org/ResultBO"
+         xmlns:ns2="http://www.bcie.org/EvaluacionMO" xmlns:ns4="http://www.bcie.org/ErrorBO"
+         xmlns:ns6="http://www.bcie.org/OperacionBO" xmlns:ns7="http://www.bcie.org/CatalogoBO"
+         xmlns:ns5="http://www.bcie.org/EvaluacionBO" xmlns:ns8="http://xmlns.bcie.org/EvaluacionService">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/EvaluacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Evaluacion/V1/Wsdl/BPEL/DumplicarEvaluacionSOR.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/EvaluacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Evaluacion/V1/Wsdl/Evaluacion.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/EvaluacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Evaluacion/V1/Wsdl/BPEL/CrearEvaluacionSOR.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.org/EvaluacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Evaluacion/V1/Wsdl/ADAPTER/ConsultarEvaluacionFenixSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/EvaluacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Evaluacion/V1/Wsdl/ADAPTER/DuplicarEvaluacionSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/EvaluacionService" location="../WSDLs/DumplicarEvaluacionSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="duplicarevaluacion_client" partnerLinkType="ns1:DuplicarEvaluacion" myRole="DumplicarEvaluacionBPELPT"/>
+    <partnerLink name="DuplicarEvaluacion_PS" partnerLinkType="ns1:DuplicarEvaluacion_PS"
+                 partnerRole="DuplicarEvaluacionPT"/>
+    <partnerLink name="CrearEvaluacion_PS" partnerLinkType="ns1:CrearEvaluacion_PS" partnerRole="EvaluacionPT"/>
+    <partnerLink name="ConsultarEvaluacion_PS" partnerLinkType="ns1:ConsultarEvaluacion_PS"
+                 partnerRole="ConsultarEvaluacionPT"/>
+    <partnerLink name="ConsultarEvaluacionFenix" partnerLinkType="ns8:ConsultarEvaluacionFenix"
+                 partnerRole="ConsultarEvaluacionFenixPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:DumplicarEvaluacionRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:DumplicarEvaluacionResponseMessage"/>
+    <variable name="setTittleVar" type="xsd:string"/>
+    <variable name="inInvokeDuplicarEvaluacion" messageType="ns1:DuplicarEvaluacionRequestMessage"/>
+    <variable name="outInvokeDuplicarEvaluacion" messageType="ns1:DuplicarEvaluacionResponseMessage"/>
+    <variable name="outInvokeCrearEvaluacion" messageType="ns1:responseCrearEvaluacionMessage"/>
+    <variable name="outConsultarEvaluacion" messageType="ns1:responseConsultarEvaluacionMessage"/>
+    <variable name="ExisteDuplicada" messageType="ns1:responseConsultarEvaluacionMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceCatchAll">
+        <assign name="assigError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyCatchAll" variable="outputVariable" partnerLink="duplicarevaluacion_client"
+               portType="ns1:DumplicarEvaluacionBPELPT" operation="DumplicarEvaluacionBPEL"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in DuplicarEvaluacion.wsdl) -->
+    <receive name="receiveInput" partnerLink="duplicarevaluacion_client" portType="ns1:DumplicarEvaluacionBPELPT" operation="DumplicarEvaluacionBPEL" variable="inputVariable" createInstance="yes"/>
+    <assign name="assignSetTittle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion: ",$inputVariable.request/ns2:Evaluacion/ns5:Operacion/ns6:idOperacion))</from>
+        <to>$setTittleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConultarEvaluacionService">
+      <variables>
+        <variable name="inConsultarEvaluacion" messageType="ns1:requestConsultarEvaluacionMessage"/>
+        <variable name="ExisteEvaluacion" type="xsd:int"/>
+      </variables>
+      <sequence name="SequenceConsultarEvaluacionFenix">
+        <assign name="assignIdOperacion">
+          <copy bpelx:insertMissingToData="yes">
+            <from>$inputVariable.request/ns2:Evaluacion/ns5:Operacion/ns6:idOperacion</from>
+            <to>$inConsultarEvaluacion.request/ns2:Evaluacion/ns5:idOperacion</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>$inputVariable.request/ns2:Evaluacion/ns5:TipoEvaluacion/ns7:Id</from>
+            <to>$inConsultarEvaluacion.request/ns2:Evaluacion/ns5:catEvaluacion/ns7:Id</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>$inputVariable.request/ns2:Evaluacion/ns5:IdFlujo</from>
+            <to>$inConsultarEvaluacion.request/ns2:Evaluacion/ns5:instanciaProceso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarEvaluacion" partnerLink="ConsultarEvaluacion_PS"
+                portType="ns1:ConsultarEvaluacionPT" operation="ConsultarEvaluacion"
+                inputVariable="inConsultarEvaluacion" outputVariable="outConsultarEvaluacion"
+                bpelx:invokeAsDetail="no"/>
+        <if name="IfOKConsultarEvaluacion">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outConsultarEvaluacion.response/ns2:Resultado/ns3:result = 'OK' and count($outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion) &gt; 0</condition>
+          <sequence name="SequenceExisteEvaluacionDuplicada">
+            <scope name="ScopeExisteEvaluacionDuplicada">
+              <variables>
+                <variable name="inConsultarEvaluacionFenix" messageType="ns8:ConsultarEvaluacionFenixRequestMessage"/>
+                <variable name="outConsultarEvaluacionFenix" messageType="ns8:ConsultarEvaluacionFenixResponseMessage"/>
+              </variables>
+              <sequence name="SequenceConsultarEvaluacionesFenix">
+                <assign name="AssignConsultarEvaluacionFenix">
+                  <copy>
+                    <from>$inputVariable.request/ns2:Evaluacion/ns5:Operacion/ns6:idOperacion</from>
+                    <to>$inConsultarEvaluacionFenix.request/ns2:idOperacion</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:Evaluacion/ns5:TipoEvaluacion/ns7:Id</from>
+                    <to>$inConsultarEvaluacionFenix.request/ns2:idTipoEvaluacion</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeConsultarEvaluacionFenix"
+                        partnerLink="ConsultarEvaluacionFenix" portType="ns8:ConsultarEvaluacionFenixPT"
+                        operation="ConsultarEvaluacionFenix" inputVariable="inConsultarEvaluacionFenix"
+                        outputVariable="outConsultarEvaluacionFenix" bpelx:invokeAsDetail="no"/>
+                <assign name="existeDuplicada">
+                  <bpelx:annotation>
+                    <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                  </bpelx:annotation>
+                  <copy>
+                    <from>ora:processXQuery10('../Transformations/ConsultarEvaluacion_TO_ExisteDuplicada.xqy', 'outConsultarEvaluacionFenix.response', $outConsultarEvaluacionFenix.response, 'outConsultarEvaluacion.response', $outConsultarEvaluacion.response, 'inputVariable.request', $inputVariable.request)</from>
+                    <to variable="ExisteDuplicada" part="response"/>
+                  </copy>
+                </assign>
+              </sequence>
+            </scope>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceErrorConsultarEvaluacionFenix">
+              <assign name="assignError">
+                <copy>
+                  <from>concat($outConsultarEvaluacion.response/ns2:Resultado/ns3:message,' -ConsultarEvaluacionService-')</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                </copy>
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                </copy>
+              </assign>
+              <reply name="ReplyError" variable="outputVariable" partnerLink="duplicarevaluacion_client"
+                     portType="ns1:DumplicarEvaluacionBPELPT" operation="DumplicarEvaluacionBPEL"/>
+              <exit name="Exit"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <if name="IfExisteDuplicada">
+      <documentation>
+        <![CDATA[Si]]>
+      </documentation>
+      <condition>$ExisteDuplicada.response/ns2:Evaluaciones/ns5:evaluacion/ns5:catEvaluacion[ns7:Descripcion = 'EXISTE_DUPLICADA']/ns7:Id &gt;0</condition>
+      <sequence name="SequenceSi">
+        <if name="IfOriginalODuplicada">
+          <documentation>
+            <![CDATA[Duplicada]]>
+          </documentation>
+          <condition>string-length($ExisteDuplicada.response/ns2:Evaluaciones/ns5:evaluacion/ns5:catEvaluacion[ns7:Descripcion = 'ID_DUPLICADO']/ns7:Id ) &gt;0</condition>
+          <assign name="AssignDuplicado">
+            <copy>
+              <from>$ExisteDuplicada.response/ns2:Evaluaciones/ns5:evaluacion/ns5:catEvaluacion[ns7:Descripcion = 'ID_DUPLICADO']/ns7:Id</from>
+              <to>$outInvokeDuplicarEvaluacion.response/ns2:codigoEvaluacion</to>
+            </copy>
+          </assign>
+          <else>
+            <documentation>
+              <![CDATA[Original]]>
+            </documentation><assign name="AssignOriginal"
+                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+              <copy>
+                <from>$ExisteDuplicada.response/ns2:Evaluaciones/ns5:evaluacion/ns5:catEvaluacion[ns7:Descripcion = 'ID_ORIGINAL']/ns7:Id</from>
+                <to>$outInvokeDuplicarEvaluacion.response/ns2:codigoEvaluacion</to>
+              </copy>
+            </assign></else>
+        </if>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[No]]>
+        </documentation>
+        <sequence name="SequenceNo">
+          <scope name="ScopeDuplicarEvaluacion">
+            <sequence name="SequenceDuplicarEvluacion">
+              <assign name="inDuplicarEVAL">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:processXQuery10('../Transformations/outConsultarEvaluacion_TO_inDuplicarEvaluacion.xqy', 'inputVariable.request', $inputVariable.request, 'outConsultarEvaluacion.response', $outConsultarEvaluacion.response)</from>
+                  <to variable="inInvokeDuplicarEvaluacion" part="request"/>
+                </copy>
+              </assign>
+              <invoke name="InvokeDuplicarEvaluacion" bpelx:invokeAsDetail="no" partnerLink="DuplicarEvaluacion_PS"
+                      portType="ns1:DuplicarEvaluacionPT" operation="DuplicarEvaluacion"
+                      inputVariable="inInvokeDuplicarEvaluacion" outputVariable="outInvokeDuplicarEvaluacion"/>
+              <if name="IfOKDuplicarEvaluacion">
+                <documentation>
+                  <![CDATA[OK]]>
+                </documentation>
+                <condition>$outInvokeDuplicarEvaluacion.response/ns2:Resultado/ns3:result = 'OK'</condition>
+                <empty name="OKDuplicarEval"/>
+                <else>
+                  <documentation>
+                    <![CDATA[ERROR]]>
+                  </documentation>
+                  <sequence name="SequenceDuplicarEvaluacion">
+                    <assign name="assignError">
+                      <copy>
+                        <from>$outInvokeDuplicarEvaluacion.response/ns2:Resultado</from>
+                        <to>$outputVariable.response/ns2:Resultado</to>
+                      </copy>
+                    </assign>
+                    <reply name="ReplyError" variable="outputVariable" partnerLink="duplicarevaluacion_client"
+                           portType="ns1:DumplicarEvaluacionBPELPT" operation="DumplicarEvaluacionBPEL"/>
+                    <exit name="Exit"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+          <forEach parallel="no" counterName="Counter" name="ForEachEvaluacion">
+            <startCounterValue>1</startCounterValue>
+            <finalCounterValue>count($outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[ns5:instanciaProceso = $inputVariable.request/ns2:Evaluacion/ns5:IdFlujo])</finalCounterValue>
+            <scope name="ScopeForEachCrearEvaluacion">
+              <variables>
+                <variable name="inInvokeCrearEvaluacion" messageType="ns1:requestCrearEvaluacionMessage"/>
+              </variables>
+              <sequence name="SequenceCrearEvaluacion">
+                <assign name="assignEvaluacion">
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:id</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:idEvaluacionOrigen</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:idOperacion</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:idOperacion</to>
+                  </copy>
+                  <copy>
+                    <from>$outInvokeDuplicarEvaluacion.response/ns2:codigoEvaluacion</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:idEvaluacion</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:idSectorIBCIE</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:idSectorIBCIE</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:SectorIBCIE</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:SectorIBCIE</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:idSubSectorIBCIE</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:idSubSectorIBCIE</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:subSectorIBCIE</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:subSectorIBCIE</to>
+                  </copy>
+                  <extensionAssignOperation>
+                    <bpelx:copyList ignoreMissingFromData="yes">
+                      <bpelx:from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:cuestionarios</bpelx:from>
+                      <bpelx:to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:cuestionarios</bpelx:to>
+                    </bpelx:copyList>
+                  </extensionAssignOperation>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:enAnalisis</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:enAnalisis</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:banEstatus</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:banEstatus</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:tipoEvaluacion</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:tipoEvaluacion</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:version</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:version</to>
+                  </copy>
+                  <copy>
+                    <from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:catEvaluacion/ns7:Id</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:catEvaluacion/ns7:Id</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outConsultarEvaluacion.response/ns2:Evaluaciones/ns5:evaluacion[$Counter]/ns5:calificacionIBCIE</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:calificacionIBCIE</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:Evaluacion/ns5:IdFlujo</from>
+                    <to>$inInvokeCrearEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:instanciaProceso</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeCrearEvaluacion" bpelx:invokeAsDetail="no" partnerLink="CrearEvaluacion_PS"
+                        portType="ns1:EvaluacionPT" operation="crearEvaluacion" inputVariable="inInvokeCrearEvaluacion"
+                        outputVariable="outInvokeCrearEvaluacion"/>
+              </sequence>
+            </scope>
+          </forEach>
+        </sequence>
+      </else>
+    </if>
+    <assign name="assignResult">
+      <copy ignoreMissingFromData="no">
+        <from>$outInvokeDuplicarEvaluacion.response/ns2:codigoEvaluacion</from>
+        <to>$outputVariable.response/ns2:idEvaluacion</to>
+      </copy>
+      <copy>
+        <from>'OK'</from>
+        <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+      </copy>
+      <copy>
+        <from>'Operacion exitosa'</from>
+        <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="duplicarevaluacion_client" portType="ns1:DumplicarEvaluacionBPELPT" operation="DumplicarEvaluacionBPEL" variable="outputVariable"/>
+  </sequence>
+</process>

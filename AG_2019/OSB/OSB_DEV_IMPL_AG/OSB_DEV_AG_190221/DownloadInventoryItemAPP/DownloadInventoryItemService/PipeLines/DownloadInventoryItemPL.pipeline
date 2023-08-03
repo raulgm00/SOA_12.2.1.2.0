@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con4="http://www.bea.com/wli/sb/stages/publish/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="DownloadInventoryItemAPP/DownloadInventoryItemService/Resources/WSDLs/DownloadInventoryItemWsd"/>
+            <con:binding>
+                <con:name>execute_bind</con:name>
+                <con:namespace>http://xmlns.oracle.com/ServiceBusApplication/DownloadInventoryItemAPP/DownloadInventoryItemWsd</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="response" name="response-afffa0d.6a5b71a7.0.174c20d68da.N7ef5">
+            <con:stage id="_StageId-afffa0d.6a5b71a7.0.174c20d68da.N7ef3" name="Stage1">
+                <con:context/>
+                <con:actions/>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="request" name="request-afffa0d.6a5b71a7.0.174c20d68da.N7ef6">
+            <con:stage id="_StageId-afffa0d.6a5b71a7.0.174c20d68da.N7ef4" name="Stage1">
+                <con:context>
+                    <con1:userNsDecl prefix="dow" namespace="http://www.agarcia.mx/EnterpriseObjects/DownloadInventoryItem"/>
+                </con:context>
+                <con:actions>
+                    <con4:route>
+                        <con1:id>_ActionId-afffb77.4dff7c4a.0.177b8737c84.N7ffe</con1:id>
+                        <con4:service ref="DownloadInventoryItemAPP/DownloadInventoryItemService/Resources/JCA/FtpRespSOA" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con4:operation>Put</con4:operation>
+                        <con4:outboundTransform/>
+                    </con4:route>
+                    <con4:assign varName="UUID" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-afffa09.N31568cbb.0.174d7df2238.N7b09</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>fn-bea:uuid()</con2:xqueryText>
+                        </con1:expr>
+                    </con4:assign>
+                    <con2:assign varName="FileNameDoc">
+                        <con1:id>_ActionId-afffa7a.5837c25.0.176173e1896.N7ff4</con1:id>
+                        <con2:expr>
+                            <con1:xqueryText>data($inbound/ctx:transport/ctx:request/tp:headers/jca:jca.ftp.FileName)</con1:xqueryText>
+                        </con2:expr>
+                    </con2:assign>
+                    <con2:assign varName="CycleCount">
+                        <con1:id>_ActionId-afffa7a.5837c25.0.176173e1896.N7fe8</con1:id>
+                        <con2:expr>
+                            <con1:xqueryText>$body/dow:Root-Element/dow:THEAD/dow:Cyclecount</con1:xqueryText>
+                        </con2:expr>
+                    </con2:assign>
+                    <con2:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-afffa0d.6a5b71a7.0.174c20d68da.N7ef0</con1:id>
+                        <con2:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con2:location>
+                        <con2:expr>
+                            <con1:xsltTransform>
+                                <con1:resource ref="DownloadInventoryItemAPP/DownloadInventoryItemService/Resources/XSLTs/XfromFtpToEBMl"/>
+                                <con1:input>$body/dow:Root-Element</con1:input>
+                                <con1:param name="UUID">
+                                    <con1:path>$UUID</con1:path>
+                                </con1:param>
+                                <con1:param name="FileNameDoc">
+                                    <con1:path>$FileNameDoc</con1:path>
+                                </con1:param>
+                            </con1:xsltTransform>
+                        </con2:expr>
+                    </con2:replace>
+                    <con3:log>
+                        <con1:id>_ActionId-afffa0d.6a5b71a7.0.174c20d68da.N7eed</con1:id>
+                        <con3:logLevel>warning</con3:logLevel>
+                        <con3:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con3:expr>
+                        <con3:message>XXXXXXXXXXXXXXXXXXXXXXXXXX</con3:message>
+                    </con3:log>
+                    <con3:report>
+                        <con1:id>_ActionId-afffa7a.5837c25.0.176173e1896.N7feb</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>fn:concat("InstanceID:", $UUID,", File:",$FileNameDoc, ", CycleCount:", $CycleCount)</con1:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>DowInvItem</con3:key>
+                            <con3:varName>body</con3:varName>
+                            <con3:value>
+                                <con1:xpathText>$inbound/ctx:transport/ctx:request/tp:headers/jca:jca.ftp.FileName</con1:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="Pipeline Pair Node1">
+                <con:request>request-afffa0d.6a5b71a7.0.174c20d68da.N7ef6</con:request>
+                <con:response>response-afffa0d.6a5b71a7.0.174c20d68da.N7ef5</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteNode1" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                <con:context/>
+                <con:actions>
+                    <con1:route>
+                        <con2:id>_ActionId-afffa0d.6a5b71a7.0.174c20d68da.N7eec</con2:id>
+                        <con1:service ref="DownloadInventoryItemAPP/DownloadInventoryItemService/BussinessServices/downloadInvItemJmsRef" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>Produce_Message</con1:operation>
+                        <con1:outboundTransform/>
+                        <con1:responseTransform/>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+        <con:partner-links/>
+    </con:router>
+    <aler:alertRules xsi:nil="true" xmlns:aler="http://xmlns.oracle.com/servicebus/monitoring/alert"/>
+</con:pipelineEntry>

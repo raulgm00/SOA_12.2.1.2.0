@@ -1,0 +1,216 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Sep 14 13:18:59 CST 2015
+  Author:  david-ramirez
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="EliminarCuestionario"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/EliminarCuestionario/EliminarCuestionario"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/EliminarCuestionario/EliminarCuestionario"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/EvaluacionService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/EvaluacionMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns3="http://www.bcie.org/ResultBO" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns4="http://www.bcie.org/ErrorBO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns5="http://xmlns.bcie.org/EvaluacionService" xmlns:ns6="http://www.bcie.org/CatalogoBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.org/EvaluacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Evaluacion/V1/Wsdl/ADAPTER/ConsultarCuestionarioSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/EvaluacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Evaluacion/V1/Wsdl/ADAPTER/EliminarCuestionarioSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/EvaluacionService" location="../WSDLs/EliminarCuestionarioSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="eliminarcuestionarioService" partnerLinkType="ns1:EliminarCuestionarioPT_PLT"
+                 myRole="EliminarCuestionarioPT_Role"/>
+    <partnerLink name="EliminarCuestionarioEVALService" partnerLinkType="ns1:EliminarCuestionarioEVALService"
+                 partnerRole="EliminarCuestionarioPT"/>
+    <partnerLink name="EliminarCuestionarioSB" partnerLinkType="ns1:EliminarCuestionarioSB"
+                 partnerRole="EliminarCuestionarioPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestEliminarCuestionarioMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseEliminarCuestionarioMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in EliminarCuestionario.wsdl) -->
+    <receive name="receiveInput" partnerLink="eliminarcuestionarioService" portType="ns1:EliminarCuestionarioPT" operation="EliminarCuestionario" variable="inputVariable" createInstance="yes"/>
+    <scope name="ScopeEliminarCuestionarioFLEX">
+      <variables>
+        <variable name="inEliminarCuestionarioEVAL" messageType="ns1:requestEliminarCuestionarioMessage"/>
+        <variable name="outEliminarCuestionarioEVAL" messageType="ns1:responseEliminarCuestionarioMessage"/>
+        <variable name="ErrorEVAL" messageType="bpelx:RuntimeFaultMessage"/>
+        <variable name="setTitleVar" type="xsd:string"/>
+      </variables>
+      <faultHandlers>
+        <catchAll>
+          <assign name="AssignError">
+            <copy>
+              <from>'ERROR'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+            </copy>
+            <copy>
+              <from>$ErrorEVAL.code</from>
+              <to>$outputVariable.response/ns2:Resultado/ns3:error/ns4:errorCode</to>
+            </copy>
+            <copy>
+              <from>'El cuestionario o la Evaulación no existe dentro del servicio'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+            </copy>
+            <copy>
+              <from>$outEliminarCuestionarioEVAL.response/ns2:Resultado/ns3:message</from>
+              <to>$outputVariable.response/ns2:Resultado/ns3:error/ns4:errorDescription</to>
+            </copy>
+          </assign>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence1">
+        <assign name="setTitleVar">
+          <copy>
+            <from>oraext:setFlowInstanceTitle(concat("idEvaluacion: ",string($inputVariable.request/ns2:idEvaluacion)))</from>
+            <to>$setTitleVar</to>
+          </copy>
+        </assign>
+        <assign name="AssignEliminarCuestionarioFLEX">
+          <copy>
+            <from>$inputVariable.request/ns2:idEvaluacion</from>
+            <to>$inEliminarCuestionarioEVAL.request/ns2:idEvaluacion</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.request/ns2:nombreUsuario</from>
+            <to>$inEliminarCuestionarioEVAL.request/ns2:nombreUsuario</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.request/ns2:Cuestionario/ns6:codigoExterno</from>
+            <to>$inEliminarCuestionarioEVAL.request/ns2:Cuestionario/ns6:codigoExterno</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeEliminarCuestionario" bpelx:invokeAsDetail="no"
+                partnerLink="EliminarCuestionarioEVALService" portType="ns1:EliminarCuestionarioPT"
+                operation="EliminarCuestionario" inputVariable="inEliminarCuestionarioEVAL"
+                outputVariable="outEliminarCuestionarioEVAL"/>
+        <if name="IfErrorEliminar">
+          <documentation>
+            <![CDATA[Error al eliminar en EVAL]]>
+          </documentation>
+          <condition>$outEliminarCuestionarioEVAL.response/ns2:Resultado/ns3:result='ERROR'</condition>
+          <sequence name="Sequence2">
+            <throw name="ErrorEval" faultName="bpelx:remoteFault" faultVariable="ErrorEVAL"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[Eliminar a Fénix]]>
+            </documentation>
+            <scope name="EliminarCuestionario">
+              <variables>
+                <variable name="inEliminarCuestionario" messageType="ns1:requestEliminarCuestionarioMessage"/>
+                <variable name="outEliminarCuestionario" messageType="ns1:responseEliminarCuestionarioMessage"/>
+              </variables>
+              <sequence name="EliminarCuestionarioSequence">
+                <assign name="AssignToEliminarCuestionario">
+                  <copy>
+                    <from>$inputVariable.request/ns2:idEvaluacion</from>
+                    <to>$inEliminarCuestionario.request/ns2:idEvaluacion</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:Cuestionario/ns6:codigoExterno</from>
+                    <to>$inEliminarCuestionario.request/ns2:Cuestionario/ns6:codigoExterno</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeToEliminarCuestionario" bpelx:invokeAsDetail="no"
+                        partnerLink="EliminarCuestionarioSB" portType="ns1:EliminarCuestionarioPT"
+                        operation="EliminarCuestionario" inputVariable="inEliminarCuestionario"
+                        outputVariable="outEliminarCuestionario"/>
+                <if name="ErrorEvaluacionDB">
+                  <documentation>
+                    <![CDATA[ERROR]]>
+                  </documentation>
+                  <condition>$outEliminarCuestionario.response/ns2:Resultado/ns3:result = 'ERROR'</condition>
+                  <sequence name="Sequence3">
+                    <assign name="AssignError">
+                      <copy>
+                        <from>'ERROR'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                      </copy>
+                      <copy>
+                        <from>'Error al llamar a la base de datos'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                      </copy>
+                    </assign>
+                  </sequence>
+                  <else>
+                    <documentation>
+                      <![CDATA[OK]]>
+                    </documentation>
+                    <assign name="AssignResultado">
+                      <copy>
+                        <from>'OK'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                      </copy>
+                      <copy>
+                        <from>'La eliminación se realizó correctamente'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                      </copy>
+                    </assign>
+                  </else>
+                </if>
+              </sequence>
+            </scope>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="eliminarcuestionarioService" portType="ns1:EliminarCuestionarioPT" operation="EliminarCuestionario" variable="outputVariable"/>
+  </sequence>
+</process>

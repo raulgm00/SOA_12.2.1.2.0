@@ -1,0 +1,165 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue May 23 09:12:11 CST 2017
+  Author:  varelaa
+  Purpose: BPEL Process for event subscription
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="PublicarAdjudicadosBpel"
+         targetNamespace="http://xmlns.oracle.com/AdquisicionesWSFenix/AdquisicionWeb/PublicarAdjudicadosBpel"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:client="http://xmlns.oracle.com/AdquisicionesWSFenix/AdquisicionWeb/PublicarAdjudicadosBpel"
+         xmlns:ora="http://schemas.oracle.com/xpath/extension"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:ns1="http://xmlns.oracle.com/DominioOperacion/Adquisicion/PublicarInformeResultadosAdjudicado"
+         xmlns:ns2="http://www.bcie.org/AdquisicionMO"
+         xmlns:bpws="http://docs.oasis-open.org/wsbpel/2.0/process/executable" xmlns:ns3="urn:bcieBinding"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ns0="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns4="http://www.bcie.org/AdquisicionBO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns5="http://www.bcie.org"
+         xmlns:ns6="http://xmlns.oracle.com/pcbpel/adapter/db/AdquisicionesWSFenix/AdquisicionWeb/dbFNXLI"
+         xmlns:ns7="http://xmlns.oracle.com/pcbpel/adapter/db/top/dbFNXLI"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns8="http://xmlns.oracle.com/pcbpel/adapter/db/AdquisicionesWSFenix/AdquisicionWeb/dbFnxInformeResultados"
+         xmlns:ns9="http://xmlns.oracle.com/pcbpel/adapter/db/dbFnxInformeResultados"
+         xmlns:ns10="http://xmlns.oracle.com/pcbpel/adapter/db/AdquisicionesSOA/ADAPTADORES/dbFnxAvisos"
+         xmlns:ns11="http://xmlns.oracle.com/pcbpel/adapter/db/dbFnxAvisos">
+    <import namespace="http://www.bcie.org" location="../Schemas/AdjudicadoBCIE.xsd"
+            importType="http://www.w3.org/2001/XMLSchema"/>
+    <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/AdquisicionesWSFenix/AdquisicionWeb/PublicarAdjudicadosBpel" location="../WSDLs/PublicarAdjudicadosBpel.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <partnerLinks>
+        <partnerLink name="wsAdquisiciones" partnerLinkType="ns3:wsAdquisiciones" partnerRole="bciePortType"/>
+        <partnerLink name="dbFnxAvisos" partnerLinkType="ns10:dbFnxAvisos_plt" partnerRole="dbFnxAvisos_role"/>
+        <partnerLink name="dbFnxInformeResultados" partnerLinkType="ns8:dbFnxInformeResultados_plt"
+                     partnerRole="dbFnxInformeResultados_role"/>
+    </partnerLinks>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        VARIABLES                                                        
+        List of messages and XML documents used within this BPEL process 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    <variables>
+        <!-- Reference to the message passed as input during initiation -->
+        <variable name="inputVariable0" element="ns2:PublicarInformeResultadosAdjudicado"/>
+        <variable name="InvokeWsPublicarAdjudicado_add_agreement_InputVariable" messageType="ns3:add_agreementRequest"/>
+        <variable name="InvokeWsPublicarAdjudicado_add_agreement_OutputVariable"
+                  messageType="ns3:add_agreementResponse"/>
+        <variable name="currentAdjudicado" type="ns4:AdjudicadoType"/>
+        <variable name="LstAdjudicado" element="ns5:ListaAdjudicados"/>
+        <variable name="SelectAviso_dbFnxAvisos_InputVariable" messageType="ns10:dbFnxAvisosInput_msg"/>
+        <variable name="SelectAviso_dbFnxAvisos_OutputVariable" messageType="ns10:dbFnxAvisosOutputCollection_msg"/>
+    </variables>
+    
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+       ORCHESTRATION LOGIC                                               
+       Set of activities coordinating the flow of messages across the    
+       services integrated within this business process                  
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    <sequence name="main">
+        <!-- Receive input from requestor. (Note: This maps to operation defined in PublicarAdjudicadosBpel.wsdl) -->
+        <receive name="receiveInput0" bpelx:eventName="ns1:InformeResultadosAdjudicado" variable="inputVariable0" createInstance="yes"/>
+        <assign name="setNoObjecion">
+            <copy>
+                <from>number($inputVariable0/ns4:idNoObjecion)</from>
+                <to>$SelectAviso_dbFnxAvisos_InputVariable.dbFnxAvisosInput_msg/ns11:IdNoObjecionVar</to>
+            </copy>
+        </assign>
+        <invoke name="SelectAviso" bpelx:invokeAsDetail="no" partnerLink="dbFnxAvisos" portType="ns10:dbFnxAvisos_ptt"
+                operation="dbFnxAvisos" inputVariable="SelectAviso_dbFnxAvisos_InputVariable"
+                outputVariable="SelectAviso_dbFnxAvisos_OutputVariable"/>
+        <forEach parallel="no" counterName="ForEach1Counter" name="ForEach1">
+            <startCounterValue>1</startCounterValue>
+            <finalCounterValue>ora:countNodes('inputVariable0','ns2:adjudicados')</finalCounterValue>
+            <scope name="Scope1">
+                
+                <sequence>
+                    <assign name="setAgrement">
+                        <copy>
+                            <from>number($inputVariable0/ns4:idNoObjecion)</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.id</to>
+                        </copy>
+                        <copy>
+                            <from>dvm:lookupValue("ListaPaises.dvm","PaisISO",$inputVariable0/ns4:nombrePais,"PaisCodigo","")</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.Country</to>
+                        </copy>
+                        <copy>
+                            <from>concat($inputVariable0/ns4:nombreOperacion, " (",$inputVariable0/ns4:numeroOperacion,")")</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.Executor</to>
+                        </copy>
+                        <copy>
+                            <from>$inputVariable0/ns4:tituloProceso</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.ProcessTitle</to>
+                        </copy>
+                        <copy>
+                            <from>$inputVariable0/ns4:numeroProceso</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.ProcessNumber</to>
+                        </copy>
+                        <copy>
+                            <from>$ForEach1Counter</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.OffererID</to>
+                        </copy>
+                        <copy>
+                            <from>$inputVariable0/ns2:adjudicados[$ForEach1Counter]/ns4:nombre</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.OffererName</to>
+                        </copy>
+                        <copy>
+                            <from>dvm:lookupValue("ListaPaises.dvm","PaisISO", $inputVariable0/ns2:adjudicados[$ForEach1Counter]/ns4:nacionalidad,"PaisCodigo","")</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.OffererNationality</to>
+                        </copy>
+                        <copy>
+                            <from>number($inputVariable0/ns2:adjudicados[$ForEach1Counter]/ns4:monto)</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.AmountAwarded</to>
+                        </copy>
+                        <copy>
+                            <from>dvm:lookupValue("ListaResultadosProcesos.dvm","ProcesoNombre",$inputVariable0/ns2:resultadoProceso,"ProcesoCodigo","")</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.ProcessResult</to>
+                        </copy>
+                        <copy>
+                            <from>xp20:current-date()</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.DateAdjudication</to>
+                        </copy>
+                        <copy>
+                            <from>string($SelectAviso_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns11:dbFnxAvisosOutput/ns11:LINEA_CREDITO)</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.CurrentCreditLine</to>
+                        </copy>
+                        <copy>
+                            <from>string($SelectAviso_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns11:dbFnxAvisosOutput/ns11:LINEA_CREDITO)</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.ParentCreditLine</to>
+                        </copy>
+                        <copy>
+                            <from>'default'</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.LineName</to>
+                        </copy>
+                        <copy>
+                            <from>'N'</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.FADM</to>
+                        </copy>
+                        <copy>
+                            <from>'4OsbYCpP'</from>
+                            <to>$InvokeWsPublicarAdjudicado_add_agreement_InputVariable.Token</to>
+                        </copy>
+                    </assign>
+                    <invoke name="InvokeWsPublicarAdjudicado"
+                            inputVariable="InvokeWsPublicarAdjudicado_add_agreement_InputVariable"
+                            outputVariable="InvokeWsPublicarAdjudicado_add_agreement_OutputVariable"
+                            bpelx:invokeAsDetail="no" partnerLink="wsAdquisiciones" portType="ns3:bciePortType"
+                            operation="add_agreement"/>
+                </sequence>
+            </scope>
+        </forEach>
+    </sequence></process>

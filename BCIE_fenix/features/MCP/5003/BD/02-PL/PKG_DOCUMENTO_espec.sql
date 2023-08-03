@@ -1,0 +1,9 @@
+create or replace PACKAGE PKG_DOCUMENTO AS 
+PROCEDURE SP_UPSERT_TBI_DOCUMENTO(
+     T_TBI_DOCUMENTO                 IN T_BITACORA_DOCUMENTO,
+   ID_BITACORA                  OUT NUMBER,
+   P_CODIGO_RES                 OUT NUMBER,
+   P_TIPO_RES                   OUT NUMBER,
+   P_MENSAJE                    OUT VARCHAR2);
+
+END PKG_DOCUMENTO;

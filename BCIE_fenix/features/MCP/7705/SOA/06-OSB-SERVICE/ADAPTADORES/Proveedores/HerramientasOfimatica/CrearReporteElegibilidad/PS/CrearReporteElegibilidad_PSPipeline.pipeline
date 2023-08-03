@@ -1,0 +1,885 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/typesystem/config" xmlns:con4="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con5="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioOperacion/Cuestionario/V1/WSDL/ADAPTER/CrearReporteElegibilidad"/>
+            <con:binding>
+                <con:name>Cuestionario12Bnd</con:name>
+                <con:namespace>http://xmlns.bcie.com/CuestionarioService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-a050a0b.6d653132.0.153a0c20195.N7dd7">
+        <con:pipeline type="error" name="error-a050a0b.6d653132.0.153a0c20195.N7dd7">
+            <con:stage id="_StageId-a050a0b.6d653132.0.153a0c20195.N7b6b" name="StageError" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context>
+                    <con2:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO"/>
+                    <con2:userNsDecl prefix="cues" namespace="http://xmlns.bcie.com/CuestionarioMO"/>
+                    <con2:userNsDecl prefix="err" namespace="http://www.bcie.org/ErrorBO"/>
+                </con:context>
+                <con:actions>
+                    <con3:assign varName="inMapeoError" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a050a0b.6d653132.0.153a0c20195.N7b6a</con2:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(fn:data($fault/ctx:errorCode))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a050a0b.6d653132.0.153a0c20195.N7b69</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS.proxyPipeline" xsi:type="con:PipelineRef"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapeoError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapeoError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a050a0b.6d653132.0.153a0c20195.N7b68</con2:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/Error_TO_CrearReporteElegibilidad_PS_Response"/>
+                                <con2:param name="message">
+                                    <con2:path>xs:string(fn:data($fault/ctx:reason))</con2:path>
+                                </con2:param>
+                                <con2:param name="ErrorResponse">
+                                    <con2:path>$outMapeoError</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con6:assign varName="varEnviarCorreoElectronicoRq" xmlns:con6="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f57c7ff.5098687d.0.160280bd992.N7f6c</con2:id>
+                        <con6:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                                <con2:param name="Accion">
+                                    <con2:path>'la generacion del documento Reporte de Elegibilidad'</con2:path>
+                                </con2:param>
+                                <con2:param name="MensajeDeError">
+                                    <con2:path>concat($body/cues:CrearReporteElegibilidadResponse/cues:Respuesta/res:message,' ',$body/cues:CrearReporteElegibilidadResponse/cues:Respuesta/res:error/err:errorDescription)</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con6:expr>
+                    </con6:assign>
+                    <con6:wsCallout xmlns:con6="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f57c7ff.5098687d.0.160280bd992.N7f69</con2:id>
+                        <con6:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con6:operation>enviarCorreoElectronico</con6:operation>
+                        <con6:request>
+                            <con6:body wrapped="false">varEnviarCorreoElectronicoRq</con6:body>
+                        </con6:request>
+                        <con6:response>
+                            <con6:body wrapped="false">varEnviarCorreoElectronicoRs</con6:body>
+                        </con6:response>
+                        <con6:requestTransform>
+                            <con4:log>
+                                <con2:id>_ActionId-N3f57c7ff.5098687d.0.160280bd992.N7f63</con2:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con2:xqueryText>$body/*</con2:xqueryText>
+                                </con4:expr>
+                                <con4:message>varEnviarCorreoElectronicoRq</con4:message>
+                            </con4:log>
+                        </con6:requestTransform>
+                        <con6:responseTransform>
+                            <con4:log>
+                                <con2:id>_ActionId-N3f57c7ff.5098687d.0.160280bd992.N7f66</con2:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con2:xqueryText>$body/*</con2:xqueryText>
+                                </con4:expr>
+                                <con4:message>varEnviarCorreoElectronicoRs</con4:message>
+                            </con4:log>
+                        </con6:responseTransform>
+                    </con6:wsCallout>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-a050a0b.6d653132.0.153a0c20195.N7b67</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="request" name="request-N3f57c7ff.54a1d215.0.176c10551c4.N7f05">
+            <con:stage id="_StageId-N3f57c7ff.54a1d215.0.176c10551c4.N7f04" name="StageConsultarOperacion">
+                <con:context>
+                    <con2:userNsDecl prefix="dec" namespace="http://www.bcie.org/DeclaracionJuradaMO"/>
+                    <con2:userNsDecl prefix="ser" namespace="http://service.org.bcie.www/"/>
+                    <con2:userNsDecl prefix="oper" namespace="http://www.bcie.org/OperacionMO"/>
+                    <con2:userNsDecl prefix="cues" namespace="http://xmlns.bcie.com/CuestionarioMO"/>
+                    <con2:userNsDecl prefix="dec1" namespace="http://www.bcie.org/DeclaracionJuradaBO"/>
+                    <con2:userNsDecl prefix="oper1" namespace="http://www.bcie.org/OperacionBO"/>
+                    <con3:variable name="outConsultarDeclaracion" path="$outConsultarDeclaracion">
+                        <con3:service operation="consultarDeclaracionJurada">
+                            <con3:reference ref="COMPOSICIONES/Entidades/Operacion/PS/DeclaracionService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        </con3:service>
+                    </con3:variable>
+                    <con3:variable name="outCrearReporte" path="$outCrearReporte">
+                        <con3:service operation="Reporte">
+                            <con3:reference ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/BS/CrearReporteElegibilidad_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        </con3:service>
+                    </con3:variable>
+                    <con3:variable name="outConsultarOperacion" path="$outConsultarOperacion">
+                        <con3:service operation="ConsultarOperacionById">
+                            <con3:reference ref="ADAPTADORES/ModeloNegocio/DominioOperacion/ConsultarOperacionByIDOperacion/PS/ConsultarOperacionByIdOperacion_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        </con3:service>
+                    </con3:variable>
+                </con:context>
+                <con:actions>
+                    <con5:log>
+                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7f03</con2:id>
+                        <con5:logLevel>info</con5:logLevel>
+                        <con5:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con5:expr>
+                        <con5:message>CrearReporteElegibilidad - Request</con5:message>
+                    </con5:log>
+                    <con1:assign varName="GuardarReporte">
+                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7f02</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body/cues:CrearReporteElegibilidadRequest/cues:GuardarReporte</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7f01</con2:id>
+                        <con1:case id="_BranchId-N3f57c7ff.54a1d215.0.176c10551c4.N7f00">
+                            <con1:condition>
+                                <con2:xqueryText>$GuardarReporte = false()</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:validate>
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7eff</con2:id>
+                                    <con1:schema ref="MDS/Resources/ComponentesComunes/DominioOperacion/Cuestionario/V1/Schema/CuestionarioMO"/>
+                                    <con1:schemaElement xmlns:cues="http://xmlns.bcie.com/CuestionarioMO">cues:CrearReporteElegibilidadRequest</con1:schemaElement>
+                                    <con1:varName>body</con1:varName>
+                                    <con1:location>
+                                        <con2:xpathText>./cues:CrearReporteElegibilidadRequest</con2:xpathText>
+                                    </con1:location>
+                                </con1:validate>
+                                <con1:wsCallout>
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7efe</con2:id>
+                                    <con1:service ref="COMPOSICIONES/Entidades/Operacion/PS/DeclaracionService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con1:operation>consultarDeclaracionJurada</con1:operation>
+                                    <con1:request>
+                                        <con1:body wrapped="false">inConsultarDeclaracion</con1:body>
+                                    </con1:request>
+                                    <con1:response>
+                                        <con1:body wrapped="false">outConsultarDeclaracion</con1:body>
+                                    </con1:response>
+                                    <con1:requestTransform>
+                                        <con1:assign varName="inConsultarDeclaracion">
+                                            <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7efd</con2:id>
+                                            <con1:expr>
+                                                <con2:xqueryTransform>
+                                                    <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_TO_ConsultarDeclaracionJurada_PS_Request"/>
+                                                    <con2:param name="idOperacion">
+                                                        <con2:path>$body/cues:CrearReporteElegibilidadRequest</con2:path>
+                                                    </con2:param>
+                                                </con2:xqueryTransform>
+                                            </con1:expr>
+                                        </con1:assign>
+                                    </con1:requestTransform>
+                                    <con1:responseTransform/>
+                                </con1:wsCallout>
+                                <con1:assign varName="NoObjecion">
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7efc</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryText>$outConsultarDeclaracion/dec:DeclaracionJurada/dec1:estadoDeclaracion/dec1:nombreEstadoNoObjecion</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:assign>
+                                <con1:assign varName="idDeclaracion">
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7efb</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryText>$outConsultarDeclaracion/dec:DeclaracionJurada/dec1:idDeclaracion</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:assign>
+                                <con1:wsCallout>
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7efa</con2:id>
+                                    <con1:service ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/BS/CrearReporteElegibilidad_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con1:operation>Reporte</con1:operation>
+                                    <con1:request>
+                                        <con1:body wrapped="false">inCrearReporte</con1:body>
+                                    </con1:request>
+                                    <con1:response>
+                                        <con1:body wrapped="false">outCrearReporte</con1:body>
+                                    </con1:response>
+                                    <con1:requestTransform>
+                                        <con1:assign varName="inCrearReporte">
+                                            <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ef9</con2:id>
+                                            <con1:expr>
+                                                <con2:xqueryTransform>
+                                                    <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_PS_TO_CrearReporteElegibilidad_BS_Request"/>
+                                                    <con2:param name="NoObjecion">
+                                                        <con2:path>$NoObjecion</con2:path>
+                                                    </con2:param>
+                                                    <con2:param name="CrearReporteElegibilidadRequest">
+                                                        <con2:path>$body/cues:CrearReporteElegibilidadRequest</con2:path>
+                                                    </con2:param>
+                                                    <con2:param name="idDeclaracion">
+                                                        <con2:path>$idDeclaracion</con2:path>
+                                                    </con2:param>
+                                                </con2:xqueryTransform>
+                                            </con1:expr>
+                                        </con1:assign>
+                                    </con1:requestTransform>
+                                    <con1:responseTransform/>
+                                </con1:wsCallout>
+                                <con2:skip>
+                                    <con2:comment>Skip para evitar guardar en OnBase</con2:comment>
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ef8</con2:id>
+                                </con2:skip>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con1:validate>
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ef7</con2:id>
+                                <con1:schema ref="MDS/Resources/ComponentesComunes/DominioOperacion/Cuestionario/V1/Schema/CuestionarioMO"/>
+                                <con1:schemaElement xmlns:cues="http://xmlns.bcie.com/CuestionarioMO">cues:CrearReporteElegibilidadRequest</con1:schemaElement>
+                                <con1:varName>body</con1:varName>
+                                <con1:location>
+                                    <con2:xpathText>./cues:CrearReporteElegibilidadRequest</con2:xpathText>
+                                </con1:location>
+                            </con1:validate>
+                            <con1:wsCallout>
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ef6</con2:id>
+                                <con1:service ref="COMPOSICIONES/Entidades/Operacion/PS/DeclaracionService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con1:operation>consultarDeclaracionJurada</con1:operation>
+                                <con1:request>
+                                    <con1:body wrapped="false">inConsultarDeclaracion</con1:body>
+                                </con1:request>
+                                <con1:response>
+                                    <con1:body wrapped="false">outConsultarDeclaracion</con1:body>
+                                </con1:response>
+                                <con1:requestTransform>
+                                    <con1:assign varName="inConsultarDeclaracion">
+                                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ef5</con2:id>
+                                        <con1:expr>
+                                            <con2:xqueryTransform>
+                                                <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_TO_ConsultarDeclaracionJurada_PS_Request"/>
+                                                <con2:param name="idOperacion">
+                                                    <con2:path>$body/cues:CrearReporteElegibilidadRequest</con2:path>
+                                                </con2:param>
+                                            </con2:xqueryTransform>
+                                        </con1:expr>
+                                    </con1:assign>
+                                </con1:requestTransform>
+                                <con1:responseTransform/>
+                            </con1:wsCallout>
+                            <con1:assign varName="NoObjecion">
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ef4</con2:id>
+                                <con1:expr>
+                                    <con2:xqueryText>$outConsultarDeclaracion/dec:DeclaracionJurada/dec1:estadoDeclaracion/dec1:nombreEstadoNoObjecion</con2:xqueryText>
+                                </con1:expr>
+                            </con1:assign>
+                            <con1:assign varName="idDeclaracion">
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ef3</con2:id>
+                                <con1:expr>
+                                    <con2:xqueryText>$outConsultarDeclaracion/dec:DeclaracionJurada/dec1:idDeclaracion</con2:xqueryText>
+                                </con1:expr>
+                            </con1:assign>
+                            <con1:wsCallout>
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ef2</con2:id>
+                                <con1:service ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/BS/CrearReporteElegibilidad_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con1:operation>Reporte</con1:operation>
+                                <con1:request>
+                                    <con1:body wrapped="false">inCrearReporte</con1:body>
+                                </con1:request>
+                                <con1:response>
+                                    <con1:body wrapped="false">outCrearReporte</con1:body>
+                                </con1:response>
+                                <con1:requestTransform>
+                                    <con1:assign varName="inCrearReporte">
+                                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ef1</con2:id>
+                                        <con1:expr>
+                                            <con2:xqueryTransform>
+                                                <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_PS_TO_CrearReporteElegibilidad_BS_Request"/>
+                                                <con2:param name="NoObjecion">
+                                                    <con2:path>$NoObjecion</con2:path>
+                                                </con2:param>
+                                                <con2:param name="CrearReporteElegibilidadRequest">
+                                                    <con2:path>$body/cues:CrearReporteElegibilidadRequest</con2:path>
+                                                </con2:param>
+                                                <con2:param name="idDeclaracion">
+                                                    <con2:path>$idDeclaracion</con2:path>
+                                                </con2:param>
+                                            </con2:xqueryTransform>
+                                        </con1:expr>
+                                    </con1:assign>
+                                </con1:requestTransform>
+                                <con1:responseTransform/>
+                            </con1:wsCallout>
+                            <con1:wsCallout>
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ef0</con2:id>
+                                <con1:service ref="ADAPTADORES/ModeloNegocio/DominioDocumento/CargarDocumentoFenix/BS/CargarDocumentoFenix_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con1:operation>CargarDocumentoFenix</con1:operation>
+                                <con1:request>
+                                    <con1:body wrapped="false">inCargar</con1:body>
+                                </con1:request>
+                                <con1:response>
+                                    <con1:body wrapped="false">outCargar</con1:body>
+                                </con1:response>
+                                <con1:requestTransform>
+                                    <con1:assign varName="inCargar">
+                                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7eef</con2:id>
+                                        <con1:expr>
+                                            <con2:xqueryTransform>
+                                                <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_BS_TO_CargarDocumentoFenix_BS_Request"/>
+                                                <con2:param name="inCrearReporte">
+                                                    <con2:path>$body/cues:CrearReporteElegibilidadRequest</con2:path>
+                                                </con2:param>
+                                                <con2:param name="return">
+                                                    <con2:path>xs:string($outCrearReporte/return)</con2:path>
+                                                </con2:param>
+                                            </con2:xqueryTransform>
+                                        </con1:expr>
+                                    </con1:assign>
+                                </con1:requestTransform>
+                                <con1:responseTransform/>
+                            </con1:wsCallout>
+                        </con1:default>
+                    </con1:ifThenElse>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-N3f57c7ff.54a1d215.0.176c10551c4.N7eee">
+            <con:stage id="_StageId-N3f57c7ff.54a1d215.0.176c10551c4.N7eed" name="StageCrearReporteElegibilidadResponse">
+                <con:context>
+                    <con2:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO"/>
+                    <con2:userNsDecl prefix="cues" namespace="http://xmlns.bcie.com/CuestionarioMO"/>
+                    <con2:userNsDecl prefix="cues1" namespace="http://xmlns.bcie.com/CuestionarioBO"/>
+                </con:context>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7eec</con2:id>
+                        <con1:case id="_BranchId-N3f57c7ff.54a1d215.0.176c10551c4.N7eeb">
+                            <con1:condition>
+                                <con2:xqueryText>$GuardarReporte = false()</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:replace varName="body" contents-only="true">
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7eea</con2:id>
+                                    <con1:location>
+                                        <con2:xpathText>.</con2:xpathText>
+                                    </con1:location>
+                                    <con1:expr>
+                                        <con2:xqueryTransform>
+                                            <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_BS_TO_CrearReporteElegibilidad_PS_Response"/>
+                                            <con2:param name="ReporteResponse">
+                                                <con2:path>$outCrearReporte</con2:path>
+                                            </con2:param>
+                                        </con2:xqueryTransform>
+                                    </con1:expr>
+                                </con1:replace>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con1:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ee9</con2:id>
+                                <con1:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con1:location>
+                                <con1:expr>
+                                    <con2:xqueryTransform>
+                                        <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_PS_TO_CargarDocumentoOnBase_BS_Response"/>
+                                        <con2:param name="ReporteResponse">
+                                            <con2:path>$outCrearReporte</con2:path>
+                                        </con2:param>
+                                    </con2:xqueryTransform>
+                                </con1:expr>
+                            </con1:replace>
+                        </con1:default>
+                    </con1:ifThenElse>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ee8</con2:id>
+                        <con1:case id="_BranchId-N3f57c7ff.54a1d215.0.176c10551c4.N7ee7">
+                            <con1:condition>
+                                <con2:xqueryText>$body/cues:CrearReporteElegibilidadResponse/cues:Respuesta/res:result!='OK'</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:assign varName="varEnviarCorreoElectronicoRq">
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ee6</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryTransform>
+                                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Error_To_EnviarCorreoElectronico"/>
+                                            <con2:param name="Accion">
+                                                <con2:path>'la generación del documento Reporte de Elegibilidad'</con2:path>
+                                            </con2:param>
+                                            <con2:param name="MensajeDeError">
+                                                <con2:path>$body/cues:CrearReporteElegibilidadResponse/cues:Respuesta/res:message</con2:path>
+                                            </con2:param>
+                                        </con2:xqueryTransform>
+                                    </con1:expr>
+                                </con1:assign>
+                                <con1:wsCallout>
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ee5</con2:id>
+                                    <con1:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con1:operation>enviarCorreoElectronico</con1:operation>
+                                    <con1:request>
+                                        <con1:body wrapped="false">varEnviarCorreoElectronicoRq</con1:body>
+                                    </con1:request>
+                                    <con1:response>
+                                        <con1:body wrapped="false">varEnviarCorreoElectronicoRs</con1:body>
+                                    </con1:response>
+                                    <con1:requestTransform>
+                                        <con5:log>
+                                            <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ee4</con2:id>
+                                            <con5:logLevel>info</con5:logLevel>
+                                            <con5:expr>
+                                                <con2:xqueryText>$body/*</con2:xqueryText>
+                                            </con5:expr>
+                                            <con5:message>varEnviarCorreoElectronicoRq</con5:message>
+                                        </con5:log>
+                                    </con1:requestTransform>
+                                    <con1:responseTransform>
+                                        <con5:log>
+                                            <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ee3</con2:id>
+                                            <con5:logLevel>info</con5:logLevel>
+                                            <con5:expr>
+                                                <con2:xqueryText>$body/*</con2:xqueryText>
+                                            </con5:expr>
+                                            <con5:message>varEnviarCorreoElectronicoRs</con5:message>
+                                        </con5:log>
+                                    </con1:responseTransform>
+                                </con1:wsCallout>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default/>
+                    </con1:ifThenElse>
+                    <con5:log>
+                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ee2</con2:id>
+                        <con5:logLevel>info</con5:logLevel>
+                        <con5:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con5:expr>
+                        <con5:message>CrearReporteElegibilidad - Response</con5:message>
+                    </con5:log>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="request" name="request-N3f57c7ff.54a1d215.0.176c10551c4.N7e27">
+            <con:stage id="_StageId-N3f57c7ff.54a1d215.0.176c10551c4.N7e25" name="ConsultraOperacionStage">
+                <con:context>
+                    <con2:userNsDecl prefix="dec" namespace="http://www.bcie.org/DeclaracionJuradaMO"/>
+                    <con2:userNsDecl prefix="cues" namespace="http://xmlns.bcie.com/CuestionarioMO"/>
+                    <con2:userNsDecl prefix="dec1" namespace="http://www.bcie.org/DeclaracionJuradaBO"/>
+                </con:context>
+                <con:actions>
+                    <con5:log>
+                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7e21</con2:id>
+                        <con5:logLevel>info</con5:logLevel>
+                        <con5:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con5:expr>
+                        <con5:message>CrearReporteNotaDeConcepto - Request</con5:message>
+                    </con5:log>
+                    <con1:assign varName="GuardaReporte">
+                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7e1e</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body/cues:CrearReporteNotaConceptoRequest/cues:GuardarReporte</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7e17</con2:id>
+                        <con1:case id="_BranchId-N3f57c7ff.54a1d215.0.176c10551c4.N7e16">
+                            <con1:condition>
+                                <con2:xqueryText>$GuardarReporte = false()</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:validate>
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7de4</con2:id>
+                                    <con1:schema ref="MDS/Resources/ComponentesComunes/DominioOperacion/Cuestionario/V1/Schema/CuestionarioMO"/>
+                                    <con1:schemaElement xmlns:cues="http://xmlns.bcie.com/CuestionarioMO">cues:CrearReporteNotaConceptoRequest</con1:schemaElement>
+                                    <con1:varName>body</con1:varName>
+                                    <con1:location>
+                                        <con2:xpathText>./cues:CrearReporteNotaConceptoRequest</con2:xpathText>
+                                    </con1:location>
+                                </con1:validate>
+                                <con1:wsCallout>
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7d80</con2:id>
+                                    <con1:service ref="COMPOSICIONES/Entidades/Operacion/PS/DeclaracionService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con1:operation>consultarDeclaracionJurada</con1:operation>
+                                    <con1:request>
+                                        <con1:body wrapped="false">inConsultarDeclaracion</con1:body>
+                                    </con1:request>
+                                    <con1:response>
+                                        <con1:body wrapped="false">outConsultarDeclaracion</con1:body>
+                                    </con1:response>
+                                    <con1:requestTransform>
+                                        <con1:assign varName="inConsultarDeclaracion">
+                                            <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ce3</con2:id>
+                                            <con1:expr>
+                                                <con2:xqueryTransform>
+                                                    <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_TO_ConsultarDeclaracionJurada_PS_Request"/>
+                                                    <con2:param name="idOperacion">
+                                                        <con2:path>$body/cues:CrearReporteNotaConceptoRequest</con2:path>
+                                                    </con2:param>
+                                                </con2:xqueryTransform>
+                                            </con1:expr>
+                                        </con1:assign>
+                                    </con1:requestTransform>
+                                    <con1:responseTransform/>
+                                </con1:wsCallout>
+                                <con1:assign varName="NoObjecion">
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7d1c</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryText>$outConsultarDeclaracion/dec:DeclaracionJurada/dec1:estadoDeclaracion/dec1:nombreEstadoNoObjecion</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:assign>
+                                <con1:assign varName="idDeclaracion">
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cdd</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryText>$outConsultarDeclaracion/dec:DeclaracionJurada/dec1:idDeclaracion</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:assign>
+                                <con1:wsCallout>
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cd7</con2:id>
+                                    <con1:service ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/BS/CrearReporteElegibilidad_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con1:operation>ReporteNotaConcepto</con1:operation>
+                                    <con1:request>
+                                        <con1:body wrapped="false">inCrearReporte</con1:body>
+                                    </con1:request>
+                                    <con1:response>
+                                        <con1:body wrapped="false">outCrearReporte</con1:body>
+                                    </con1:response>
+                                    <con1:requestTransform>
+                                        <con1:assign varName="inCrearReporte">
+                                            <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cd1</con2:id>
+                                            <con1:expr>
+                                                <con2:xqueryTransform>
+                                                    <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_PS_TO_CrearReporteElegibilidad_BS_Request"/>
+                                                    <con2:param name="NoObjecion">
+                                                        <con2:path>$NoObjecion</con2:path>
+                                                    </con2:param>
+                                                    <con2:param name="CrearReporteElegibilidadRequest">
+                                                        <con2:path>$body/cues:CrearReporteNotaConceptoRequest</con2:path>
+                                                    </con2:param>
+                                                    <con2:param name="idDeclaracion">
+                                                        <con2:path>$idDeclaracion</con2:path>
+                                                    </con2:param>
+                                                </con2:xqueryTransform>
+                                            </con1:expr>
+                                        </con1:assign>
+                                    </con1:requestTransform>
+                                    <con1:responseTransform/>
+                                </con1:wsCallout>
+                                <con2:skip>
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ccb</con2:id>
+                                </con2:skip>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con1:validate>
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7db2</con2:id>
+                                <con1:schema ref="MDS/Resources/ComponentesComunes/DominioOperacion/Cuestionario/V1/Schema/CuestionarioMO"/>
+                                <con1:schemaElement xmlns:cues="http://xmlns.bcie.com/CuestionarioMO">cues:CrearReporteNotaConceptoRequest</con1:schemaElement>
+                                <con1:varName>body</con1:varName>
+                                <con1:location>
+                                    <con2:xpathText>./cues:CrearReporteNotaConceptoRequest</con2:xpathText>
+                                </con1:location>
+                            </con1:validate>
+                            <con1:wsCallout>
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7d4e</con2:id>
+                                <con1:service ref="COMPOSICIONES/Entidades/Operacion/PS/DeclaracionService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con1:operation>consultarDeclaracionJurada</con1:operation>
+                                <con1:request>
+                                    <con1:body wrapped="false">inConsultarDeclaracion</con1:body>
+                                </con1:request>
+                                <con1:response>
+                                    <con1:body wrapped="false">outConsultarDeclaracion</con1:body>
+                                </con1:response>
+                                <con1:requestTransform>
+                                    <con1:assign varName="inConsultarDeclaracion">
+                                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ce0</con2:id>
+                                        <con1:expr>
+                                            <con2:xqueryTransform>
+                                                <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_TO_ConsultarDeclaracionJurada_PS_Request"/>
+                                                <con2:param name="idOperacion">
+                                                    <con2:path>$body/cues:CrearReporteNotaConceptoRequest</con2:path>
+                                                </con2:param>
+                                            </con2:xqueryTransform>
+                                        </con1:expr>
+                                    </con1:assign>
+                                </con1:requestTransform>
+                                <con1:responseTransform/>
+                            </con1:wsCallout>
+                            <con1:assign varName="NoObjecion">
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cea</con2:id>
+                                <con1:expr>
+                                    <con2:xqueryText>$outConsultarDeclaracion/dec:DeclaracionJurada/dec1:estadoDeclaracion/dec1:nombreEstadoNoObjecion</con2:xqueryText>
+                                </con1:expr>
+                            </con1:assign>
+                            <con1:assign varName="idDeclaracion">
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cda</con2:id>
+                                <con1:expr>
+                                    <con2:xqueryText>$outConsultarDeclaracion/dec:DeclaracionJurada/dec1:idDeclaracion</con2:xqueryText>
+                                </con1:expr>
+                            </con1:assign>
+                            <con1:wsCallout>
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cd4</con2:id>
+                                <con1:service ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/BS/CrearReporteElegibilidad_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con1:operation>ReporteNotaConcepto</con1:operation>
+                                <con1:request>
+                                    <con1:body wrapped="false">inCrearReporte</con1:body>
+                                </con1:request>
+                                <con1:response>
+                                    <con1:body wrapped="false">outCrearReporte</con1:body>
+                                </con1:response>
+                                <con1:requestTransform>
+                                    <con1:assign varName="inCrearReporte">
+                                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cce</con2:id>
+                                        <con1:expr>
+                                            <con2:xqueryTransform>
+                                                <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_PS_TO_CrearReporteElegibilidad_BS_Request"/>
+                                                <con2:param name="NoObjecion">
+                                                    <con2:path>$NoObjecion</con2:path>
+                                                </con2:param>
+                                                <con2:param name="CrearReporteElegibilidadRequest">
+                                                    <con2:path>$body/cues:CrearReporteNotaConceptoRequest</con2:path>
+                                                </con2:param>
+                                                <con2:param name="idDeclaracion">
+                                                    <con2:path>$idDeclaracion</con2:path>
+                                                </con2:param>
+                                            </con2:xqueryTransform>
+                                        </con1:expr>
+                                    </con1:assign>
+                                </con1:requestTransform>
+                                <con1:responseTransform/>
+                            </con1:wsCallout>
+                            <con1:wsCallout>
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cc8</con2:id>
+                                <con1:service ref="ADAPTADORES/ModeloNegocio/DominioDocumento/CargarDocumentoFenix/BS/CargarDocumentoFenix_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con1:operation>CargarDocumentoFenix</con1:operation>
+                                <con1:request>
+                                    <con1:body wrapped="false">inCargar</con1:body>
+                                </con1:request>
+                                <con1:response>
+                                    <con1:body wrapped="false">outCargar</con1:body>
+                                </con1:response>
+                                <con1:requestTransform>
+                                    <con1:assign varName="inCargar">
+                                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cc4</con2:id>
+                                        <con1:expr>
+                                            <con2:xqueryTransform>
+                                                <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_BS_TO_CargarDocumentoFenix_BS_Request"/>
+                                                <con2:param name="inCrearReporte">
+                                                    <con2:path>$body/cues:CrearReporteNotaConceptoRequest</con2:path>
+                                                </con2:param>
+                                                <con2:param name="return">
+                                                    <con2:path>xs:string($outCrearReporte/return)</con2:path>
+                                                </con2:param>
+                                            </con2:xqueryTransform>
+                                        </con1:expr>
+                                    </con1:assign>
+                                </con1:requestTransform>
+                                <con1:responseTransform/>
+                            </con1:wsCallout>
+                        </con1:default>
+                    </con1:ifThenElse>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-N3f57c7ff.54a1d215.0.176c10551c4.N7e26">
+            <con:stage id="_StageId-N3f57c7ff.54a1d215.0.176c10551c4.N7e24" name="StageCrearReporteNotaConceptoResponse">
+                <con:context>
+                    <con2:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO"/>
+                    <con2:userNsDecl prefix="cues" namespace="http://xmlns.bcie.com/CuestionarioMO"/>
+                </con:context>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cb7</con2:id>
+                        <con1:case id="_BranchId-N3f57c7ff.54a1d215.0.176c10551c4.N7cb6">
+                            <con1:condition>
+                                <con2:xqueryText>$GuardarReporte = false()</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:replace contents-only="true" varName="body">
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cab</con2:id>
+                                    <con1:location>
+                                        <con2:xpathText>.</con2:xpathText>
+                                    </con1:location>
+                                    <con1:expr>
+                                        <con2:xqueryTransform>
+                                            <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_BS_TO_CrearReporteElegibilidad_PS_Response"/>
+                                            <con2:param name="ReporteResponse">
+                                                <con2:path>$outCrearReporte</con2:path>
+                                            </con2:param>
+                                        </con2:xqueryTransform>
+                                    </con1:expr>
+                                </con1:replace>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con1:replace contents-only="true" varName="body">
+                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ca8</con2:id>
+                                <con1:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con1:location>
+                                <con1:expr>
+                                    <con2:xqueryTransform>
+                                        <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearReporteElegibilidad_PS_TO_CargarDocumentoOnBase_BS_Response"/>
+                                        <con2:param name="ReporteResponse">
+                                            <con2:path>$outCrearReporte</con2:path>
+                                        </con2:param>
+                                    </con2:xqueryTransform>
+                                </con1:expr>
+                            </con1:replace>
+                        </con1:default>
+                    </con1:ifThenElse>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7caf</con2:id>
+                        <con1:case id="_BranchId-N3f57c7ff.54a1d215.0.176c10551c4.N7cae">
+                            <con1:condition>
+                                <con2:xqueryText>$body/cues:CrearReporteNotaConceptoResponse/cues:Respuesta/res:result!='OK'</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:assign varName="varEnviarCorreoElectronicoRq">
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ca5</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryTransform>
+                                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Error_To_EnviarCorreoElectronico"/>
+                                            <con2:param name="Accion">
+                                                <con2:path>'la generación del documento Reporte de Nota de Conepto'</con2:path>
+                                            </con2:param>
+                                            <con2:param name="MensajeDeError">
+                                                <con2:path>$body/cues:CrearReporteNotaConceptoResponse/cues:Respuesta/res:message</con2:path>
+                                            </con2:param>
+                                        </con2:xqueryTransform>
+                                    </con1:expr>
+                                </con1:assign>
+                                <con1:wsCallout>
+                                    <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7ca2</con2:id>
+                                    <con1:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con1:operation>enviarCorreoElectronico</con1:operation>
+                                    <con1:request>
+                                        <con1:body wrapped="false">varEnviarCorreoElectronicoRq</con1:body>
+                                    </con1:request>
+                                    <con1:response>
+                                        <con1:body wrapped="false">varEnviarCorreoElectronicoRs</con1:body>
+                                    </con1:response>
+                                    <con1:requestTransform>
+                                        <con5:log>
+                                            <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7c9f</con2:id>
+                                            <con5:logLevel>debug</con5:logLevel>
+                                        </con5:log>
+                                    </con1:requestTransform>
+                                    <con1:responseTransform>
+                                        <con5:log>
+                                            <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7c9c</con2:id>
+                                            <con5:logLevel>debug</con5:logLevel>
+                                        </con5:log>
+                                    </con1:responseTransform>
+                                </con1:wsCallout>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default/>
+                    </con1:ifThenElse>
+                    <con5:log>
+                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7c99</con2:id>
+                        <con5:logLevel>info</con5:logLevel>
+                        <con5:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con5:expr>
+                        <con5:message>CrearReporteElegibilidad - Response</con5:message>
+                    </con5:log>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:branch-node type="operation" id="_FlowId-N3f57c7ff.54a1d215.0.176c10551c4.N7fa0" name="BranchNode1">
+                <con:context/>
+                <con:branch-table>
+                    <con:branch name="crearReporteElegibilidad">
+                        <con:operator>equals</con:operator>
+                        <con:value/>
+                        <con:flow>
+                            <con:pipeline-node name="ReporteElegibilidadPipelinePairNode">
+                                <con:request>request-N3f57c7ff.54a1d215.0.176c10551c4.N7f05</con:request>
+                                <con:response>response-N3f57c7ff.54a1d215.0.176c10551c4.N7eee</con:response>
+                            </con:pipeline-node>
+                            <con:route-node name="ReporteElegibilidadRouteNode">
+                                <con:context/>
+                                <con:actions>
+                                    <con4:route>
+                                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7edc</con2:id>
+                                        <con4:service ref="COMPOSICIONES/Entidades/Documento/PS/DocumentoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                        <con4:operation>cargarDocumento</con4:operation>
+                                        <con4:outboundTransform>
+                                            <con1:replace varName="body" contents-only="true">
+                                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7edb</con2:id>
+                                                <con1:location>
+                                                    <con2:xpathText>.</con2:xpathText>
+                                                </con1:location>
+                                                <con1:expr>
+                                                    <con2:xqueryTransform>
+                                                        <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearDocumentoFenix_BS_TO_CrearDocumentoOnBase_PS_Request"/>
+                                                        <con2:param name="outCrearDocumento">
+                                                            <con2:path>$outCargar</con2:path>
+                                                        </con2:param>
+                                                    </con2:xqueryTransform>
+                                                </con1:expr>
+                                            </con1:replace>
+                                        </con4:outboundTransform>
+                                        <con4:responseTransform/>
+                                    </con4:route>
+                                </con:actions>
+                            </con:route-node>
+                        </con:flow>
+                    </con:branch>
+                    <con:branch name="crearReporteNotaConcepto">
+                        <con:operator>equals</con:operator>
+                        <con:value/>
+                        <con:flow>
+                            <con:pipeline-node name="ReporteNotaConceptoPipelinePairNode">
+                                <con:request>request-N3f57c7ff.54a1d215.0.176c10551c4.N7e27</con:request>
+                                <con:response>response-N3f57c7ff.54a1d215.0.176c10551c4.N7e26</con:response>
+                            </con:pipeline-node>
+                            <con:route-node name="ReporteNotaConceptoRouteNode">
+                                <con:context/>
+                                <con:actions>
+                                    <con4:route>
+                                        <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cc1</con2:id>
+                                        <con4:service ref="COMPOSICIONES/Entidades/Documento/PS/DocumentoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                        <con4:operation>cargarDocumento</con4:operation>
+                                        <con4:outboundTransform>
+                                            <con1:replace varName="body" contents-only="true">
+                                                <con2:id>_ActionId-N3f57c7ff.54a1d215.0.176c10551c4.N7cbe</con2:id>
+                                                <con1:location>
+                                                    <con2:xpathText>.</con2:xpathText>
+                                                </con1:location>
+                                                <con1:expr>
+                                                    <con2:xqueryTransform>
+                                                        <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteElegibilidad/XQUERY/CrearDocumentoFenix_BS_TO_CrearDocumentoOnBase_PS_Request"/>
+                                                        <con2:param name="outCrearDocumento">
+                                                            <con2:path>$outCargar</con2:path>
+                                                        </con2:param>
+                                                    </con2:xqueryTransform>
+                                                </con1:expr>
+                                            </con1:replace>
+                                        </con4:outboundTransform>
+                                        <con4:responseTransform/>
+                                    </con4:route>
+                                </con:actions>
+                            </con:route-node>
+                        </con:flow>
+                    </con:branch>
+                    <con:default-branch>
+                        <con:flow/>
+                    </con:default-branch>
+                </con:branch-table>
+            </con:branch-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

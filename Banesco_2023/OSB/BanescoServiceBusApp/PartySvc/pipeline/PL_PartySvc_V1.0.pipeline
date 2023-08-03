@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="Commons/wsdl/BizLayer/Party/PartySvc_V1.0"/>
+            <con:binding>
+                <con:name>PartySvc_V1.0SOAPBinding</con:name>
+                <con:namespace>http://xmlns.banesco.com/BizLayer/PartySvc_V1.0</con:namespace>
+            </con:binding>
+            <con:selector type="SOAP action"/>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:template-overrides>
+            <con:action-override id="_ActionId-N3f5742ff.N42f8149.0.15657898019.N79a5">
+                <con1:reply isError="true" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f5742ff.3e8eaf92.0.15667a700c0.N7f8d">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xsltTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="PartySvc/resources/xslt/DynamicTable"/>
+                            <con2:input>$body/*</con2:input>
+                        </con2:xsltTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f5742ff.3e8eaf92.0.15667a700c0.N7f59">
+                <con1:dynamic-route xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                    <con1:service>
+                        <con2:xqueryText xmlns:con2="http://www.bea.com/wli/sb/stages/config"><![CDATA[let $service := $var_DR/rule[@id=data($varOperation)]/component_target
+let $operation := $var_DR/rule[@id=data($varOperation)]/backend_operation
+return
+if ($var_DR/rule[@id=data($varOperation)]/@tipo = string("composed")) then
+  <ctx:route>
+       <ctx:pipeline>{data($service)}</ctx:pipeline>
+       <ctx:operation>{data($operation)}</ctx:operation>
+  </ctx:route>
+else (
+  <ctx:route>
+       <ctx:service isProxy='true'>{data($service)}</ctx:service>
+       <ctx:operation>{data($operation)}</ctx:operation>
+  </ctx:route>)]]></con2:xqueryText>
+                    </con1:service>
+                </con1:dynamic-route>
+            </con:action-override>
+            <con:placeholder-override id="PlaceholderID_a011835.5b65340a.0.15ffe241537.N8000">
+                <con:stage id="_StageId-a011835.5b65340a.0.15ffe241537.N7ff6" name="st_Header">
+                    <con:context/>
+                    <con:disabled>true</con:disabled>
+                    <con:actions>
+                        <con1:insert varName="body" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                            <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-a011835.5b65340a.0.15ffe241537.N7fbf</con2:id>
+                            <con1:where>first-child</con1:where>
+                            <con1:expr>
+                                <con2:xqueryText xmlns:con2="http://www.bea.com/wli/sb/stages/config">$varHeader</con2:xqueryText>
+                            </con1:expr>
+                        </con1:insert>
+                    </con:actions>
+                </con:stage>
+            </con:placeholder-override>
+        </con:template-overrides>
+    </con:router>
+    <con:template ref="Commons/pipeline/Templates/PLT_Business_V1.0"/>
+</con:pipelineEntry>

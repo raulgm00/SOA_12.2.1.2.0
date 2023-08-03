@@ -1,0 +1,496 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Nov 29 18:56:33 CST 2016
+  Author:  david-fernandez
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConsultarLineaCreditoFormalizacion"
+               targetNamespace="http://xmlns.oracle.com/DominioLineaCredito/ConsultarLineaCreditoFormalizacion/ConsultarLineaCreditoFormalizacion"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioLineaCredito/ConsultarLineaCreditoFormalizacion/ConsultarLineaCreditoFormalizacion"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ConsultarLineaCreditoFormalizacionSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns2="http://www.bcie.org/LineaCreditoMO"
+         xmlns:ns3="http://xmlns.bcie.com/ConsultarOperacionesAsociadasSAD" xmlns:ns4="http://www.bcie.org/OperacionMO"
+         xmlns:ns5="ConsultarLineaCredito" xmlns:ns6="http://www.bcie.org/ContratoService"
+         xmlns:ns21="http://www.bcie.org/TerminoBO" xmlns:ns17="http://www.bcie.org/ReglaBO"
+         xmlns:ns15="http://www.bcie.org/OperacionBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns7="http://www.bcie.org/ContratoMO" xmlns:ns10="http://www.bcie.org/CommonBO"
+         xmlns:ns22="http://www.bcie.org/MatrizTCCBO" xmlns:ns9="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns18="http://www.bcie.org/ProductoBO" xmlns:ns12="http://www.bcie.org/CondicionBO"
+         xmlns:ns14="http://www.bcie.org/DocumentoBO" xmlns:ns19="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns20="http://www.bcie.org/ComisionBO" xmlns:ns11="http://www.bcie.org/CatalogoBO"
+         xmlns:ns16="http://www.bcie.org/DesembolsoBO" xmlns:ns8="http://www.bcie.org/ContratoBO"
+         xmlns:ns13="http://www.bcie.org/AtributoBO" xmlns:ns23="http://www.bcie.org/ResultBO"
+         xmlns:ns24="http://www.bcie.org/ErrorBO" xmlns:ns26="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns25="http://www.bcie.org/ClienteBO" xmlns:ns27="http://www.bcie.org/LineaCreditoService"
+         xmlns:ns28="http://www.bcie.org/ConsultarLineaCreditoByIdOperacionSAD"
+         xmlns:ns29="http://www.bcie.org/ConsultarFLEXCUBE"
+         xmlns:ns30="http://www.bcie.org/ConsultarImporteTransitoSAD">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ConsultarLineaCreditoFormalizacionSOR"
+          location="../WSDLs/ConsultarLineaCreditoFormalizacionSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="consultarlineacreditoformalizacion_client" partnerLinkType="ns1:ConsultarLineaCreditoFormalizacion" myRole="ConsultarLineaCreditoFormalizacion_PT"/>
+    <partnerLink name="ConsultarOperacionesAsociadas_SB" partnerLinkType="ns3:ConsultarOperacionesAsociadas_SB"
+                 partnerRole="ConsultarOperacionesAsociadas_PT"/>
+    <partnerLink name="ConsultarLineaCreditoBPEL_Direct" partnerLinkType="ns5:ConsultarLineaCreditoBPEL_Direct"
+                 partnerRole="ConsultarLineaCreditoPT"/>
+    <partnerLink name="ConsultarContratoLineaCredito_SB" partnerLinkType="ns27:ConsultarContratoLineaCredito_SB"
+                 partnerRole="consultarLineaCreditoPT"/>
+    <partnerLink name="ConsultarFLEXCUBE" partnerLinkType="ns29:ConsultarFLEXCUBE" partnerRole="ConsultarFLEXCUBE_PT"/>
+    <partnerLink name="ConsultarImporteTransito" partnerLinkType="ns30:ConsultarImporteTransito"
+                 partnerRole="ConsultarImporteTransito_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConsultarLineaCreditoFormalizacionMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConsultarLineaCreditoFormalizacionMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="inConsultarOperacionesAsociadas" messageType="ns3:requestConsultarOperacionesAsociadasMessage"/>
+    <variable name="outConsultarOperacionesAsociadas" messageType="ns3:responseConsultarOperacionesAsociadasMessage"/>
+    <variable name="outConsultarOperacionesAsociadasTotal" messageType="ns3:responseConsultarOperacionesAsociadasMessage"/>
+    <variable name="inConsultarContratoLineaCredito" messageType="ns27:ConsultarLineaCreditoRequestMessage"/>
+    <variable name="outConsultarContratoLineaCredito" messageType="ns27:ConsultarLineaCreditoResponseMessage"/>
+    <variable name="distinctContrato" messageType="ns1:responseConsultarLineaCreditoFormalizacionMessage"/>
+    <variable name="tempConsultarContratoLineaCreditoAsociada" messageType="ns27:ConsultarLineaCreditoResponseMessage"/>
+    <variable name="inConsultarContratoLineaCreditoGeneral" messageType="ns27:ConsultarLineaCreditoRequestMessage"/>
+    <variable name="outConsultarContratoLineaCreditoGeneral" messageType="ns27:ConsultarLineaCreditoResponseMessage"/>
+    <variable name="InvokeConsultarFlexcube_ConsultarFLEXCUBE_InputVariable"
+              messageType="ns29:requestConsultarFLEXCUBEMessage"/>
+    <variable name="InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable"
+              messageType="ns29:responseConsultarFLEXCUBEMessage"/>
+    <variable name="ConsultarImporteTransito_ConsultarImporteTransito_InputVariable"
+              messageType="ns30:requestConsultarImporteTransitoMessage"/>
+    <variable name="ConsultarImporteTransito_ConsultarImporteTransito_OutputVariable"
+              messageType="ns30:responseConsultarImporteTransitoMessage"/>
+    <variable name="MontoImporteTransito" type="xsd:double"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceFaultAll">
+        <assign name="AssignFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns23:result</to>
+          </copy>
+          <copy>
+            <from>concat('Error en BPEL ConsultarLineaCreditoFormalizacion: ',ora:getFaultAsString())</from>
+            <to>$outputVariable.response/ns2:Resultado/ns23:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyFaultAll" variable="outputVariable" partnerLink="consultarlineacreditoformalizacion_client"
+               portType="ns1:ConsultarLineaCreditoFormalizacion_PT" operation="ConsultarLineaCreditoFormalizacion"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConsultarLineaCreditoFormalizacion.wsdl) -->
+    <receive name="receiveInput" partnerLink="consultarlineacreditoformalizacion_client" portType="ns1:ConsultarLineaCreditoFormalizacion_PT" operation="ConsultarLineaCreditoFormalizacion" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion: ",$inputVariable.request/ns2:idOperacion))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <assign name="AssignConsultarContrato">
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.request/ns2:idOperacion</from>
+        <to>$inConsultarContratoLineaCredito.request/ns2:idOperacion</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.request/ns2:instanciaProceso</from>
+        <to>$inConsultarContratoLineaCredito.request/ns2:instanciaProceso</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.request/ns2:IdContrato</from>
+        <to>$inConsultarContratoLineaCredito.request/ns2:IdContrato</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultarContratoLineaCredito"
+            partnerLink="ConsultarContratoLineaCredito_SB" portType="ns27:consultarLineaCreditoPT"
+            operation="consultarLineaCredito" inputVariable="inConsultarContratoLineaCredito"
+            bpelx:invokeAsDetail="no" outputVariable="outConsultarContratoLineaCredito"/>
+    <if name="IfValidaOK">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>$outConsultarContratoLineaCredito.response/ns2:Resultado/ns23:result = 'OK'</condition>
+      <sequence name="Sequence2">
+        <forEach parallel="no" counterName="ContratoCounter" name="ForEachContratoLineaCredito">
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($outConsultarContratoLineaCredito.response/ns2:clienteContrato)</finalCounterValue>
+          <scope name="Scope3">
+            <sequence name="Sequence4">
+              <forEach parallel="no" counterName="LineaCounter" name="ForEachLineaCredito">
+                <startCounterValue>1</startCounterValue>
+                <finalCounterValue>count($outConsultarContratoLineaCredito.response/ns2:clienteContrato/ns8:LineaCredito)</finalCounterValue>
+                <scope name="Scope4">
+                  <if name="IfValidaFlex">
+                    <documentation>
+                      <![CDATA[idFLex]]>
+                    </documentation>
+                    <condition>string-length($outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Flexcube/ns9:id) &gt; 0 or ($outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:EstadoMonto='false')</condition>
+                    <sequence name="Sequence3">
+                      <assign name="assingConsultaFlex">
+                        <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                          <from>string($outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Flexcube/ns9:id)</from>
+                          <to>$InvokeConsultarFlexcube_ConsultarFLEXCUBE_InputVariable.request/ns2:codigoContrato</to>
+                        </copy>
+                        <copy>
+                          <from>'LINEA'</from>
+                          <to>$InvokeConsultarFlexcube_ConsultarFLEXCUBE_InputVariable.request/ns2:nivelDetalle</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeConsultarFlexcube" bpelx:invokeAsDetail="no" partnerLink="ConsultarFLEXCUBE"
+                              portType="ns29:ConsultarFLEXCUBE_PT" operation="ConsultarFLEXCUBE"
+                              inputVariable="InvokeConsultarFlexcube_ConsultarFLEXCUBE_InputVariable"
+                              outputVariable="InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable"/>
+                      <if name="IfOK">
+                        <documentation>
+                          <![CDATA[OK]]>
+                        </documentation>
+                        <condition>$InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable.response/ns2:Resultado/ns23:result='OK'</condition>
+                        <if name="IfValidaMonto">
+                          <documentation>
+                            <![CDATA[OK]]>
+                          </documentation>
+                          <condition>string-length($InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable.response/ns2:TipoContrato/ns9:LineaCredito/ns9:Monto/ns10:importe)=0</condition>
+                          <assign name="AssignConsultaMontoDisponible">
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>'DISPONIBLE'</from>
+                              <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto/ns10:tipo/ns11:DescripcionCorta</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>''</from>
+                              <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto/ns10:importe</to>
+                            </copy>
+                          </assign>
+                          <else>
+                            <assign name="AssignOutConsultaMontoDisponible">
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable.response/ns2:TipoContrato/ns9:LineaCredito/ns9:NumeroLineaCredito</from>
+                                <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:NumeroLineaCredito</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable.response/ns2:TipoContrato/ns9:LineaCredito/ns9:MontoLinea</from>
+                                <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:MontoLinea</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes">
+                                <from>$InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable.response/ns2:TipoContrato/ns9:LineaCredito/ns9:Flexcube/ns9:id</from>
+                                <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Flexcube/ns9:id</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable.response/ns2:TipoContrato/ns9:LineaCredito/ns9:Monto/ns10:tipo/ns11:DescripcionCorta</from>
+                                <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto/ns10:tipo/ns11:DescripcionCorta</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable.response/ns2:TipoContrato/ns9:LineaCredito/ns9:Monto/ns10:importe</from>
+                                <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto/ns10:importe</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable.response/ns2:TipoContrato/ns9:LineaCredito/ns9:Monto/ns10:moneda/ns11:codigoExterno</from>
+                                <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto/ns10:moneda/ns11:codigoExterno</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>string('APROBADO')</from>
+                                <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto[5]/ns10:tipo/ns11:DescripcionCorta</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable.response/ns2:TipoContrato/ns9:LineaCredito/ns9:Monto/ns10:importe</from>
+                                <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto[5]/ns10:importe</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable.response/ns2:TipoContrato/ns9:LineaCredito/ns9:Monto/ns10:moneda/ns11:codigoExterno</from>
+                                <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto[5]/ns10:moneda/ns11:codigoExterno</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                        <else>
+                          <empty name="Empty1"/>
+                        </else>
+                      </if>
+                      <scope name="Scope1">
+                        <sequence>
+                          <assign name="AssignConsultaImporteTransitoIn">
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:idLineaCredito</from>
+                              <to>$ConsultarImporteTransito_ConsultarImporteTransito_InputVariable.request/ns2:LineaCredito/ns9:idLineaCredito</to>
+                            </copy>
+                          </assign>
+                          <invoke name="ConsultarImporteTransito" bpelx:invokeAsDetail="no"
+                                  partnerLink="ConsultarImporteTransito" portType="ns30:ConsultarImporteTransito_PT"
+                                  operation="ConsultarImporteTransito"
+                                  inputVariable="ConsultarImporteTransito_ConsultarImporteTransito_InputVariable"
+                                  outputVariable="ConsultarImporteTransito_ConsultarImporteTransito_OutputVariable"/>
+                          <if name="IfValidaMontoTransito">
+                            <condition>string-length($ConsultarImporteTransito_ConsultarImporteTransito_OutputVariable.response/ns2:LineaCredito/ns9:Monto/ns10:importe)=0</condition>
+                            <assign name="AssignConsultaImporteTransito">
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>0</from>
+                                <to>$MontoImporteTransito</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$ConsultarImporteTransito_ConsultarImporteTransito_OutputVariable.response/ns2:LineaCredito/ns9:Monto/ns10:tipo/ns11:DescripcionCorta</from>
+                                <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto[2]/ns10:tipo/ns11:DescripcionCorta</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$ConsultarImporteTransito_ConsultarImporteTransito_OutputVariable.response/ns2:LineaCredito/ns9:Monto/ns10:importe</from>
+                                <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto[2]/ns10:importe</to>
+                              </copy>
+                            </assign>
+                            <else>
+                              <documentation>
+                                <![CDATA[OK]]>
+                              </documentation>
+                              <assign name="AssignConsultaImporteTransito">
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>string($ConsultarImporteTransito_ConsultarImporteTransito_OutputVariable.response/ns2:LineaCredito/ns9:Monto/ns10:tipo/ns11:DescripcionCorta)</from>
+                                  <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto[2]/ns10:tipo/ns11:DescripcionCorta</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$ConsultarImporteTransito_ConsultarImporteTransito_OutputVariable.response/ns2:LineaCredito/ns9:Monto/ns10:importe</from>
+                                  <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto[2]/ns10:importe</to>
+                                </copy>
+                                <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                  <from>$ConsultarImporteTransito_ConsultarImporteTransito_OutputVariable.response/ns2:LineaCredito/ns9:Monto/ns10:importe</from>
+                                  <to>$MontoImporteTransito</to>
+                                </copy>
+                              </assign>
+                            </else>
+                          </if>
+                        </sequence>
+                      </scope>
+                      <if name="IfValidarSuma">
+                        <documentation>
+                          <![CDATA[OK]]>
+                        </documentation>
+                        <condition>string-length($InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable.response/ns2:TipoContrato/ns9:LineaCredito/ns9:Monto/ns10:importe)=0</condition>
+                        <empty name="Empty2"/>
+                        <else>
+                          <assign name="AssignMontoDisponibleDesembolso">
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>string('DISPONIBLE_DESEMBOLSO')</from>
+                              <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto[3]/ns10:tipo/ns11:DescripcionCorta</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>($InvokeConsultarFlexcube_ConsultarFLEXCUBE_OutputVariable.response/ns2:TipoContrato/ns9:LineaCredito/ns9:Monto/ns10:importe) - ($MontoImporteTransito)</from>
+                              <to>$outConsultarContratoLineaCredito.response/ns2:clienteContrato[$ContratoCounter]/ns8:LineaCredito[$LineaCounter]/ns9:Monto[3]/ns10:importe</to>
+                            </copy>
+                          </assign>
+                        </else>
+                      </if>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[noIdFlex]]>
+                      </documentation>
+                      <empty name="Empty"/>
+                    </else>
+                  </if>
+                </scope>
+              </forEach>
+            </sequence>
+          </scope>
+        </forEach>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[ERROR]]>
+        </documentation>
+        <sequence name="SequenceErrorConsultarContratoLineaCredito">
+          <assign name="AssignErrorConsultarContratoLineaCredito">
+            <copy>
+              <from>'OK'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns23:result</to>
+            </copy>
+            <copy>
+              <from>concat('ConsultarContratoLineaCredito:  ',$outConsultarContratoLineaCredito.response/ns2:Resultado/ns23:message)</from>
+              <to>$outputVariable.response/ns2:Resultado/ns23:message</to>
+            </copy>
+          </assign>
+          <reply name="ReplyErrorConsultarContratoLineaCredito" variable="outputVariable"
+                 partnerLink="consultarlineacreditoformalizacion_client"
+                 portType="ns1:ConsultarLineaCreditoFormalizacion_PT" operation="ConsultarLineaCreditoFormalizacion"/>
+          <exit name="Exit"/>
+        </sequence>
+      </else>
+    </if>
+    <assign name="Tr_OutConsultarContratoLineaCredito_TO_OutputVariable_Response">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/Tr_OutConsultarContratoLineaCredito_TO_OutputVariable_Response.xsl", $outConsultarContratoLineaCredito.response)</from>
+        <to variable="outputVariable" part="response"/>
+      </copy>
+    </assign>
+    <assign name="AssignRequestConsultarOperacionesAsociadas">
+      <copy>
+        <from>$inputVariable.request/ns2:idOperacion</from>
+        <to>$inConsultarOperacionesAsociadas.request/ns4:idOperacion</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultarOperacionesAsociadas"
+            partnerLink="ConsultarOperacionesAsociadas_SB" portType="ns3:ConsultarOperacionesAsociadas_PT"
+            operation="ConsultarOperacionesAsociadas" inputVariable="inConsultarOperacionesAsociadas"
+            bpelx:invokeAsDetail="no" outputVariable="outConsultarOperacionesAsociadas"/>
+    <if name="IfValidaRegistros">
+      <documentation>
+        <![CDATA[ConRegistros]]>
+      </documentation>
+      <condition>count($outConsultarOperacionesAsociadas.response/ns4:Operacion/ns15:contrato) &gt; 0</condition>
+      <sequence name="SequenceConLineasAsociadas">
+        <assign name="XQ_LineasAsociadasTotal">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:processXQuery10('../Transformations/XQ_LineasAsociadasTotal.xqy', 'outConsultarOperacionesAsociadas.response', $outConsultarOperacionesAsociadas.response)</from>
+            <to variable="outConsultarOperacionesAsociadasTotal" part="response"/>
+          </copy>
+        </assign>
+        <forEach parallel="yes" counterName="ForEachLineaCreditoCounter" name="ForEachLineaCreditoAsociada">
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($outConsultarOperacionesAsociadasTotal.response/ns4:Operacion/ns15:contrato/ns8:LineaCredito)</finalCounterValue>
+          <scope name="ScopeForEachLineaCreditoAsociada">
+            <variables>
+              <variable name="inConsultarLineaCreditoBPEL" messageType="ns5:ConsultarLineaCreditoRequestMessage"/>
+              <variable name="outConsultarLineaCreditoBPEL" messageType="ns5:ConsultarLineaCreditoResponseMessage"/>
+            </variables>
+            <sequence name="SequenceLineaCreditoAsociada">
+              <assign name="AssignRequestConsultarLineaCreditoBPEL">
+                <copy>
+                  <from>$outConsultarOperacionesAsociadasTotal.response/ns4:Operacion[1]/ns15:contrato[1]/ns8:LineaCredito[$ForEachLineaCreditoCounter]/ns9:idLineaCredito</from>
+                  <to>$inConsultarLineaCreditoBPEL.ConsultarLineaCreditoRequest/ns2:idLineaCredito</to>
+                </copy>
+                <copy>
+                  <from>$outConsultarOperacionesAsociadasTotal.response/ns4:Operacion[1]/ns15:contrato[1]/ns8:LineaCredito[$ForEachLineaCreditoCounter]/ns9:NumeroLineaCredito</from>
+                  <to>$inConsultarLineaCreditoBPEL.ConsultarLineaCreditoRequest/ns2:numeroLinea</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeConsultarLineaCreditoBPEL" partnerLink="ConsultarLineaCreditoBPEL_Direct"
+                      portType="ns5:ConsultarLineaCreditoPT" operation="consultarLineaCredito"
+                      inputVariable="inConsultarLineaCreditoBPEL" outputVariable="outConsultarLineaCreditoBPEL"
+                      bpelx:invokeAsDetail="no"/>
+              <assign name="AssignConsultarLineaCreditoBPELResponse">
+                <copy bpelx:insertMissingToData="yes">
+                  <from>$outConsultarLineaCreditoBPEL.ConsultarLineaCreditoResponse/ns2:LineaCredito</from>
+                  <to>$outputVariable.response/ns2:LineaCreditoAsociada[$ForEachLineaCreditoCounter]</to>
+                </copy>
+              </assign>
+            </sequence>
+          </scope>
+        </forEach>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[SinRegistros]]>
+        </documentation>
+        <sequence name="Sequence1">
+          <empty name="Empty"/>
+        </sequence>
+      </else>
+    </if>
+    <assign name="XQ_DistinctContrato">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:processXQuery10('../Transformations/XQ_DistinctContrato.xqy', 'outputVariable.response', $outputVariable.response)</from>
+        <to variable="distinctContrato" part="response"/>
+      </copy>
+    </assign>
+    <forEach parallel="no" counterName="CounterContratoLineaAsociada" name="ForEachContratoLineaAsociada">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($distinctContrato.response/ns2:LineaCreditoAsociada)</finalCounterValue>
+      <scope name="ScopeForEachContratoLineaAsociada">
+        <variables>
+          <variable name="inConsultarContratoLineaCreditoAsociada" messageType="ns27:ConsultarLineaCreditoRequestMessage"/>
+          <variable name="outConsultarContratoLineaCreditoAsociada" messageType="ns27:ConsultarLineaCreditoResponseMessage"/>
+        </variables>
+        <sequence name="SequenceForEachContratoLineaAsociada">
+          <assign name="AssignConsultarContratoLineaCredito">
+            <copy ignoreMissingFromData="no">
+              <from>$distinctContrato.response/ns2:LineaCreditoAsociada[$CounterContratoLineaAsociada]/ns9:idContrato</from>
+              <to>$inConsultarContratoLineaCreditoAsociada.request/ns2:IdContrato</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeConsultarContratoLineaCredito" partnerLink="ConsultarContratoLineaCredito_SB"
+                  portType="ns27:consultarLineaCreditoPT" operation="consultarLineaCredito"
+                  inputVariable="inConsultarContratoLineaCreditoAsociada" bpelx:invokeAsDetail="no"
+                  outputVariable="outConsultarContratoLineaCreditoAsociada"/>
+          <assign name="AssignConsultarContratoLineaCreditoTemp">
+            <extensionAssignOperation>
+              <bpelx:copyList ignoreMissingFromData="yes">
+                <bpelx:from>$outConsultarContratoLineaCreditoAsociada.response/ns2:clienteContrato/ns8:LineaCredito</bpelx:from>
+                <bpelx:to>$tempConsultarContratoLineaCreditoAsociada.response/ns2:clienteContrato/ns8:LineaCredito</bpelx:to>
+              </bpelx:copyList>
+            </extensionAssignOperation>
+            <copy ignoreMissingFromData="yes">
+              <from>$outConsultarContratoLineaCreditoAsociada.response/ns2:clienteContrato/ns8:idOperacion</from>
+              <to>$tempConsultarContratoLineaCreditoAsociada.response/ns2:clienteContrato/ns8:idOperacion</to>
+            </copy>
+          </assign>
+        </sequence>
+      </scope>
+    </forEach>
+    <assign name="XQ_Response">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:processXQuery10('../Transformations/XQ_Response.xqy', 'outputVariable.response', $outputVariable.response, 'tempConsultarContratoLineaCreditoAsociada.response', $tempConsultarContratoLineaCreditoAsociada.response)</from>
+        <to variable="outputVariable" part="response"/>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="consultarlineacreditoformalizacion_client" portType="ns1:ConsultarLineaCreditoFormalizacion_PT" operation="ConsultarLineaCreditoFormalizacion" variable="outputVariable"/>
+  </sequence>
+</process>

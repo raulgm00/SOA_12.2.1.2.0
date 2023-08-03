@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioOperacion/Aprobacion/V1/Wsdl/ADAPTER/ValidarProcesoAprobacionFinalizadoSAD"/>
+            <con:binding>
+                <con:name>ValidarAprobacionPT12Bnd</con:name>
+                <con:namespace>http://xmlns.bcie.com/AprobacionService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="error" name="error-a05fe31.N1ccf12f0.0.153cf5a3897.N7f74" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+            <con:stage id="_StageId-a05fe31.N1ccf12f0.0.153cf5a3897.N7f73" name="StageError" xmlns:con4="http://www.bea.com/wli/sb/typesystem/config">
+                <con:context/>
+                <con:actions>
+                    <con3:ifThenElse>
+                        <con5:id xmlns:con5="http://www.bea.com/wli/sb/stages/config">_ActionId-a05fe31.N1ccf12f0.0.153cf5a3897.N7f72</con5:id>
+                        <con3:case id="_BranchId-a05fe31.N1ccf12f0.0.153cf5a3897.N7f71">
+                            <con3:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError) = 0</con2:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:assign varName="codigoError">
+                                    <con5:id xmlns:con5="http://www.bea.com/wli/sb/stages/config">_ActionId-a05fe31.N1ccf12f0.0.153cf5a3897.N7f70</con5:id>
+                                    <con3:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con3:expr>
+                                </con3:assign>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default/>
+                    </con3:ifThenElse>
+                    <con3:assign varName="inMapError">
+                        <con5:id xmlns:con5="http://www.bea.com/wli/sb/stages/config">_ActionId-a05fe31.N1ccf12f0.0.153cf5a3897.N7f6f</con5:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(data($codigoError))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con5:id xmlns:con5="http://www.bea.com/wli/sb/stages/config">_ActionId-a05fe31.N1ccf12f0.0.153cf5a3897.N7f6e</con5:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true">
+                        <con5:id xmlns:con5="http://www.bea.com/wli/sb/stages/config">_ActionId-a05fe31.N1ccf12f0.0.153cf5a3897.N7f6d</con5:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con5:xqueryTransform xmlns:con5="http://www.bea.com/wli/sb/stages/config">
+                                <con5:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/Aprobacion/ValidarProcesoAprobacionFinalizado/XQUERY/Error_TO_ValidarProcesoAprobacion_Response"/>
+                                <con5:param name="message">
+                                    <con5:path>xs:string(fn:data($fault/ctx:errorCode))</con5:path>
+                                </con5:param>
+                                <con5:param name="ErrorResponse">
+                                    <con5:path>$outMapeoError</con5:path>
+                                </con5:param>
+                            </con5:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-a05fe31.N1ccf12f0.0.153cf5a3897.N7f6c</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteNodeValiarAprobacion" error-handler="error-a05fe31.N1ccf12f0.0.153cf5a3897.N7f74">
+                <con:context>
+                    <con1:userNsDecl prefix="apr" namespace="http://www.bcie.org/AprobacionMO"/>
+                </con:context>
+                <con:actions>
+                    <con2:route>
+                        <con1:id>_ActionId-a05fe31.N1ccf12f0.0.153cf5a3897.N7ffd</con1:id>
+                        <con2:service ref="ADAPTADORES/ModeloNegocio/DominioOperacion/Aprobacion/ValidarProcesoAprobacionFinalizado/BS/ValidarProcesoAprobacionFinalizado_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:operation>ValidarProcesoAprobacionFinalizado</con2:operation>
+                        <con2:outboundTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a05fe31.N1ccf12f0.0.153cf5a3897.N7ff7</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/Aprobacion/ValidarProcesoAprobacionFinalizado/XQUERY/ValidarProcesoAprobacion_BS_TO_ValidarProcesoAprobacion_PS_Request"/>
+                                        <con1:param name="ValidarProcesoAprobacionFinalizadoRequest">
+                                            <con1:path>$body/apr:ValidarProcesoAprobacionFinalizadoRequest</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con2:outboundTransform>
+                        <con2:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a05fe31.N1ccf12f0.0.153cf5a3897.N7ffa</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/Aprobacion/ValidarProcesoAprobacionFinalizado/XQUERY/ValidarProcesoAprobacion_PS_TO_ValidarProcesoAprobacion_BS_Response"/>
+                                        <con1:param name="ValidarProcesoAprobacionFinalizadoOutputCollection">
+                                            <con1:path>$body/*[1]</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con2:responseTransform>
+                    </con2:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

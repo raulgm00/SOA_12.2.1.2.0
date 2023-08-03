@@ -1,0 +1,47 @@
+create or replace PACKAGE PKG_DESEMBOLSOS
+AS
+  PROCEDURE SP_TRANS_GPOECONOMICO_PAIS(
+      P_ID_CLIENTE              IN NUMBER,
+      RECORDSET_GE              OUT SYS_REFCURSOR,
+      RECORDSET_PAIS            OUT SYS_REFCURSOR,
+      P_CODIGO_RES              OUT NUMBER,
+      P_MENSAJE                 OUT VARCHAR2);
+  PROCEDURE SP_CONSULTAR_SALDO_CARTERA(
+      P_LINEA_CREDITO     IN VARCHAR2,
+      P_LINEA_FINANCIERA  IN T_VARCHAR2_TAB,
+      P_DESTINO           IN T_VARCHAR2_TAB,
+      P_MONEDA            IN T_VARCHAR2_TAB,
+      P_PAIS              IN T_VARCHAR2_TAB,
+      P_CODIGO_RES        OUT NUMBER,
+      P_MENSAJE           OUT VARCHAR2,
+      P_SALDO             OUT NUMBER);
+  PROCEDURE VALIDA_LIMITE_PORCENTAJE (
+       P_NUMERO_LINEA_CREDITO         IN  VARCHAR2,
+       P_CODIGO_LINEA_FINANCIERA      IN  VARCHAR2,
+       P_MONTO_APROBADO_USD           IN  NUMBER,
+       P_SALDO_USD                    IN  NUMBER,
+       P_CODIGO_RES                   OUT NUMBER,
+       P_TIPO_RES                     OUT NUMBER,
+       P_MENSAJE                      OUT VARCHAR2);
+   PROCEDURE SP_CONSULTAR_TRANSFERENCIAS(
+      P_ID_DESEMBOLSO                   IN NUMBER,
+      P_ID_TRANSFERENCIA                IN NUMBER,
+      P_ID_CONSOLIDACION_PADRE          IN NUMBER,
+      RS_TRANSFERENCIAS                 OUT SYS_REFCURSOR,
+      P_CODIGO_RES                      OUT NUMBER,
+      P_MENSAJE                         OUT VARCHAR2);
+   PROCEDURE SP_UPSERT_TRANSFERENCIA(
+       T_LISTA_TRANSFERENCIA_BANCARIA   IN  T_TRANSFERENCIA_BANCARIA,
+       P_CODIGO_RES                     OUT NUMBER,
+       P_TIPO_RES                       OUT NUMBER,
+       P_MENSAJE                        OUT VARCHAR2);
+   PROCEDURE SP_LISTA_PEDIENTE_F1(
+       P_NUMERO_LINEA_CREDITO       IN  VARCHAR2,
+       P_CODIGO_LINEA_FINANCIERA    IN  VARCHAR2,
+       RECORDSET                    OUT SYS_REFCURSOR,
+       P_CODIGO_RES                 OUT NUMBER,
+       P_TIPO_RES                   OUT NUMBER,
+       P_MENSAJE                    OUT VARCHAR2,
+       P_ACUMULADO_MESSAGE          OUT VARCHAR2);
+END PKG_DESEMBOLSOS;
+/

@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioCliente/Cliente/V1/Wsdl/ADAPTER/ConsultarClienteFLEXCUBESAD"/>
+            <con:binding>
+                <con:name>ConsultarClienteFLEXCUBE_PTSOAP12Binding</con:name>
+                <con:namespace>http://www.bcie.org/ConsultarClienteFLEXCUBESAD</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:template-overrides>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7e64">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>ConsultarClienteFLEXCUBE_REQUEST</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:placeholder-override id="PlaceholderID_N3f57f436.N5fad521c.0.154a59514cb.N7e63"/>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7ff6">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/ConsultarClienteFLEXCUBE/XQUERY/ConsultarCliente_PS_TO_ConsultarCliente_BS_Request"/>
+                            <con2:param name="ConsultarClienteFLEXCUBERequest">
+                                <con2:path>$body/*</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:placeholder-override id="PlaceholderID_N3f57f436.N5fad521c.0.154a59514cb.N7d4c">
+                <con:stage id="_StageId-N3f579b6a.N7a2fd287.0.160036bd1ea.N7f75" name="StageEnviarCorreoElectronico">
+                    <con:context>
+                        <con1:userNsDecl prefix="m" namespace="http://org/bcie/ws/middle/FLEXCUBE.wsdl" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    </con:context>
+                    <con:actions>
+                        <con1:ifThenElse xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                            <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579b6a.N7a2fd287.0.160036bd1ea.N7f6a</con2:id>
+                            <con1:case id="_BranchId-N3f579b6a.N7a2fd287.0.160036bd1ea.N7f69">
+                                <con1:condition>
+                                    <con2:xqueryConditionExpr xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                                        <con2:compExpr operator=">">
+                                            <con2:leftPath>fn:string-length($body/m:consultarClienteResponse/mensaje_out)</con2:leftPath>
+                                            <con2:rightPath>0</con2:rightPath>
+                                        </con2:compExpr>
+                                    </con2:xqueryConditionExpr>
+                                </con1:condition>
+                                <con1:actions>
+                                    <con1:assign varName="varEnviarCorreoRq">
+                                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579b6a.N7a2fd287.0.160036bd1ea.N7f66</con2:id>
+                                        <con1:expr>
+                                            <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                                                <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Error_To_EnviarCorreoElectronico"/>
+                                                <con2:param name="Accion">
+                                                    <con2:path>'la CONSULTA de cliente en FLEXCUBE'</con2:path>
+                                                </con2:param>
+                                                <con2:param name="MensajeDeError">
+                                                    <con2:path>$body/m:consultarClienteResponse/mensaje_out</con2:path>
+                                                </con2:param>
+                                            </con2:xqueryTransform>
+                                        </con1:expr>
+                                    </con1:assign>
+                                    <con1:wsCallout>
+                                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579b6a.N7a2fd287.0.160036bd1ea.N7f63</con2:id>
+                                        <con1:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                        <con1:operation>enviarCorreoElectronico</con1:operation>
+                                        <con1:request>
+                                            <con1:body wrapped="false">varEnviarCorreoRq</con1:body>
+                                        </con1:request>
+                                        <con1:response>
+                                            <con1:body wrapped="false">varEnviarCorreoRs</con1:body>
+                                        </con1:response>
+                                        <con1:requestTransform/>
+                                        <con1:responseTransform/>
+                                    </con1:wsCallout>
+                                </con1:actions>
+                            </con1:case>
+                            <con1:default/>
+                        </con1:ifThenElse>
+                    </con:actions>
+                </con:stage>
+            </con:placeholder-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7d48">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/ConsultarClienteFLEXCUBE/XQUERY/ConsultarCliente_BS_TO_ConsultarCliente_PS_Response"/>
+                            <con2:param name="ConsultarClienteFLEXCUBERequest">
+                                <con2:path>$request/*</con2:path>
+                            </con2:param>
+                            <con2:param name="consultarClienteResponse">
+                                <con2:path>$body/*</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7d44">
+                <con1:replace contents-only="true" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config"/>
+            </con:action-override>
+            <con:stage-override id="_StageId-N3f57f436.N5fad521c.0.154a59514cb.N7d4b">
+                <con:context>
+                    <con1:userNsDecl prefix="cli" namespace="http://www.bcie.org/ClienteMO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:variable name="outConsultarClienteById" path="$outConsultarClienteById" asChild="false" xmlns:con1="http://www.bea.com/wli/sb/typesystem/config">
+                        <con1:schema ref="MDS/Resources/ComponentesComunes/DominioCliente/Cliente/V1/Schema/ClienteMO" element="ConsultarClienteResponse"/>
+                    </con1:variable>
+                </con:context>
+            </con:stage-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7f5e">
+                <con1:route xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                    <con1:service ref="ADAPTADORES/Proveedores/FLEXCUBE/ConsultarClienteFLEXCUBE/BS/ConsultarCliente" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                    <con1:operation>ConsultarCliente</con1:operation>
+                </con1:route>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7e60">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>ConsultarCliente_FLEXCUBE_BS_REQUEST</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7e5d">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>ConsultarCliente_FLEXCUBE_BS_RESPONSE</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7e48">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>ConsultarClienteFLEXCUBE_ERROR-REQUEST</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7d41">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>ConsultarClienteFLEXCUBE_RESPONSE</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7d59">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>ConsultarClienteFLEXCUBE_ERROR-RESPONSE</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7dd2">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>ConsultarClienteFLEXCUBE_ERROR-BS</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57181f.2ea5e88a.0.154bf8d10f9.N7f8b">
+                <con1:replace xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryText xmlns:con2="http://www.bea.com/wli/sb/stages/config">$errorResponse</con2:xqueryText>
+                    </con1:expr>
+                </con1:replace>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57181f.2ea5e88a.0.154bf8d10f9.N7eb4">
+                <con1:replace xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryText xmlns:con2="http://www.bea.com/wli/sb/stages/config">$errorResponse</con2:xqueryText>
+                    </con1:expr>
+                </con1:replace>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57181f.2ea5e88a.0.154bf8d10f9.N7f1f">
+                <con1:replace xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryText xmlns:con2="http://www.bea.com/wli/sb/stages/config">$errorResponse</con2:xqueryText>
+                    </con1:expr>
+                </con1:replace>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57c7ff.41d94d3.0.1594161c85e.N7ee1">
+                <con1:ifThenElse xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:case id="_BranchId-N3f57c7ff.41d94d3.0.1594161c85e.N7ee0">
+                        <con1:condition>
+                            <con2:xqueryText xmlns:con2="http://www.bea.com/wli/sb/stages/config">$outValidarEstadoFlexcube/val:VtaEstadoFlexcube/val:estadoFlexcube = 'OK'</con2:xqueryText>
+                        </con1:condition>
+                    </con1:case>
+                </con1:ifThenElse>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57181f.2ea5e88a.0.154bf8d10f9.N7ff2">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/ConsultarClienteFLEXCUBE/XQUERY/ERROR_TO_ConsultarCliente_PS_Response"/>
+                            <con2:param name="message">
+                                <con2:path>fn:data($body/soap12-env:Fault/soap12-env:Reason)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorType">
+                                <con2:path>fn:data($fault/ctx:reason)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorCode">
+                                <con2:path>fn:data($fault/ctx:errorCode)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorDescription">
+                                <con2:path>fn:data($fault/ctx:details)</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57181f.2ea5e88a.0.154bf8d10f9.N7f1c">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/ConsultarClienteFLEXCUBE/XQUERY/ERROR_TO_ConsultarCliente_PS_Response"/>
+                            <con2:param name="message">
+                                <con2:path>fn:data($body/soap12-env:Fault/soap12-env:Reason)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorType">
+                                <con2:path>fn:data($fault/ctx:reason)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorCode">
+                                <con2:path>fn:data($fault/ctx:errorCode)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorDescription">
+                                <con2:path>fn:data($fault/ctx:details)</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57181f.2ea5e88a.0.154bf8d10f9.N7f87">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/ConsultarClienteFLEXCUBE/XQUERY/ERROR_TO_ConsultarCliente_PS_Response"/>
+                            <con2:param name="message">
+                                <con2:path>fn:data($body/soap12-env:Fault/soap12-env:Reason)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorType">
+                                <con2:path>fn:data($fault/ctx:reason)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorCode">
+                                <con2:path>fn:data($fault/ctx:errorCode)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorDescription">
+                                <con2:path>fn:data($fault/ctx:details)</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:placeholder-override id="PlaceholderID_N3f579b6a.N7a2fd287.0.160036bd1ea.N7f62">
+                <con:stage id="_StageId-N3f579b6a.N7a2fd287.0.160036bd1ea.N7f56" name="Stage1">
+                    <con:context/>
+                    <con:actions>
+                        <con1:assign varName="varEnviarCorreoElectronicoRq" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                            <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579b6a.N7a2fd287.0.160036bd1ea.N7f53</con2:id>
+                            <con1:expr>
+                                <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                                    <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Error_To_EnviarCorreoElectronico"/>
+                                    <con2:param name="Accion">
+                                        <con2:path>'la CONSULTA de cliente en FLEXCUBE'</con2:path>
+                                    </con2:param>
+                                    <con2:param name="MensajeDeError">
+                                        <con2:path>fn:data($body/soap12-env:Fault/soap12-env:Reason)</con2:path>
+                                    </con2:param>
+                                </con2:xqueryTransform>
+                            </con1:expr>
+                        </con1:assign>
+                        <con1:wsCallout xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                            <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579b6a.N7a2fd287.0.160036bd1ea.N7f4f</con2:id>
+                            <con1:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoElectronicoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                            <con1:operation>enviarCorreoElectronico</con1:operation>
+                            <con1:request>
+                                <con1:body wrapped="false">varEnviarCorreoElectronicoRq</con1:body>
+                            </con1:request>
+                            <con1:response>
+                                <con1:body wrapped="false">varEnviarCorreoRs</con1:body>
+                            </con1:response>
+                            <con1:requestTransform/>
+                            <con1:responseTransform/>
+                        </con1:wsCallout>
+                    </con:actions>
+                </con:stage>
+            </con:placeholder-override>
+            <con:placeholder-override id="PlaceholderID_a050ab9.51c541e3.0.16008bc485b.N7e72">
+                <con:stage id="_StageId-a050ab9.51c541e3.0.16008bc485b.N7bf6" name="StageNotificacion">
+                    <con:context/>
+                    <con:actions>
+                        <con1:assign varName="varEnviarCorreoElectronicoRq" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                            <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-a050ab9.51c541e3.0.16008bc485b.N7bf5</con2:id>
+                            <con1:expr>
+                                <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                                    <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Error_To_EnviarCorreoElectronico"/>
+                                    <con2:param name="Accion">
+                                        <con2:path>'la CONSULTA de cliente en FLEXCUBE'</con2:path>
+                                    </con2:param>
+                                    <con2:param name="MensajeDeError">
+                                        <con2:path>fn:data($body/soap12-env:Fault/soap12-env:Reason)</con2:path>
+                                    </con2:param>
+                                </con2:xqueryTransform>
+                            </con1:expr>
+                        </con1:assign>
+                        <con1:wsCallout xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                            <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-a050ab9.51c541e3.0.16008bc485b.N7bf4</con2:id>
+                            <con1:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoElectronicoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                            <con1:operation>enviarCorreoElectronico</con1:operation>
+                            <con1:request>
+                                <con1:body wrapped="false">varEnviarCorreoElectronicoRq</con1:body>
+                            </con1:request>
+                            <con1:response>
+                                <con1:body wrapped="false">varEnviarCorreoRs</con1:body>
+                            </con1:response>
+                            <con1:requestTransform/>
+                            <con1:responseTransform/>
+                        </con1:wsCallout>
+                    </con:actions>
+                </con:stage>
+            </con:placeholder-override>
+            <con:action-override id="_ActionId-a050ab9.53174a95.0.16009feba3d.N7ffe">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                            <con2:param name="Accion">
+                                <con2:path>'la CONSULTA de cliente en FLEXCUBE'</con2:path>
+                            </con2:param>
+                            <con2:param name="MensajeDeError">
+                                <con2:path>concat(fn:data($body/soap12-env:Fault/soap12-env:Reason),' ',fn:data($fault/ctx:details))</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:action-override id="_ActionId-a050ab9.51c541e3.0.16008bc485b.N7b1c">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                            <con2:param name="Accion">
+                                <con2:path>'la CONSULTA de cliente en FLEXCUBE'</con2:path>
+                            </con2:param>
+                            <con2:param name="MensajeDeError">
+                                <con2:path>concat(fn:data($body/soap12-env:Fault/soap12-env:Reason),' ',fn:data($fault/ctx:details))</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+        </con:template-overrides>
+    </con:router>
+    <con:template ref="ADAPTADORES/Proveedores/FLEXCUBE/Templates/wsdl_Sync"/>
+</con:pipelineEntry>

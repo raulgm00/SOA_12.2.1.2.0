@@ -1,0 +1,651 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Sep 30 13:25:44 CDT 2015
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CrearComision_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/CrearComision/CrearComision_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/CrearComision/CrearComision_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/CargoTramiteService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns2="http://www.bcie.org/ComisionMO"
+         xmlns:ns7="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns4="http://www.bcie.org/OperacionBO"
+         xmlns:ns8="http://www.bcie.org/ResultBO" xmlns:ns3="http://www.bcie.org/ComisionBO"
+         xmlns:ns6="http://www.bcie.org/CatalogoBO" xmlns:ns5="http://www.bcie.org/ClienteBO"
+         xmlns:ns9="http://www.bcie.org/ErrorBO" xmlns:ns10="http://xmlns.bcie.com/CargoTramiteService"
+         xmlns:ns11="http://xmlns.bcie.com/ComisionService" xmlns:ns12="http://www.bcie.org/ProductoBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns13="http://www.bcie.org/AtributoBO"
+         xmlns:ns18="http://www.bcie.org/TerminoBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns15="http://www.bcie.org/CommonBO" xmlns:ns14="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns16="http://www.bcie.org/CondicionBO" xmlns:ns17="http://www.bcie.org/DocumentoBO"
+         xmlns:ns20="http://www.bcie.org/HerramientaCEBO" xmlns:ns19="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns21="http://www.bcie.org/ContratoBO" xmlns:ns22="http://www.bice.org/CrearPrestamoFLEXCUBEService"
+         xmlns:ns23="http://www.bcie.org/LineaCreditoMO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/CargoTramiteService" location="../WSDLs/CrearCargoTramiteSORWrapper1.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="CrearCargoTramite" partnerLinkType="ns10:CrearComision1" myRole="CrearCargoTramitePT"/>
+    <partnerLink name="ActualizarComisionService" partnerLinkType="ns11:ActualizarComisionService"
+                 partnerRole="ActualizarComisionPT"/>
+    <partnerLink name="ConsultarComisionService" partnerLinkType="ns11:ConsultarComisionService"
+                 partnerRole="ConsultarComisionPT"/>
+    <partnerLink name="ConsultarFechaCargoService" partnerLinkType="ns11:ConsultarFechaCargoService"
+                 partnerRole="ConsultarFechaCargoPT"/>
+    <partnerLink name="CrearPrestamoFLEXCUBE_SB" partnerLinkType="ns22:CrearPrestamoFLEXCUBE_SB"
+                 partnerRole="CrearPrestamoFLEXCUBE_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestCrearCargoTramiteMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="consultarComision_OutputVariable" messageType="ns11:responseConsultarComisionMessage"/>
+    <variable name="runtimeFault" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="outputVariable" messageType="ns10:responseCrearCargoTramiteMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="outCrearPrestamoFLEXCUBE" messageType="ns22:responseCrearPrestamoFLEXCUBEMessage"/>
+    <variable name="consultarFechaCargo_OutputVariable" messageType="ns11:responseConsultarFechaCargoMessage"/>
+  </variables>
+<faultHandlers>
+    <catchAll>
+      <sequence>
+        <assign name="Assign_OutputVariable">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:result</to>
+          </copy>
+          <copy>
+            <from>$runtimeFault.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:message</to>
+          </copy>
+          <copy>
+            <from>$runtimeFault.detail</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:error/ns9:errorDescription</to>
+          </copy>
+          <copy>
+            <from>$runtimeFault.code</from>
+            <to>$outputVariable.response/ns2:Resultado/ns8:error/ns9:errorCode</to>
+          </copy>
+        </assign>
+        <reply name="ReplyException" variable="outputVariable" partnerLink="CrearCargoTramite"
+               portType="ns10:CrearCargoTramitePT"
+               operation="crearCargoTramite"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CrearComision_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="CrearCargoTramite" portType="ns10:CrearCargoTramitePT"
+             operation="crearCargoTramite" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignFlowName">
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>oraext:setFlowInstanceTitle(concat("idComision= ",string($inputVariable.request/ns2:idComision)))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarcomision">
+      <variables>
+        <variable name="consultarComision_InputVariable"
+                  messageType="ns11:requestConsultarComisionMessage"/>
+      </variables>
+      
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="remoteFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence8">
+            <assign name="Assign_Fault">
+              <copy>
+                <from variable="remoteFault"/>
+                <to variable="runtimeFault"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:bindingFault" faultVariable="bindingFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence7">
+            <assign name="Assign_Fault">
+              <copy>
+                <from variable="bindingFault"/>
+                <to variable="runtimeFault"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence4">
+            <assign name="Assign_Fault">
+              <copy>
+                <from>-1</from>
+                <to>$runtimeFault.code</to>
+              </copy>
+              <copy>
+                <from>'Error general al Consultar Comisión'</from>
+                <to>$runtimeFault.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$runtimeFault.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence9">
+        <assign name="Assign_ConsultarComisionInputVariable">
+          <copy>
+            <from>$inputVariable.request/ns2:idComision</from>
+            <to>$consultarComision_InputVariable.request/ns2:idComision</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarComision" partnerLink="ConsultarComisionService"
+                portType="ns11:ConsultarComisionPT" operation="ConsultarComision"
+                inputVariable="consultarComision_InputVariable"
+                outputVariable="consultarComision_OutputVariable" bpelx:invokeAsDetail="no"/>
+        <if name="IfErrorConsultar">
+          <documentation>
+            <![CDATA[ErrorConsulta]]>
+          </documentation>
+          <condition>$consultarComision_OutputVariable.response/ns2:Resultado/ns8:result = 'ERROR'</condition>
+          <sequence name="Sequence3">
+            <assign name="Assign_Error">
+              <copy>
+                <from>-1</from>
+                <to>$runtimeFault.code</to>
+              </copy>
+              <copy>
+                <from>$consultarComision_OutputVariable.response/ns2:Resultado/ns8:message</from>
+                <to>$runtimeFault.detail</to>
+              </copy>
+              <copy>
+                <from>'Error al Consultar Comision'</from>
+                <to>$runtimeFault.summary</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ConsultaExitosa]]>
+            </documentation>
+            <sequence name="Sequence12">
+              <if name="IfNumeroCuentacliente">
+                <documentation>
+                  <![CDATA[NumeroCuentaCorrecto]]>
+                </documentation>
+                <condition>string-length($consultarComision_OutputVariable.response/ns2:Comision/ns3:numeroCuentaCliente)&gt;1</condition>
+                <empty name="NumeroCuentaCorrecto"/>
+                <else>
+                  <documentation>
+                    <![CDATA[ERROR]]>
+                  </documentation>
+                  <sequence name="Sequence14">
+                    <assign name="Assign_NumeroCuentaInvalido">
+                      <copy>
+                        <from>'-1'</from>
+                        <to>$runtimeFault.code</to>
+                      </copy>
+                      <copy>
+                        <from>'No existe Número Cuenta Cliente para el Usuario y Moneda seleccionados'</from>
+                        <to>$runtimeFault.summary</to>
+                      </copy>
+                    </assign>
+                    <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+                  </sequence>
+                </else>
+              </if>
+              <if name="IfMontoCero">
+                <documentation>
+                  <![CDATA[MontoMayorACero]]>
+                </documentation>
+                <condition>$consultarComision_OutputVariable.response/ns2:Comision/ns3:montoComision &gt; 0</condition>
+                <empty name="MontoMayor"/>
+                <else>
+                  <documentation>
+                    <![CDATA[MontoMenorIgualACero]]>
+                  </documentation>
+                  <sequence name="Sequence13">
+                     <assign name="Assign_MontoError">
+                      <copy>
+                        <from>-1</from>
+                        <to>$runtimeFault.code</to>
+                      </copy>
+                      <copy>
+                        <from>$consultarComision_OutputVariable.response/ns2:Resultado/ns8:message</from>
+                        <to>$runtimeFault.detail</to>
+                      </copy>
+                      <copy>
+                        <from>'El monto es menor o igual a cero'</from>
+                        <to>$runtimeFault.summary</to>
+                      </copy>
+                    </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarFechaCargo">
+      <variables>
+        <variable name="consultarFechaCargo_InputVariable" messageType="ns11:requestConsultarFechaCargoMessage"/>
+      </variables>
+       <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="remoteFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence8">
+            <assign name="Assign_Fault">
+              <copy>
+                <from variable="remoteFault"/>
+                <to variable="runtimeFault"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:bindingFault" faultVariable="bindingFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence7">
+            <assign name="Assign_Fault">
+              <copy>
+                <from variable="bindingFault"/>
+                <to variable="runtimeFault"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence4">
+            <assign name="Assign_Fault">
+              <copy>
+                <from>-1</from>
+                <to>$runtimeFault.code</to>
+              </copy>
+              <copy>
+                <from>'Error general al Consultar Fecha'</from>
+                <to>$runtimeFault.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$runtimeFault.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence12">
+        <invoke name="Invoke_ConsultarFechaCargo" bpelx:invokeAsDetail="no" partnerLink="ConsultarFechaCargoService"
+                portType="ns11:ConsultarFechaCargoPT" operation="ConsultarFechaCargo"
+                inputVariable="consultarFechaCargo_InputVariable" outputVariable="consultarFechaCargo_OutputVariable"/>
+     <if name="IfErrorConsultar">
+          <documentation>
+            <![CDATA[ErrorConsulta]]>
+          </documentation>
+          <condition>$consultarFechaCargo_OutputVariable.response/ns2:Resultado/ns8:result = 'ERROR'</condition>
+          <sequence name="Sequence3">
+            <assign name="Assign_Error">
+              <copy>
+                <from>-1</from>
+                <to>$runtimeFault.code</to>
+              </copy>
+              <copy>
+                <from>$consultarFechaCargo_OutputVariable.response/ns2:Resultado/ns8:message</from>
+                <to>$runtimeFault.detail</to>
+              </copy>
+              <copy>
+                <from>'Error al Consultar Comision'</from>
+                <to>$runtimeFault.summary</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ConsultaExitosa]]>
+            </documentation>
+            <sequence name="Sequence15">
+              <assign name="Assign_ConsultarFechaCargo">
+                <copy>
+                  <from>$consultarComision_OutputVariable.response/ns2:Comision/ns3:fechaVencimiento</from>
+                  <to>$consultarComision_OutputVariable.response/ns2:Comision/ns3:fechaInicioComision</to>
+                </copy>
+              </assign>
+            </sequence>
+          </else>
+        </if>
+        <scope name="ScopeNumeroEmpleado">
+          <faultHandlers>
+            <catchAll>
+              <sequence name="Sequence4">
+                <assign name="Assign_Fault">
+                  <copy>
+                    <from>-2</from>
+                    <to>$runtimeFault.code</to>
+                  </copy>
+                  <copy>
+                    <from>'Error al obtener Número de Empleado del Responsable de la Operación'</from>
+                    <to>$runtimeFault.summary</to>
+                  </copy>
+                  <copy>
+                    <from>ora:getFaultAsString()</from>
+                    <to>$runtimeFault.detail</to>
+                  </copy>
+                </assign>
+                <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+              </sequence>
+            </catchAll>
+          </faultHandlers>
+          <assign name="Assign_ObtenerNúmeroEmpleado">
+            <copy>
+              <from>ids:getUserProperty($consultarComision_OutputVariable.response/ns2:Operacion/ns4:cliente/ns5:ejecutivo,'employeenumber')</from>
+              <to>$consultarComision_OutputVariable.response/ns2:Operacion/ns4:cliente/ns5:ejecutivo</to>
+            </copy>
+          </assign>
+        </scope>
+      </sequence>
+    </scope>
+    <scope name="ScopeCrearComisionFLEXCUBE">
+      <variables>
+        <variable name="inCrearPrestamoFLEXCUBE" messageType="ns22:requestCrearPrestamoFLEXCUBEMessage"/>
+      </variables>
+       <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="remoteFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence8">
+            <assign name="Assign_Fault">
+              <copy>
+                <from variable="remoteFault"/>
+                <to variable="runtimeFault"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:bindingFault" faultVariable="bindingFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence7">
+            <assign name="Assign_Fault">
+              <copy>
+                <from variable="bindingFault"/>
+                <to variable="runtimeFault"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:bindingFault" faultVariable="runtimeFault"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence4">
+            <assign name="Assign_Fault">
+              <copy>
+                <from>-2</from>
+                <to>$runtimeFault.code</to>
+              </copy>
+              <copy>
+                <from>'Error al crear prestamo'</from>
+                <to>$runtimeFault.summary</to>
+              </copy>
+              <copy>
+                <from>$outCrearPrestamoFLEXCUBE.response/ns23:Resultado/ns8:error/ns9:errorType</from>
+                <to>$runtimeFault.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence10">
+        <if name="IfFechaVencimiento">
+          <documentation>
+            <![CDATA[Vacio]]>
+          </documentation>
+          <condition>string-length($consultarComision_OutputVariable.response/ns2:Comision/ns3:fechaVencimiento) != 0</condition>
+          <empty name="Empty1"/>
+          <else>
+            <documentation>
+              <![CDATA[NoVacio]]>
+            </documentation>
+            <sequence name="Sequence18">
+              <assign name="Assign_Fault">
+                <copy>
+                  <from>-2</from>
+                  <to>$runtimeFault.code</to>
+                </copy>
+                <copy>
+                  <from>'Error Fecha de Vencimiento'</from>
+                  <to>$runtimeFault.summary</to>
+                </copy>
+                <copy>
+                  <from>'Error Fecha de Vencimiento'</from>
+                  <to>$runtimeFault.detail</to>
+                </copy>
+              </assign>
+              <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+            </sequence>
+          </else>
+        </if>
+        <assign name="XQ_RequestCrearPrestamoFLEXCUBE">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:processXQuery10('../Transformations/XQ_RequestCrearPrestamoFLEXCUBE.xqy', 'consultarComision_OutputVariable.response', $consultarComision_OutputVariable.response, 'consultarFechaCargo_OutputVariable.response', $consultarFechaCargo_OutputVariable.response)</from>
+            <to variable="inCrearPrestamoFLEXCUBE" part="request"/>
+          </copy>
+        </assign>
+        <invoke name="InvokeCrearPrestamoFLEXCUBE_SB" bpelx:invokeAsDetail="no" partnerLink="CrearPrestamoFLEXCUBE_SB"
+                portType="ns22:CrearPrestamoFLEXCUBE_PT" operation="CrearPrestamosFLEXCUBE"
+                inputVariable="inCrearPrestamoFLEXCUBE" outputVariable="outCrearPrestamoFLEXCUBE"/>
+        <if name="IfValidaOK">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outCrearPrestamoFLEXCUBE.response/ns23:Resultado/ns8:result = 'OK'</condition>
+          <assign name="responseOK">
+            <copy>
+              <from>$outCrearPrestamoFLEXCUBE.response/ns23:codigoContrato</from>
+              <to>$outputVariable.response/ns2:codigoContrato</to>
+            </copy>
+            <copy>
+              <from>'OK'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns8:result</to>
+            </copy>
+            <copy>
+              <from>'Registro exitoso'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns8:message</to>
+            </copy>
+          </assign>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="Sequence16">
+              <assign name="errorCrearPrestamoFLEXCUBE">
+                <copy>
+                  <from>-2</from>
+                  <to>$runtimeFault.code</to>
+                </copy>
+                <copy>
+                  <from>$outCrearPrestamoFLEXCUBE.response/ns23:Resultado/ns8:message</from>
+                  <to>$runtimeFault.detail</to>
+                </copy>
+                <copy>
+                  <from>'Error al crear Loan'</from>
+                  <to>$runtimeFault.summary</to>
+                </copy>
+              </assign>
+              <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeActualizarComision">
+      <variables>
+        <variable name="actualizarComision_InputVariable" messageType="ns11:requestActualizarComisionMessage"/>
+        <variable name="actualizarComision_OutputVariable" messageType="ns11:responseActualizarComisionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="remoteFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence8">
+            <assign name="Assign_Fault">
+              <copy>
+                <from variable="remoteFault"/>
+                <to variable="runtimeFault"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:bindingFault" faultVariable="bindingFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence7">
+            <assign name="Assign_Fault">
+              <copy>
+                <from variable="bindingFault"/>
+                <to variable="runtimeFault"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence4">
+            <assign name="Assign_Fault">
+              <copy>
+                <from>-2</from>
+                <to>$runtimeFault.code</to>
+              </copy>
+              <copy>
+                <from>'Error general al Actualizar Código Contrato en Comisión'</from>
+                <to>$runtimeFault.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$runtimeFault.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence11">
+        <assign name="Assign_ActualizarComisionInputVariable">
+          <copy>
+            <from>$inputVariable.request/ns2:idComision</from>
+            <to>$actualizarComision_InputVariable.request/ns2:Comision/ns3:idComision</to>
+          </copy>
+          <copy>
+            <from>$consultarComision_OutputVariable.response/ns2:Comision/ns3:fechaValor</from>
+            <to>$actualizarComision_InputVariable.request/ns2:Comision/ns3:fechaValor</to>
+          </copy>
+          <copy>
+            <from>$consultarComision_OutputVariable.response/ns2:Comision/ns3:fechaVencimiento</from>
+            <to>$actualizarComision_InputVariable.request/ns2:Comision/ns3:fechaVencimiento</to>
+          </copy>
+          <copy>
+            <from>$outputVariable.response/ns2:codigoContrato</from>
+            <to>$actualizarComision_InputVariable.request/ns2:Comision/ns3:codigoContrato</to>
+          </copy>
+          <copy>
+            <from>$consultarComision_OutputVariable.response/ns2:Comision/ns3:fechaInicioCapital</from>
+            <to>$actualizarComision_InputVariable.request/ns2:Comision/ns3:fechaInicioCapital</to>
+          </copy>
+          <copy>
+            <from>$consultarComision_OutputVariable.response/ns2:Comision/ns3:fechaInicioComision</from>
+            <to>$actualizarComision_InputVariable.request/ns2:Comision/ns3:fechaInicioComision</to>
+          </copy>
+          <copy>
+            <from>4</from>
+            <to>$actualizarComision_InputVariable.request/ns2:Comision/ns3:estadoTCC/ns13:id</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>true()</from>
+            <to>$actualizarComision_InputVariable.request/ns2:Comision/ns3:estado</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ActualizarComision" bpelx:invokeAsDetail="no" partnerLink="ActualizarComisionService"
+                portType="ns11:ActualizarComisionPT" operation="ActualizarComision"
+                inputVariable="actualizarComision_InputVariable" outputVariable="actualizarComision_OutputVariable"/>
+       <if name="IfErrorActualizarCargoTramite">
+          <documentation>
+            <![CDATA[ErrorActualizacion]]>
+          </documentation>
+          <condition>$actualizarComision_OutputVariable.response/ns2:Resultado/ns8:result = 'ERROR'</condition>
+          <sequence name="Sequence11">
+             <assign name="Assign_FaultVariable">
+              <copy>
+                <from>-3</from>
+                <to>$runtimeFault.code</to>
+              </copy>
+              <copy>
+                <from>$actualizarComision_OutputVariable.response/ns2:Resultado/ns8:message</from>
+                <to>$runtimeFault.detail</to>
+              </copy>
+              <copy>
+                <from>'Error al Actualizar Comisión'</from>
+                <to>$runtimeFault.summary</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFault"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ActualizacionExitosa]]>
+            </documentation>
+            <empty name="ActualizacionExitosa"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="CrearCargoTramite" portType="ns10:CrearCargoTramitePT"
+           operation="crearCargoTramite" variable="outputVariable"/>
+  </sequence>
+</process>

@@ -1,0 +1,397 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Sep 09 19:32:43 CST 2015
+  Author:  david-ramirez
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionLavadoActivos"
+         targetNamespace="http://xmlns.bcie.org/ConfiguracionProcesos/ConfiguracionLavadoActivos/ConfiguracionLavadoActivos"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:client="http://xmlns.bcie.org/ConfiguracionProcesos/ConfiguracionLavadoActivos/ConfiguracionLavadoActivos"
+         xmlns:ora="http://schemas.oracle.com/xpath/extension" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://xmlns.oracle.com/ValidaMontoRule/ValidaMontoRule_DecisionService"
+         xmlns:ns3="http://xmlns.bcie.com/ProductoService" xmlns:ns5="http://www.bcie.org/ConfiguracionProcesosMO"
+         xmlns:ns4="http://www.bcie.org/ProductoMO" xmlns:ns11="http://www.bcie.org/ProductoBO"
+         xmlns:ns6="http://www.bcie.org/ConfiguracionProcesosBO" xmlns:ns10="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns7="http://www.bcie.org/OperacionBO" xmlns:ns12="http://www.bcie.org/ResultBO"
+         xmlns:ns9="http://www.bcie.org/CatalogoBO" xmlns:ns8="http://www.bcie.org/ClienteBO"
+         xmlns:ns13="http://www.bcie.org/ErrorBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns15="http://www.bcie.org"
+         xmlns:ns14="http://xmlns.oracle.com/bpel"
+         xmlns:ns16="http://xmlns.oracle.com/Utilidades/SolicitarAnalistaLAFT/SolicitarAnalistaBPEL"
+         xmlns:ns17="http://xmlns.bcie.com/OperacionService" xmlns:ns18="http://www.bcie.org/OperacionMO"
+         xmlns:ns19="http://www.bcie.com/ConsultarRolesPorProceso" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns20="http://www.bcie.org/ConsultarRolesPorProcesoMO"
+         xmlns:ns21="http://www.bcie.org/ConsultarRolesPorProcesoBO"
+         xmlns:ns22="http://www.bcie.org/EsUsuarioEnGrupoService" xmlns:ns23="http://www.bcie.org/UsuarioMO"
+         xmlns:ns24="http://www.bcie.org/UsuarioBO">
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/OperacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Operacion/V1/Wsdl/BPEL/ActualizarOperacionSOR.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.oracle.com/ValidaMontoRule/ValidaMontoRule_DecisionService"
+          location="oramds:/apps/Resources/ComponentesComunes/BusinessRules/ValidarMontoSolicitadoBR/V1/Wsdl/ValidaMontoRule_DecisionService.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ProductoService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioProducto/Producto/V1/Wsdl/Producto.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionLavadoActivosSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configuracionlavadoactivos_client" partnerLinkType="ns1:ConfiguracionLavadoActivos"
+                 myRole="ConfiguracionLavadoActivosPT"/>
+    <partnerLink name="ValidarMontoBusinessRule" partnerLinkType="ns2:ValidarMontoBusinessRule"
+                 partnerRole="IDecisionService"/>
+    <partnerLink name="ConsultarProductoByIdOperacionService"
+                 partnerLinkType="ns3:ConsultarProductoByIdOperacionService" partnerRole="ProductoPT"/>
+    <partnerLink name="ActualizarOperacion_PS" partnerLinkType="ns17:ActualizarOperacion_PS" partnerRole="OperacionPT"/>
+    <partnerLink name="ConsultarRoles" partnerLinkType="ns19:ConsultarRoles"
+                 partnerRole="ConsultarRolesPorProceso_ptt"/>
+    <partnerLink name="ConsultarMonto" partnerLinkType="ns17:ConsultarMonto" partnerRole="ConsultarMontoOperacionPT"/>
+    <partnerLink name="ValidarUsuario" partnerLinkType="ns22:ValidarUsuario" partnerRole="EsUsuarioEnGrupoPT"/>
+  </partnerLinks>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConfiguracionLavadoActivosMessage"/>
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConfiguracionLavadoActivosMessage"/>
+    <variable name="InUsuario" messageType="ns22:EsUsuarioEnGrupoRequestMessage"/>
+    <variable name="OutUsuario" messageType="ns22:EsUsuarioEnGrupoResponseMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence6">
+        <assign name="AssignError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns5:Resultado/ns12:result</to>
+          </copy>
+          <copy>
+            <from>'Error en ConfiguracionLavadoActivos'</from>
+            <to>$outputVariable.response/ns5:Resultado/ns12:message</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns5:Resultado/ns12:error/ns13:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyERROR" variable="outputVariable" partnerLink="configuracionlavadoactivos_client"
+               portType="ns1:ConfiguracionLavadoActivosPT" operation='configuracionLavadoActivos'/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionLavadoActivos.wsdl) -->
+    <receive name="receiveInput" partnerLink="configuracionlavadoactivos_client"
+             portType="ns1:ConfiguracionLavadoActivosPT" operation="configuracionLavadoActivos" variable="inputVariable"
+             createInstance="yes"/>
+    <assign name="AssignUsuario">
+      <copy>
+        <from>$inputVariable.request/ns5:usuario</from>
+        <to>$InUsuario.request/ns23:Usuario</to>
+      </copy>
+      <copy>
+        <from>13</from>
+        <to>$InUsuario.request/ns23:idRolUsuario</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeUsuario" partnerLink="ValidarUsuario" portType="ns22:EsUsuarioEnGrupoPT"
+            operation="esUsuarioEnGrupo" inputVariable="InUsuario" outputVariable="OutUsuario"
+            bpelx:invokeAsDetail="no"/>
+    <scope name="ScopeConsultarProducto">
+      <variables>
+        <variable name="inConsultarProducto" messageType="ns3:requestConsultarByIdOperacionMessage"/>
+        <variable name="outConsultarProducto" messageType="ns3:responseConsultarByIdOperacionMessage"/>
+      </variables>
+      <sequence name="Sequence1">
+        <assign name="AssignConsultarProducto">
+          <copy>
+            <from>$inputVariable.request/ns5:idOperacion</from>
+            <to>$inConsultarProducto.request/ns4:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarProducto" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarProductoByIdOperacionService" portType="ns3:ProductoPT"
+                operation="consultarByIdOperacion" inputVariable="inConsultarProducto"
+                outputVariable="outConsultarProducto"/>
+        <scope name="ScopeValidarMonto">
+          <variables>
+            <variable name="inValidarMonto" messageType="ns2:callFunctionStatelessMessage"/>
+            <variable name="outValidarMonto" messageType="ns2:callFunctionStatelessDecisionMessage"/>
+            <variable name="InConsultarMonto" messageType="ns17:requestConsultarMontoOperacionMessage"/>
+            <variable name="OutConsultarMonto" messageType="ns17:responseConsultarMontoOperacionMessage"/>
+          </variables>
+          <sequence name="Sequence2">
+            <if name="IfValidacionDato">
+              <documentation>
+                <![CDATA[DATOEXISTENTE]]>
+              </documentation>
+              <condition>string($outConsultarProducto.response/ns4:Resultado/ns12:result)='OK'</condition>
+              <sequence>
+                <assign name="AssignProducto">
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$outConsultarProducto.response/ns4:Operacion</from>
+                    <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:operacion</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$outConsultarProducto.response/ns4:Producto</from>
+                    <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:producto</to>
+                  </copy>
+                </assign>
+                <assign name="AssignOutSolicitarAnalista">
+                  <copy>
+                    <from>$OutUsuario.response/ns23:EsUsuario</from>
+                    <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:solicitarAnalista</to>
+                  </copy>
+                </assign>
+                <if name="IfRequiereLAFT">
+                  <documentation>
+                    <![CDATA[Requiere LAFT]]>
+                  </documentation>
+                  <condition>string($outputVariable.response/ns5:configuracionLavadoActivos/ns6:producto/ns11:reglas/ns11:requiereLaft)='true'</condition>
+                  <sequence>
+                    <assign name="AssignConsultarMonto">
+                      <copy>
+                        <from>$inputVariable.request/ns5:idOperacion</from>
+                        <to>$InConsultarMonto.request/ns18:idOperacion</to>
+                      </copy>
+                      <copy>
+                        <from>2</from>
+                        <to>$InConsultarMonto.request/ns18:IdTcaTipoMonto</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeConsultarMonto" partnerLink="ConsultarMonto"
+                            portType="ns17:ConsultarMontoOperacionPT" operation="consultarMontoOperacion"
+                            inputVariable="InConsultarMonto" outputVariable="OutConsultarMonto"
+                            bpelx:invokeAsDetail="no"/>
+                    <assign name="AssignValidarMonto">
+                      <copy>
+                        <from>'ValidaMontoRule_DecisionService'</from>
+                        <to>$inValidarMonto.payload/@name</to>
+                      </copy>
+                      <copy>
+                        <from>$OutConsultarMonto.response/ns18:MontoOperacion/ns7:montoOperacion/ns7:monto</from>
+                        <to>$inValidarMonto.payload/ns2:parameterList/ns15:ValidaMontoRequest/ns15:monto</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeValidarMonto" bpelx:invokeAsDetail="no" partnerLink="ValidarMontoBusinessRule"
+                            portType="ns2:IDecisionService" operation="callFunctionStateless"
+                            inputVariable="inValidarMonto" outputVariable="outValidarMonto"/>
+                    <if name="AplicaLAFT">
+                      <documentation>
+                        <![CDATA[Aplica LAFT]]>
+                      </documentation>
+                      <condition>string($outValidarMonto.payload/ns2:resultList/ns15:ValidaMontoResponse/ns15:respuesta) = 'true'</condition>
+                      <sequence name="Sequence3">
+                        <assign name="AssignAplicaLAFT">
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>true()</from>
+                            <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:aplicaLAFT</to>
+                          </copy>
+                        </assign>
+                        <if name="IfOFICRealizaLaft">
+                          <documentation>
+                            <![CDATA[OFIC Realiza LAFT]]>
+                          </documentation>
+                          <condition>string($outputVariable.response/ns5:configuracionLavadoActivos/ns6:producto/ns11:reglas/ns11:OFICrealizaAnalisisLAFT)='true'</condition>
+                          <assign name="AssignOFIC">
+                            <copy>
+                              <from>'false'</from>
+                              <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:responsableRO</to>
+                            </copy>
+                            <copy>
+                              <from>'true'</from>
+                              <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:responsableOFIC</to>
+                            </copy>
+                          </assign>
+                          <else>
+                            <documentation>
+                              <![CDATA[Responsabel Operacion LAFT]]>
+                            </documentation>
+                            <assign name="AssignResponsableOperacion">
+                              <copy>
+                                <from>'true'</from>
+                                <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:responsableRO</to>
+                              </copy>
+                              <copy>
+                                <from>'false'</from>
+                                <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:responsableOFIC</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                      </sequence>
+                      <else>
+                        <documentation>
+                          <![CDATA[No Aplica Laft]]>
+                        </documentation>
+                        <sequence>
+                          <assign name="AssignNoAplicaLAFT">
+                            <copy>
+                              <from>$outValidarMonto.payload/ns2:resultList/ns15:ValidaMontoResponse/ns15:respuesta</from>
+                              <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:responsableRO</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>false()</from>
+                              <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:aplicaLAFT</to>
+                            </copy>
+                            <copy>
+                              <from>$outValidarMonto.payload/ns2:resultList/ns15:ValidaMontoResponse/ns15:respuesta</from>
+                              <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:responsableOFIC</to>
+                            </copy>
+                          </assign>
+                        </sequence>
+                      </else>
+                    </if>
+                  </sequence>
+                  <else>
+                    <documentation>
+                      <![CDATA[No requiere LAFT]]>
+                    </documentation>
+                    <assign name="AssignNoRequiereLAFT">
+                      <copy>
+                        <from>'false'</from>
+                        <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:responsableRO</to>
+                      </copy>
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>false()</from>
+                        <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:aplicaLAFT</to>
+                      </copy>
+                      <copy>
+                        <from>'false'</from>
+                        <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:responsableOFIC</to>
+                      </copy>
+                    </assign>
+                  </else>
+                </if>
+                <scope name="ScopeActualizarOperacion">
+                  <variables>
+                    <variable name="inActualizarOperacion" messageType="ns17:requestActualizarOperacionMessage"/>
+                    <variable name="outActualizarOperacion" messageType="ns17:responseActualizarOperacionMessage"/>
+                  </variables>
+                  <sequence name="Sequence4">
+                    <assign name="AssignActualizarOperacion">
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>$inputVariable.request/ns5:idOperacion</from>
+                        <to>$inActualizarOperacion.request/ns18:Operacion/ns7:idOperacion</to>
+                      </copy>
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:aplicaLAFT</from>
+                        <to>$inActualizarOperacion.request/ns18:Operacion/ns7:aplicaLaft</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeActualizarOperacion" bpelx:invokeAsDetail="no"
+                            partnerLink="ActualizarOperacion_PS" portType="ns17:OperacionPT"
+                            operation="actualizarOperacion" inputVariable="inActualizarOperacion"
+                            outputVariable="outActualizarOperacion"/>
+                  </sequence>
+                </scope>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[NO EXISTEN DATOS]]>
+                </documentation>
+                <assign name="ERROR">
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$outConsultarProducto.response/ns4:Resultado</from>
+                    <to>$outputVariable.response/ns5:Resultado</to>
+                  </copy>
+                </assign>
+              </else>
+            </if>
+          </sequence>
+        </scope>
+        <scope name="ScopeConsultarRol">
+          <variables>
+            <variable name="InConsultarRol" messageType="ns19:requestMessage"/>
+            <variable name="OutConsultarRol" messageType="ns19:replyMessage"/>
+            <variable name="CountRol" type="xsd:unsignedInt"/>
+          </variables>
+          <sequence name="Sequence5">
+            <assign name="AssignConsultarRol">
+              <copy>
+                <from>7</from>
+                <to>$InConsultarRol.request/ns20:Proceso/ns21:idProceso</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarRol" partnerLink="ConsultarRoles" portType="ns19:ConsultarRolesPorProceso_ptt"
+                    operation="ConsultarRolesPorProceso" inputVariable="InConsultarRol" outputVariable="OutConsultarRol"
+                    bpelx:invokeAsDetail="no"/>
+            <assign name="AssignCountRol">
+              <copy>
+                <from>count($OutConsultarRol.response/ns20:ListadoRoles/ns21:listadoRoles)</from>
+                <to>$CountRol</to>
+              </copy>
+            </assign>
+            <forEach parallel="no" counterName="CounterRoles" name="ForEachRol">
+              <bpelx:skipCondition>$CountRol=0</bpelx:skipCondition>
+              <startCounterValue>1</startCounterValue>
+              <finalCounterValue>$CountRol</finalCounterValue>
+              <scope name="Scope1">
+                <assign name="AssignOutConsultarRol">
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$OutConsultarRol.response/ns20:ListadoRoles/ns21:listadoRoles[$CounterRoles]/ns9:Id</from>
+                    <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:RolesEquipoTrabajo/ns6:Rol[$CounterRoles]/ns9:Id</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$OutConsultarRol.response/ns20:ListadoRoles/ns21:listadoRoles[$CounterRoles]/ns9:Descripcion</from>
+                    <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:RolesEquipoTrabajo/ns6:Rol[$CounterRoles]/ns9:Descripcion</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$OutConsultarRol.response/ns20:ListadoRoles/ns21:listadoRoles[$CounterRoles]/ns9:DescripcionCorta</from>
+                    <to>$outputVariable.response/ns5:configuracionLavadoActivos/ns6:RolesEquipoTrabajo/ns6:Rol[$CounterRoles]/ns9:DescripcionCorta</to>
+                  </copy>
+                </assign>
+              </scope>
+            </forEach>
+          </sequence>
+        </scope>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configuracionlavadoactivos_client"
+           portType="ns1:ConfiguracionLavadoActivosPT" operation="configuracionLavadoActivos"
+           variable="outputVariable"/>
+  </sequence>
+</process>

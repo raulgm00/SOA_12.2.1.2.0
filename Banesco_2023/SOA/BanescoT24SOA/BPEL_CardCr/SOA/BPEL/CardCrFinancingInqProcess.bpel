@@ -1,0 +1,206 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Jul 18 22:33:10 COT 2018
+  Author:  ljrodriguez
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CardCrFinancingInqProcess"
+               targetNamespace="http://xmlns.banesco.com/ProcessService/BPEL_CardCr/CardCrFinancingInqProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.banesco.com/ProcessService/BPEL_CardCr/CardCrFinancingInqProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.banesco.com/ProcessService/BPEL_CardCr/CardCrFinancingInqSvc_V1.0"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://xmlns.banesco.com/TechLayer/CardCrTechSvc_V1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns3="http://xmlns.banesco.com/eopt/CardCrFinancingInq_V1.0"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns5="http://xmlns.banesco.com/eo/Banking_V1.0" xmlns:ns7="http://xmlns.banesco.com/eo/Party_V1.0"
+         xmlns:ns4="http://xmlns.banesco.com/eo/Card_V1.0" xmlns:ns6="http://xmlns.banesco.com/eo/Common_V1.0"
+         xmlns:ns8="http://xmlns.banesco.com/eo/Product_V1.0" xmlns:ns10="http://xmlns.banesco.com/eo/Acct_V1.0"
+         xmlns:ns9="http://xmlns.banesco.com/eo/Status_V1.0"
+         xmlns:ns11="http://xmlns.banesco.com/appopt/AOptCommon_V1.0"
+         xmlns:ns12="http://xmlns.banesco.com/BPEL_CardCr/CardCrFinancingInq_V1.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.banesco.com/appopt/AOptCommon_V1.0" location="../Schemas/AOptCommon_V1.0.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://xmlns.banesco.com/TechLayer/CardCrTechSvc_V1.0"
+          location="../WSDLs/CardCrTechSvc_V1.0Wrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <import namespace="http://xmlns.banesco.com/eopt/CardCrFinancingInq_V1.0"
+          location="../Schemas/CardCrFinancingInq/CardCrFinancingInq_V1.0.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://xmlns.banesco.com/BPEL_CardCr/CardCrFinancingInq_V1.0"
+          location="../Schemas/CardCrFinancingInq_V1.0.xsd" importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://xmlns.banesco.com/ProcessService/BPEL_CardCr/CardCrFinancingInqSvc_V1.0"
+          location="../WSDLs/CardCrFinancingInqSvc_V1.0.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="CardCrTechSvc_DRef" partnerLinkType="ns2:CardCrTechSvc_DRef"
+                 partnerRole="CardCrTechSvc_V1.0PortType"/>
+    <partnerLink name="CardCrFinancingInq_DirectB" partnerLinkType="ns1:CardCrFinancingInq_DirectB"
+                 myRole="CardCrFinancingInqSvcPort"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:CardCrFinancingInqRq"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:CardCrFinancingInqRs"/>
+    <variable name="Var_RequestCardCrTech" element="ns3:CardCrFinancingInqRq"/>
+    <variable name="var_validationCode" type="xsd:string"/>
+    <variable name="var_CardCrFinancingInqResponse" messageType="ns2:CardCrFinancingInqRs"/>
+    <variable name="varHeader" element="ns11:MsgHdrRq"/>
+    <variable name="VarFinancingList" element="ns3:CardCrFinancingInqRs"/>
+    <variable name="VarResponse3010" element="ns3:CardCrFinancingInqRs"/>
+    <variable name="VarResponse3020" element="ns3:CardCrFinancingInqRs"/>
+    <variable name="varOutputHeaderTech" element="ns11:MsgHdrRs"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CardCrFinancingInqProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="CardCrFinancingInq_DirectB" portType="ns1:CardCrFinancingInqSvcPort" operation="CardCrFinancingInq" variable="inputVariable" createInstance="yes"
+             bpelx:headerVariable="varHeader"/>
+    <assign name="setRequestCardCrTech">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/xslt_in_CardCrFinancingInqSvc_to_CardCrTechSvcl.xsl", $inputVariable.CardCrFinancingInqRq)</from>
+        <to variable="Var_RequestCardCrTech"/>
+      </copy>
+    </assign>
+    <assign name="setVariables">
+      <copy>
+        <from>'0'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$var_validationCode</to>
+      </copy>
+      <copy>
+        <from>xp20:current-dateTime()</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$varHeader/ns11:ClientDt</to>
+      </copy>
+    </assign>
+    <assign name="financingList">
+      <copy>
+        <from><literal><CardCrFinancingInqRs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                             xmlns="http://xmlns.banesco.com/eopt/CardCrFinancingInq_V1.0">
+  <Card/>
+  <FIData/>
+  <Party>
+  </Party>
+  <PersonName>
+  </PersonName>
+  <Status>
+  </Status>
+</CardCrFinancingInqRs></literal></from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$VarFinancingList</to>
+      </copy>
+    </assign>
+    <while name="While1">
+      <condition>$var_validationCode != '3020'</condition>
+      <scope name="Scope1">
+        <sequence name="Sequence1">
+
+          <invoke name="Invoke1" partnerLink="CardCrTechSvc_DRef" portType="ns2:CardCrTechSvc_V1.0PortType"
+                  operation="CardCrFinancingInq" inputVariable="Var_RequestCardCrTech"
+                  outputVariable="var_CardCrFinancingInqResponse"
+                  bpelx:outputHeaderVariable="varOutputHeaderTech" bpelx:invokeAsDetail="no"
+                  bpelx:inputHeaderVariable="varHeader"/>
+          <assign name="updateValidationCode">
+            <copy>
+              <from>substring($var_CardCrFinancingInqResponse.CardCrFinancingInqRs/ns3:Status/ns9:AdditionalStatus/ns9:StatusCode,1,4)</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$var_validationCode</to>
+            </copy>
+          </assign>
+          <if name="If1">
+            <condition>$var_validationCode !="3020"</condition>
+            <sequence name="Sequence2">
+              <assign name="insertElements">
+                <extensionAssignOperation>
+                  <bpelx:append>
+                    <?audit suppress oracle.ide.xml.validation-incomplete?>
+                    <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$var_CardCrFinancingInqResponse.CardCrFinancingInqRs/ns3:Card/ns4:FinancingInfo[1]</bpelx:from>
+                    <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$VarFinancingList/ns3:Card</bpelx:to>
+                  </bpelx:append>
+                </extensionAssignOperation>
+              </assign>
+              <assign name="setOutput3010">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:doXSLTransformForDoc("../Transformations/xslt_out_CardCrTechSvc.xsl", $var_CardCrFinancingInqResponse.CardCrFinancingInqRs)</from>
+                  <to variable="VarResponse3010"/>
+                </copy>
+              </assign>
+            </sequence>
+            <else>
+              <assign name="setOutput3020">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:doXSLTransformForDoc("../Transformations/xslt_out_CardCrTechSvc.xsl", $var_CardCrFinancingInqResponse.CardCrFinancingInqRs)</from>
+                  <to variable="VarResponse3020"/>
+                </copy>
+              </assign>
+            </else>
+          </if>
+          
+        </sequence>
+      </scope>
+    </while>
+    <assign name="setResponse">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/xslt_out_CardCrTechSvc_to_CardCrFinancingInqSvc1.xsl", $VarResponse3010, "VarFinancingList", $VarFinancingList, "VarResponse3020", $VarResponse3020)</from>
+        <to variable="outputVariable" part="CardCrFinancingInqRs"/>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="CardCrFinancingInq_DirectB" portType="ns1:CardCrFinancingInqSvcPort" operation="CardCrFinancingInq" variable="outputVariable"
+           bpelx:headerVariable="varOutputHeaderTech"/>
+  </sequence>
+</process>

@@ -1,0 +1,545 @@
+<?xml version="1.0" encoding="windows-1252" ?>
+<!DOCTYPE ViewObject SYSTEM "jbo_03_01.dtd">
+<!---->
+<ViewObject
+  xmlns="http://xmlns.oracle.com/bc4j"
+  Name="TccElementosOperVO"
+  Version="12.1.3.10.8"
+  InheritPersonalization="merge"
+  BindingStyle="OracleName"
+  CustomQuery="true"
+  RowClass="org.bcie.fenix.common.model.vo.TccElementosOperVORowImpl"
+  ComponentClass="org.bcie.fenix.common.model.vo.TccElementosOperVOImpl"
+  PageIterMode="Full"
+  ComponentInterface="org.bcie.fenix.common.model.vo.common.TccElementosOperVO"
+  ClientProxyName="org.bcie.fenix.common.model.vo.client.TccElementosOperVOClient">
+  <DesignTime>
+    <Attr Name="_codeGenFlag2" Value="Access|Coll|VarAccess"/>
+    <Attr Name="_isExpertMode" Value="true"/>
+    <Attr Name="_isCodegen" Value="true"/>
+  </DesignTime>
+  <Variable
+    Name="pIdOperacion"
+    Kind="where"
+    Type="oracle.jbo.domain.Number"/>
+  <Variable
+    Name="pIdEnmienda"
+    Kind="where"
+    Type="oracle.jbo.domain.Number"/>
+  <SQLQuery><![CDATA[SELECT 1 ID_LINK,                     
+       TT.ID ID_TIPO_TCC,                     
+       TT.DESCRIPCION DESC_TIPO_TCC,                     
+       TER.ID ID_TCC,                     
+       TER.NOMBRE DESCRIPCION_TCC,                     
+       TER.ID_TCA_ESTADO_TCC ID_ESTADO_TCC,                     
+       TER.ID_TCA_SUB_ESTADO_TCC ID_SUB_ESTADO_TCC,                  
+       TER.ID_OPERACION ID_OPERACION,                     
+       TET.DESCRIPCION DESC_ESTADO_TCC,                 
+       ETC1.ID ENMIENDA_ID,                 
+       ETC1.INSTANCIA_PROCESO ENMIENDA_INSTANCIA_PROCESO,                 
+       ETC1.REQUIERE_ASJUR ENMIENDA_REQUIERE_ASJUR,                 
+       ETC1.REQUIERE_OGC ENMIENDA_REQUIERE_OGC,                 
+       DET1.ACCION DETALLE_ENMIENDA_ACCION,               
+       (SELECT TETCC.DESCRIPCION               
+        FROM TCA_ESTADO_TCC TETCC               
+        WHERE TETCC.ID = TER.ID_TCA_SUB_ESTADO_TCC) DESC_SUBESTADO_TCC,               
+       TT.REQUIERE_VALIDAR_COFI,            
+       TT.REQUIERE_OCG REQUIERE_OGC_ENMIENDA, 
+       TT.REQUIERE_OT REQUIERE_OT_ENMIENDA, 
+       TT.REQUIERE_ASJUR REQUIERE_ASJUR_ENMIENDA 
+FROM TCA_TERMINO TT,                     
+     TERMINO TER,                     
+     TCA_ESTADO_TCC TET,                 
+     ENMIENDA_TCC ETC1,                 
+     DETALLE_ENMIENDA_TCC DET1                 
+WHERE 1 = 1                  
+                 
+  --ENMIENDA_TCC VS DETALLE_ENMIENDA_TCC                 
+  AND ETC1.ID = DET1.ID_ENMIENDA_TCC                 
+                   
+  --ENMIENDA_TCC VS TERMINO                 
+  AND TER.ID_OPERACION = ETC1.ID_OPERACION                 
+                   
+  --DETALLE_ENMIENDA VS TERMINO                 
+  AND TER.ID = DET1.ID_TCC                 
+  AND UPPER(DET1.TIPO_TCC) = 'TERMINO'                 
+                   
+  --TERMINO VS TCA_TERMINO                     
+  AND TER.ID_TCA_TERMINO = TT.ID                     
+                       
+  --TERMINO VS TCA_ESTADO_TCC                     
+  AND TER.ID_TCA_ESTADO_TCC = TET.ID                     
+                       
+  --Terminos no eliminados                     
+  AND TER.ID_TCA_ESTADO_TCC <> 10                     
+  AND TER.ID_TCA_ESTADO_TCC <> 22                
+                   
+  -- Exclusion de terminos sin nombre  
+  AND TER.NOMBRE IS NOT NULL   
+                    
+  --Enmiendas activas                 
+  AND ETC1.BAN_ESTATUS = 1                 
+                   
+  --Detalle enmiendas activos                 
+  AND DET1.BAN_ESTATUS = 1                 
+                       
+  AND TER.ID_OPERACION = :pIdOperacion                     
+  AND (   
+       ETC1.ID = :pIdEnmienda    
+       OR    
+       :pIdEnmienda IS NULL   
+      )   
+                       
+UNION                     
+SELECT 2 ID_LINK,                     
+       TC.ID ID_TIPO_TCC,                     
+       TC.DESCRIPCION DESC_TIPO_TCC,                     
+       CON.ID ID_TCC,                     
+       CON.NOMBRE DESCRIPCION_TCC,                     
+       CON.ID_TCA_ESTADO_TCC ID_ESTADO_TCC,                     
+       CON.ID_TCA_SUB_ESTADO_TCC ID_SUB_ESTADO_TCC,                  
+       CON.ID_OPERACION ID_OPERACION,                     
+       TET.DESCRIPCION DESC_ESTADO_TCC,                 
+       ETC2.ID ENMIENDA_ID,                 
+       ETC2.INSTANCIA_PROCESO ENMIENDA_INSTANCIA_PROCESO,                 
+       ETC2.REQUIERE_ASJUR ENMIENDA_REQUIERE_ASJUR,                 
+       ETC2.REQUIERE_OGC ENMIENDA_REQUIERE_OGC,                 
+       DET2.ACCION DETALLE_ENMIENDA_ACCION,               
+       (SELECT TETCC.DESCRIPCION               
+        FROM TCA_ESTADO_TCC TETCC               
+        WHERE TETCC.ID = CON.ID_TCA_SUB_ESTADO_TCC) DESC_SUBESTADO_TCC,              
+       TC.REQUIERE_VALIDAR_COFI,          
+       0 as REQUIERE_OGC_ENMIENDA, 
+       0 as REQUIERE_OT_ENMIENDA, 
+       0 as REQUIERE_ASJUR_ENMIENDA          
+FROM TCA_CONDICION TC,                     
+     CONDICION CON,                     
+     TCA_ESTADO_TCC TET,                 
+     ENMIENDA_TCC ETC2,                 
+     DETALLE_ENMIENDA_TCC DET2                 
+WHERE 1 = 1                     
+                 
+  --ENMIENDA_TCC VS DETALLE_ENMIENDA_TCC                 
+  AND ETC2.ID = DET2.ID_ENMIENDA_TCC                 
+                   
+  --ENMIENDA_TCC VS TERMINO                 
+  AND CON.ID_OPERACION = ETC2.ID_OPERACION                 
+                   
+  --DETALLE_ENMIENDA VS TERMINO                 
+  AND CON.ID = DET2.ID_TCC                 
+  AND UPPER(DET2.TIPO_TCC) = 'CONDICION'                 
+                   
+  --CONDICION VS TCA_TIPO_CONDICION                     
+  AND CON.ID_TCA_CONDICION = TC.ID                     
+                       
+  --CONDICION VS TCA_ESTADO_TCC                     
+  AND CON.ID_TCA_ESTADO_TCC = TET.ID                     
+                  
+  --Condiciones no eliminadas                     
+  AND CON.ID_TCA_ESTADO_TCC <> 10                     
+  AND CON.ID_TCA_ESTADO_TCC <> 22                
+                   
+  -- Exclusion de condiciones sin nombre  
+  AND CON.NOMBRE IS NOT NULL   
+                    
+  --Enmiendas activas                 
+  AND ETC2.BAN_ESTATUS = 1                 
+                   
+  --Detalle enmiendas activos                 
+  AND DET2.BAN_ESTATUS = 1                 
+                       
+  AND CON.ID_OPERACION = :pIdOperacion   
+  AND (   
+       ETC2.ID = :pIdEnmienda    
+       OR    
+       :pIdEnmienda IS NULL   
+      )   
+                       
+UNION                     
+SELECT 3 ID_LINK,                     
+       TCO.ID ID_TIPO_TCC,                     
+       TCO.DESCRIPCION DESC_TIPO_TCC,                     
+       COM.ID ID_TCC,                     
+       COM.NOMBRE DESCRIPCION_TCC,                     
+       COM.ID_TCA_ESTADO_TCC ID_ESTADO_TCC,                  
+       COM.ID_TCA_SUB_ESTADO_TCC ID_SUB_ESTADO_TCC,                  
+       COM.ID_OPERACION ID_OPERACION,                     
+       TET.DESCRIPCION DESC_ESTADO_TCC,                 
+       ETC3.ID ENMIENDA_ID,                 
+       ETC3.INSTANCIA_PROCESO ENMIENDA_INSTANCIA_PROCESO,                 
+       ETC3.REQUIERE_ASJUR ENMIENDA_REQUIERE_ASJUR,                 
+       ETC3.REQUIERE_OGC ENMIENDA_REQUIERE_OGC,                 
+       DET3.ACCION DETALLE_ENMIENDA_ACCION,               
+       (SELECT TETCC.DESCRIPCION               
+        FROM TCA_ESTADO_TCC TETCC               
+        WHERE TETCC.ID = COM.ID_TCA_SUB_ESTADO_TCC) DESC_SUBESTADO_TCC,              
+       TCO.REQUIERE_VALIDAR_COFI,          
+       0 as REQUIERE_OGC_ENMIENDA, 
+       0 as REQUIERE_OT_ENMIENDA, 
+       0 as REQUIERE_ASJUR_ENMIENDA 
+FROM TCA_COMISION TCO,                     
+     COMISION COM,                     
+     TCA_ESTADO_TCC TET,                 
+     ENMIENDA_TCC ETC3,                 
+     DETALLE_ENMIENDA_TCC DET3                 
+WHERE 1 = 1                    
+                 
+  --ENMIENDA_TCC VS DETALLE_ENMIENDA_TCC                 
+  AND ETC3.ID = DET3.ID_ENMIENDA_TCC                 
+                   
+  --ENMIENDA_TCC VS TERMINO                 
+  AND COM.ID_OPERACION = ETC3.ID_OPERACION                 
+                   
+  --DETALLE_ENMIENDA VS TERMINO                 
+  AND COM.ID = DET3.ID_TCC                 
+  AND UPPER(DET3.TIPO_TCC) = 'COMISION'                 
+                   
+  --COMISION VS TCA_TIPO_CONDICION                     
+  AND COM.ID_TCA_COMISION = TCO.ID                     
+                       
+  --COMISION VS TCA_ESTADO_TCC                     
+  AND COM.ID_TCA_ESTADO_TCC = TET.ID                     
+                       
+  --Comisiones no eliminadas                  
+  AND COM.ID_TCA_ESTADO_TCC <> 10                     
+  AND COM.ID_TCA_ESTADO_TCC <> 22                
+                   
+  -- Exclusion de comisiones sin nombre  
+  AND COM.NOMBRE IS NOT NULL   
+                    
+    --Enmiendas activas                 
+  AND ETC3.BAN_ESTATUS = 1                 
+                   
+  --Detalle enmiendas activos                 
+  AND DET3.BAN_ESTATUS = 1                 
+                       
+  AND COM.ID_OPERACION = :pIdOperacion     
+  AND (   
+       ETC3.ID = :pIdEnmienda  
+       OR    
+       :pIdEnmienda IS NULL   
+      )]]></SQLQuery>
+  <ViewAttribute
+    Name="IdLink"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Type="oracle.jbo.domain.Number"
+    ColumnType="NUMBER"
+    AliasName="ID_LINK"
+    Expression="ID_LINK"
+    SQLType="NUMERIC"/>
+  <ViewAttribute
+    Name="IdTipoTcc"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="5"
+    Scale="0"
+    Type="oracle.jbo.domain.Number"
+    ColumnType="NUMBER"
+    AliasName="ID_TIPO_TCC"
+    Expression="ID_TIPO_TCC"
+    SQLType="NUMERIC"/>
+  <ViewAttribute
+    Name="DescTipoTcc"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="256"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="DESC_TIPO_TCC"
+    Expression="DESC_TIPO_TCC"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="256"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="IdTcc"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="12"
+    Scale="0"
+    Type="oracle.jbo.domain.Number"
+    ColumnType="NUMBER"
+    AliasName="ID_TCC"
+    Expression="ID_TCC"
+    SQLType="NUMERIC"/>
+  <ViewAttribute
+    Name="DescripcionTcc"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="1024"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="DESCRIPCION_TCC"
+    Expression="DESCRIPCION_TCC"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="1024"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="IdEstadoTcc"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="5"
+    Scale="0"
+    Type="oracle.jbo.domain.Number"
+    ColumnType="NUMBER"
+    AliasName="ID_ESTADO_TCC"
+    Expression="ID_ESTADO_TCC"
+    SQLType="NUMERIC"/>
+  <ViewAttribute
+    Name="IdSubEstadoTcc"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="5"
+    Scale="0"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="ID_SUB_ESTADO_TCC"
+    Expression="ID_SUB_ESTADO_TCC"
+    SQLType="INTEGER"/>
+  <ViewAttribute
+    Name="IdOperacion"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="12"
+    Scale="0"
+    Type="oracle.jbo.domain.Number"
+    ColumnType="NUMBER"
+    AliasName="ID_OPERACION"
+    Expression="ID_OPERACION"
+    SQLType="NUMERIC"/>
+  <ViewAttribute
+    Name="DescEstadoTcc"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="256"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="DESC_ESTADO_TCC"
+    Expression="DESC_ESTADO_TCC"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="256"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="EnmiendaId"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="12"
+    Scale="0"
+    Type="java.lang.Long"
+    ColumnType="NUMBER"
+    AliasName="ENMIENDA_ID"
+    Expression="ENMIENDA_ID"
+    SQLType="NUMERIC"/>
+  <ViewAttribute
+    Name="EnmiendaInstanciaProceso"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="255"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="ENMIENDA_INSTANCIA_PROCESO"
+    Expression="ENMIENDA_INSTANCIA_PROCESO"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="255"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="EnmiendaRequiereAsjur"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="1"
+    Scale="0"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="ENMIENDA_REQUIERE_ASJUR"
+    Expression="ENMIENDA_REQUIERE_ASJUR"
+    SQLType="INTEGER"/>
+  <ViewAttribute
+    Name="EnmiendaRequiereOgc"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="1"
+    Scale="0"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="ENMIENDA_REQUIERE_OGC"
+    Expression="ENMIENDA_REQUIERE_OGC"
+    SQLType="INTEGER"/>
+  <ViewAttribute
+    Name="DetalleEnmiendaAccion"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="16"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="DETALLE_ENMIENDA_ACCION"
+    Expression="DETALLE_ENMIENDA_ACCION"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="16"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="DescSubestadoTcc"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="256"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="DESC_SUBESTADO_TCC"
+    Expression="DESC_SUBESTADO_TCC"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="256"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="RequiereValidarCofi"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="1"
+    Scale="0"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="REQUIERE_VALIDAR_COFI"
+    Expression="REQUIERE_VALIDAR_COFI"
+    SQLType="INTEGER"/>
+  <ViewAttribute
+    Name="RequiereOgcEnmienda"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Type="java.lang.Integer"
+    ColumnType="TYPE"
+    AliasName="REQUIERE_OGC_ENMIENDA"
+    Expression="REQUIERE_OGC_ENMIENDA"
+    SQLType="INTEGER"/>
+  <ViewAttribute
+    Name="RequiereOtEnmienda"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="REQUIERE_OT_ENMIENDA"
+    Expression="REQUIERE_OT_ENMIENDA"
+    SQLType="NUMERIC"/>
+  <ViewAttribute
+    Name="RequiereAsjurEnmienda"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="REQUIERE_ASJUR_ENMIENDA"
+    Expression="REQUIERE_ASJUR_ENMIENDA"
+    SQLType="NUMERIC"/>
+  <ViewAttribute
+    Name="iconPath"
+    IsSelected="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="255"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="VIEW_ATTR"
+    SQLType="VARCHAR"/>
+  <ViewAttribute
+    Name="iconPathSubEstado"
+    IsSelected="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="255"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="VIEW_ATTR"
+    SQLType="VARCHAR"/>
+  <AttrArray Name="KeyAttributes">
+    <Item Value="IdLink"/>
+    <Item Value="IdTipoTcc"/>
+    <Item Value="IdTcc"/>
+    <Item Value="EnmiendaId"/>
+  </AttrArray>
+  <ViewLinkAccessor
+    Name="TccTipoPorOperVO"
+    ViewLink="org.bcie.fenix.common.model.vo.link.TccTipoPorOperVOAndTccElementosOperVO"
+    Type="oracle.jbo.Row"
+    Reversed="true"
+    IsUpdateable="false"/>
+  <ClientInterface
+    Name="__clientInterface">
+    <Method
+      Name="setpIdOperacion"
+      MethodName="setpIdOperacion">
+      <Return
+        Name="_return_type_"
+        Type="void"/>
+      <Parameter
+        Name="value"
+        Type="oracle.jbo.domain.Number"/>
+    </Method>
+    <Method
+      Name="setpIdOperacion"
+      MethodName="setpIdOperacion">
+      <Return
+        Name="_return_type_"
+        Type="void"/>
+      <Parameter
+        Name="value"
+        Type="oracle.jbo.domain.Number"/>
+    </Method>
+    <Method
+      Name="obtenerIconoPathPorEstadoTcc"
+      MethodName="obtenerIconoPathPorEstadoTcc">
+      <Return
+        Name="_return_type_"
+        Type="java.lang.String"/>
+      <Parameter
+        Name="estadoTcc"
+        Type="java.lang.Integer"/>
+    </Method>
+    <Method
+      Name="borrarElementoTCCGrid"
+      MethodName="borrarElementoTCCGrid">
+      <Return
+        Name="_return_type_"
+        Type="void"/>
+      <Parameter
+        Name="tipoTcc"
+        Type="oracle.jbo.domain.Number"/>
+      <Parameter
+        Name="idTcc"
+        Type="oracle.jbo.domain.Number"/>
+    </Method>
+    <Method
+      Name="eliminarTccAlCancelarEnmiendas"
+      MethodName="eliminarTccAlCancelarEnmiendas">
+      <Return
+        Name="_return_type_"
+        Type="java.lang.Boolean"/>
+    </Method>
+  </ClientInterface>
+</ViewObject>

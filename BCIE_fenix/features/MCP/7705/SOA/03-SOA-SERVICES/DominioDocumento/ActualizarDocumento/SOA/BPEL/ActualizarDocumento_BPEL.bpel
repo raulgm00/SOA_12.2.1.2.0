@@ -1,0 +1,494 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Dec 07 16:06:37 CST 2015
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ActualizarDocumento_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioDocumento/ActualizarDocumento/ActualizarDocumento_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioDocumento/ActualizarDocumento/ActualizarDocumento_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/DocumentoService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns3="http://www.bcie.org/DocumentoBO"
+         xmlns:ns2="http://www.bcie.org/DocumentoMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns7="http://www.bcie.org/ProductoBO"
+         xmlns:ns8="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns6="http://www.bcie.org/OperacionBO"
+         xmlns:ns9="http://www.bcie.org/ResultBO" xmlns:ns5="http://www.bcie.org/CatalogoBO"
+         xmlns:ns4="http://www.bcie.org/ClienteBO" xmlns:ns10="http://www.bcie.org/ErrorBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/DocumentoService" location="../WSDLs/ActualizarDocumentoSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="actualizardocumento_bpel_client" partnerLinkType="ns1:ActualizarDocumento_BPEL" myRole="AEDocumentoPT"/>
+    <partnerLink name="ConsultarAdjuntoDBService" partnerLinkType="ns1:ConsultarAdjuntoDBService"
+                 partnerRole="ConsultarAdjuntoPT"/>
+    <partnerLink name="EliminarDocumentoOnBaseService" partnerLinkType="ns1:EliminarDocumentoOnBaseService"
+                 partnerRole="EliminarDocumentoPT"/>
+    <partnerLink name="ActualizarDocumentoDBService" partnerLinkType="ns1:ActualizarDocumentoDBService"
+                 partnerRole="ActualizarDocumentoPT"/>
+    <partnerLink name="ModificarDocumentoOnBaseService" partnerLinkType="ns1:ModificarDocumentoOnBaseService"
+                 partnerRole="ModificarDocumentoPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestCargarDocumentoMessage"/>
+  <variable name="faultVar" messageType="bpelx:RuntimeFaultMessage"/>
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseCargarDocumentoMessage"/>
+    <variable name="consultarAdjuntoByIdAdjunto_OutputVariable"
+              messageType="ns1:responseConsultarAdjuntoByIdAdjuntoMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="actualizarDocumento_InputVariable" messageType="ns1:requestActualizarDocumentoMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence20">
+        <assign name="Assign_ErrorAOutput">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns9:result</to>
+          </copy>
+          <copy>
+            <from>$faultVar.code</from>
+            <to>$outputVariable.response/ns2:Resultado/ns9:error/ns10:errorCode</to>
+          </copy>
+          <copy>
+            <from>$faultVar.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns9:message</to>
+          </copy>
+          <copy>
+            <from>$faultVar.detail</from>
+            <to>$outputVariable.response/ns2:Resultado/ns9:error/ns10:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="actualizardocumento_bpel_client"
+               portType="ns1:AEDocumentoPT" operation="actualizarDocumento"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ActualizarDocumento_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="actualizardocumento_bpel_client" portType="ns1:AEDocumentoPT"
+             operation="actualizarDocumento" variable="inputVariable" createInstance="yes"/>
+             <assign name="AssignFlowName">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idAdjunto= ",string($inputVariable.request/ns2:Documentos/ns3:Documento[1]/ns3:idAdjunto)))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarAdjunto">
+      <variables>
+        <variable name="consultarAdjuntoByIdAdjunto_InputVariable"
+                  messageType="ns1:requestConsultarAdjuntoByIdAdjuntoMessage"/>
+      </variables>
+      <faultHandlers>
+        <catchAll>
+          <sequence name="Sequence25">
+            <assign name="Assign_ErrorConsulta">
+                <copy>
+                  <from>'-1'</from>
+                  <to>$faultVar.code</to>
+                </copy>
+                <copy>
+                  <from>'Error en Consulta Adjunto'</from>
+                  <to>$faultVar.summary</to>
+                </copy>
+              </assign>
+              <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence1">
+        <assign name="Assign_ConsultarAdjuntoInput">
+          <copy>
+            <from>$inputVariable.request/ns2:Documentos/ns3:Documento/ns3:idAdjunto</from>
+            <to>$consultarAdjuntoByIdAdjunto_InputVariable.request/ns2:idAdjunto</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarAdjunto" bpelx:invokeAsDetail="no" partnerLink="ConsultarAdjuntoDBService"
+                portType="ns1:ConsultarAdjuntoPT" operation="consultarAdjuntoByIdAdjunto"
+                inputVariable="consultarAdjuntoByIdAdjunto_InputVariable"
+                outputVariable="consultarAdjuntoByIdAdjunto_OutputVariable"/>
+        <if name="IfConsultaExitosa">
+          <documentation>
+            <![CDATA[ConsultaOK]]>
+          </documentation>
+          <condition>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Resultado/ns9:result = 'OK'</condition>
+           <scope name="ScopeTipoArchivo">
+                    <sequence name="Sequence16">
+                      <assign name="Assign_TipoArchivo">
+                        <copy>
+                          <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioDocumento/Documento/V1/DVM/TipoArchivo.dvm","tipoArchivo",$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento/ns3:mime_type,"tipoOnBase","???")</from>
+                          <to>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento/ns3:mime_type</to>
+                        </copy>
+                      </assign>
+              <if name="IfNoOnBase">
+                <documentation>
+                  <![CDATA[IdOnBaseVacio]]>
+                </documentation>
+                <condition>string-length(data($consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento/ns3:idExterno)) &lt; 1</condition>
+                <sequence name="Sequence36">
+                  <assign name="Assign_DetailFault">
+                    <copy>
+                      <from>'Adjunto no cuenta con id OnBase'</from>
+                      <to>$faultVar.detail</to>
+                    </copy>
+                  </assign>
+                  <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+                </sequence>
+              </if>
+            </sequence>
+                  </scope>
+          <else>
+            <documentation>
+              <![CDATA[ConsultaError]]>
+            </documentation>
+            <sequence name="Sequence18">
+              <assign name="Assign_ErrorConsulta">
+                <copy>
+                  <from>ora:getFaultAsString()</from>
+                  <to>$faultVar.detail</to>
+                </copy>
+              </assign>
+              <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <if name="IfAccion">
+      <documentation>
+        <![CDATA[Actualizar]]>
+      </documentation>
+      <condition>$inputVariable.request/ns2:Documentos/ns3:Documento/ns3:accionARealizar='2'</condition>
+      <scope name="ScopeModificarDocumentoOnBase">
+        <variables>
+          <variable name="modificarDocumentoOnBase_InputVariable"
+                    messageType="ns1:requestModificarDocumentoOnBaseMessage"/>
+          <variable name="modificarDocumentoOnBase_OutputVariable"
+                    messageType="ns1:responseModificarDocumentoOnBaseMessage"/>
+        </variables>
+        <faultHandlers>
+          <catchAll>  <sequence name="Sequence33">
+                  <assign name="Assign_ErrorModificarDocumento">
+                <copy>
+                  <from>'-3'</from>
+                  <to>$faultVar.code</to>
+                </copy>
+                <copy>
+                  <from>'Error al Modificar Documento en OnBase'</from>
+                  <to>$faultVar.summary</to>
+                </copy>
+               
+              </assign>
+              <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+                </sequence></catchAll>
+        </faultHandlers>
+        <sequence name="Sequence24">
+          <assign name="Assign_ModificarDocumentoOnBaseInput">
+            <copy>
+              <from>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento</from>
+              <to>$modificarDocumentoOnBase_InputVariable.request/ns2:Documentos/ns3:Documento</to>
+            </copy>
+            <copy>
+              <from>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Cliente</from>
+              <to>$modificarDocumentoOnBase_InputVariable.request/ns2:Cliente</to>
+            </copy>
+            <copy>
+              <from>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Operacion</from>
+              <to>$modificarDocumentoOnBase_InputVariable.request/ns2:Operacion</to>
+            </copy>
+          </assign>
+          <invoke name="Invoke_ModificarDocumentoOnBase" bpelx:invokeAsDetail="no"
+                  partnerLink="ModificarDocumentoOnBaseService" portType="ns1:ModificarDocumentoPT"
+                  operation="modificarDocumentoOnBase" inputVariable="modificarDocumentoOnBase_InputVariable"
+                  outputVariable="modificarDocumentoOnBase_OutputVariable"/>
+          <if name="IfModificacionOk">
+            <documentation>
+              <![CDATA[ModificacionRealizada]]>
+            </documentation>
+            <condition>$modificarDocumentoOnBase_OutputVariable.response/ns2:Resultado/ns9:result='OK'</condition>
+            <sequence name="Sequence35">
+              <assign name="Assign_ActualizarDocumentoInput">
+                <copy>
+                  <from>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento/ns3:idDocumento</from>
+                  <to>$actualizarDocumento_InputVariable.request/ns2:Documento/ns3:idDocumento</to>
+                </copy>
+                <copy>
+                  <from>'4'</from>
+                  <to>$actualizarDocumento_InputVariable.request/ns2:Documento/ns3:accionARealizar</to>
+                </copy>
+              </assign>
+              <!--scope name="ScopeActualizarAdjunto">
+              <variables>
+                <variable name="actualizarAdjunto_InputVariable" messageType="ns1:requestActualizarAdjuntoMessage"/>
+                <variable name="actualizarAdjunto_OutputVariable" messageType="ns1:responseActualizarAdjuntoMessage"/>
+              </variables>
+                <sequence name="Sequence5">
+                  <assign name="AssignActualizarAdjuntoInputVariable">
+                    <copy>
+                      <from>$inputVariable.request/ns2:Documentos/ns3:Documento[1]/ns3:idAdjunto</from>
+                      <to>$actualizarAdjunto_InputVariable.request/ns2:Documento/ns3:idAdjunto</to>
+                    </copy>
+                    <copy>
+                      <from>$modificarDocumentoOnBase_OutputVariable.response/ns2:Documentos/ns3:Documento[1]/ns3:idExterno</from>
+                      <to>$actualizarAdjunto_InputVariable.request/ns2:Documento/ns3:idExterno</to>
+                    </copy>
+                  </assign>
+                  <invoke name="Invoke_ActualizarAdjunto" partnerLink="ActualizarAdjuntoDBService"
+                          portType="ns1:ActualizarAdjuntoPT" operation="actualizarAdjunto"
+                          inputVariable="actualizarAdjunto_InputVariable"
+                          outputVariable="actualizarAdjunto_OutputVariable" bpelx:invokeAsDetail="no"/>
+                  <if name="IfActualizarAdjunto">
+                    <documentation>
+                      <![CDATA[Actualizacion Exitosa]]>
+                    </documentation>
+                    <condition>$actualizarAdjunto_OutputVariable.response/ns2:Resultado/ns9:result = 'OK'</condition>
+                    <empty name="ActualizacionExitosa"/>
+                    <else>
+                      <documentation>
+                        <![CDATA[Actualizacion Fallida]]>
+                      </documentation>
+                      <sequence name="Sequence12">
+                        <assign name="Assign_DetallefalloAdjunto">
+                          <copy>
+                            <from>$actualizarAdjunto_OutputVariable.response/ns2:Resultado/ns9:message</from>
+                            <to>$faultVar.detail</to>
+                          </copy>
+                        </assign>
+                        <throw name="ThrowActualizarAdjunto" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+                      </sequence>
+                    </else>
+                  </if>
+                </sequence>
+              </scope-->
+
+            </sequence>
+            <else>
+              <documentation>
+                <![CDATA[ModificacionError]]>
+              </documentation>
+              <sequence name="Sequence33">
+                <assign name="Assign_Detallefallo"> <copy>
+                  <from>$modificarDocumentoOnBase_OutputVariable.response/ns2:Resultado/ns9:message</from>
+                  <to>$faultVar.detail</to>
+                </copy></assign>
+                <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+                </sequence>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+      <elseif>
+        <documentation>
+          <![CDATA[Eliminar]]>
+        </documentation>
+        <condition>$inputVariable.request/ns2:Documentos/ns3:Documento/ns3:accionARealizar='3'</condition>
+        <scope name="ScopeEliminarDocumentoOnBase">
+          <variables>
+            <variable name="eliminarDocumentoOnBase_InputVariable"
+                      messageType="ns1:requestEliminarDocumentoOnBaseMessage"/>
+            <variable name="eliminarDocumentoOnBase_OutputVariable"
+                      messageType="ns1:responseEliminarDocumentoOnBaseMessage"/>
+          </variables>
+          <faultHandlers>
+            <catchAll> <sequence name="Sequence32">
+                  <assign name="Assign_ErrorEliminarDocumento">
+                  <copy>
+                    <from>'-3'</from>
+                    <to>$faultVar.code</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>$eliminarDocumentoOnBase_OutputVariable.response/ns2:Resultado/ns9:message</from>
+                    <to>$faultVar.detail</to>
+                  </copy>
+                  <copy>
+                    <from>'Error al Eliminar Documento en OnBase'</from>
+                    <to>$faultVar.summary</to>
+                  </copy>
+                </assign>
+                  <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+                </sequence></catchAll>
+          </faultHandlers>
+          <sequence name="Sequence21">
+            <assign name="Assign_EliminarDocumentoInput">
+              <copy>
+                <from>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento/ns3:idExterno</from>
+                <to>$eliminarDocumentoOnBase_InputVariable.request/ns2:idDocumento</to>
+              </copy>
+            </assign>
+            <invoke name="Invoke_EliminarDocumentoOnBase"
+                    partnerLink="EliminarDocumentoOnBaseService" portType="ns1:EliminarDocumentoPT"
+                    operation="eliminarDocumentoOnBase" inputVariable="eliminarDocumentoOnBase_InputVariable"
+                    bpelx:invokeAsDetail="no" outputVariable="eliminarDocumentoOnBase_OutputVariable"/>
+            <if name="IfEliminarDocumentoOnBase">
+              <condition>$eliminarDocumentoOnBase_OutputVariable.response/ns2:Resultado/ns9:result='OK'</condition>
+              <assign name="Assign_ActualizarDocumentoInput">
+                <copy>
+                  <from>$consultarAdjuntoByIdAdjunto_OutputVariable.response/ns2:Documento/ns3:idDocumento</from>
+                  <to>$actualizarDocumento_InputVariable.request/ns2:Documento/ns3:idDocumento</to>
+                </copy>
+                <copy>
+                  <from>'4'</from>
+                  <to>$actualizarDocumento_InputVariable.request/ns2:Documento/ns3:accionARealizar</to>
+                </copy>
+                <copy>
+                  <from>0</from>
+                  <to>$actualizarDocumento_InputVariable.request/ns2:Documento/ns3:estatusTipoDoc</to>
+                </copy>
+              </assign>
+              <else>
+                <sequence name="Sequence22">
+                  <assign name="Assign_ErrorEliminarDocumento">
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>$eliminarDocumentoOnBase_OutputVariable.response/ns2:Resultado/ns9:message</from>
+                      <to>$faultVar.detail</to>
+                    </copy>
+                  </assign>
+                  <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+                </sequence>
+              </else>
+            </if>
+          </sequence>
+        </scope>
+      </elseif>
+      <else>
+        <documentation>
+          <![CDATA[OperacionDesconocida]]>
+        </documentation>
+        <sequence name="Sequence19">
+          <assign name="Assign_ErrorOperacion">
+            <copy>
+              <from>'-2'</from>
+              <to>$faultVar.code</to>
+            </copy>
+            <copy>
+              <from>'Operación a Realizar Desconocida'</from>
+              <to>$faultVar.summary</to>
+            </copy>
+          </assign>
+          <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </sequence>
+      </else>
+    </if>
+    <scope name="ScopeActualizarDocumento">
+      <variables>
+        <variable name="actualizarDocumento_OutputVariable" messageType="ns1:responseActualizarDocumentoMessage"/>
+      </variables>
+      <faultHandlers>
+        <catchAll> <sequence name="Sequence34">
+              <assign name="Assign_ErrorEliminarDocumento">
+                <copy>
+                  <from>'-3'</from>
+                  <to>$faultVar.code</to>
+                </copy>
+                <copy>
+                  <from>'Error al Eliminar Documento en OnBase'</from>
+                  <to>$faultVar.summary</to>
+                </copy>
+              </assign>
+              <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+            </sequence></catchAll>
+      </faultHandlers>
+      <sequence name="Sequence23">
+        <invoke name="Invoke_ActualizarDocumento" partnerLink="ActualizarDocumentoDBService"
+                portType="ns1:ActualizarDocumentoPT" operation="actualizarDocumento"
+                inputVariable="actualizarDocumento_InputVariable" outputVariable="actualizarDocumento_OutputVariable"
+                bpelx:invokeAsDetail="no"/>
+        <if name="IfActualizarDocumento">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$actualizarDocumento_OutputVariable.response/ns2:Resultado/ns9:result='OK'</condition>
+          <empty name="ActualizacionOK"/>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="Sequence23">
+              <assign name="Assign_ErrorEliminarDocumento">
+                <copy>
+                  <from>'-3'</from>
+                  <to>$faultVar.code</to>
+                </copy>
+                <copy>
+                  <from>$actualizarDocumento_OutputVariable.response/ns2:Resultado/ns9:message</from>
+                  <to>$faultVar.detail</to>
+                </copy>
+                <copy>
+                  <from>'Error al Eliminar Documento en OnBase'</from>
+                  <to>$faultVar.summary</to>
+                </copy>
+              </assign>
+              <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeRespuesta">
+      <assign name="Assign_OutputVariable">
+        <extensionAssignOperation>
+          <bpelx:remove>
+            <bpelx:target>$outputVariable.response/ns2:Documentos</bpelx:target>
+          </bpelx:remove>
+        </extensionAssignOperation>
+        <copy bpelx:insertMissingToData="yes">
+          <from>'OK'</from>
+          <to>$outputVariable.response/ns2:Resultado/ns9:result</to>
+        </copy>
+        <copy bpelx:insertMissingToData="yes">
+          <from>'Operación Realizada Exitosamente'</from>
+          <to>$outputVariable.response/ns2:Resultado/ns9:message</to>
+        </copy>
+      </assign>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="actualizardocumento_bpel_client" portType="ns1:AEDocumentoPT" operation="actualizarDocumento" variable="outputVariable"/>
+  </sequence>
+</process>

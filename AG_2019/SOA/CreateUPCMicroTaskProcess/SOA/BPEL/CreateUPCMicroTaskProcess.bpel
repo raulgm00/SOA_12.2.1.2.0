@@ -1,0 +1,523 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Jun 25 17:51:10 CDT 2019
+  Author:  joseb
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CreateUPCMicroTaskProcess"
+               targetNamespace="http://xmlns.oracle.com/CreateStyleMicroTaskProcess/CreateUPCMicroTaskProcess/CreateUPCMicroTaskProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/CreateStyleMicroTaskProcess/CreateUPCMicroTaskProcess/CreateUPCMicroTaskProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/Items/CreateUPCMicroTaskProcessSvc/v1.0"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns3="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Items/CreateItemEntity"
+         xmlns:ns4="http://mx.agarcia.ea/Capabilities/Core/Items/JDACreateItemProcessSvc/v1.0"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns6="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns7="http://mx.agarcia.ea/Applications/JDA/Items/QueryItem/v1.0"
+         xmlns:ns8="http://mx.agarcia.ea/Applications/JDA/Items/QueryItem"
+         xmlns:ns9="http://mx.agarcia.ea/Applications/JDA/Items/CreateItem/v1.0"
+         xmlns:ns10="http://mx.agarcia.ea/Applications/Governance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns11="http://mx.agarcia.ea/Commons/Schemas/AGStandardHeader"
+         xmlns:ns12="http://mx.agarcia.ea/Applications/JDA/Items/CreateItem">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://mx.agarcia.ea/Applications/Governance"
+          location="http://172.16.19.26:7004/Applications/Governance/PS/GovernanceAPIPXY/v1.0?WSDL"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateUPCMicroTaskProcessSvc/v1.0"
+          location="../WSDLs/CreateUPCMicroTaskProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateUPCMicroTaskProcessSvc/v1.0"
+          location="../WSDLs/CreateUPCMicroTaskProcessWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="createupcmicrotaskprocess_client" partnerLinkType="ns1:CreateUPCMicroTaskProcess" myRole="createItemPType"/>
+    <partnerLink name="JDACreateItemProcessPXY" partnerLinkType="ns4:JDACreateItemProcessPXY"
+                 partnerRole="CreateItemJDAPTye"/>
+    <partnerLink name="JDAFindSKUByIdPXY" partnerLinkType="ns7:JDAFindSKUByIdPXY" partnerRole="queryItemPort"/>
+    <partnerLink name="JDACreateUPCPXY" partnerLinkType="ns9:JDACreateUPCPXY" partnerRole="createItemPType"/>
+    <partnerLink name="GovernanceAPIPXY" partnerLinkType="ns10:GovernanceAPIPXY" partnerRole="GovernancePort"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:createItemRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:createItemResponseMessage"/>
+    <variable name="InvokeJDACreateItem_InputVariable" messageType="ns4:createItemJDARequestMessage"/>
+    <variable name="InvokeJDACreateItem_OutputVariable" messageType="ns4:createItemJDARequestMessage"/>
+    <variable name="messageError" messageType="ns1:standardMessageFault"/>
+    <variable name="InvokeJDAFindSKU_InputVariable" messageType="ns7:findItemByIdRequestMessage"/>
+    <variable name="InvokeJDAFindSKU_OutputVariable" messageType="ns7:filterItemResponseMessage"/>
+    <variable name="InvokeJDACreateUPC_InputVariable" messageType="ns9:createItemRequestMessage"/>
+    <variable name="InvokeJDACreateUPC_OutputVariable" messageType="ns9:createItemResponseMessage"/>
+    <variable name="header" messageType="ns1:standardMessageHeader"/>
+    <variable name="InvokeGovernanceAPI_InputVariable" messageType="ns10:audit"/>
+    <variable name="InvokeGovernanceAPI_OutputVariable" messageType="ns10:auditResponse"/>
+    <variable name="InvokeGovernanceAPIUPC_InputVariable" messageType="ns10:audit"/>
+    <variable name="InvokeGovernanceAPIUPC_OutputVariable" messageType="ns10:auditResponse"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CreateUPCMicroTaskProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="createupcmicrotaskprocess_client" portType="ns1:createItemPType" operation="create" variable="inputVariable" createInstance="yes"
+             bpelx:headerVariable="header"/>
+    <scope name="ScopeFindSKU">
+      <variables>
+        <variable name="startDateFindSKU" type="xsd:dateTime"/>
+      </variables>
+      <faultHandlers>
+        <catch bpelx:name="timeout" faultName="bpelx:timeout" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage"><assign name="AssignError"
+                                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$Fault.detail</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorDescription</to>
+      </copy>
+      <copy>
+         <from>'CRUPC-002'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorCode</to>
+      </copy>
+   </assign></catch>
+        <catch bpelx:name="remoteFault" faultName="bpelx:remoteFault" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage"><assign name="AssignError"
+                                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$Fault.detail</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorDescription</to>
+      </copy>
+      <copy>
+         <from>'CRUPC-002'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorCode</to>
+      </copy>
+   </assign></catch>
+        <catch bpelx:name="bindingFault" faultName="bpelx:bindingFault" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <assign name="AssignError">
+            <copy>
+              <from>$Fault.detail</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorDescription</to>
+            </copy>
+            <copy>
+              <from>'CRUPC-002'</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns3:errorCode</to>
+            </copy>
+          </assign>
+        </catch>
+      </faultHandlers><sequence name="Sequence4"><assign name="startDateFind">
+          <copy>
+            <from>xp20:current-dateTime()</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$startDateFindSKU</to>
+          </copy>
+        </assign>
+        <sequence name="Sequence2"><assign name="TransformReqFindSKU"><bpelx:annotation><bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern></bpelx:annotation><copy><from>ora:doXSLTransformForDoc("../Transformations/TransformFindSKUReq.xsl", $inputVariable.createItemRequestMessage)</from><to variable="InvokeJDAFindSKU_InputVariable"
+                                                                                                                                                                                                                                                                                                                      part="payload"/></copy></assign><invoke name="InvokeJDAFindSKU"
+                                                                                                                                                                                                                                                                                                                                                              partnerLink="JDAFindSKUByIdPXY"
+                                                                                                                                                                                                                                                                                                                                                              portType="ns7:queryItemPort"
+                                                                                                                                                                                                                                                                                                                                                              operation="findById"
+                                                                                                                                                                                                                                                                                                                                                              inputVariable="InvokeJDAFindSKU_InputVariable"
+                                                                                                                                                                                                                                                                                                                                                              outputVariable="InvokeJDAFindSKU_OutputVariable"
+                                                                                                                                                                                                                                                                                                                                                              bpelx:invokeAsDetail="no"
+                                                                                                                                                                                                                                                                                                                                                              bpelx:inputHeaderVariable="header"/></sequence>
+        <scope name="ScopeGovernance" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <variables>
+         <variable name="Entry_1" messageType="ns10:audit"/>
+         <variable name="Entry_2" messageType="ns10:audit"/>
+         <variable name="Entry_3" messageType="ns10:audit"/>
+         <variable name="Entry_4" messageType="ns10:audit"/>
+         <variable name="Entry_5" messageType="ns10:audit"/>
+         <variable name="Entry_6" messageType="ns10:audit"/>
+         <variable name="Entry_7" messageType="ns10:audit"/>
+         <variable name="Entry_8" messageType="ns10:audit"/>
+      </variables>
+      <faultHandlers>
+         <catchAll>
+            <empty name="Empty1"/>
+         </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence38">
+         <assign name="Assign1">
+            <copy>
+               <from>'TraceActivity'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:operation</to>
+            </copy>
+            <copy>
+               <from>'Creacion de UPC en JDA'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:data</to>
+            </copy>
+            <copy>
+               <from>$header.header/ns11:parameters/ns11:parameter[@Key='gov.interface.id']</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:interfaceId</to>
+            </copy>
+            <copy>
+               <from>$header.header/ns11:parameters/ns11:parameter[@Key='gov.activity.id']</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:activityId</to>
+            </copy>
+            <copy>
+               <from>'id'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+            </copy>
+            <copy>
+               <from>$InvokeJDAFindSKU_InputVariable.payload/ns8:itemFilter/ns5:id</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+            </copy>
+            <copy>
+               <from>'RMS'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:source</to>
+            </copy>
+            <copy>
+               <from>'registrationDate'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+            </copy>
+            <copy>
+               <from>$startDateFindSKU</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+            </copy>
+            <copy>
+               <from>'finishDate'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+            </copy>
+            <copy>
+               <from>xp20:current-dateTime()</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+            </copy>
+            <copy>
+               <from>'component'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+            </copy>
+            <copy>
+               <from>'CreateUPCMicroTaskProcess'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+            </copy>
+            <copy>
+               <from>'destinyComponent'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+            </copy>
+            <copy>
+               <from>'JDAFindSKU'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+            </copy>
+            <copy>
+               <from>'message'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+            </copy>
+            <copy>
+               <from>concat('Buscar SKU con id: ',$InvokeJDAFindSKU_InputVariable.payload/ns8:itemFilter/ns5:id)</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+            </copy>
+            <copy>
+               <from>'level'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+            </copy>
+            <copy>
+               <from>'1'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+            </copy>
+            <copy>
+               <from>'status'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+            </copy>
+            <copy>
+               <from>'finalizado'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+            </copy>
+            <copy>
+               <from>'class'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+            </copy>
+            <copy>
+               <from>'expert'</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+            </copy>
+         </assign>
+         <assign name="Assign2">
+            <extensionAssignOperation>
+               <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+               </bpelx:append>
+            </extensionAssignOperation>
+            <extensionAssignOperation>
+               <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+               </bpelx:append>
+            </extensionAssignOperation>
+            <extensionAssignOperation>
+               <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+               </bpelx:append>
+            </extensionAssignOperation>
+            <extensionAssignOperation>
+               <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+               </bpelx:append>
+            </extensionAssignOperation>
+            <extensionAssignOperation>
+               <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+               </bpelx:append>
+            </extensionAssignOperation>
+            <extensionAssignOperation>
+               <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+               </bpelx:append>
+            </extensionAssignOperation>
+            <extensionAssignOperation>
+               <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+               </bpelx:append>
+            </extensionAssignOperation>
+            <extensionAssignOperation>
+               <bpelx:append xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPI_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+               </bpelx:append>
+            </extensionAssignOperation>
+         </assign>
+         <invoke name="InvokeGovernanceAPI" partnerLink="GovernanceAPIPXY" portType="ns10:GovernancePort"
+                 operation="audit" inputVariable="InvokeGovernanceAPI_InputVariable"
+                 outputVariable="InvokeGovernanceAPI_OutputVariable" bpelx:invokeAsDetail="no"
+                 bpelx:inputHeaderVariable="header" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/>
+      </sequence>
+   </scope>
+      </sequence></scope>
+    <scope name="ScopeCreateUPC">
+      <variables>
+        <variable name="startDateUPC" type="xsd:dateTime"/>
+      </variables>
+      <sequence name="Sequence37">
+        <assign name="startDateUPC">
+          <copy>
+            <from>xp20:current-dateTime()</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$startDateUPC</to>
+          </copy>
+        </assign>
+        <sequence name="Sequence3"><assign name="TransformCreateUPCReq"><bpelx:annotation><bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern></bpelx:annotation><copy><from>ora:doXSLTransformForDoc("../Transformations/TransformJDAUPCReq.xsl", $inputVariable.createItemRequestMessage, "InvokeJDAFindSKU_OutputVariable.payload", $InvokeJDAFindSKU_OutputVariable.payload)</from><to variable="InvokeJDACreateUPC_InputVariable"
+                                                                                                                                                                                                                                                                                                                                                                                                            part="createItemRequestMessage"/></copy></assign><invoke name="InvokeJDACreateUPC"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                     partnerLink="JDACreateUPCPXY"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                     portType="ns9:createItemPType"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                     operation="create"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                     inputVariable="InvokeJDACreateUPC_InputVariable"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                     outputVariable="InvokeJDACreateUPC_OutputVariable"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                     bpelx:invokeAsDetail="no"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                     bpelx:inputHeaderVariable="header"/></sequence>
+        <scope name="ScopeGovernanceUPC">
+          <variables>
+            <variable name="Entry_1_upc" messageType="ns10:audit"/>
+            <variable name="Entry_2_upc" messageType="ns10:audit"/>
+            <variable name="Entry_3_upc" messageType="ns10:audit"/>
+            <variable name="Entry_4_upc" messageType="ns10:audit"/>
+            <variable name="Entry_5_upc" messageType="ns10:audit"/>
+            <variable name="Entry_6_upc" messageType="ns10:audit"/>
+            <variable name="Entry_7_upc" messageType="ns10:audit"/>
+            <variable name="Entry_8_upc" messageType="ns10:audit"/>
+          </variables>
+          <faultHandlers>
+            <catchAll>
+              <empty name="Empty1"/>
+            </catchAll>
+          </faultHandlers>
+          <sequence name="Sequence39">
+            <assign name="Assign3">
+              <copy>
+                <from>'TraceActivity'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:operation</to>
+              </copy>
+              <copy>
+                <from>$header.header/ns11:parameters/ns11:parameter[@Key='gov.interface.id']</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:interfaceId</to>
+              </copy>
+              <copy>
+                <from>$header.header/ns11:parameters/ns11:parameter[@Key='gov.activity.id']</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:activityId</to>
+              </copy>
+              <copy>
+                <from>'id UPC'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+              </copy>
+              <copy>
+                <from>$InvokeJDACreateUPC_InputVariable.createItemRequestMessage/ns12:item/ns5:id</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+              </copy>
+              <copy>
+                <from>'Creacion de UPC en JDA'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:data</to>
+              </copy>
+              <copy>
+                <from>'registrationDate'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+              </copy>
+              <copy>
+                <from>$startDateUPC</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+              </copy>
+              <copy>
+                <from>'finishDate'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+              </copy>
+              <copy>
+                <from>xp20:current-dateTime()</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+              </copy>
+              <copy>
+                <from>'component'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+              </copy>
+              <copy>
+                <from>'CreateUPCMicroTaskProcess'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+              </copy>
+              <copy>
+                <from>'destinyComponent'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+              </copy>
+              <copy>
+                <from>'JDACreateUPC'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+              </copy>
+              <copy>
+                <from>'message'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+              </copy>
+              <copy>
+                <from>concat('Creacion de UPC con id: ',$InvokeJDACreateUPC_InputVariable.createItemRequestMessage/ns12:item/ns5:id)</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+              </copy>
+              <copy>
+                <from>'level'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+              </copy>
+              <copy>
+                <from>'1'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+              </copy>
+              <copy>
+                <from>'status'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+              </copy>
+              <copy>
+                <from>'class'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:key</to>
+              </copy>
+              <copy>
+                <from>'expert'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+              </copy>
+              <copy>
+                <from>'finalizado'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry/ns10:value</to>
+              </copy>
+            </assign>
+            <assign name="Assign4">
+              <extensionAssignOperation>
+                <bpelx:append>
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_1_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+                </bpelx:append>
+              </extensionAssignOperation>
+              <extensionAssignOperation>
+                <bpelx:append>
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_2_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+                </bpelx:append>
+              </extensionAssignOperation>
+              <extensionAssignOperation>
+                <bpelx:append>
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_3_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+                </bpelx:append>
+              </extensionAssignOperation>
+              <extensionAssignOperation>
+                <bpelx:append>
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_4_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+                </bpelx:append>
+              </extensionAssignOperation>
+              <extensionAssignOperation>
+                <bpelx:append>
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_5_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+                </bpelx:append>
+              </extensionAssignOperation>
+              <extensionAssignOperation>
+                <bpelx:append>
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_6_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+                </bpelx:append>
+              </extensionAssignOperation>
+              <extensionAssignOperation>
+                <bpelx:append>
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_7_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+                </bpelx:append>
+              </extensionAssignOperation>
+              <extensionAssignOperation>
+                <bpelx:append>
+                  <bpelx:from expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Entry_8_upc.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:from>
+                  <bpelx:to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeGovernanceAPIUPC_InputVariable.request/ns10:request/ns10:header/ns10:parameters/ns10:entry</bpelx:to>
+                </bpelx:append>
+              </extensionAssignOperation>
+            </assign>
+            <invoke name="InvokeGovernanceAPIUPC" bpelx:invokeAsDetail="no" partnerLink="GovernanceAPIPXY"
+                    portType="ns10:GovernancePort" operation="audit"
+                    inputVariable="InvokeGovernanceAPIUPC_InputVariable"
+                    outputVariable="InvokeGovernanceAPIUPC_OutputVariable"/>
+          </sequence>
+        </scope>
+      </sequence></scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="createupcmicrotaskprocess_client" portType="ns1:createItemPType" operation="create" variable="outputVariable"/>
+  </sequence>
+</process>

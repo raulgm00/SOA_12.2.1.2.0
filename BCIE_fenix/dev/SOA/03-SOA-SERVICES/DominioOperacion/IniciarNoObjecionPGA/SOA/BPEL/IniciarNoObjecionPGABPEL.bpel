@@ -1,0 +1,318 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Oct 19 12:10:44 CST 2021
+  Author:  FOX
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="IniciarNoObjecionPGABPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/IniciarNoObjecionPGA/IniciarNoObjecionPGABPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/IniciarNoObjecionPGA/IniciarNoObjecionPGABPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/AdquisicionService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/OperacionService"
+         xmlns:ns3="http://www.bcie.org/OperacionMO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns4="http://www.bcie.org/AdquisicionMO"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ns17="http://www.bcie.org/TerminoBO" xmlns:ns5="http://www.bcie.org/OperacionBO"
+         xmlns:ns20="http://www.bcie.org/ResultBO" xmlns:ns13="http://www.bcie.org/CommonBO"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ns12="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns14="http://www.bcie.org/CondicionBO" xmlns:ns8="http://www.bcie.org/ProductoBO"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:ns9="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns16="http://www.bcie.org/DocumentoBO" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ns19="http://www.bcie.org/HerramientaCEBO" xmlns:ns18="http://www.bcie.org/ComisionBO"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns7="http://www.bcie.org/CatalogoBO" xmlns:ns10="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns11="http://www.bcie.org/ContratoBO" xmlns:ns6="http://www.bcie.org/ClienteBO"
+         xmlns:ns15="http://www.bcie.org/AtributoBO" xmlns:ns21="http://www.bcie.org/ErrorBO"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns22="http://www.bcie.org/CrearActualizarNoObjecionSAD"
+         xmlns:ns23="http://xmlns.oracle.com/bpmn/bpmnProcess/AdquisicionProcess"
+         xmlns:ns29="http://xmlns.bcie.org/ObjetoProceso/Comun/Parameter/V1"
+         xmlns:ns25="http://xmlns.bcie.org/ObjetoProceso/Comun/Operacion/V1"
+         xmlns:ns28="http://xmlns.bcie.org/ObjetoProceso/Comun/Proceso/V1"
+         xmlns:ns24="http://xmlns.bcie.org/ObjetoProceso/Comun/Header/V1"
+         xmlns:ns27="http://xmlns.bcie.org/ObjetoProceso/Comun/Tarea/V1"
+         xmlns:ns26="http://xmlns.bcie.org/ObjetoProceso/Comun/Cliente/V1" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns30="http://xmlns.oracle.com/bpmn/bpmnProcess/ProcesosAlternos">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/AdquisicionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Adquisicion/V1/Wsdl/BPEL/IniciarNoObjecionPGASOR.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/CrearActualizarNoObjecionSAD"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Adquisicion/V1/Wsdl/ADAPTER/CrearNoObjecionPGASAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/OperacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Operacion/V1/Wsdl/ADAPTER/ConsultarOperacionByIdSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/AdquisicionService" location="../WSDLs/IniciarNoObjecionPGASORWrapper1.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="IniciarNoObjecionPGADirect" partnerLinkType="ns1:IniciarNoObjecionPGADirect"
+                 myRole="IniciarNoObjecionPGAPT"/>
+    <partnerLink name="ConsultarOperacionById" partnerLinkType="ns2:ConsultarOperacionById"
+                 partnerRole="ConsultarOperacionById12Port"/>
+    <partnerLink name="CrearNoObjecionPGA" partnerLinkType="ns22:CrearNoObjecionPGA"
+                 partnerRole="CrearNoObjecionPGAPT"/>
+    <partnerLink name="ProcesosAlternos" partnerLinkType="ns30:InicioAdquisicion"
+                 partnerRole="ProcesosAlternosPortType"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:IniciarNoObjecionPGARequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:IniciarNoObjecionPGAResponseMessage"/>
+    <variable name="ConsultarOperacionById_InputVariable" messageType="ns2:requestConsultarOperacionMessage"/>
+    <variable name="ConsultarOperacionById_OutputVariable" messageType="ns2:responseConsultarOperacionMessage"/>
+    <variable name="CrearNoObjecionPGA_InputVariable" messageType="ns22:requestCrearNoObjecionPGAMessage"/>
+    <variable name="CrearNoObjecionPGA_OutputVariable" messageType="ns22:responseCrearNoObjecionPGAMessage"/>
+    <variable name="InicioAdquisicion_InputVariable" messageType="ns30:InicioAdquisicion"/>
+    <variable name="InicioAdquisicion_OutputVariable" messageType="ns30:InicioProcesoResponse"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in IniciarNoObjecionPGABPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="IniciarNoObjecionPGADirect" portType="ns1:IniciarNoObjecionPGAPT" operation="IniciarNoObjecionPGA" variable="inputVariable" createInstance="yes"/>
+    <scope name="Scope2">
+      <sequence name="SequenceCrearObjecionPGA">
+        <assign name="AssignCrearNoObjecionPGA_InputVariable">
+          <copy>
+            <from>$inputVariable.IniciarNoObjecionPGARequest/ns4:IdOperacion</from>
+            <to>$CrearNoObjecionPGA_InputVariable.request/ns4:PNID_OPERACION</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.IniciarNoObjecionPGARequest/ns4:NumeroCorrespondencia</from>
+            <to>$CrearNoObjecionPGA_InputVariable.request/ns4:PVNUMERO_CORRESPONDENCIA</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.IniciarNoObjecionPGARequest/ns4:Documentos/ns4:documento[1]</from>
+            <to>$CrearNoObjecionPGA_InputVariable.request/ns4:P_DOCUMENTOS/ns4:P_DOCUMENTOS_ITEM[1]</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeCrearObjecionPGA" bpelx:invokeAsDetail="no" partnerLink="CrearNoObjecionPGA"
+                portType="ns22:CrearNoObjecionPGAPT" operation="CrearNoObjecionPGA"
+                inputVariable="CrearNoObjecionPGA_InputVariable" outputVariable="CrearNoObjecionPGA_OutputVariable"/>
+        <if name="IfError">
+          <documentation>
+            <![CDATA[errorCreacion]]>
+          </documentation>
+          <condition>$CrearNoObjecionPGA_OutputVariable.response/ns4:resultado/ns20:result = 'ERROR'</condition>
+          <sequence name="SequenceErrorCrearNoObjecionPGA">
+            <assign name="AssignError">
+              <copy>
+                <from>$CrearNoObjecionPGA_OutputVariable.response/ns4:resultado/ns20:result</from>
+                <to>$outputVariable.IniciarNoObjecionPGAResponse/ns4:Resultado/ns20:result</to>
+              </copy>
+              <copy>
+                <from>$CrearNoObjecionPGA_OutputVariable.response/ns4:resultado/ns20:message</from>
+                <to>$outputVariable.IniciarNoObjecionPGAResponse/ns4:Resultado/ns20:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="IniciarNoObjecionPGADirect"
+                   portType="ns1:IniciarNoObjecionPGAPT" operation="IniciarNoObjecionPGA"/>
+            <exit name="Exit2"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[CreacionCorrecta]]>
+            </documentation>
+            <sequence name="SequenceCrearNoObjecionPGACorrecta">
+              <empty name="Empty4"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="Scope1">
+      <sequence name="SequenceConsultarOperacion">
+        <assign name="AssignConsultarOperacionById_InputVariable">
+          <copy>
+            <from>$inputVariable.IniciarNoObjecionPGARequest/ns4:IdOperacion</from>
+            <to>$ConsultarOperacionById_InputVariable.request/ns3:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarOperacion" partnerLink="ConsultarOperacionById"
+                portType="ns2:ConsultarOperacionById12Port" operation="ConsultarOperacionById" inputVariable="ConsultarOperacionById_InputVariable"
+                bpelx:invokeAsDetail="no" outputVariable="ConsultarOperacionById_OutputVariable"/>
+        <if name="IfError">
+          <documentation>
+            <![CDATA[errorConsulta]]>
+          </documentation>
+          <condition>$ConsultarOperacionById_OutputVariable.response/ns3:Resultado/ns20:result  = 'ERROR'</condition>
+          <sequence name="SequenceErrorConsultaOperacion">
+            <assign name="AssignError">
+              <copy>
+                <from>$ConsultarOperacionById_OutputVariable.response/ns3:Resultado/ns20:result</from>
+                <to>$outputVariable.IniciarNoObjecionPGAResponse/ns4:Resultado/ns20:result</to>
+              </copy>
+              <copy>
+                <from>$ConsultarOperacionById_OutputVariable.response/ns3:Resultado/ns20:message</from>
+                <to>$outputVariable.IniciarNoObjecionPGAResponse/ns4:Resultado/ns20:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="IniciarNoObjecionPGADirect"
+                   portType="ns1:IniciarNoObjecionPGAPT" operation="IniciarNoObjecionPGA"/>
+            <exit name="Exit1"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[consultaCorrecta]]>
+            </documentation>
+            <sequence name="Sequence3">
+              <sequence name="SequenceConsultaOperacionCorrecta">
+                <empty name="Empty1"/>
+              </sequence>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="Scope3">
+      <sequence name="Sequence4">
+        <assign name="AssignInicioAdquisicion_InputVariable">
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>'ID_NO_OBJECION'</from>
+            <to>$InicioAdquisicion_InputVariable.parameters/ns23:Header/ns29:ParameterType[1]/ns29:parameterName</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$CrearNoObjecionPGA_OutputVariable.response/ns4:PNID_NOOBJECION</from>
+            <to>$InicioAdquisicion_InputVariable.parameters/ns23:Header/ns29:ParameterType[1]/ns29:parameterValue</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>'ID_ADQUISICION'</from>
+            <to>$InicioAdquisicion_InputVariable.parameters/ns23:Header/ns29:ParameterType[2]/ns29:parameterName</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$CrearNoObjecionPGA_OutputVariable.response/ns4:PNID_ADQUISICION</from>
+            <to>$InicioAdquisicion_InputVariable.parameters/ns23:Header/ns29:ParameterType[2]/ns29:parameterValue</to>
+          </copy>
+          <copy>
+            <from>$ConsultarOperacionById_OutputVariable.response/ns3:Operacion/ns5:idOperacion</from>
+            <to>$InicioAdquisicion_InputVariable.parameters/ns23:Header/ns24:Operacion/ns25:CodigoOperacion</to>
+          </copy>
+          <copy>
+            <from>$ConsultarOperacionById_OutputVariable.response/ns3:Operacion/ns5:responsable</from>
+            <to>$InicioAdquisicion_InputVariable.parameters/ns23:Header/ns24:Operacion/ns25:ResponsableOperacion</to>
+          </copy>
+          <copy>
+            <from>$ConsultarOperacionById_OutputVariable.response/ns3:Operacion/ns5:nombre</from>
+            <to>$InicioAdquisicion_InputVariable.parameters/ns23:Header/ns24:Operacion/ns25:NombreOperacion</to>
+          </copy>
+          <copy>
+            <from>$ConsultarOperacionById_OutputVariable.response/ns3:Operacion/ns5:cliente/ns6:idCliente</from>
+            <to>$InicioAdquisicion_InputVariable.parameters/ns23:Header/ns24:Operacion/ns25:CodigoCliente</to>
+          </copy>
+          <copy>
+            <from>$ConsultarOperacionById_OutputVariable.response/ns3:Operacion/ns5:cliente/ns6:razonSocial</from>
+            <to>$InicioAdquisicion_InputVariable.parameters/ns23:Header/ns24:Operacion/ns25:NombreCliente</to>
+          </copy>
+          <copy>
+            <from>$ConsultarOperacionById_OutputVariable.response/ns3:Operacion/ns5:producto/ns8:idProducto</from>
+            <to>$InicioAdquisicion_InputVariable.parameters/ns23:Header/ns24:Operacion/ns25:CodigoProducto</to>
+          </copy>
+          <copy>
+            <from>$ConsultarOperacionById_OutputVariable.response/ns3:Operacion/ns5:producto/ns8:descripcion</from>
+            <to>$InicioAdquisicion_InputVariable.parameters/ns23:Header/ns24:Operacion/ns25:NombreProducto</to>
+          </copy>
+          <copy>
+            <from>$ConsultarOperacionById_OutputVariable.response/ns3:Operacion/ns5:Pais/ns7:Descripcion</from>
+            <to>$InicioAdquisicion_InputVariable.parameters/ns23:Header/ns24:Operacion/ns25:Pais</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeInicioAdquisicion"
+                inputVariable="InicioAdquisicion_InputVariable"
+                partnerLink="ProcesosAlternos" portType="ns30:ProcesosAlternosPortType"
+                operation="InicioAdquisicion"
+                outputVariable="InicioAdquisicion_OutputVariable" bpelx:invokeAsDetail="no"/>
+        <if name="IfError">
+          <documentation>
+            <![CDATA[ErrorInicioAdquisicion]]>
+          </documentation>
+          <condition>$InicioAdquisicion_OutputVariable.resultado/ns30:resultado/ns20:result = 'ERROR'</condition>
+          <sequence name="SequenceErrorInicioAdquisicion">
+            <assign name="AssignError">
+              <copy>
+                <from>$InicioAdquisicion_OutputVariable.resultado/ns30:resultado/ns20:result</from>
+                <to>$outputVariable.IniciarNoObjecionPGAResponse/ns4:Resultado/ns20:result</to>
+              </copy>
+              <copy>
+                <from>$InicioAdquisicion_OutputVariable.resultado/ns30:resultado/ns20:message</from>
+                <to>$outputVariable.IniciarNoObjecionPGAResponse/ns4:Resultado/ns20:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="IniciarNoObjecionPGADirect"
+                   portType="ns1:IniciarNoObjecionPGAPT" operation="IniciarNoObjecionPGA"/>
+            <exit name="Exit3"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[InicioAdquisicionCorrecto]]>
+            </documentation>
+            <sequence name="SequenceInicioAdquisicionCorrecto">
+              <empty name="Empty3"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <assign name="outputVariable">
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$CrearNoObjecionPGA_OutputVariable.response/ns4:PNID_NOOBJECION</from>
+        <to>$outputVariable.IniciarNoObjecionPGAResponse/ns4:IdNoObjecion</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$CrearNoObjecionPGA_OutputVariable.response/ns4:PNID_ADQUISICION</from>
+        <to>$outputVariable.IniciarNoObjecionPGAResponse/ns4:IdAdquisicion</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$CrearNoObjecionPGA_OutputVariable.response/ns4:resultado/ns20:result</from>
+        <to>$outputVariable.IniciarNoObjecionPGAResponse/ns4:Resultado/ns20:result</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$CrearNoObjecionPGA_OutputVariable.response/ns4:resultado/ns20:message</from>
+        <to>$outputVariable.IniciarNoObjecionPGAResponse/ns4:Resultado/ns20:message</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="IniciarNoObjecionPGADirect" portType="ns1:IniciarNoObjecionPGAPT" operation="IniciarNoObjecionPGA" variable="outputVariable"/>
+  </sequence>
+</process>

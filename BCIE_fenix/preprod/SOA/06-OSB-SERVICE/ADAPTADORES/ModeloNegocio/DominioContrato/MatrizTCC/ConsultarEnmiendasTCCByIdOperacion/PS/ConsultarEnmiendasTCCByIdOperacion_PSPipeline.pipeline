@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/Wsdl/ADAPTER/ConsultarEnmiendasTCCByIdOperacionSAD"/>
+            <con:binding>
+                <con:name>ConsultarEnmiendasTCCByIdOperacionPT12Bnd</con:name>
+                <con:namespace>urn:ConsultarEnmiendasTCCByIdOperacionSAD</con:namespace>
+            </con:binding>
+        </con:binding>
+        <oper:operations xmlns:oper="http://xmlns.oracle.com/servicebus/pipeline/operations">
+            <oper:tracingEnabled>true</oper:tracingEnabled>
+            <oper:monitoring enabled="true" level="service" aggregationInterval="10"/>
+        </oper:operations>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-a050aee.7617b54f.0.1538191af20.N7fc6">
+        <con:pipeline type="error" name="error-a050aee.7617b54f.0.1538191af20.N7fc6">
+            <con:stage id="_StageId-a050aee.7617b54f.0.1538191af20.N7f4c" name="StageError" xmlns:con4="http://www.bea.com/wli/sb/typesystem/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                <con:context/>
+                <con:actions>
+                    <con3:ifThenElse xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aee.7617b54f.0.1538191af20.N7f4b</con6:id>
+                        <con3:case id="_BranchId-a050aee.7617b54f.0.1538191af20.N7f4a">
+                            <con3:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError) = 0</con2:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:assign varName="codigoError">
+                                    <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aee.7617b54f.0.1538191af20.N7f49</con6:id>
+                                    <con3:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con3:expr>
+                                </con3:assign>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default/>
+                    </con3:ifThenElse>
+                    <con3:assign varName="inMapError" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aee.7617b54f.0.1538191af20.N7f48</con6:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(data($codigoError))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aee.7617b54f.0.1538191af20.N7f47</con6:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aee.7617b54f.0.1538191af20.N7f46</con6:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con6:xqueryTransform xmlns:con6="http://www.bea.com/wli/sb/stages/config">
+                                <con6:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ConsultarEnmiendasTCCByIdOperacion/XQUERY/Error_ConsultarEnmiendasTCCByIdOperacion_Response"/>
+                                <con6:param name="message">
+                                    <con6:path>xs:string(fn:data($fault/ctx:reason))</con6:path>
+                                </con6:param>
+                                <con6:param name="responseMapeoErrorMessage">
+                                    <con6:path>$outMapeoError</con6:path>
+                                </con6:param>
+                            </con6:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-a050aee.7617b54f.0.1538191af20.N7f45</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteNode1">
+                <con:context>
+                    <con1:userNsDecl prefix="mat" namespace="http://www.bcie.org/MatrizTCCMO"/>
+                </con:context>
+                <con:actions>
+                    <con2:route>
+                        <con1:id>_ActionId-a050aee.7617b54f.0.1538191af20.N7ffd</con1:id>
+                        <con2:service ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ConsultarEnmiendasTCCByIdOperacion/BS/ConsultarEnmiendasTCCByIdOperacion_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:operation>ConsultarEnmiendasTCCByIdOperacionSelect</con2:operation>
+                        <con2:outboundTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a050aee.7617b54f.0.1538191af20.N7ffa</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ConsultarEnmiendasTCCByIdOperacion/XQUERY/ConsultarEnmiendasTCCByIdOperacion_PS_TO_ConsultarEnmiendasTCCByIdOperacion_BS_Request"/>
+                                        <con1:param name="ConsultarEnmiendasTCCByIdOperacionRequest">
+                                            <con1:path>$body/mat:ConsultarEnmiendasTCCByIdOperacionRequest</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con2:outboundTransform>
+                        <con2:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a050aee.7617b54f.0.1538191af20.N7ff7</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ConsultarEnmiendasTCCByIdOperacion/XQUERY/ConsultarEnmiendasTCCByIdOperacion_BS_TO_ConsultarEnmiendasTCCByIdOperacion_PS_Response"/>
+                                        <con1:param name="EnmiendaTccCollection">
+                                            <con1:path>$body/*[1]</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con2:responseTransform>
+                    </con2:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

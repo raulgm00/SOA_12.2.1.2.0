@@ -1,0 +1,792 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.1" xmlns:f="http://java.sun.com/jsf/core" xmlns:af="http://xmlns.oracle.com/adf/faces/rich"
+          xmlns:c="http://java.sun.com/jsp/jstl/core" xmlns:trh="http://myfaces.apache.org/trinidad/html"
+          xmlns:wf="http://xmlns.oracle.com/bpel/workflow/workflow-taglib.tld"
+          xmlns:wlc="http://xmlns.oracle.com/bpel/workflow/worklist">
+    <c:set var="pa12prepagoghtBundle" value="#{adfBundle['pa12prepagoght.PA12PrepagoGHTBundle']}"/>
+    <jsp:directive.page contentType="text/html;charset=UTF-8"/>
+    <f:view>
+        <af:document title="PA12RealizarAjustesSolicitudPrepago.jspx" id="d1">
+            <af:messages id="m1"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:resource type="javascript" source="/jsLibs/taskDetailsWithTemplate.js"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:form id="f1" usesUpload="true">
+                <af:pageTemplate viewId="/templates/bcieTaskTemplate.jspx" id="pageTemplateID">
+                    <af:resource type="javascript" source="/js/utils.js"/>
+                    <f:facet name="action">
+                        <af:toolbar visible="#{actionAvailable.toolbarAvailable}" id="actionTlb">
+                            <af:switcher id="customActionButtons" facetName="#{actionAvailable.isCustomActionButtons}">
+                                <f:facet name="true">
+                                    <af:panelGroupLayout layout="horizontal" id="pgl1">
+                                        <!-- DESTESTIMAR PREPAGO -->
+                                        <af:button text="#{pa12prepagoghtBundle.DESESTIMAR_PREPAGO_OUTCOME}"
+                                                   disabled="#{!bindings.MASINFORMACION.enabled}"
+                                                   action="#{prepagoActionBean.invocarMasInformacion}"
+                                                   id="b1" styleClass="headerLink" immediate="true"
+                                                   rendered="#{pageFlowScope.prepagoBean.requiereMasInfoCOFI}"
+                                                   partialSubmit="false" visible="#{wf:isCustomActionAvailable('MASINFORMACION', 'bindings.customActions')}">
+                                        </af:button>
+                                        <!-- FINALIZAR TAREA -->
+                                        <af:button text="#{pa12prepagoghtBundle.FINALIZAR_TAREA_OUTCOME}"
+                                                   disabled="#{!bindings.FINALIZARTAREA.enabled}"
+                                                   action="#{prepagoActionBean.invocarFinalizarTarea}"
+                                                   id="b3" styleClass="headerLink" immediate="true"
+                                                   partialSubmit="false" visible="#{wf:isCustomActionAvailable('FINALIZARTAREA', 'bindings.customActions')}">
+                                        </af:button>
+                                    </af:panelGroupLayout>
+                                </f:facet>
+                            </af:switcher>
+                            <af:button actionListener="#{invokeActionBean.setOperation}" text="#{resources.CLAIM}"
+                                       id="Claim" action="#{invokeActionBean.invokeOperation}" partialSubmit="false"
+                                       visible="#{actionAvailable.claimAvailable}" styleClass="headerLink"
+                                       rendered="false">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Claim"/>
+                            </af:button>
+                            <af:button id="acknowledge" actionListener="#{invokeActionBean.setOperation}"
+                                       text="#{resources.ACKNOWLEDGE}" action="#{invokeActionBean.invokeOperation}"
+                                       partialSubmit="false" visible="#{actionAvailable.isFyiTask}"
+                                       styleClass="headerLink" rendered="false">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Acknowledge"/>
+                            </af:button>
+                            <af:button id="resume" actionListener="#{invokeActionBean.setOperation}"
+                                       text="#{resources.RESUME}" action="#{invokeActionBean.invokeOperation}"
+                                       partialSubmit="false" visible="#{actionAvailable.resumeAvailable}"
+                                       styleClass="headerLink" rendered="false">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Resume"/>
+                            </af:button>
+                            <af:panelGroupLayout layout="horizontal" id="pgl2" rendered="false">
+                                <af:group rendered="#{!((empty actionAvailable.customActions) and (empty actionAvailable.redirectActions) and (empty actionAvailable.otherActions)) || bindings.update.enabled}"
+                                          id="g4">
+                                    <af:menuBar id="mb1">
+                                        <af:menu id="acts" text="#{resources.TASK_ACTIONS}"
+                                                 visible="#{actionAvailable.actionsAvailable || bindings.update.enabled}">
+                                            <af:group id="g5">
+                                                <af:forEach var="childNode1" items="#{actionAvailable.customActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{childNode1.displayName}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi2">
+                                                        <f:attribute name="ACTION_MENU_ITEM"
+                                                                     value="#{childNode1.action}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g3">
+                                                <af:forEach var="childNode2" items="#{actionAvailable.redirectActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode2]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="true" id="cmi1">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode2}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g1">
+                                                <af:forEach var="childNode3" items="#{actionAvailable.otherActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode3]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi4">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode3}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g2">
+                                                <af:commandMenuItem id="save" textAndAccessKey="#{resources.SAVE}"
+                                                                    actionListener="#{invokeActionBean.setAction}"
+                                                                    action="#{invokeActionBean.action}"
+                                                                    partialSubmit="false"
+                                                                    rendered="#{actionAvailable.updateAvailable}">
+                                                    <f:attribute name="ACTION_MENU_ITEM" value="bindings.update"/>
+                                                </af:commandMenuItem>
+                                            </af:group>
+                                        </af:menu>
+                                    </af:menuBar>
+                                </af:group>
+                            </af:panelGroupLayout>
+                            <af:spacer width="10" id="s3"/>
+                            <af:link shortDesc="#{resources.PREVIOUS_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/nexttraversalarrow_ena.png'  : '/hw_images/previoustraversalarrow_ena.png'}"
+                                     action="fetchPreviousTask"
+                                     visible="#{pageFlowScope.enableNavigationButton != null}" id="l2"/>
+                            <af:spacer width="10" id="s1"/>
+                            <af:link shortDesc="#{resources.NEXT_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/previoustraversalarrow_ena.png' : '/hw_images/nexttraversalarrow_ena.png'}"
+                                     action="fetchNextTask" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l1"/>
+                            <af:spacer width="10" id="s6"/>
+                            <af:link shortDesc="#{resources.SHORT_DESC_CLOSE}" icon="/hw_images/close_ena.png"
+                                     action="closeTaskFlow" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l3"/>
+                            <af:popup id="reassignPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog id="reAsDg" dialogListener="#{invokeActionBean.reassignAction}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           title="#{resources.REASSIGNPAGE}">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="reAsIdB" mode="REASSIGN" showActionButtons="false"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="requestInfoPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.INFOREQUESTEDPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.requestInfoAction}" id="reqIfD">
+                                    <wlc:requestInfoDialog workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                           id="rqIDgC"
+                                                           selectedTaskId="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds[0]}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="routePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.ROUTEPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.routeTaskAction}" id="rteDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="rteIdB" mode="ROUTE"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="decomposePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{pageFlowScope.ADFHumanTaskBean.decomposeDialogTitle}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.decomposeTaskAction}" id="dcmpDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.ADFHumanTaskBean.workflowContext}"
+                                                         id="dcmpIdB" mode="DECOMPOSE"
+                                                         selectedTaskObject="#{pageFlowScope.ADFHumanTaskBean.task}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="popupEnterPasswordDialog" contentDelivery="lazyUncached"
+                                      childCreation="deferred">
+                                <af:dialog title="#{resources.ENTER_PASSWORD}"
+                                           dialogListener="#{invokeActionBean.validatePassword}" type="okCancel"
+                                           modal="true" cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}" closeIconVisible="false"
+                                           id="pwdDlg">
+                                    <af:panelGroupLayout id="pgl9">
+                                        <af:panelFormLayout id="pfl1">
+                                            <af:inputText id="pwdBox" rows="1" columns="50"
+                                                          value="#{invokeActionBean.password}"
+                                                          label="#{resources.PASSWORD}" secret="true" required="true"/>
+                                        </af:panelFormLayout>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="helpPopup" childCreation="deferred">
+                                <af:switcher facetName="#{pageFlowScope.taskDocumentationBean.isTaskDoc}" id="s5">
+                                    <f:facet name="true">
+                                        <af:panelGroupLayout layout="vertical" id="pgl7">
+                                            <af:link text="#{resources.OPEN_IN_WINDOW}"
+                                                     destination="#{pageFlowScope.taskDocumentationBean.docURL}"
+                                                     targetFrame="help" id="help"
+                                                     rendered="#{!empty bindings.activityId.inputValue}"/>
+                                            <af:outputFormatted value="#{pageFlowScope.taskDocumentationBean.taskDoc}"
+                                                                id="of1"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <f:facet name="false">
+                                        <af:outputText value="#{resources.TASK_DOC_NOT_AVAILABLE}" id="ot7"/>
+                                    </f:facet>
+                                </af:switcher>
+                            </af:popup>
+                            <!-- FINALIZAR TAREA -->
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="p1"
+                                      binding="#{prepagoActionBean.popupFinalizarTarea}">
+                                <af:dialog id="d2" type="none">
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl3">
+                                            <af:button text="#{pa12prepagoghtBundle.ACEPTAR_BTN_TXT}" id="b2"
+                                                       action="#{prepagoActionBean.aceptarFinalizarTarea}"
+                                                       actionListener="#{invokeActionBean.setOperation}">
+                                                       <f:attribute name="DC_OPERATION_BINDING" value="bindings.FINALIZARTAREA"/>
+                                                       </af:button>
+                                            <af:button text="#{pa12prepagoghtBundle.CANCELAR_BTN_TXT}" id="b4"
+                                                       action="#{prepagoActionBean.cancelarFinalizarTarea}"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <af:panelGroupLayout id="pgl4" layout="vertical" halign="center">
+                                        <af:outputText value="#{pa12prepagoghtBundle.CONFIRMAR_REALIZAR_AJUSTES_SOLICITUD_MSG}" id="ot1"/>
+                                        <af:region value="#{bindings.MensajesFinalizarTareaBTF.regionModel}" id="r11"/>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <!-- MAS INFORMACION -->
+                            <af:popup childCreation="deferred" autoCancel="disabled" 
+                                      binding="#{prepagoActionBean.popupMasInformacion}" id="p2">
+                                <af:dialog  type="none" id="d3">
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl5">
+                                            <af:button text="#{pa12prepagoghtBundle.ACEPTAR_BTN_TXT}" 
+                                                       action="#{prepagoActionBean.aceptarMasInformacion}"
+                                                       actionListener="#{invokeActionBean.setOperation}" id="b5">
+                                                       <f:attribute name="DC_OPERATION_BINDING" value="bindings.MASINFORMACION"/>
+                                            </af:button>
+                                            <af:button text="#{pa12prepagoghtBundle.CANCELAR_BTN_TXT}" 
+                                                       action="#{prepagoActionBean.cancelarMasInformacion}" id="b6"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <af:panelGroupLayout id="pgl6" layout="vertical" halign="center">
+                                        <af:outputText value="#{pa12prepagoghtBundle.DESESTIMAR_INGRESAR_SOLICITUD_PREPAGO_MSG}"
+                                                       id="ot18"/>
+                                        <af:region value="#{bindings.MensajesMasInformacionBTF.regionModel}" id="r12"/>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                        </af:toolbar>
+                    </f:facet>
+                    <f:facet name="header">
+                        <af:panelGroupLayout id="pglHeader" layout="vertical">
+                            <af:region value="#{bindings.MensajesCintaBTF1.regionModel}" id="r10"/>
+                            <af:region value="#{bindings.encabezadoBTF1.regionModel}" id="r1"/>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:facet name="body">
+                        <af:panelGroupLayout id="pgl10" layout="vertical">
+                            <af:panelAccordion discloseMany="true" id="pa1" discloseNone="true"
+                                               styleClass="secctionAccordion">
+                                <!-- DETALLE OPERACION -->
+                                <!--<af:showDetailItem id="pane1" text="#{pa12prepagoghtBundle.PNL_TXT_DETALLE_DE_LA_OPERACION}" immediate="true"
+                                                   inlineStyle="margin-left: 10px; margin-right: 10px;"
+                                                   disclosureListener="#{pageFlowScope.prepagoBean.panelDetalleOperacionDisclosureListener}">
+                                    <af:region value="#{bindings.detalleOperacionBTF1.regionModel}" id="r2"/>
+                                </af:showDetailItem>-->
+                                  <!--<af:showDetailItem id="paneCA"
+                                               text="#{pa12prepagoghtBundle.LBL_CLASIFICACION_AMBIENTAL}"
+                                               immediate="true">
+                                    <af:region value="#{bindings.editarClasificacionAmbientalBTF1.regionModel}"
+                                               id="r9"/>
+                                </af:showDetailItem>-->
+                                <!-- DOCUMENTOS -->
+                                <af:showDetailItem id="pane2" text="#{pa12prepagoghtBundle.PNL_TXT_DOCUMENTOS}" immediate="true"
+                                                   inlineStyle="margin-left: 10px; margin-right: 10px;"
+                                                   disclosureListener="#{pageFlowScope.prepagoBean.panelDocumentosDisclosureListener}">
+                                    <af:region value="#{bindings.gestorDocumentosBTF1.regionModel}" id="r3"/>
+                                </af:showDetailItem>
+                                <!-- TERMINOS, CONDICIONES Y COMISIONES -->
+                                <!--<af:showDetailItem id="pane3" text="#{pa12prepagoghtBundle.PNL_TXT_TERMINOS_CONDICIONES_Y_COMISIONES}" immediate="true"
+                                                   inlineStyle="margin-left: 10px; margin-right: 10px;"
+                                                   disclosureListener="#{pageFlowScope.prepagoBean.panelMatrizTccDisclosureListener}">
+                                    <af:region value="#{bindings.matriztccBTF1.regionModel}" id="r4"/>
+                                </af:showDetailItem>-->
+                                <!-- DATOS TAREA -->
+                                <af:showDetailItem id="pane4" text="#{pa12prepagoghtBundle.PNL_TXT_DATOS_DE_LA_TAREA}" immediate="true" disclosed="true"
+                                                   inlineStyle="margin-left: 10px; margin-right: 10px;">
+                                     <!-- Mensajes y notificaciones de la tarea, operacion o cliente -->
+                                    <af:region value="#{bindings.clienteEnMoraBTF1.regionModel}" id="r8"/>
+                                    <af:spacer width="10" height="10" id="s4"/>
+                                     <af:outputText value="Inicializar lista de tipos de moneda" id="ot2"
+                                                   visible="false" binding="#{prepagoActionBean.initListaTipoMoneda}"/>
+                                    <af:outputText value="Inicializar lista de dias habiles" id="ot16" visible="false"
+                                                   binding="#{prepagoActionBean.initListaDiasHabiles}"/>
+                                    <!--Formulario de prepago -->
+                                    <af:panelGridLayout id="pgl11" partialTriggers="pgl18 id1">
+                                        <af:gridRow marginTop="5px" height="auto" id="gr1">
+                                            <af:gridCell id="gc6" width="100px" styleClass="FNXDefaultfont">
+                                                <af:outputText value="#{pa12prepagoghtBundle.FECHA_SOLICITUD_LBL}"
+                                                               id="ot33"/>
+                                            </af:gridCell>
+                                            <af:gridCell id="gc8" width="20px">
+                                                <af:spacer width="10" height="10" id="s9"/>
+                                            </af:gridCell>
+                                            <af:gridCell marginStart="5px" width="auto" id="gc1"
+                                                         styleClass="FNXDefaultfont">
+                                                <af:panelGroupLayout id="pgl18" layout="horizontal"
+                                                                     partialTriggers="id1">
+                                                    <af:inputDate value="#{bindings.FechaSolicitud.inputValue}"
+                                                                  columns="#{bindings.FechaSolicitud.hints.displayWidth}"
+                                                                  shortDesc="#{bindings.FechaSolicitud.hints.tooltip}"
+                                                                  id="id1" labelStyle="FNXDefaultfont"
+                                                                  contentStyle="#{pageFlowScope.esLecturaFechaSolicitud?'font-weight:bold;color:Black;':''}"
+                                                                  autoSubmit="false"
+                                                                  binding="#{prepagoActionBean.uiFechaSolicitud}"
+                                                                  clientComponent="true" immediate="true"
+                                                                  maxValue="#{pageFlowScope.prepagoBean.currentDate}"
+                                                                  disabled="#{pageFlowScope.prepagoBean.esBtnCalcularBloqueado}"
+                                                                  readOnly="#{pageFlowScope.esLecturaFechaSolicitud}"
+                                                                  partialTriggers="btnResetBuscar btnBuscar">
+                                                        <af:clientListener type="keyDown" method="enableCalendarOnly"/>
+                                                        <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                    </af:inputDate>
+                                                </af:panelGroupLayout>
+                                            </af:gridCell>
+                                            <af:gridCell id="gc19" width="20px">
+                                                <af:spacer width="10" height="10" id="s16"/>
+                                            </af:gridCell>
+                                            <af:gridCell id="gc9" width="100px" styleClass="FNXDefaultfont">
+                                                <af:outputText value="#{pa12prepagoghtBundle.RESOLUCION_LBL}"
+                                                               id="ot34"/>
+                                            </af:gridCell>
+                                            <af:gridCell id="gc14" width="20px">
+                                                <af:spacer width="10" height="10" id="s140"/>
+                                            </af:gridCell>
+                                            <af:gridCell marginStart="5px" width="auto" marginEnd="5px" id="gc2"
+                                                         styleClass="FNXDefaultfont">
+                                                <af:selectOneChoice value="#{bindings.IdTcaTipoResolucion.inputValue}"
+                                                                    required="#{bindings.IdTcaTipoResolucion.hints.mandatory}"
+                                                                    contentStyle="width: 150px;"
+                                                                    shortDesc="#{bindings.IdTcaTipoResolucion.hints.tooltip}"
+                                                                    id="soc2" autoSubmit="false"
+                                                                    binding="#{prepagoActionBean.tipoResolucionUI}"
+                                                                    disabled="#{pageFlowScope.prepagoBean.esBtnCalcularBloqueado}"
+                                                                    partialTriggers="btnResetBuscar btnBuscar">
+                                                    <f:selectItems value="#{bindings.IdTcaTipoResolucion.items}" id="si2"/>
+                                                    <f:validator binding="#{bindings.IdTcaTipoResolucion.validator}"/>
+                                                </af:selectOneChoice>
+                                            </af:gridCell>
+                                        </af:gridRow>
+                                        <af:gridRow marginTop="5px" height="auto" id="gr2">
+                                            <af:gridCell id="gc10" width="80px" styleClass="FNXDefaultfont">
+                                                <af:outputText value="#{pa12prepagoghtBundle.FECHA_PREPAGO_LBL}"
+                                                               id="ot35"/>
+                                            </af:gridCell>
+                                            <af:gridCell id="gc15" width="20px">
+                                                <af:spacer width="10" height="10" id="s13"/>
+                                            </af:gridCell>
+                                            <af:gridCell marginStart="5px" width="auto" id="gc3"
+                                                         styleClass="FNXDefaultfont">
+                                                <af:inputDate value="#{bindings.FechaPrepago.inputValue}"
+                                                              required="#{bindings.FechaPrepago.hints.mandatory}"
+                                                              columns="#{bindings.FechaPrepago.hints.displayWidth}"
+                                                              shortDesc="#{bindings.FechaPrepago.hints.tooltip}"
+                                                              id="id2" autoSubmit="false"
+                                                              binding="#{prepagoActionBean.uiFechaPrepago}"
+                                                              clientComponent="true"
+                                                              disabledDays="#{pageFlowScope.prepagoBean.disabledDaysValue}"
+                                                              disabled="#{pageFlowScope.prepagoBean.esBtnCalcularBloqueado}"
+                                                              partialTriggers="btnResetBuscar btnBuscar">
+                                                    <af:clientListener type="keyDown" method="enableCalendarOnly"/>
+                                                    <f:validator binding="#{bindings.FechaPrepago.validator}"/>
+                                                    <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                </af:inputDate>
+                                            </af:gridCell>
+                                            <af:gridCell id="gc20" width="20px">
+                                                <af:spacer width="10" height="10" id="s15"/>
+                                            </af:gridCell>
+                                            <af:gridCell id="gc11" width="100px" styleClass="FNXDefaultfont">
+                                                <af:outputText value="#{pa12prepagoghtBundle.TIPO_DE_PREPAGO_LBL}"
+                                                               id="ot36"/>
+                                            </af:gridCell>
+                                            <af:gridCell id="gc16" width="20px">
+                                                <af:spacer width="10" height="10" id="s12"/>
+                                            </af:gridCell>
+                                            <af:gridCell marginStart="5px" width="auto" marginEnd="5px" id="gc4"
+                                                         styleClass="FNXDefaultfont">
+                                                <af:selectOneChoice value="#{bindings.IdTcaTipoPrepago.inputValue}"
+                                                                    required="#{bindings.IdTcaTipoPrepago.hints.mandatory}"
+                                                                    shortDesc="#{bindings.IdTcaTipoPrepago.hints.tooltip}"
+                                                                    id="soc3"
+                                                                    disabled="#{pageFlowScope.prepagoBean.esBtnCalcularBloqueado}"
+                                                                    readOnly="#{pageFlowScope.esLecturaTipoPrepago}"
+                                                                    contentStyle="width: 150px;#{pageFlowScope.esLecturaTipoPrepago?'font-weight:bold;color:Black;':''}"
+                                                                    autoSubmit="false"
+                                                                    partialTriggers="btnResetBuscar btnBuscar">
+                                                    <f:selectItems value="#{bindings.IdTcaTipoPrepago.items}" id="si3"/>
+                                                    <f:validator binding="#{bindings.IdTcaTipoPrepago.validator}"/>
+                                                </af:selectOneChoice>
+                                            </af:gridCell>
+                                        </af:gridRow>
+                                        <af:gridRow marginTop="5px" height="auto" id="gr3">
+                                            <af:gridCell id="gc12" width="90px" styleClass="FNXDefaultfont">
+                                                <af:panelGroupLayout id="pgl8" layout="vertical">
+                                                    <af:outputText value="#{pa12prepagoghtBundle.MONTO_PREPAGAR_LBL}"
+                                                                   id="ot37"/>
+                                                    <af:spacer width="20" height="20" id="s21"/>
+                                                    <af:outputText value="#{pa12prepagoghtBundle.MONEDA_PREPAGO_TXT}"
+                                                                   id="ot371"/>
+                                                    <af:spacer width="20" height="20" id="s2"/>
+                                                    <af:outputText value="#{pa12prepagoghtBundle.FECHA_RENOVACION_LBL}"
+                                                                   id="ot38"
+                                                                   shortDesc="#{pa12prepagoghtBundle.FECHA_INCLUSION_DE_NUEVAS_CONDICIONES_SHORTDESC}"
+                                                                   noWrap="false"
+                                                                   inlineStyle="width:120px;display:inline-block;word-wrap:break-word"
+                                                                   visible="#{pageFlowScope.prepagoBean.esLineaGlobal}"/>
+                                                </af:panelGroupLayout>
+                                            </af:gridCell>
+                                            <af:gridCell id="gc17" width="20px">
+                                                <af:spacer width="10" height="10" id="s11"/>
+                                            </af:gridCell>
+                                            <af:gridCell marginStart="5px" width="auto" id="gc5"
+                                                         styleClass="FNXDefaultfont">
+                                                <af:panelGroupLayout id="pgl12" layout="vertical">
+                                                    <af:panelGroupLayout id="pgl13" layout="horizontal">
+                                                        <af:inputText value="#{bindings.MontoPrepago.inputValue}"
+                                                                      required="#{bindings.MontoPrepago.hints.mandatory}"
+                                                                      columns="#{bindings.MontoPrepago.hints.displayWidth}"
+                                                                      maximumLength="#{bindings.MontoPrepago.hints.precision}"
+                                                                      shortDesc="#{bindings.MontoPrepago.hints.tooltip}"
+                                                                      id="it1" contentStyle="width: 150px;"
+                                                                      autoSubmit="true"
+                                                                      partialTriggers="btnResetBuscar btnBuscar">
+                                                            <f:validator binding="#{bindings.MontoPrepago.validator}"/>
+                                                            <af:convertNumber groupingUsed="true" maxFractionDigits="3"
+                                                                              minFractionDigits="2" locale="en-US"/>
+                                                        </af:inputText>
+                                                    </af:panelGroupLayout>
+                                                    <af:spacer width="10" height="10" id="s26"/>
+                                                    <!--<af:selectOneChoice value="#{bindings.IdTcaTipoMoneda.inputValue}" 
+                                                                        binding="#{prepagoActionBean.monedaUIC}"
+                                                                        readOnly="#{pageFlowScope.prepagoBean.esTareaCompletada}"
+                                                                        required="#{bindings.IdTcaTipoMoneda.hints.mandatory}"
+                                                                        shortDesc="#{bindings.IdTcaTipoMoneda.hints.tooltip}"
+                                                                        id="soc1">
+                                                        <f:selectItems value="#{bindings.IdMoneda.items}" id="si5"/>
+                                                        <f:validator binding="#{bindings.IdTcaTipoMoneda.validator}"/>
+                                                    </af:selectOneChoice>-->
+                                                    <af:selectOneChoice value="#{bindings.IdMoneda1.inputValue}"
+                                                                        required="#{bindings.IdMoneda1.hints.mandatory}"
+                                                                        binding="#{prepagoActionBean.monedaUIC}"
+                                                                        disabled="#{pageFlowScope.prepagoBean.esBtnCalcularBloqueado}"
+                                                                        readOnly="#{pageFlowScope.prepagoBean.esTareaCompletada}"
+                                                                        shortDesc="#{bindings.IdMoneda1.hints.tooltip}"
+                                                                        id="soc4"
+                                                                        partialTriggers="btnResetBuscar btnBuscar">
+                                                        <f:selectItems value="#{bindings.IdMoneda1.items}" id="si1"/>
+                                                        <f:validator binding="#{bindings.IdMoneda1.validator}"/>
+                                                    </af:selectOneChoice>
+                                                    <!--<af:selectOneChoice value="#{bindings.IdTcaTipoMoneda.inputValue}" 
+                                                                        binding="#{prepagoActionBean.monedaUIC}"
+                                                                        readOnly="#{pageFlowScope.prepagoBean.esTareaCompletada}"
+                                                                        required="#{bindings.IdMoneda.hints.mandatory}"
+                                                                        shortDesc="#{bindings.IdMoneda.hints.tooltip}"
+                                                                        id="soc1">
+                                                        <f:selectItems value="#{bindings.IdMoneda.items}" id="si5"/>
+                                                        <f:validator binding="#{bindings.IdMoneda.validator}"/>
+                                                    </af:selectOneChoice>-->
+                                                    <af:spacer width="10" height="10" id="s261"/>
+                                                    <af:inputDate value="#{bindings.FechaRenovacion.inputValue}"
+                                                                  required="#{bindings.FechaRenovacion.hints.mandatory}"
+                                                                  columns="#{bindings.FechaRenovacion.hints.displayWidth}"
+                                                                  shortDesc="#{bindings.FechaRenovacion.hints.tooltip}"
+                                                                  id="id3"
+                                                                  rendered="#{pageFlowScope.prepagoBean.esLineaGlobal}"
+                                                                  autoSubmit="false"
+                                                                  disabled="#{pageFlowScope.prepagoBean.esBtnCalcularBloqueado}"
+                                                                  readOnly="#{pageFlowScope.prepagoBean.esTareaCompletada}"
+                                                                  partialTriggers="btnResetBuscar btnBuscar">
+                                                        <f:validator binding="#{bindings.FechaRenovacion.validator}"/>
+                                                        <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                    </af:inputDate>
+                                                </af:panelGroupLayout>
+                                            </af:gridCell>
+                                            <af:gridCell id="gc48" width="20px">
+                                                <af:spacer width="10" height="10" id="s30"/>
+                                            </af:gridCell>
+                                            <af:gridCell marginStart="5px" id="gc45"
+                                                         styleClass="FNXDefaultfont">
+                                                <af:panelBox text="#{pa12prepagoghtBundle._TIPO_DE_CAPTURA_}" id="pb1" showDisclosure="false"
+                                                             inlineStyle="width:280px;">
+                                                    <af:selectOneRadio value="#{bindings.IdTcaTipoCaptura.inputValue}"
+                                                                       layout="vertical"
+                                                                       required="#{bindings.IdTcaTipoCaptura.hints.mandatory}"
+                                                                       shortDesc="#{bindings.IdTcaTipoCaptura.hints.tooltip}"
+                                                                       id="sor1" autoSubmit="true"
+                                                                       valueChangeListener="#{prepagoActionBean.tipoCapturaValueChangeListener}"
+                                                                       binding="#{pageFlowScope.prepagoBean.selectOneRadioTipoCapturaBinding}">
+                                                        <f:selectItems value="#{bindings.IdTcaTipoCaptura.items}"
+                                                                       id="si4"/>
+                                                        <f:validator binding="#{bindings.IdTcaTipoCaptura.validator}"/>
+                                                    </af:selectOneRadio>
+                                                </af:panelBox>
+                                                <!--<af:button text="#{pa12prepagoghtBundle.BUSCAR_CONTRATOS_TXT}" id="btnBuscar"
+                                                           actionListener="#{prepagoActionBean.calcular}"
+                                                           disabled="#{pageFlowScope.prepagoBean.esBtnCalcularBloqueado}"
+                                                           partialTriggers="btnResetBuscar"/>
+                                                <af:spacer width="10" height="10" id="s3011"/>
+                                                <af:button text="#{pa12prepagoghtBundle.NUEVA_BUSQUEDA_TXT}" id="btnResetBuscar"
+                                                           actionListener="#{prepagoActionBean.nuevoCalculo}"
+                                                           disabled="#{!pageFlowScope.prepagoBean.esBtnCalcularBloqueado}"
+                                                           partialTriggers="btnBuscar"/>-->
+                                            </af:gridCell>
+                                        </af:gridRow>
+                                        
+                                        <af:gridRow marginTop="5px" height="auto" id="gr3b"> 
+                                            <af:gridCell marginStart="5px" id="gc45b"
+                                                         styleClass="FNXDefaultfont"> 
+                                                <af:button text="#{pa12prepagoghtBundle.BUSCAR_CONTRATOS_TXT}" id="btnBuscar"
+                                                           actionListener="#{prepagoActionBean.calcular}"
+                                                           disabled="#{pageFlowScope.prepagoBean.esBtnCalcularBloqueado or pageFlowScope.prepagoBean.esTareaCompletada}"
+                                                           partialTriggers="btnResetBuscar"/>
+                                                <af:spacer width="10" height="10" id="s3011"/>
+                                                <af:button text="#{pa12prepagoghtBundle.NUEVA_BUSQUEDA_TXT}" id="btnResetBuscar"
+                                                           actionListener="#{prepagoActionBean.nuevoCalculo}"
+                                                           disabled="#{!pageFlowScope.prepagoBean.esBtnCalcularBloqueado or pageFlowScope.prepagoBean.esTareaCompletada}"
+                                                           partialTriggers="btnBuscar"/>
+                                                <af:spacer width="246" height="50" id="s3012"/>
+                                                <af:button text="#{pa12prepagoghtBundle.GUARDAR_PREPAGO_TXT}" id="btnGuardar"
+                                                           actionListener="#{prepagoActionBean.guardarPrepago}"
+                                                           disabled="#{pageFlowScope.prepagoBean.esTareaCompletada}"
+                                                           partialTriggers="btnBuscar"/>
+                                            </af:gridCell>
+                                        </af:gridRow>
+                                        
+                                    </af:panelGridLayout>
+                                    <af:spacer width="10" height="10" id="s7"/>
+                                    <!-- Contratos de desembolsos -->
+                                    <af:panelHeader text="#{pa12prepagoghtBundle.CONTRATOS_DE_DESEMBOLSOS_TITLE}" id="ph1">
+                                    <af:table value="#{bindings.ContratoDesembolsoPrepagoVO.collectionModel}" var="row"
+                                              rows="#{bindings.ContratoDesembolsoPrepagoVO.rangeSize}"
+                                              emptyText="#{bindings.ContratoDesembolsoPrepagoVO.viewable ? pa12prepagoghtBundle.NO_HAY_DATOS_PARA_MOSTRAR_MSG :
+                                                          pa12prepagoghtBundle.ACCESO_DENEGADO_MSG}"
+                                              rowBandingInterval="0"
+                                              selectionListener="#{prepagoActionBean.contratoDesembolsoPrepagoSelectionListener}"
+                                              rowSelection="single"
+                                              fetchSize="#{bindings.ContratoDesembolsoPrepagoVO.rangeSize}" id="t1"
+                                              freezeDirection="end" columnStretching="multiple"
+                                              partialTriggers="sbc1 it2 bt1 bt2"
+                                              binding="#{prepagoActionBean.tablaContratoUIC}">
+                                            <af:column headerText="#{pa12prepagoghtBundle.LINEA_DE_CREDITO_HEADER_TEXT}"
+                                                       id="c1" align="center" inlineStyle="text-align:center;"
+                                                       width="40%">
+                                                <af:panelGroupLayout id="pgl19" layout="horizontal">
+                                                    <af:panelGroupLayout id="pgl20" rendered="#{(row.IdHijo eq 0) and (bindings.IdTcaTipoResolucion.inputValue eq 2)}">
+                                                      <af:button  id="bt1" icon="/images/cerrado.png"
+                                                                  rendered="#{row.Expandible eq true}"
+                                                                  actionListener="#{prepagoActionBean.cargarProximasFechasActionEvent}"
+                                                                  inlineStyle="background-color: transparent;border: none ;border-color: transparent !important ;background: none !important ;">
+                                                        <af:setActionListener from="#{row.Id}" 
+                                                                to="#{prepagoActionBean.idPadreSeleccionado}"/>
+                                                        <af:setActionListener from="#{row.ContratoDesembolsoFlexcube}" 
+                                                                to="#{prepagoActionBean.contratoFlexSeleccionado}"/>
+                                                      </af:button>
+                                                      <af:button  id="bt2" icon="/images/abierto.png"
+                                                                  rendered="#{row.Expandible eq false}"
+                                                                  actionListener="#{prepagoActionBean.quitarProximasFechasActionEvent}"
+                                                                  inlineStyle="background-color: transparent;border: none ;border-color: transparent !important ;background: none !important ;">
+                                                        <af:setActionListener from="#{row.Id}" 
+                                                                to="#{prepagoActionBean.idPadreSeleccionado}"/>
+                                                        <af:setActionListener from="#{row.ContratoDesembolsoFlexcube}" 
+                                                                to="#{prepagoActionBean.contratoFlexSeleccionado}"/>
+                                                      </af:button>
+                                                    </af:panelGroupLayout>
+                                                    <af:spacer width="45" height="10" id="s18"
+                                                               rendered="#{(row.IdHijo gt 0) and (bindings.IdTcaTipoResolucion.inputValue eq 2)}"/>
+                                                    <af:outputText value="#{row.LineaCredito}"
+                                                               shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.LineaCredito.tooltip}"
+                                                               id="ot9"/>
+                                                </af:panelGroupLayout>
+                                            </af:column>
+                                            <af:column headerText="#{pa12prepagoghtBundle.CONTRATO_DESEMBOLSO_HEADER_TEXT}"
+                                                       id="c13" align="center" inlineStyle="text-align:center;"
+                                                       width="40%">
+                                                <af:outputText value="#{row.UserRef}"
+                                                               shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.UserRef.tooltip}"
+                                                               id="ot17"/>
+                                            </af:column>
+                                            <af:column headerText="#{pa12prepagoghtBundle.CONTRATO_DESEMBOLSO_HEADER_TEXT}"
+                                                       id="c2" align="center" inlineStyle="text-align:center;"
+                                                       width="40%" visible="false">
+                                                <af:outputText value="#{row.ContratoDesembolsoFlexcube}"
+                                                               shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.ContratoDesembolsoFlexcube.tooltip}"
+                                                               id="ot11"/>
+                                            </af:column>
+                                            <af:column headerText="#{pa12prepagoghtBundle.FONDO_CONTABLE_HEADER_TEXT}"
+                                                       id="c11" width="40%">
+                                                <af:outputText value="#{row.FondoContable}"
+                                                               shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.FondoContable.tooltip}"
+                                                               id="ot13"/>
+                                            </af:column>
+                                            <af:column headerText="#{pa12prepagoghtBundle.ESCRITURACION_HEADER_TEXT}"
+                                                       id="c7" rendered="#{!pageFlowScope.prepagoBean.esLineaGlobal}"
+                                                       width="40%">
+                                                <af:outputText value="#{row.FechaEscrituracion}"
+                                                               shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.FechaEscrituracion.tooltip}"
+                                                               id="ot12">
+                                                    <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                </af:outputText>
+                                            </af:column>
+                                            <af:column headerText="#{pa12prepagoghtBundle.RESOLUCION_HEADER_TEXT}"
+                                                       id="c3" align="center" inlineStyle="text-align:center;"
+                                                       rendered="false" width="40%">
+                                                <af:outputText value="#{row.Resolucion}"
+                                                               shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.Resolucion.tooltip}"
+                                                               id="ot3"/>
+                                            </af:column>
+                                            <af:column headerText="#{pa12prepagoghtBundle.FECHA_EFECTIVA_HEADER_TEXT}"
+                                                       id="c4" align="center" inlineStyle="text-align:center;"
+                                                       width="40%">
+                                                <af:outputText value="#{row.FechaEfectiva}"
+                                                               shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.FechaEfectiva.tooltip}"
+                                                               id="ot4">
+                                                    <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                </af:outputText>
+                                            </af:column>
+                                            <af:column headerText="#{pa12prepagoghtBundle.VENCIMIENTO_HEADER_TEXT}"
+                                                       id="c5" align="center" inlineStyle="text-align:center;"
+                                                       width="40%">
+                                                <af:outputText value="#{row.FechaVencimiento}"
+                                                               shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.FechaVencimiento.tooltip}"
+                                                               id="ot5">
+                                                    <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                </af:outputText>
+                                            </af:column>            
+                                            <af:column headerText="#{pa12prepagoghtBundle.PROXIMO_PAGO_HEADER_TEXT}"
+                                                       id="c6" frozen="false" align="center"
+                                                       inlineStyle="text-align:center;" width="40%">
+                                                <af:outputText value="#{row.FechaProximoPago}"
+                                                               shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.FechaProximoPago.tooltip}"
+                                                               id="ot6">
+                                                    <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                </af:outputText>
+                                                <f:facet name="footer">
+                                                    <af:panelGroupLayout id="pgl14" layout="horizontal" halign="center">
+                                                        <af:outputText value="#{pa12prepagoghtBundle.TOTALES_FOOT_TEXT}" id="ot25"
+                                                                       inlineStyle="text-align:center;"/>
+                                                    </af:panelGroupLayout>
+                                                </f:facet>
+                                            </af:column>
+                                            <af:column headerText="#{pa12prepagoghtBundle.MONEDA_HEADER_TEXT}"
+                                                       id="c12" align="center" inlineStyle="text-align:center;"
+                                                       width="40%">
+                                                <af:outputText value="#{row.TipoMoneda}"
+                                                               shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.TipoMoneda.tooltip}"
+                                                               id="ot10"
+                                                               rendered="#{row.IdHijo eq 0}"/>
+                                            </af:column>
+                                            <af:column headerText="#{pa12prepagoghtBundle.CAPITAL_NO_VENCIDO_A_LA_FECHA_DEL_PREPAGO_HEADER_TEXT}"
+                                                       id="c8" align="center" inlineStyle="text-align:right;"
+                                                       width="40%">
+                                                <af:outputText value="#{row.CapitalNoVencido}"
+                                                               shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.CapitalNoVencido.tooltip}"
+                                                               id="ot8"
+                                                               rendered="#{row.IdHijo eq 0}">
+                                                    <af:convertNumber groupingUsed="true" maxFractionDigits="3"
+                                                                  minFractionDigits="2" locale="en_US"/>
+                                                </af:outputText>
+                                                <f:facet name="footer">
+                                                    <af:panelGroupLayout id="pgl15" layout="horizontal" halign="right">
+                                                        <af:outputText value="#{bindings.CapitalNovencidoTotalPrepago.inputValue}"
+                                                                       id="ot15" inlineStyle="text-align:right;">
+                                                            <af:convertNumber groupingUsed="true" maxFractionDigits="3"
+                                                                              minFractionDigits="2"
+                                                                              locale="en_US"/>
+                                                        </af:outputText>
+                                                    </af:panelGroupLayout>
+                                                </f:facet>
+                                            </af:column>
+                                            <af:column headerText="#{pa12prepagoghtBundle.PAGO_TOTAL_HEADER_TEXT}"
+                                                       id="c9" align="center" inlineStyle="text-align:center;"
+                                                       width="40%">
+                                                <f:facet name="header">
+                                                    <af:panelGroupLayout id="pgl17" halign="center" layout="vertical"
+                                                                         partialTriggers="b7 b8">
+                                                    <af:outputText value="Pago total" id="ot44"/>
+                                                    <af:button  id="b7" icon="/images/checkBox.png"
+                                                                   rendered="#{!pageFlowScope.prepagoBean.esPagoTotalHeader}"
+                                                                    disabled="#{pageFlowScope.prepagoBean.esLecturaPagoTotal}"
+                                                                    actionListener="#{prepagoActionBean.esPagoTotalHeaderActionEvent}"
+                                                                   inlineStyle="background-color: transparent;border: none ;border-color: transparent !important ;background: none !important ;"
+                                                                   partialTriggers="::sor1">
+                                                        <af:setActionListener from="#{true}" to="#{pageFlowScope.esPagoTotalHeaderValueAction}"/>
+                                                        </af:button>
+                                                        <af:button  id="b8" icon="/images/checkBoxOn.png"
+                                                                   rendered="#{pageFlowScope.prepagoBean.esPagoTotalHeader}"
+                                                                   disabled="#{pageFlowScope.prepagoBean.esLecturaPagoTotal}"
+                                                                   actionListener="#{prepagoActionBean.esPagoTotalHeaderActionEvent}"
+                                                                   inlineStyle="background-color: transparent;border: none ;border-color: transparent !important ;background: none !important ;"
+                                                                   partialTriggers="::sor1">
+                                                        <af:setActionListener from="#{false}" to="#{pageFlowScope.esPagoTotalHeaderValueAction}"/>  
+                                                        </af:button>
+                                                    </af:panelGroupLayout>
+                                                </f:facet>
+                                                <af:selectBooleanCheckbox value="#{row.bindings.EsPagoTotal.inputValue}"
+                                                                          label="#{row.bindings.EsPagoTotal.label}"
+                                                                          shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.EsPagoTotal.tooltip}"
+                                                                          id="sbc1" autoSubmit="true" disabled="#{row.bindings.MontoPrepago.inputValue > 0 and row.bindings.EsPagoTotal.inputValue eq false ? true : false}"
+                                                                          valueChangeListener="#{prepagoActionBean.esPagoTotalValueChangeListener}"
+                                                                          rendered="#{row.IdHijo eq 0}"/>
+                                            </af:column>
+                                            <af:column headerText="#{pa12prepagoghtBundle.MONTO_PREPAGO_HEADER_TEXT}"
+                                                       id="c10" align="center" inlineStyle="text-align:right;"
+                                                       width="40%">
+                                                <af:inputText value="#{row.bindings.MontoPrepago.inputValue}"
+                                                              label="#{bindings.ContratoDesembolsoPrepagoVO.hints.MontoPrepago.label}"
+                                                              required="#{bindings.ContratoDesembolsoPrepagoVO.hints.MontoPrepago.mandatory}"
+                                                              columns="#{bindings.ContratoDesembolsoPrepagoVO.hints.MontoPrepago.displayWidth}"
+                                                              maximumLength="#{bindings.ContratoDesembolsoPrepagoVO.hints.MontoPrepago.precision}"
+                                                              shortDesc="#{bindings.ContratoDesembolsoPrepagoVO.hints.MontoPrepago.tooltip}"
+                                                              id="it2" readOnly="#{row.bindings.EsPagoTotal.inputValue}"
+                                                              autoSubmit="true" valueChangeListener="#{prepagoActionBean.montoPrepagoValueChangeListener}"
+                                                              rendered="#{row.IdHijo eq 0}">
+                                                    <f:validator binding="#{row.bindings.MontoPrepago.validator}"/>
+                                                    <af:convertNumber groupingUsed="true" maxFractionDigits="2"
+                                                                  minFractionDigits="2" locale="en_US"/>
+                                                </af:inputText>
+                                                <f:facet name="footer">
+                                                    <af:panelGroupLayout id="pgl16" halign="right" layout="horizontal">
+                                                        <af:inputText value="#{bindings.MontoTotalPrepago.inputValue}"
+                                                                      required="#{bindings.MontoTotalPrepago.hints.mandatory}"
+                                                                      columns="#{bindings.MontoTotalPrepago.hints.displayWidth}"
+                                                                      maximumLength="#{bindings.MontoTotalPrepago.hints.precision}"
+                                                                      shortDesc="#{bindings.MontoTotalPrepago.hints.tooltip}"
+                                                                      id="it4" readOnly="true"
+                                                                      partialTriggers="::sor1 b7 b8 ::t1">
+                                                            <f:validator binding="#{bindings.MontoTotalPrepago.validator}"/>
+                                                            <af:convertNumber locale="EN"
+                                                                              type="number" minFractionDigits="2"
+                                                                              maxFractionDigits="2"/>
+                                                        </af:inputText>
+                                                        <af:outputText value="#{bindings.MontoTotalPrepago.inputValue}"
+                                                                       id="ot14" rendered="false">
+                                                            <af:convertNumber groupingUsed="true" maxFractionDigits="3"
+                                                                              minFractionDigits="2"
+                                                                              locale="en_US"/>
+                                                        </af:outputText>
+                                                    </af:panelGroupLayout>
+                                                </f:facet>
+                                            </af:column>
+                                        </af:table>
+                                    </af:panelHeader>
+                                    <!-- Condiciones especiales -->
+                                    <af:spacer width="10" height="10" id="s17"/>
+                                    <af:region value="#{bindings.condicionEspecialPrepagoBTF1.regionModel}" id="r7"
+                                               binding="#{pageFlowScope.prepagoBean.regionCondicionEspecialBinding}"/>
+                                    <!-- Coberturas,Venta de cartera,Fuentes externas -->
+                                    <af:spacer width="10" height="10" id="s14"/>
+                                    <af:region value="#{bindings.consultarInformacionPrepagoBTF1.regionModel}" id="r6"
+                                               binding="#{pageFlowScope.prepagoBean.regionConsultarInformacionBinding}"/>
+                                    <!-- Observaciones del prepago -->
+                                    <af:spacer width="10" height="10" id="s8"/>
+                                    <af:panelFormLayout id="pfl2" labelAlignment="top">
+                                        <af:inputText label="Observaciones del prepago:" clientComponent="true" id="it3"
+                                                      columns="154" rows="5" showRequired="true"
+                                                      requiredMessageDetail="Se necesita introducir una observacion."
+                                                      value="#{bindings.Observacion.inputValue}" autoSubmit="true"
+                                                      styleClass="PreWrap">
+                                            <af:validateLength maximum="4000"/>
+                                        </af:inputText>
+                                    </af:panelFormLayout>
+                                    <af:spacer width="10" height="10" id="s10"/>
+                                    <!-- Invocar metodo obtenerAtributosContratosDesembolsos
+                                         llenar #{pageFlowScope.prepagoBean.idLineaCredito} para condicionEspecialPrepagoBTF
+                                         llenar #{pageFlowScope.prepagoBean.listaContratoDesembolso} para consultarInformacionPrepagoBTF-->
+                                    <af:outputText value="CARGA PRUEBA METODO 'obtenerAtributosContratosDesembolsos'"
+                                                   visible="false" id="otObtenerAtributos"
+                                                   binding="#{pageFlowScope.prepagoBean.initFormObtenerListas}"/>
+                                </af:showDetailItem>
+                                <!-- COMENTARIOS -->
+                                <af:showDetailItem id="pane5" text="#{pa12prepagoghtBundle.PNL_TXT_COMENTARIOS}" immediate="true"
+                                                   inlineStyle="margin-left: 10px; margin-right: 10px;"
+                                                   disclosureListener="#{pageFlowScope.prepagoBean.panelComentariosDisclosureListener}">
+                                    <af:region value="#{bindings.comentariosBTF1.regionModel}" id="r5"/>
+                                </af:showDetailItem>
+                            </af:panelAccordion>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:facet name="comment"/>
+                    <f:facet name="attachment"/>
+                    <f:facet name="history"/>
+                    <f:attribute name="title"
+                                 value="#{bindings.NombreTarea == '' ? 'PA12 GHT' : bindings.NombreTarea}"/>
+                </af:pageTemplate>
+            </af:form>
+        </af:document>
+    </f:view>
+</jsp:root>

@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpel:process name="ConsultarSaldoLinea_SJ"
+              targetNamespace="http://xmlns.oracle.com/OSB_BCIE/ADAPTADORES/"
+              xmlns:tns="http://xmlns.oracle.com/OSB_BCIE/ADAPTADORES/"
+              xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+              xmlns:rescon="http://www.bea.com/alsb/flow/resources/config"
+              xmlns:bea="http://www.bea.com/bpel/ui/extensions"
+              xmlns:ext="http://www.bea.com/bpel/extensions"
+              xmlns:expr="http://www.bea.com/wli/sb/stages/config"
+              xmlns:trf="http://www.bea.com/wli/sb/stages/transform/config"
+              xmlns:bind="http://www.bcie.org/ConsultarSaldoLineaSAD" 
+              bea:name="ConsultarSaldoLinea_SJ"
+              rescon:snippetVersion="1.0"
+              xmlns:ns0="http://www.bea.com/wli/sb/reference" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xmlns:ns1="http://www.bcie.org/ConsultarSaldoSAD"
+              xmlns:ns2="http://www.bice.org/ActualizarLineaCreditoService" xmlns:con="http://www.bcie.org/ContratoBO"
+              xmlns:lin="http://www.bcie.org/LineaCreditoMO" xmlns:lin1="http://www.bcie.org/LineaCreditoBO"
+              xmlns:des="http://www.bcie.org/DesembolsoBO" xmlns:des1="http://www.bcie.org/DesembolsoMO"
+              xmlns:com="http://www.bcie.org/CommonBO" xmlns:ns3="http://www.bea.com/wli/sb/stages/logging/config"
+              xmlns:oper="http://www.bcie.org/OperacionBO" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+              xmlns:res="http://www.bcie.org/ResultBO">
+    <bpel:partnerLinks>
+        <bpel:partnerLink name="ConsultarSaldoLinea_SJ" partnerLinkType="tns:ConsultarSaldoLinea_SJ"
+                          myRole="ConsultarSaldoLinea_SJ">
+	       </bpel:partnerLink>
+        <bpel:partnerLink name="ConsultarSaldo_PS" partnerLinkType="tns:ConsultarSaldo_PS"
+                          partnerRole="ConsultarSaldo_PS"/>
+        <bpel:partnerLink name="ConsultarLineaCreditoByIdLineaCredito_PS"
+                          partnerLinkType="tns:ConsultarLineaCreditoByIdLineaCredito_PS"
+                          partnerRole="ConsultarLineaCreditoByIdLineaCredito_PS"/>
+    </bpel:partnerLinks>
+
+	   <bpel:variables>
+        <bpel:variable name="request"
+	                      messageType="bind:requestConsultarSaldoLineaMessage">
+	       </bpel:variable>
+	       <bpel:variable name="response"
+                       messageType="bind:responseConsultarSaldoLineaMessage">
+	       </bpel:variable>
+        <bpel:variable name="inConsultarLineaCredito"
+                       messageType="ns2:ConsultarLineaCreditoByIdLineaCreditoRequestMessage"/>
+        <bpel:variable name="outConsultarLineaCredito"
+                       messageType="ns2:ConsultarLineaCreditoByIdLineaCreditoResponseMessage"/>
+        <bpel:variable name="consultarSaldoLoteResponse" element="lin:ConsultarSaldoLineaResponse"/>
+        <bpel:variable name="Resultado" type="xsd:string"/>
+    </bpel:variables>
+
+    <bpel:sequence>
+        <bpel:receive partnerLink="ConsultarSaldoLinea_SJ" operation="ConsultarSaldoLinea" variable="request" createInstance="yes">
+	           <rescon:receiveInfo>
+                <rescon:wsdl ref="MDS/Resources/ComponentesComunes/DominioLineaCredito/LineaCredito/V1/Wsdl/ADAPTER/ConsultarSaldoLineaSAD" binding="bind:ConsultarSaldoLinea_PTSOAP12Binding"/>
+            </rescon:receiveInfo>
+        </bpel:receive>
+        <bpel:assign>
+            <bpel:extensionAssignOperation>
+                <ns3:log>
+                    <ns3:expr>
+                        <expr:xqueryText>$request.request/*</expr:xqueryText>
+                    </ns3:expr>
+                    <ns3:logLevel>info</ns3:logLevel>
+                    <ns3:message>ConsultarSaldoLinea_Request</ns3:message>
+                </ns3:log>
+            </bpel:extensionAssignOperation>
+        </bpel:assign>
+        <bpel:assign>
+            <bpel:extensionAssignOperation>
+                <trf:assign varName="response.response">
+                    <trf:expr>
+                        <expr:xqueryTransform>
+                            <expr:resource ref="ADAPTADORES/ModeloNegocio/DominioLineaCredito/ConsultarSaldoLinea/XQUERY/ConsultarSaldoLineaIni"/>
+                        </expr:xqueryTransform>
+                    </trf:expr>
+                </trf:assign>
+            </bpel:extensionAssignOperation>
+            <bpel:extensionAssignOperation>
+                <trf:assign varName="Resultado">
+                    <trf:expr>
+                        <expr:xqueryText>'OK'</expr:xqueryText>
+                    </trf:expr>
+                </trf:assign>
+            </bpel:extensionAssignOperation>
+        </bpel:assign>
+        <bpel:assign>
+            <bpel:extensionAssignOperation>
+                <trf:assign varName="inConsultarLineaCredito.request">
+                    <trf:expr>
+                        <expr:xqueryTransform>
+                            <expr:resource ref="ADAPTADORES/ModeloNegocio/DominioLineaCredito/ConsultarSaldoLinea/XQUERY/ConsultarSaldoLineaRequest_To_ConsultarLineaCreditoRequest"/>
+                            <expr:param name="ConsultarSaldoLineaRequest">
+                                <expr:path>$request.request</expr:path>
+                            </expr:param>
+                        </expr:xqueryTransform>
+                    </trf:expr>
+                </trf:assign>
+            </bpel:extensionAssignOperation>
+        </bpel:assign>
+        <bpel:invoke partnerLink="ConsultarLineaCreditoByIdLineaCredito_PS"
+                     operation="consultarLineaCreditoByIdLineaCredito" inputVariable="inConsultarLineaCredito"
+                     outputVariable="outConsultarLineaCredito">
+            <rescon:invokeInfo>
+                <rescon:service ref="ADAPTADORES/ModeloNegocio/DominioLineaCredito/ConsultarLineaCreditoByIdLineaCredito/PS/ConsultarLineaCreditoByIdLineaCredito_PS"
+                                xsi:type="ns0:ProxyRef"/>
+            </rescon:invokeInfo>
+        </bpel:invoke>
+        <bpel:forEach parallel="yes" counterName="countDesembolsos">
+            <bpel:startCounterValue>1</bpel:startCounterValue>
+            <bpel:finalCounterValue>count($outConsultarLineaCredito.response/lin:Operacion/oper:contrato/con:LineaCredito/lin1:ContratoDesembolso)</bpel:finalCounterValue>
+            <bpel:completionCondition>
+                <bpel:branches successfulBranchesOnly="no">count($outConsultarLineaCredito.response/lin:Operacion/oper:contrato/con:LineaCredito/lin1:ContratoDesembolso)</bpel:branches>
+            </bpel:completionCondition>
+            <bpel:scope>
+                <bpel:variables>
+                    <bpel:variable name="inCosnultarSaldo" messageType="ns1:requestConsultarSaldoMessage"/>
+                    <bpel:variable name="outCosnultarSaldo" messageType="ns1:responseConsultarSaldoMessage"/>
+                </bpel:variables>
+                <bpel:sequence>
+                    <bpel:assign>
+                        <bpel:extensionAssignOperation>
+                            <trf:assign varName="inCosnultarSaldo.request">
+                                <trf:expr>
+                                    <expr:xqueryTransform>
+                                        <expr:resource ref="ADAPTADORES/ModeloNegocio/DominioLineaCredito/ConsultarSaldoLinea/XQUERY/ConsultarLineaCreditoResponse_To_ConsultarSaldoRequest"/>
+                                        <expr:param name="counter">
+                                            <expr:path>$countDesembolsos</expr:path>
+                                        </expr:param>
+                                        <expr:param name="ConsultarLineaCreditoByIdLineaCreditoResponse">
+                                            <expr:path>$outConsultarLineaCredito.response</expr:path>
+                                        </expr:param>
+                                    </expr:xqueryTransform>
+                                </trf:expr>
+                            </trf:assign>
+                        </bpel:extensionAssignOperation>
+                    </bpel:assign>
+                    <bpel:invoke partnerLink="ConsultarSaldo_PS" operation="consultarSaldo"
+                                 inputVariable="inCosnultarSaldo" outputVariable="outCosnultarSaldo">
+                        <rescon:invokeInfo>
+                            <rescon:service ref="ADAPTADORES/ModeloNegocio/DominioDesembolso/ConsultarSaldo/PS/ConsultarSaldo_PS"
+                                            xsi:type="ns0:ProxyRef"/>
+                        </rescon:invokeInfo>
+                    </bpel:invoke>
+                    <bpel:assign>
+                        <bpel:extensionAssignOperation>
+                            <trf:assign varName="Resultado">
+                                <trf:expr>
+                                    <expr:xqueryText>if($Resultado = 'OK') then  
+  if(string($outCosnultarSaldo.response/des1:Resultado/res:result) = 'OK') then 'OK'  
+  else string($outCosnultarSaldo.response/des1:Resultado/res:message) 
+else $Resultado</expr:xqueryText>
+                                </trf:expr>
+                            </trf:assign>
+                        </bpel:extensionAssignOperation>
+                        <bpel:extensionAssignOperation>
+                            <trf:assign varName="consultarSaldoLoteResponse">
+                                <trf:expr>
+                                    <expr:xqueryTransform>
+                                        <expr:resource ref="ADAPTADORES/ModeloNegocio/DominioLineaCredito/ConsultarSaldoLinea/XQUERY/ConsultaSaldoResponse_To_ConsultaSaldoLoteResponse"/>
+                                        <expr:param name="ConsultarSaldoResponse">
+                                            <expr:path>$outCosnultarSaldo.response</expr:path>
+                                        </expr:param>
+                                    </expr:xqueryTransform>
+                                </trf:expr>
+                            </trf:assign>
+                        </bpel:extensionAssignOperation>
+                        <bpel:extensionAssignOperation>
+                            <ns3:log>
+                                <ns3:expr>
+                                    <expr:xqueryText>$consultarSaldoLoteResponse</expr:xqueryText>
+                                </ns3:expr>
+                                <ns3:logLevel>info</ns3:logLevel>
+                                <ns3:message>ConsultarSaldoLoteResponse_Cliclo</ns3:message>
+                            </ns3:log>
+                        </bpel:extensionAssignOperation>
+                        <bpel:extensionAssignOperation>
+                            <trf:insert varName="response.response">
+                                <trf:location>
+                                    <expr:xpathText>.</expr:xpathText>
+                                </trf:location>
+                                <trf:where>first-child</trf:where>
+                                <trf:expr>
+                                    <expr:xqueryText>$consultarSaldoLoteResponse/*</expr:xqueryText>
+                                </trf:expr>
+                            </trf:insert>
+                        </bpel:extensionAssignOperation>
+                        <bpel:extensionAssignOperation>
+                            <ns3:log>
+                                <ns3:expr>
+                                    <expr:xqueryText>$response.response</expr:xqueryText>
+                                </ns3:expr>
+                                <ns3:message>ConsultarSaldoLoteResponse_CResponse</ns3:message>
+                                <ns3:logLevel>info</ns3:logLevel>
+                            </ns3:log>
+                        </bpel:extensionAssignOperation>
+                    </bpel:assign>
+                </bpel:sequence>
+            </bpel:scope>
+        </bpel:forEach>
+        <bpel:assign>
+            <bpel:extensionAssignOperation>
+                <trf:assign varName="response.response">
+                    <trf:expr>
+                        <expr:xqueryTransform>
+                            <expr:resource ref="ADAPTADORES/ModeloNegocio/DominioLineaCredito/ConsultarSaldoLinea/XQUERY/ConsultarLineaCreditoResponse_To_ConsultarSaldoLineaResponse"/>
+                            <expr:param name="ConsultarSaldoLineaResponse">
+                                <expr:path>$response.response</expr:path>
+                            </expr:param>
+                            <expr:param name="ConsultarLineaCreditoByIdLineaCreditoResponse">
+                                <expr:path>$outConsultarLineaCredito.response</expr:path>
+                            </expr:param>
+                            <expr:param name="Resultado">
+                                <expr:path>$Resultado</expr:path>
+                            </expr:param>
+                        </expr:xqueryTransform>
+                    </trf:expr>
+                </trf:assign>
+            </bpel:extensionAssignOperation>
+        </bpel:assign>
+        <bpel:assign>
+            <bpel:extensionAssignOperation>
+                <ns3:log>
+                    <ns3:expr>
+                        <expr:xqueryText>$response.response/*</expr:xqueryText>
+                    </ns3:expr>
+                    <ns3:message>ConsultarSaldoLinea_Response</ns3:message>
+                    <ns3:logLevel>info</ns3:logLevel>
+                </ns3:log>
+            </bpel:extensionAssignOperation>
+        </bpel:assign>
+        <bpel:reply partnerLink="ConsultarSaldoLinea_SJ" operation="ConsultarSaldoLinea" variable="response"></bpel:reply>
+    </bpel:sequence>
+</bpel:process>

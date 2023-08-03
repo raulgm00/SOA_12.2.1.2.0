@@ -1,0 +1,532 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Sep 10 16:53:31 CDT 2015
+  Author:  luis-morales
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConsultarDeclaracion_BPEL"
+               targetNamespace="http://xmlns.oracle.com/Utilidades/ConsultarDeclaracion/ConsultarDeclaracion_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/Utilidades/ConsultarDeclaracion/ConsultarDeclaracion_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://xmlns.bcie.com/DeclaracionJuradaService"
+         xmlns:ns2="http://xmlns.oracle.com/ValidarNoObjecionBR/ValidarNoObjecionBR_DecisionService_1"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:ns4="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns5="http://www.bcie.org/ResultBO" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns6="http://www.bcie.org/ErrorBO" xmlns:ns3="http://www.bcie.org/DeclaracionJuradaMO"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns8="http://xmlns.bcie.org/EstadosDeclaracion" xmlns:ns7="http://xmlns.oracle.com/bpel"
+         xmlns:ns9="http://www.bcie.org/CatalogoBO" xmlns:ns10="http://xmlns.bcie.com/OperacionService"
+         xmlns:ns12="http://www.bcie.org/OperacionBO" xmlns:ns11="http://www.bcie.org/OperacionMO"
+         xmlns:ns13="http://www.bcie.org/ClienteBO" xmlns:ns14="http://www.bcie.org/ProductoBO"
+         xmlns:ns15="http://www.bcie.org/ValidarNoObjecionService" xmlns:ns16="http://xmlns.bcie.org/ProductoService"
+         xmlns:ns17="http://www.bcie.org/ProductoMO" xmlns:ns24="http://www.bcie.org/TerminoBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns20="http://www.bcie.org/CommonBO"
+         xmlns:ns19="http://www.bcie.org/LineaCreditoBO" xmlns:ns21="http://www.bcie.org/CondicionBO"
+         xmlns:ns23="http://www.bcie.org/DocumentoBO" xmlns:ns27="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns25="http://www.bcie.org/ComisionBO" xmlns:ns26="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns18="http://www.bcie.org/ContratoBO" xmlns:ns22="http://www.bcie.org/AtributoBO">
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+  <import namespace="http://xmlns.bcie.com/DeclaracionJuradaService"
+          location="../WSDLs/ConsultarDeclaracionByIdSADWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <import namespace="http://xmlns.bcie.com/DeclaracionJuradaService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/DeclaracionJurada/V1/Wsdl/ADAPTER/ConsultarDeclaracionByIdSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>  
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="ConsultarDeclaracionDirect" partnerLinkType="ns1:ConsultarDeclaracionDirect"
+                 myRole="DeclaracionJuradaPT"/>
+    <partnerLink name="ConsultarDeclaracion_SB" partnerLinkType="ns1:ConsultarDeclaracion_SB"
+                 partnerRole="DeclaracionJuradaPT"/>
+    <partnerLink name="ConsultarOperacionByIdOperacion" partnerLinkType="ns10:ConsultarOperacionByIdOperacion"
+                 partnerRole="ConsultarOperacionById12Port"/>
+    <partnerLink name="ValidarNoObjecion_BR" partnerLinkType="ns15:ValidarNoObjecionPT_PLT"
+                 partnerRole="ValidarNoObjecionPT_Role"/>
+    <partnerLink name="ConsultarCatProducto" partnerLinkType="ns16:ConsultarCatProducto"
+                 partnerRole="ConsultarCatProductoPT"/>
+    <partnerLink name="ConsultarProductoByIdOperacion" partnerLinkType="ns16:ConsultarProductoByIdOperacion"
+                 partnerRole="ConsultarProductoByIdOperacionPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConsultarDeclaracionJuradaByIdOperacionMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConsultarDeclaracionJuradaByIdOperacionMessage"/>
+    <variable name="NoObjecion" type="xsd:boolean"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConsultarDeclaracion_BPEL.wsdl) -->
+    <receive name="receiveInput" variable="inputVariable" createInstance="yes" partnerLink="ConsultarDeclaracionDirect"
+             portType="ns1:DeclaracionJuradaPT" operation="consultarDeclaracionJurada"/>
+    <scope name="ConsultarOperacionScope">
+      <variables>
+        <variable name="inConsultarOperacion" messageType="ns10:requestConsultarOperacionMessage"/>
+        <variable name="outConsultarOperacion" messageType="ns10:responseConsultarOperacionMessage"/>
+        <variable name="consultarProdByIdOperacion_Input" messageType="ns16:requestConsultarByIdOperacionMessage"/>
+        <variable name="consultarProdByIdOperacion_Output" messageType="ns16:responseConsultarByIdOperacionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="AssignError">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>'Error al momento de consultar la declaración'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="ConsultarOperacionSequence">
+        <assign name="setTitleVar">
+          <copy>
+            <from>oraext:setFlowInstanceTitle(concat("idOperacion: ",string($inputVariable.request/ns3:idOperacion)))</from>
+            <to>$setTitleVar</to>
+          </copy>
+        </assign>
+                                     
+        <assign name="ConsultarOperacionAssign">
+          <copy>
+            <from>$inputVariable.request/ns3:idOperacion</from>
+            <to>$inConsultarOperacion.request/ns11:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeToConsultarOperacion" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarOperacionByIdOperacion" portType="ns10:ConsultarOperacionById12Port"
+                operation="ConsultarOperacionById" inputVariable="inConsultarOperacion"
+                outputVariable="outConsultarOperacion"/>
+        <if name="ExisteOperacion">
+          <documentation>
+            <![CDATA[Existe]]>
+          </documentation>
+          <condition>$outConsultarOperacion.response/ns11:Resultado/ns5:result = 'OK'</condition>
+          <sequence>
+            <assign name="SetConsultarProducto">
+              <copy>
+                <from>$inputVariable.request/ns3:idOperacion</from>
+                <to>$consultarProdByIdOperacion_Input.request/ns17:idOperacion</to>
+              </copy>
+            </assign>
+            <invoke name="ConsultarProductoByOperacion" bpelx:invokeAsDetail="no"
+                    partnerLink="ConsultarProductoByIdOperacion" portType="ns16:ConsultarProductoByIdOperacionPT"
+                    operation="consultarByIdOperacion" inputVariable="consultarProdByIdOperacion_Input"
+                    outputVariable="consultarProdByIdOperacion_Output"/>
+            <if name="IfProducto">
+              <condition>$consultarProdByIdOperacion_Output.response/ns17:Resultado/ns5:result = 'OK' and $consultarProdByIdOperacion_Output.response/ns17:Producto/ns14:reglas/ns14:requiereLaft = 'false'</condition>
+              <sequence name="NorequiereLAFT"><assign name="AssignNoAplica"
+                                                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                  <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                    <from>true()</from>
+                    <to>$outputVariable.response/ns3:DeclaracionJurada/ns4:estadoDeclaracion/ns4:EstadoNoObjecion</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                    <from>'No Aplica'</from>
+                    <to>$outputVariable.response/ns3:DeclaracionJurada/ns4:estadoDeclaracion/ns4:nombreEstadoNoObjecion</to>
+                  </copy>
+                  <copy>
+                    <from>'OK'</from>
+                    <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+                  </copy>
+                  <copy>
+                    <from>'Producto no requiere LAFT'</from>
+                    <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+                  </copy>
+                </assign></sequence>
+              <elseif>
+                <condition>$consultarProdByIdOperacion_Output.response/ns17:Resultado/ns5:result = 'OK'</condition>
+                <scope name="ValidarNoObjecionScope">
+                  <variables>
+                    <variable name="inConsultarDeclaracion"
+                              messageType="ns1:requestConsultarDeclaracionJuradaByIdOperacionMessage"/>
+                    <variable name="outConsultarDeclaracion"
+                              messageType="ns1:responseConsultarDeclaracionJuradaByIdOperacionMessage"/>
+                    <variable name="FechaVencimiento" type="xsd:date"/>
+                    <variable name="codigoEstadoDeclaracion" type="xsd:int"/>
+                  </variables>
+                  <sequence name="ValidarNoObjecionSequence">
+                    <assign name="ConsultarDeclaracionAssign">
+                      <copy>
+                        <from>$inputVariable.request/ns3:idOperacion</from>
+                        <to>$inConsultarDeclaracion.request/ns3:idOperacion</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$inputVariable.request/ns3:excluirEnProceso</from>
+                        <to>$inConsultarDeclaracion.request/ns3:excluirEnProceso</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeToConsultarDeclaracionSB" partnerLink="ConsultarDeclaracion_SB"
+                            portType="ns1:DeclaracionJuradaPT" operation="consultarDeclaracionJurada"
+                            inputVariable="inConsultarDeclaracion" outputVariable="outConsultarDeclaracion"
+                            bpelx:invokeAsDetail="no"/>
+                    <if name="DeclaracionError">
+                      <documentation>
+                        <![CDATA[OK]]>
+                      </documentation>
+                      <condition>$outConsultarDeclaracion.response/ns3:Resultado/ns5:result != 'ERROR'</condition>
+                      <sequence>
+                        <forEach parallel="no" counterName="DeclaracionCounter" name="DeclaracionList">
+                          <startCounterValue>1</startCounterValue>
+                          <finalCounterValue>count($outConsultarDeclaracion.response/ns3:DeclaracionJurada)</finalCounterValue>
+                          <scope name="DeclaracionListScope">
+                            <sequence>
+                              <assign name="ConsultarDeclaracionResponseAssign">
+                                <copy>
+                                  <from>$outConsultarDeclaracion.response/ns3:DeclaracionJurada[$DeclaracionCounter]</from>
+                                  <to>$outputVariable.response/ns3:DeclaracionJurada</to>
+                                </copy>
+                                <copy>
+                                  <from>$outConsultarDeclaracion.response/ns3:DeclaracionJurada[$DeclaracionCounter]/ns4:estadoDeclaracion/ns4:codigoEstadoDeclaracion</from>
+                                  <to>$codigoEstadoDeclaracion</to>
+                                </copy>
+                                <copy>
+                                  <from>$outConsultarDeclaracion.response/ns3:DeclaracionJurada[$DeclaracionCounter]/ns4:fechaVencimiento</from>
+                                  <to>$FechaVencimiento</to>
+                                </copy>
+                              </assign>
+                            </sequence>
+                          </scope>
+                        </forEach>
+                        <if name="OperacionConExcepcion">
+                          <documentation>
+                            <![CDATA[ExisteOperacionConExcepcion]]>
+                          </documentation>
+                          <condition>$codigoEstadoDeclaracion = 12</condition>
+                          <assign name="AssignNoAplica">
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>true()</from>
+                              <to>$outputVariable.response/ns3:DeclaracionJurada/ns4:estadoDeclaracion/ns4:EstadoNoObjecion</to>
+                            </copy>
+                            <copy>
+                              <from>'OK'</from>
+                              <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+                            </copy>
+                            <copy>
+                              <from>'La consulta se ha realizado correctamente'</from>
+                              <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>'No Aplica'</from>
+                              <to>$outputVariable.response/ns3:DeclaracionJurada/ns4:estadoDeclaracion/ns4:nombreEstadoNoObjecion</to>
+                            </copy>
+                          </assign>
+                          <else>
+                            <documentation>
+                              <![CDATA[NoExisteOperacionConExcepcion]]>
+                            </documentation>
+                            <scope name="NoExisteOperacionConExcepcion"
+                                   xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                              <variables>
+                                <variable name="nombreEstadoNoObjecion" type="xsd:string"/>
+                                <variable name="inValidarNoObjecion"
+                                          messageType="ns15:ValidarNoObjecionRequestMessage"/>
+                                <variable name="outValidarNoObjecion"
+                                          messageType="ns15:ValidarNoObjecionResponseMessage"/>
+                                <variable name="banderaProductoEspecial" type="xsd:decimal"/>
+                              </variables>
+                              <faultHandlers>
+                                <catchAll>
+                                  <sequence name="Sequence5">
+                                    <assign name="DatosIncorrectos">
+                                      <copy>
+                                        <from>'ERROR'</from>
+                                        <to>$outputVariable.response/ns3:Resultado/ns5:error/ns6:errorCode</to>
+                                      </copy>
+                                      <copy>
+                                        <from>'Datos incorrectos'</from>
+                                        <to>$outputVariable.response/ns3:Resultado/ns5:error/ns6:errorDescription</to>
+                                      </copy>
+                                    </assign>
+                                    <rethrow name="ValidarNoObjecion"/>
+                                  </sequence>
+                                </catchAll>
+                              </faultHandlers>
+                              <sequence name="Sequence4">
+                                <assign name="ValidarNoObjecionBRAssign">
+                                  <copy>
+                                    <from>$inputVariable.request/ns3:idOperacion</from>
+                                    <to>$inValidarNoObjecion.request/ns3:idOperacion</to>
+                                  </copy>
+                                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                    <from>$inputVariable.request/ns3:excluirEnProceso</from>
+                                    <to>$inValidarNoObjecion.request/ns3:excluirEnProceso</to>
+                                  </copy>
+                                </assign>
+                                <invoke name="InvokeValidarNoObjecion" bpelx:invokeAsDetail="no"
+                                        partnerLink="ValidarNoObjecion_BR" portType="ns15:ValidarNoObjecionPT"
+                                        operation="validarNoObjecion" inputVariable="inValidarNoObjecion"
+                                        outputVariable="outValidarNoObjecion"/>
+                                <if name="Resultado" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                  <documentation>
+                                    <![CDATA[RespuestaValidacion]]>
+                                  </documentation>
+                                  <condition>string-length($outValidarNoObjecion.response/ns3:Declaracion) != 0</condition>
+                                  <sequence name="Sequence9">
+                                    <scope name="ScopeConsultarCatProducto">
+                                      <variables>
+                                        <variable name="consultarCatProducto_InputVariable"
+                                                  messageType="ns16:requestConsultarCatProductoMessage"/>
+                                        <variable name="consultarCatProducto_OutputVariable"
+                                                  messageType="ns16:responseConsultarCatProductoMessage"/>
+                                      </variables>
+                                      <sequence name="Sequence10">
+                                        <assign name="AssignConsultarCatProductoInput">
+                                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                            <from>true()</from>
+                                            <to>$consultarCatProducto_InputVariable.request/ns17:Producto/ns14:reglas/ns14:requiereLaft</to>
+                                          </copy>
+                                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                            <from>false()</from>
+                                            <to>$consultarCatProducto_InputVariable.request/ns17:Producto/ns14:reglas/ns14:OFICrealizaAnalisisLAFT</to>
+                                          </copy>
+                                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                            <from>0</from>
+                                            <to>$banderaProductoEspecial</to>
+                                          </copy>
+                                        </assign>
+                                        <invoke name="InvokeConsultarCatProducto" partnerLink="ConsultarCatProducto"
+                                                portType="ns16:ConsultarCatProductoPT" operation="consultarCatProducto"
+                                                inputVariable="consultarCatProducto_InputVariable"
+                                                outputVariable="consultarCatProducto_OutputVariable"
+                                                bpelx:invokeAsDetail="no"/>
+                                        <forEach parallel="no" counterName="productoCounter" name="ForEachProducto">
+                                          <bpelx:skipCondition>count($consultarCatProducto_OutputVariable.response/ns17:Producto)=0</bpelx:skipCondition>
+                                          <startCounterValue>1</startCounterValue>
+                                          <finalCounterValue>count($consultarCatProducto_OutputVariable.response/ns17:Producto)</finalCounterValue>
+                                          <scope name="ScopeEachProducto">
+                                            <assign name="AssignBanderaProducto1">
+                                              <bpelx:skipCondition>$outConsultarOperacion.response/ns11:Operacion/ns12:producto/ns14:idProducto != $consultarCatProducto_OutputVariable.response/ns17:Producto[$productoCounter]/ns14:idProducto</bpelx:skipCondition>
+                                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                                <from>1</from>
+                                                <to>$banderaProductoEspecial</to>
+                                              </copy>
+                                            </assign>
+                                          </scope>
+                                        </forEach>
+                                      </sequence>
+                                    </scope>
+                                    <if name="IfProductoLista">
+                                      <documentation>
+                                        <![CDATA[ProductoLista]]>
+                                      </documentation>
+                                      <condition>$codigoEstadoDeclaracion = 2 and $banderaProductoEspecial = 1</condition>
+                                      <assign name="AssignSi">
+                                        <copy>
+                                          <from>$outValidarNoObjecion.response/ns3:Declaracion</from>
+                                          <to>$outputVariable.response/ns3:DeclaracionJurada</to>
+                                        </copy>
+                                        <copy>
+                                          <from>'OK'</from>
+                                          <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+                                        </copy>
+                                        <copy>
+                                          <from>'La consulta se ha realizado correctamente'</from>
+                                          <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+                                        </copy>
+                                        <copy ignoreMissingFromData="yes">
+                                          <from>true()</from>
+                                          <to>$outputVariable.response/ns3:DeclaracionJurada/ns4:estadoDeclaracion/ns4:EstadoNoObjecion</to>
+                                        </copy>
+                                        <copy ignoreMissingFromData="yes">
+                                          <from>'Si'</from>
+                                          <to>$outputVariable.response/ns3:DeclaracionJurada/ns4:estadoDeclaracion/ns4:nombreEstadoNoObjecion</to>
+                                        </copy>
+                                      </assign>
+                                      <else>
+                                        <documentation>
+                                          <![CDATA[NoProductoLista]]>
+                                        </documentation>
+                                        <assign name="NoObjecion">
+                                          <copy>
+                                            <from>$outValidarNoObjecion.response/ns3:Declaracion</from>
+                                            <to>$outputVariable.response/ns3:DeclaracionJurada</to>
+                                          </copy>
+                                          <copy>
+                                            <from>$outValidarNoObjecion.response/ns3:Resultado</from>
+                                            <to>$outputVariable.response/ns3:Resultado</to>
+                                          </copy>
+                                        </assign>
+                                      </else>
+                                    </if>
+                                  </sequence>
+                                  <else>
+                                    <documentation>
+                                      <![CDATA[MontoOperacion]]>
+                                    </documentation>
+                                    <sequence name="ValidarMontoSequence">
+                                      <forEach parallel="no" counterName="MontoCounter" name="ForEachMonto">
+                                        <startCounterValue>1</startCounterValue>
+                                        <finalCounterValue>count($outConsultarOperacion.response/ns11:Operacion/ns12:montoOperacion/ns12:montoOperacion)</finalCounterValue>
+                                        <scope name="MontoList">
+                                          <if name="MontoSolicitado">
+                                            <documentation>
+                                              <![CDATA[> 20000]]>
+                                            </documentation>
+                                            <condition>$outConsultarOperacion.response/ns11:Operacion/ns12:montoOperacion/ns12:montoOperacion[$MontoCounter]/ns12:monto &gt;= 20000 and $outConsultarOperacion.response/ns11:Operacion/ns12:montoOperacion/ns12:montoOperacion/ns12:Descripcion = 'SOLICITADO'</condition>
+                                            <sequence>
+                                              <assign name="AssignNo">
+                                                <copy>
+                                                  <from>$outValidarNoObjecion.response/ns3:Declaracion</from>
+                                                  <to>$outputVariable.response/ns3:DeclaracionJurada</to>
+                                                </copy>
+                                                <copy>
+                                                  <from>'OK'</from>
+                                                  <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+                                                </copy>
+                                                <copy>
+                                                  <from>'La consulta se ha realizado correctamente'</from>
+                                                  <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+                                                </copy>
+                                                <copy ignoreMissingFromData="yes">
+                                                  <from>false()</from>
+                                                  <to>$outputVariable.response/ns3:DeclaracionJurada/ns4:estadoDeclaracion/ns4:EstadoNoObjecion</to>
+                                                </copy>
+                                                <copy ignoreMissingFromData="yes">
+                                                  <from>'No'</from>
+                                                  <to>$outputVariable.response/ns3:DeclaracionJurada/ns4:estadoDeclaracion/ns4:nombreEstadoNoObjecion</to>
+                                                </copy>
+                                              </assign>
+                                            </sequence>
+                                            <else>
+                                              <documentation>
+                                                <![CDATA[< 20000]]>
+                                              </documentation>
+                                              <sequence>
+                                                <assign name="AssignResultado">
+                                                  <copy>
+                                                    <from>$outValidarNoObjecion.response/ns3:Declaracion</from>
+                                                    <to>$outputVariable.response/ns3:DeclaracionJurada</to>
+                                                  </copy>
+                                                  <copy ignoreMissingFromData="yes">
+                                                    <from>true()</from>
+                                                    <to>$outputVariable.response/ns3:DeclaracionJurada/ns4:estadoDeclaracion/ns4:EstadoNoObjecion</to>
+                                                  </copy>
+                                                  <copy ignoreMissingFromData="yes">
+                                                    <from>'No Aplica'</from>
+                                                    <to>$outputVariable.response/ns3:DeclaracionJurada/ns4:estadoDeclaracion/ns4:nombreEstadoNoObjecion</to>
+                                                  </copy>
+                                                  <copy ignoreMissingFromData="yes">
+                                                    <from>'OK'</from>
+                                                    <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+                                                  </copy>
+                                                  <copy ignoreMissingFromData="yes">
+                                                    <from>'La consulta se ha realizado correctamente'</from>
+                                                    <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+                                                  </copy>
+                                                </assign>
+                                              </sequence>
+                                            </else>
+                                          </if>
+                                        </scope>
+                                      </forEach>
+                                    </sequence>
+                                  </else>
+                                </if>
+                              </sequence>
+                            </scope>
+                          </else>
+                        </if>
+                      </sequence>
+                      <else>
+                        <documentation>
+                          <![CDATA[ERROR]]>
+                        </documentation>
+                        <sequence name="ErrorConsultarDeclaracionSequence">
+                          <throw name="ErrorConsultarDeclaracion" faultName="bpelx:remoteFault"/>
+                        </sequence>
+                      </else>
+                    </if>
+                  </sequence>
+                </scope>
+              </elseif>
+              <else>
+                <assign name="ErrorConsultaProducto">
+                  <copy>
+                    <from>$consultarProdByIdOperacion_Output.response/ns17:Resultado/ns5:result</from>
+                    <to>$outputVariable.response/ns3:Resultado/ns5:result</to>
+                  </copy>
+                  <copy>
+                    <from>$consultarProdByIdOperacion_Output.response/ns17:Resultado/ns5:message</from>
+                    <to>$outputVariable.response/ns3:Resultado/ns5:message</to>
+                  </copy>
+                  <copy>
+                    <from>$consultarProdByIdOperacion_Output.response/ns17:Resultado/ns5:error</from>
+                    <to>$outputVariable.response/ns3:Resultado/ns5:error</to>
+                  </copy>
+                </assign>
+              </else>
+            </if>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[NoExiste]]>
+            </documentation>
+            <sequence name="Sequence7">
+              <assign name="AssignError">
+                <copy>
+                  <from>$outConsultarOperacion.response/ns11:Resultado/ns5:error/ns6:errorCode</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns5:error/ns6:errorCode</to>
+                </copy>
+                <copy>
+                  <from>$outConsultarOperacion.response/ns11:Resultado/ns5:error/ns6:errorDescription</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns5:error/ns6:errorDescription</to>
+                </copy>
+              </assign>
+              <throw name="ThrowErrorOperacion" faultName="bpelx:remoteFault"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" variable="outputVariable" partnerLink="ConsultarDeclaracionDirect"
+           portType="ns1:DeclaracionJuradaPT" operation="consultarDeclaracionJurada"/>
+  </sequence>
+</process>

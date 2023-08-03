@@ -1,0 +1,272 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Nov 24 16:26:46 CST 2016
+  Author:  hugo-casarrubias
+  Type: BPEL 2.0 Process
+  Purpose: One Way BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConsolidarFlujoCaja"
+               targetNamespace="http://xmlns.oracle.com/DominioDesembolso/PropagarTransferencia/ConsolidarFlujoCaja"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioDesembolso/PropagarTransferencia/ConsolidarFlujoCaja"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://www.bcie.org/ConsultarDetalleTransaccionByIdDesembolsoSAD"
+         xmlns:ns2="http://www.bcie.org/Desembolso" xmlns:ns3="http://xmlns.bcie.com/CorreoElectronicoService"
+         xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xmlns:ns4="http:/www.bcie.org/PropagarTransferenciaXSD"
+         xmlns:ns6="http://www.bcie.org/DesembolsoBO" xmlns:ns5="http://www.bcie.org/DesembolsoMO"
+         xmlns:ns7="http://www.bcie.org/CommonBO" xmlns:ns8="http://www.bcie.org/ProductoBO"
+         xmlns:ns10="http://www.bcie.org/HerramientaCEBO" xmlns:ns13="http://www.bcie.org/ComisionBO"
+         xmlns:ns12="http://www.bcie.org/MatrizTCCBO" xmlns:ns11="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns9="http://www.bcie.org/CatalogoBO" xmlns:ns14="http://www.bcie.org/AtributoBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns15="http://www.bcie.org/ResultBO"
+         xmlns:ns16="http://www.bcie.org/ErrorBO" xmlns:ns17="http://xmlns.bcie.com/UsuarioService"
+         xmlns:ns18="http://xmlns.oracle.com/OSB_BCIE/MDS/ConsultarUsuarioProcesoClienteSAD"
+         xmlns:ns19="http://www.bcie.org/ConsultarUsuarioProcesoClienteMO" xmlns:ns20="http://www.bcie.org/UsuarioMO"
+         xmlns:ns22="http://www.bcie.org/ConsultarUsuarioTareasBO" xmlns:ns21="http://www.bcie.org/UsuarioBO">
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/DesembolsoMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/Schema/DesembolsoMO.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http:/www.bcie.org/PropagarTransferenciaXSD" location="../Schemas/PropagarTransferenciaXSD.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/DominioDesembolso/PropagarTransferencia/ConsolidarFlujoCaja" location="../WSDLs/ConsolidarFlujoCaja.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="consolidarflujocaja_client" partnerLinkType="client:ConsolidarFlujoCaja" myRole="ConsolidarFlujoCajaProvider"/>
+    <partnerLink name="ConsultarDetalleTransaccionByIdDesembolso"
+                 partnerLinkType="ns1:ConsultarDetalleTransaccionByIdDesembolso"
+                 partnerRole="ConsultarDetalleTransaccionByIdDesembolso_PT"/>
+    <partnerLink name="Desembolso_SB" partnerLinkType="ns2:Desembolso_SB" partnerRole="Desembolso_PT"/>
+    <partnerLink name="EnviarCorreoElectronico" partnerLinkType="ns3:EnviarCorreoElectronico"
+                 partnerRole="CorreoElectronicoPT"/>
+    <partnerLink name="ConsultarAtributosUsuario" partnerLinkType="ns17:ConsultarAtributosUsuario"
+                 partnerRole="UsuarioPT"/>
+    <partnerLink name="ConsultarUsuarioProcesoCliente" partnerLinkType="ns18:ConsultarUsuarioProcesoCliente"
+                 partnerRole="ConsultarUsuarioProcesoCliente_ptt"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:ConsolidarFlujoCajaRequestMessage"/>
+    <variable name="EnviarCorreoElectronico_InputVariable" messageType="ns3:requestEnviarCorreoElectronicoMessage"/>
+    <variable name="EnviarCorreoElectronico_OutputVariable" messageType="ns3:responseEnviarCorreoElectronicoMessage"/>
+    <variable name="ConsultarDetalleTransaccionByIdDesembolso_InputVariable"
+              messageType="ns1:requestConsultarDetalleTransaccionMessage"/>
+    <variable name="ConsultarDetalleTransaccionByIdDesembolso_OutputVariable"
+              messageType="ns1:responseConsultarDetalleTransaccionMessage"/>
+    <variable name="PropagarReserva_InputVariable" messageType="ns2:requestPropagarReservaMessage"/>
+    <variable name="PropagarReserva_OutputVariable" messageType="ns2:responsePropagarReservaMessage"/>
+    <variable name="tablaCorreo" element="ns4:tablaCorreo"/>
+    <variable name="count" type="xsd:long"/>
+    <variable name="ConsolidrFlujoCaja_InputVariable" messageType="client:ConsolidarFlujoCajaRequestMessage"/>
+    <variable name="Variable1" messageType="client:ConsolidarFlujoCajaRequestMessage"/>
+    <variable name="Correo" element="ns4:estructuraCorreo"/>
+    <variable name="varFault" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="ConsultarAtributosUsuario_InputVariable"
+              messageType="ns17:requestConsultarAtributosUsuarioMessage"/>
+    <variable name="ConsultarAtributosUsuario_OutputVariable"
+              messageType="ns17:responseConsultarAtributosUsuarioMessage"/>
+    <variable name="ConsultarUsuarioProcesoCliente_InputVariable" messageType="ns18:requestMessage"/>
+    <variable name="ConsultarUsuarioProcesoCliente_OutputVariable" messageType="ns18:replyMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence1">
+        <assign name="XQ_CrearCorreo">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:processXQuery10('../Transformations/CrearCorreo.xqy', 'tablaCorreo', $tablaCorreo)</from>
+        <to variable="Correo"/>
+      </copy>
+    </assign>
+        <invoke name="EnviarCorreoElectronico" bpelx:invokeAsDetail="no" partnerLink="EnviarCorreoElectronico"
+                portType="ns16:CorreoElectronicoPT" operation="enviarCorreoElectronico"
+                inputVariable="EnviarCorreoElectronico_InputVariable"
+                outputVariable="EnviarCorreoElectronico_OutputVariable"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConsolidarFlujoCaja.wsdl) -->
+    <receive name="receiveInput" partnerLink="consolidarflujocaja_client" portType="client:ConsolidarFlujoCaja" operation="process"
+             variable="inputVariable" createInstance="yes"/>
+    <sequence name="SeqDatosCorreo">
+      <assign name="DatosUsuarioCorreo">
+        <copy>
+          <from>ora:processXQuery10('../Transformations/ConsolidaFlujoCajaIn_To_TablaCorreo.xqy', 'ConsolidarFlujoCaja_InputVariable.ConsolidarFlujoCajaIn', $inputVariable.payload)</from>
+          <to>$tablaCorreo</to>
+        </copy>
+        <copy>
+          <from>$inputVariable.payload/ns5:instanciaProceso</from>
+          <to>$ConsultarUsuarioProcesoCliente_InputVariable.ConsultarUsuarioProcesoClienteIn/ns19:instanciaProceso</to>
+        </copy>
+        <copy>
+          <from>$inputVariable.payload/ns5:idOperacion</from>
+          <to>$ConsultarUsuarioProcesoCliente_InputVariable.ConsultarUsuarioProcesoClienteIn/ns19:idOperacion</to>
+        </copy>
+        <copy>
+          <from>17</from>
+          <to>$ConsultarUsuarioProcesoCliente_InputVariable.ConsultarUsuarioProcesoClienteIn/ns19:idProceso</to>
+        </copy>
+      </assign>
+      <invoke name="ConsultarUsuarioProcesoCliente" bpelx:invokeAsDetail="no"
+              partnerLink="ConsultarUsuarioProcesoCliente" portType="ns18:ConsultarUsuarioProcesoCliente_ptt"
+              operation="ConsultarUsuarioProcesoCliente" inputVariable="ConsultarUsuarioProcesoCliente_InputVariable"
+              outputVariable="ConsultarUsuarioProcesoCliente_OutputVariable"/>
+      <assign name="DatosUsuario">
+        <copy>
+          <from>$ConsultarUsuarioProcesoCliente_OutputVariable.ConsultarUsuarioProcesoClienteOut/ns19:UsuarioProcesoCliente[1]/ns22:usuario</from>
+          <to>$ConsultarAtributosUsuario_InputVariable.request/ns20:listaNombres/ns21:nombreUsuario</to>
+        </copy>
+      </assign>
+      <invoke name="ConsultarAtributosUsuario" bpelx:invokeAsDetail="no" partnerLink="ConsultarAtributosUsuario"
+              portType="ns17:UsuarioPT" operation="consultarAtributosUsuario"
+              inputVariable="ConsultarAtributosUsuario_InputVariable"
+              outputVariable="ConsultarAtributosUsuario_OutputVariable"/>
+    </sequence>
+    <forEach parallel="no" counterName="Counter" name="ForEachAplicarCompensacion">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($inputVariable.payload/ns5:ContratoDesembolso)</finalCounterValue>
+      <scope name="ScopeAplicarCompensacion">
+        <variables>
+          <variable name="inputAplicarDesembolso" messageType="client:ConsolidarFlujoCajaRequestMessage"/>
+              <variable name="AplicarCompensacionDesembolso_InputVariable"
+              messageType="ns2:requestAplicarCompensacionDesembolsoMessage"/>
+    <variable name="AplicarCompensacionDesembolso_OutputVariable"
+              messageType="ns2:responseAplicarCompensacionDesembolsoMessage"/>
+        </variables>
+        <sequence name="AplicarCompensacionDesembolso">
+          <assign name="AsignarDesembolso">
+            <copy>
+              <from>$inputVariable.payload/ns5:ContratoDesembolso[$Counter]</from>
+              <to>$inputAplicarDesembolso.payload/ns5:ContratoDesembolso</to>
+            </copy>
+          </assign>
+          <assign name="aplicarCompensacionDesembolso">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:doXSLTransformForDoc("../Transformations/ConsolidarFlujoCajaIn_To_AplicarCompensacionDesembolso.xsl", $inputAplicarDesembolso.payload)</from>
+              <to variable="AplicarCompensacionDesembolso_InputVariable" part="request"/>
+            </copy>
+          </assign>
+          <invoke name="AplicarCompensacion" bpelx:invokeAsDetail="no" partnerLink="Desembolso_SB"
+                  portType="ns2:Desembolso_PT" operation="AplicarCompensacionDesembolso"
+                  inputVariable="AplicarCompensacionDesembolso_InputVariable"
+                  outputVariable="AplicarCompensacionDesembolso_OutputVariable"/>
+          <if name="If_CompensacionError">
+            <condition>$AplicarCompensacionDesembolso_OutputVariable.response/ns5:Resultado/ns15:result != 'OK'</condition>
+            <sequence name="SeqConsultarDetalleTransaccion">
+              <assign name="AssignIdDesembolso">
+                <copy>
+                  <from>$inputAplicarDesembolso.ConsolidarFlujoCajaIn/ns4:ContratoDesembolso/ns5:idDesembolso</from>
+                  <to>$ConsultarDetalleTransaccionByIdDesembolso_InputVariable.request/ns4:idDesembolso</to>
+                </copy>
+              </assign>
+              <invoke name="ConsultarDetalleTransaccion" bpelx:invokeAsDetail="no"
+                      partnerLink="ConsultarDetalleTransaccionByIdDesembolso"
+                      portType="ns1:ConsultarDetalleTransaccionByIdDesembolso_PT"
+                      operation="ConsultarDetalleTransaccionByIdDesembolso"
+                      inputVariable="ConsultarDetalleTransaccionByIdDesembolso_InputVariable"
+                      outputVariable="ConsultarDetalleTransaccionByIdDesembolso_OutputVariable"/>
+              <assign name="ERROR">
+                <copy>
+                  <from>concat($emailBody,$registroTransferencias)</from>
+                  <to>$emailBody</to>
+                </copy>
+              </assign>
+              <throw name="Throw" faultName="bpel:invalidVariables" faultVariable="varFault"/>
+            </sequence>
+            <else>
+              <sequence name="SeqOkAplicarCompensacion">
+                <empty name="Empty"/>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+    </forEach>
+    <sequence name="SeqPropagarConsoidadoPadre">
+      <assign name="propagarConsolidadoPadre">
+        <copy>
+          <from>$inputVariable.payload/ns5:ContratoDesembolso[1]/ns6:Transferencia[1]/ns6:idConsolidacionPadre</from>
+          <to>$PropagarReserva_InputVariable.request/ns5:idTransferencia</to>
+        </copy>
+        <copy>
+          <from>'hcruz'</from>
+          <to>$PropagarReserva_InputVariable.request/ns5:usuarioAutoriza</to>
+        </copy>
+        <copy>
+          <from>ora:processXQuery10('../Transformations/EstatusOk_TablaCorreo.xqy', 'tablaCorreo', $tablaCorreo)</from>
+          <to>$tablaCorreo</to>
+        </copy>
+      </assign>
+      <invoke name="propagarReserva" partnerLink="Desembolso_SB" portType="ns2:Desembolso_PT"
+              operation="propagarReserva" inputVariable="PropagarReserva_InputVariable"
+              outputVariable="PropagarReserva_OutputVariable" bpelx:invokeAsDetail="no"/>
+      <if name="If_PropagarReserva">
+        <condition>$PropagarReserva_OutputVariable.response/ns5:Resultado/ns15:result!='OK'</condition>
+        <sequence name="SeqErrorPropagar">
+          <throw name="Throw" faultName="bpel:invalidVariables" faultVariable="varFault"/>
+        </sequence>
+        <else>
+          <sequence name="SeqOkPropagar">
+            <assign name="Ok">
+              <copy>
+                <from>'OK'</from>
+                <to>$tablaCorreo/ns4:tablaTransferencias[ns4:operacion='CREAR']/ns4:estatus</to>
+              </copy>
+            </assign>
+          </sequence>
+        </else>
+      </if>
+    </sequence>
+    <assign name="XQ_CrearCorreo">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:processXQuery10('../Transformations/CrearCorreo.xqy', 'tablaCorreo', $tablaCorreo)</from>
+        <to variable="Correo"/>
+      </copy>
+    </assign>
+    <invoke name="EnviarCorreoElectronico" bpelx:invokeAsDetail="no" partnerLink="EnviarCorreoElectronico"
+            portType="ns3:CorreoElectronicoPT" operation="enviarCorreoElectronico"
+            inputVariable="EnviarCorreoElectronico_InputVariable"
+            outputVariable="EnviarCorreoElectronico_OutputVariable"/>
+  </sequence>
+</process>

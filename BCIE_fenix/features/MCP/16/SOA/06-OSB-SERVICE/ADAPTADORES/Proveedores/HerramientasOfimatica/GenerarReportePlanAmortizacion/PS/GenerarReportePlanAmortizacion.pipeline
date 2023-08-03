@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/Wsdl/ADAPTER/GenerarReportePlanAmortizacionSAD"/>
+            <con:binding>
+                <con:name>GenerarReportePlanAmortizacion_PTSOAP12Binding</con:name>
+                <con:namespace>http://www.bcie.org/GenerarReportePlanAmortizacionSAD</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="request" name="request-a0a280c.N2b623f03.0.17450aa0f3e.N8000">
+            <con:stage id="_StageId-a0a280c.N2b623f03.0.17450aa0f3e.N7ffe" name="GenerarReportePlanAmortizacionRequest">
+                <con:context>
+                    <con1:userNsDecl prefix="des" namespace="http://www.bcie.org/DesembolsoMO"/>
+                </con:context>
+                <con:actions>
+                    <con2:log>
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7ffa</con1:id>
+                        <con2:logLevel>info</con2:logLevel>
+                        <con2:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con2:expr>
+                        <con2:message>GenerarReportePlanAmortizacion - Request</con2:message>
+                    </con2:log>
+                    <con3:assign varName="requestPlanAmortizacion">
+                        <con1:id>_ActionId-a0a280c.361e0201.0.1745628574b.N7ffe</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>$body/des:GeneraReportePlanAmortizacionRequest</con1:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:assign varName="inObtenerPlanAmortizacion">
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7ff4</con1:id>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/GenerarReportePlanAmortizacion/XQUERY/GenerarReportePlanAmortizacion_PS_TO_ObtenerPlanAmortizacion_BS_Request"/>
+                                <con1:param name="GeneraReportePlanAmortizacionRequest">
+                                    <con1:path>$body/des:GeneraReportePlanAmortizacionRequest</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7ff1</con1:id>
+                        <con3:service ref="ADAPTADORES/Proveedores/HerramientasOfimatica/GenerarReportePlanAmortizacion/BS/ObtenerPlanAmortizacion" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>ObtenerPlanAmortizacion</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inObtenerPlanAmortizacion</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outObtenerPlanAmortizacion</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:assign varName="planAmortizacionXMLData">
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fee</con1:id>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/GenerarReportePlanAmortizacion/XQUERY/ObtenerPlanAmortizacion_BS_TO_GenerarReportePlanAmortizacion_PS_XML"/>
+                                <con1:param name="planAmortizacion">
+                                    <con1:path>$outObtenerPlanAmortizacion</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:assign varName="planAmortizacionXML">
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7feb</con1:id>
+                        <con3:expr>
+                            <con1:xsltTransform>
+                                <con1:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/GenerarReportePlanAmortizacion/XSL/PlanAmortizacion_docx"/>
+                                <con1:input>$planAmortizacionXMLData/desembolso</con1:input>
+                            </con1:xsltTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:assign varName="inConsultarConfiguracion">
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fe8</con1:id>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/GenerarReportePlanAmortizacion/XQUERY/GenerarReportePlanAmortizacion_PS_TO_ConsultarConfiguracion_BS"/>
+                                <con1:param name="llave">
+                                    <con1:path>"REPOSITORIO_FILE_SYSTEM"</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fe5</con1:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/ConsultarConfiguracion/BS/ConsultarConfiguracion_db" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>ConsultarConfiguracion</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inConsultarConfiguracion</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outConsultarConfiguracion</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:assign varName="inCrearReporteZip">
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fe2</con1:id>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/GenerarReportePlanAmortizacion/XQUERY/GenerarReportePlanAmortizacion_PS_TO_CrearReporteZip_BS_Request"/>
+                                <con1:param name="configuracion">
+                                    <con1:path>$outConsultarConfiguracion</con1:path>
+                                </con1:param>
+                                <con1:param name="plantilla">
+                                    <con1:path>"BCIE_REPORTS/Amortizacion"</con1:path>
+                                </con1:param>
+                                <con1:param name="planAmortizacionXml">
+                                    <con1:path>$planAmortizacionXML</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fdf</con1:id>
+                        <con3:service ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteZip/BS/CrearReporteZipPort" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>generarReporte</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inCrearReporteZip</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outCrearReporteZip</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-a0a280c.N2b623f03.0.17450aa0f3e.N7fff">
+            <con:stage id="_StageId-a0a280c.N2b623f03.0.17450aa0f3e.N7ffd" name="GenerarReportePlanAmortizacionResponse">
+                <con:context>
+                    <con1:userNsDecl prefix="des" namespace="http://www.bcie.org/DesembolsoMO"/>
+                </con:context>
+                <con:actions>
+                    <con3:assign varName="ReporteZipBS">
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fdc</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>fn-bea:inlinedXML($outCrearReporteZip)</con1:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con2:log>
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fd9</con1:id>
+                        <con2:logLevel>info</con2:logLevel>
+                        <con2:expr>
+                            <con1:xqueryText>$ReporteZipBS</con1:xqueryText>
+                        </con2:expr>
+                        <con2:message>ReporteZipBS  - Response</con2:message>
+                    </con2:log>
+                    <con3:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fd6</con1:id>
+                        <con3:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/GenerarReportePlanAmortizacion/XQUERY/CrearReporteZip_BS_TO_GenerarReportePlanAmortizacion_PS_Response"/>
+                                <con1:param name="archivos">
+                                    <con1:path>$ReporteZipBS</con1:path>
+                                </con1:param>
+                                <con1:param name="GeneraReportePlanAmortizacionRequest">
+                                    <con1:path>$requestPlanAmortizacion</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:log>
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7ff7</con1:id>
+                        <con2:logLevel>info</con2:logLevel>
+                        <con2:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con2:expr>
+                        <con2:message>GenerarReportePlanAmortizacion - Response</con2:message>
+                    </con2:log>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a0a280c.N2b623f03.0.17450aa0f3e.N7fd5" name="StageEnviarNotificacion">
+                <con:context>
+                    <con1:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO"/>
+                    <con1:userNsDecl prefix="des" namespace="http://www.bcie.org/DesembolsoMO"/>
+                    <con1:userNsDecl prefix="doc" namespace="http://www.bcie.org/DocumentoBO"/>
+                    <con1:userNsDecl prefix="err" namespace="http://www.bcie.org/ErrorBO"/>
+                </con:context>
+                <con:actions>
+                    <con3:ifThenElse>
+                        <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fcb</con1:id>
+                        <con3:case id="_BranchId-a0a280c.N2b623f03.0.17450aa0f3e.N7fca">
+                            <con3:condition>
+                                <con1:xqueryText>$body/des:GeneraReportePlanAmortizacionResponse/des:Resultado/res:result != 'OK'</con1:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:assign varName="varEnviarCorreoElectronicoRq">
+                                    <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fc7</con1:id>
+                                    <con3:expr>
+                                        <con1:xqueryTransform>
+                                            <con1:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                                            <con1:param name="Accion">
+                                                <con1:path>'Generar Plan de Amortizacion'</con1:path>
+                                            </con1:param>
+                                            <con1:param name="MensajeDeError">
+                                                <con1:path>concat($body/des:GeneraReportePlanAmortizacionResponse/des:Resultado/res:message, ' ',$body/des:GeneraReportePlanAmortizacionResponse/des:Resultado/res:error/err:errorDescription)</con1:path>
+                                            </con1:param>
+                                        </con1:xqueryTransform>
+                                    </con3:expr>
+                                </con3:assign>
+                                <con3:wsCallout>
+                                    <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fc4</con1:id>
+                                    <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoElectronico_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con3:operation>enviarCorreoElectronico</con3:operation>
+                                    <con3:request>
+                                        <con3:body wrapped="false">varEnviarCorreoElectronicoRq</con3:body>
+                                    </con3:request>
+                                    <con3:response>
+                                        <con3:body wrapped="false">varEnviarCorreoElectronicoRs</con3:body>
+                                    </con3:response>
+                                    <con3:requestTransform>
+                                        <con2:log>
+                                            <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fc1</con1:id>
+                                            <con2:logLevel>info</con2:logLevel>
+                                            <con2:expr>
+                                                <con1:xqueryText>$varEnviarCorreoElectronicoRq</con1:xqueryText>
+                                            </con2:expr>
+                                            <con2:message>varEnviarCorreoElectronicoRq-GenerarReportePlanAmortizacion_PsPipeline</con2:message>
+                                        </con2:log>
+                                    </con3:requestTransform>
+                                    <con3:responseTransform>
+                                        <con2:log>
+                                            <con1:id>_ActionId-a0a280c.N2b623f03.0.17450aa0f3e.N7fbe</con1:id>
+                                            <con2:logLevel>info</con2:logLevel>
+                                            <con2:expr>
+                                                <con1:xqueryText>$varEnviarCorreoElectronicoRs</con1:xqueryText>
+                                            </con2:expr>
+                                            <con2:message>varEnviarCorreoElectronicoRs-GenerarReportePlanAmortizacion_PsPipeline</con2:message>
+                                        </con2:log>
+                                    </con3:responseTransform>
+                                </con3:wsCallout>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default>
+                            <con3:ifThenElse>
+                                <con1:id>_ActionId-a0a280c.N178ce08.0.174e0aac000.N7fee</con1:id>
+                                <con3:case id="_BranchId-a0a280c.N178ce08.0.174e0aac000.N7fed">
+                                    <con3:condition>
+                                        <con1:xqueryText>$requestPlanAmortizacion/des:CargarDocumento = fn:true()</con1:xqueryText>
+                                    </con3:condition>
+                                    <con3:actions>
+                                        <con3:wsCallout>
+                                            <con1:id>_ActionId-a0a280c.N178ce08.0.174e0aac000.N7fea</con1:id>
+                                            <con3:service ref="ADAPTADORES/ModeloNegocio/DominioDocumento/CargarDocumentoFenix/PS/CargarDocumentoFenix_PSPipeline" xsi:type="con:PipelineRef"/>
+                                            <con3:operation>cargarDocumentoFenix</con3:operation>
+                                            <con3:request>
+                                                <con3:body wrapped="false">inCargarDocumento</con3:body>
+                                            </con3:request>
+                                            <con3:response>
+                                                <con3:body wrapped="false">outCargarDocumento</con3:body>
+                                            </con3:response>
+                                            <con3:requestTransform>
+                                                <con3:assign varName="inCargarDocumento">
+                                                    <con1:id>_ActionId-a0a280c.N178ce08.0.174e0aac000.N7fe1</con1:id>
+                                                    <con3:expr>
+                                                        <con1:xqueryTransform>
+                                                            <con1:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/GenerarReportePlanAmortizacion/XQUERY/GenerarReportePlanAmortizacion_PS_TO_CargarDocumentoFenix_PS_Request"/>
+                                                            <con1:param name="generarReportePlanAmortizacionResponse">
+                                                                <con1:path>$body/des:GeneraReportePlanAmortizacionResponse</con1:path>
+                                                            </con1:param>
+                                                        </con1:xqueryTransform>
+                                                    </con3:expr>
+                                                </con3:assign>
+                                                <con2:log>
+                                                    <con1:id>_ActionId-a0a280c.N178ce08.0.174e0aac000.N7fe7</con1:id>
+                                                    <con2:logLevel>info</con2:logLevel>
+                                                    <con2:expr>
+                                                        <con1:xqueryText>$inCargarDocumento</con1:xqueryText>
+                                                    </con2:expr>
+                                                    <con2:message>CargarDocumentoFenix_BS-Request</con2:message>
+                                                </con2:log>
+                                            </con3:requestTransform>
+                                            <con3:responseTransform>
+                                                <con2:log>
+                                                    <con1:id>_ActionId-a0a280c.N178ce08.0.174e0aac000.N7fe4</con1:id>
+                                                    <con2:logLevel>info</con2:logLevel>
+                                                    <con2:expr>
+                                                        <con1:xqueryText>$outCargarDocumento</con1:xqueryText>
+                                                    </con2:expr>
+                                                    <con2:message>CargarDocumentoFenix_BS-Response</con2:message>
+                                                </con2:log>
+                                            </con3:responseTransform>
+                                        </con3:wsCallout>
+                                        <con3:ifThenElse>
+                                            <con1:id>_ActionId-a0a280c.3043abd2.0.1763dd3d4cb.N7fea</con1:id>
+                                            <con3:case id="_BranchId-a0a280c.3043abd2.0.1763dd3d4cb.N7fe9">
+                                                <con3:condition>
+                                                    <con1:xqueryText>$outCargarDocumento/*:Resultado/*:result = 'OK'</con1:xqueryText>
+                                                </con3:condition>
+                                                <con3:actions>
+                                                    <con3:wsCallout>
+                                                        <con1:id>_ActionId-a0a280c.3043abd2.0.1763dd3d4cb.N7fe6</con1:id>
+                                                        <con3:service ref="ADAPTADORES/ModeloNegocio/DominioDocumento/CargarDocumentoFenixOnbase/PS/CargarDocumentoFenixOnbase_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                                        <con3:operation>cargarDocumentoOnbaseSOR</con3:operation>
+                                                        <con3:request>
+                                                            <con3:body wrapped="false">inCargarDocumentoOnbase</con3:body>
+                                                        </con3:request>
+                                                        <con3:response>
+                                                            <con3:body wrapped="false">outCargarDocumentoOnbase</con3:body>
+                                                        </con3:response>
+                                                        <con3:requestTransform>
+                                                            <con3:assign varName="inCargarDocumentoOnbase">
+                                                                <con1:id>_ActionId-a0a280c.3043abd2.0.1763dd3d4cb.N7fc0</con1:id>
+                                                                <con3:expr>
+                                                                    <con1:xqueryTransform>
+                                                                        <con1:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/GenerarReportePlanAmortizacion/XQUERY/CargarDocumentoFenix_PS_TO_CargarDocumentoOnBase_PS_Request"/>
+                                                                        <con1:param name="CargarDocumentosFenixResponse">
+                                                                            <con1:path>$outCargarDocumento</con1:path>
+                                                                        </con1:param>
+                                                                    </con1:xqueryTransform>
+                                                                </con3:expr>
+                                                            </con3:assign>
+                                                            <con2:log>
+                                                                <con1:id>_ActionId-a0a280c.3043abd2.0.1763dd3d4cb.N7fbd</con1:id>
+                                                                <con2:logLevel>info</con2:logLevel>
+                                                                <con2:expr>
+                                                                    <con1:xqueryText>$inCargarDocumentoOnbase</con1:xqueryText>
+                                                                </con2:expr>
+                                                                <con2:message>CargarDocumentoFenixOnbase_BS-Request</con2:message>
+                                                            </con2:log>
+                                                        </con3:requestTransform>
+                                                        <con3:responseTransform>
+                                                            <con2:log>
+                                                                <con1:id>_ActionId-a0a280c.3043abd2.0.1763dd3d4cb.N7fba</con1:id>
+                                                                <con2:logLevel>info</con2:logLevel>
+                                                                <con2:expr>
+                                                                    <con1:xqueryText>$outCargarDocumentoOnbase</con1:xqueryText>
+                                                                </con2:expr>
+                                                                <con2:message>CargarDocumentoFenixOnbase_BS-Response</con2:message>
+                                                            </con2:log>
+                                                        </con3:responseTransform>
+                                                    </con3:wsCallout>
+                                                </con3:actions>
+                                            </con3:case>
+                                            <con3:default/>
+                                        </con3:ifThenElse>
+                                    </con3:actions>
+                                </con3:case>
+                                <con3:default/>
+                            </con3:ifThenElse>
+                        </con3:default>
+                    </con3:ifThenElse>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PipelinePairNode1">
+                <con:request>request-a0a280c.N2b623f03.0.17450aa0f3e.N8000</con:request>
+                <con:response>response-a0a280c.N2b623f03.0.17450aa0f3e.N7fff</con:response>
+            </con:pipeline-node>
+        </con:flow>
+        <con:shared-variables>
+            <con:variable>inObtenerPlanAmortizacion</con:variable>
+            <con:variable>outObtenerPlanAmortizacion</con:variable>
+            <con:variable>inConsultarConfiguracion</con:variable>
+            <con:variable>outConsultarConfiguracion</con:variable>
+            <con:variable>planAmortizacionXML</con:variable>
+            <con:variable>planAmortizacionXMLData</con:variable>
+            <con:variable>inCrearReporteZip</con:variable>
+            <con:variable>outCrearReporteZip</con:variable>
+            <con:variable>ReporteZipBS</con:variable>
+            <con:variable>varEnviarCorreoElectronicoRq</con:variable>
+            <con:variable>varEnviarCorreoElectronicoRs</con:variable>
+            <con:variable>inMapeoError</con:variable>
+            <con:variable>outMapeoError</con:variable>
+            <con:variable>requestPlanAmortizacion</con:variable>
+            <con:variable>inCargarDocumento</con:variable>
+            <con:variable>outCargarDocumento</con:variable>
+            <con:variable>inCargarDocumentoOnbase</con:variable>
+            <con:variable>outCargarDocumentoOnbase</con:variable>
+        </con:shared-variables>
+    </con:router>
+</con:pipelineEntry>

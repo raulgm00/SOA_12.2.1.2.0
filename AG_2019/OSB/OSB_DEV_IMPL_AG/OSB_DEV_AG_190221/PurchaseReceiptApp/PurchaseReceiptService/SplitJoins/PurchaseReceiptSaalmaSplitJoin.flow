@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpel:process name="PurchaseReceiptSaalmaSplitJoin"
+              targetNamespace="http://xmlns.oracle.com/OSBAGApp/PurchaseReceiptApp/"
+              xmlns:tns="http://xmlns.oracle.com/OSBAGApp/PurchaseReceiptApp/"
+              xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+              xmlns:rescon="http://www.bea.com/alsb/flow/resources/config"
+              xmlns:bea="http://www.bea.com/bpel/ui/extensions"
+              xmlns:ext="http://www.bea.com/bpel/extensions"
+              xmlns:expr="http://www.bea.com/wli/sb/stages/config"
+              xmlns:trf="http://www.bea.com/wli/sb/stages/transform/config"
+              xmlns:bind="http://www.agarcia.mx/ServiceBus/PurchaseReceiptSaalmaSplitJoin" 
+              bea:name="PurchaseReceiptSaalmaSplitJoin"
+              rescon:snippetVersion="1.0"
+              xmlns:ns0="http://www.bea.com/wli/sb/pipeline/config"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xmlns:ns1="http://www.agarcia.mx/ServiceBus/PurchaseReceiptService"
+              xmlns:res="http://www.agarcia.mx/ServiceBus/nxsd/saalma/resultados"
+              xmlns:lis="http://www.agarcia.mx/ServiceBus/nxsd/saalma/AdvancedShipmentNotice/LISTRESPs"
+              xmlns:ns2="http://www.bea.com/wli/sb/stages/logging/config">
+    <bpel:partnerLinks>
+        <bpel:partnerLink name="PurchaseReceiptSaalmaSplitJoin" partnerLinkType="tns:PurchaseReceiptSaalmaSplitJoin"
+                          myRole="PurchaseReceiptSaalmaSplitJoin">
+	       </bpel:partnerLink>
+        <bpel:partnerLink name="PurchaseReceiptService" partnerLinkType="tns:PurchaseReceiptService"
+                          partnerRole="PurchaseReceiptService"/>
+    </bpel:partnerLinks>
+
+	   <bpel:variables>
+        <bpel:variable name="request"
+	                      messageType="bind:requestMessage">
+	       </bpel:variable>
+	       <bpel:variable name="response"
+                       messageType="bind:replyMessage">
+	       </bpel:variable>
+        <bpel:variable name="ProcessPurchaseReceiptEBM" messageType="ns1:requestMessage"/>
+        <bpel:variable name="ProcessPurchaseReceiptEBMResponse" messageType="ns1:replyMessage"/>
+    </bpel:variables>
+
+    <bpel:sequence>
+        <bpel:receive partnerLink="PurchaseReceiptSaalmaSplitJoin" operation="ProcessPurchaseReceipt" variable="request" createInstance="yes">
+	           <rescon:receiveInfo>
+                <rescon:wsdl ref="PurchaseReceiptApp/PurchaseReceiptService/Resources/WSDLs/PurchaseReceiptSaalmaSplitJoin" binding="bind:PurchaseReceipt_bind"/>
+            </rescon:receiveInfo>
+        </bpel:receive>
+        <bpel:assign>
+            <bpel:extensionAssignOperation ext:txnPropagation="Supports">
+                <trf:assign varName="ProcessPurchaseReceiptEBM.request">
+                    <trf:expr>
+                        <expr:xqueryText>&lt;ProcessReceiptEBM/&gt;</expr:xqueryText>
+                    </trf:expr>
+                </trf:assign>
+            </bpel:extensionAssignOperation>
+            <bpel:extensionAssignOperation ext:txnPropagation="Supports">
+                <trf:replace contents-only="false" varName="ProcessPurchaseReceiptEBM.request">
+                    <trf:location>
+                        <expr:xpathText>.</expr:xpathText>
+                    </trf:location>
+                    <trf:expr>
+                        <expr:xsltTransform>
+                            <expr:resource ref="PurchaseReceiptApp/PurchaseReceiptService/Resources/XSLTs/XformSAALMARequestABM_To_ProcessPurchaseReceiptRequestEBM"/>
+                            <expr:input>$request.request</expr:input>
+                        </expr:xsltTransform>
+                    </trf:expr>
+                </trf:replace>
+            </bpel:extensionAssignOperation>
+        </bpel:assign>
+        <bpel:invoke partnerLink="PurchaseReceiptService" operation="ProcessPurchaseReceipt"
+                     inputVariable="ProcessPurchaseReceiptEBM" outputVariable="ProcessPurchaseReceiptEBMResponse"
+                     ext:txnPropagation="Supports">
+            <rescon:invokeInfo>
+                <rescon:service ref="PurchaseReceiptApp/PurchaseReceiptService/Pipelines/PurchaseReceiptService"
+                                xsi:type="ns0:PipelineRef"/>
+            </rescon:invokeInfo>
+        </bpel:invoke>
+        <bpel:assign>
+            <bpel:extensionAssignOperation ext:txnPropagation="Supports">
+                <trf:assign varName="response.response">
+                    <trf:expr>
+                        <expr:xqueryText>&lt;LISTRESP/&gt;</expr:xqueryText>
+                    </trf:expr>
+                </trf:assign>
+            </bpel:extensionAssignOperation>
+            <bpel:extensionAssignOperation ext:txnPropagation="Supports">
+                <trf:replace contents-only="false" varName="response.response">
+                    <trf:location>
+                        <expr:xpathText>.</expr:xpathText>
+                    </trf:location>
+                    <trf:expr>
+                        <expr:xsltTransform>
+                            <expr:resource ref="PurchaseReceiptApp/PurchaseReceiptService/Resources/XSLTs/XformProcessPurchaseReceiptResponseEBM_To_SAALMAResponseABM"/>
+                            <expr:input>$ProcessPurchaseReceiptEBMResponse.response</expr:input>
+                        </expr:xsltTransform>
+                    </trf:expr>
+                </trf:replace>
+            </bpel:extensionAssignOperation>
+        </bpel:assign>
+        <bpel:reply partnerLink="PurchaseReceiptSaalmaSplitJoin" operation="ProcessPurchaseReceipt" variable="response"></bpel:reply>
+    </bpel:sequence>
+</bpel:process>

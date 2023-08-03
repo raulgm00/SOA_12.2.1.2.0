@@ -1,0 +1,230 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sat Jun 15 12:27:16 GMT-06:00 2019
+  Author:  User
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CostChangeApprovedProcessBPEL"
+               targetNamespace="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/CostChangeApprovedProcessBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/CostChangeApprovedProcessBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/CostChangeApprovedProcess/v1.0"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://mx.agarcia.ea/Applications/RetailMerchandising/RMS/CostChange/v1.0"
+         xmlns:ns3="http://xmlns.oracle.com/pcbpel/adapter/db/MDMCreateCostChange/MDMCreateCostChange/MDMCreateCostChange"
+         xmlns:ns7="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns8="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:ns6="http://mx.agarcia.ea/Canonical/Commons/RetailStore/v1"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns4="http://mx.agarcia.ea/Applications/RetailMerchandising/RMS/CostChange"
+         xmlns:ns9="http://mx.agarcia.ea/Capabilities/Foundation/Party/CostChangeTask"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/ChangeCost/v1"
+         xmlns:ns10="http://xmlns.oracle.com/pcbpel/adapter/db/AGSOABpelApplication/CostChangeApprovedProcess/MDMUpdateCostChange"
+         xmlns:ns11="http://xmlns.oracle.com/pcbpel/adapter/db/top/MDMUpdateCostChange"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns12="http://xmlns.oracle.com/pcbpel/adapter/db/RPMExportPriceCostChangeApp/RPMExportPriceCostChange/RPMPriceCostChangeExport"
+         xmlns:ns13="http://xmlns.oracle.com/pcbpel/adapter/db/RPMPriceCostChangeExport"
+         xmlns:ns14="http://xmlns.oracle.com/pcbpel/adapter/db/AGSOABpelApplication/CostChangeApprovedProcess/MDMCreateCostChangeDetails"
+         xmlns:ns15="http://xmlns.oracle.com/pcbpel/adapter/db/top/MDMCreateCostChangeDetails"
+         xmlns:ns16="http://xmlns.oracle.com/pcbpel/adapter/db/CostChangeApp/CostChangeApprovedProcess/InsertCostChange"
+         xmlns:ns17="http://xmlns.oracle.com/pcbpel/adapter/db/top/InsertCostChange">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/CostChangeApprovedProcess/v1.0"
+          location="../WSDLs/CostChangeApprovedProcessWSDLWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="costchangeapprovedprocessbpel_client" partnerLinkType="ns1:CostChangeApprovedProcessBPEL" myRole="CostChangeApprovedProcessPType"/>
+    <partnerLink name="MDMUpdateCostChange" partnerLinkType="ns10:MDMUpdateCostChange_plt"
+                 partnerRole="MDMUpdateCostChange_role"/>
+    <partnerLink name="RPMFindCostChangeDetailsPXY" partnerLinkType="ns12:RPMPriceCostChangeExport_plt"
+                 partnerRole="RPMPriceCostChangeExport_role"/>
+    <partnerLink name="MDMCreateCostChangeDetails" partnerLinkType="ns14:MDMCreateCostChangeDetails_plt"
+                 partnerRole="MDMCreateCostChangeDetails_role"/>
+    <partnerLink name="InsertCostChange" partnerLinkType="ns16:InsertCostChange_plt"
+                 partnerRole="InsertCostChange_role"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:saveCostChangeEventDataRequest"/>
+    <variable name="Invoke_MDMUpdateCostChange_InVar" messageType="ns10:CchEventsCollection_msg"/>
+    <variable name="Invoke_RPMFindCostChangeDetails_InVar" messageType="ns12:RPMPriceCostChangeExportInput_msg"/>
+    <variable name="Invoke_RPMFindCostChangeDetails_OutVar"
+              messageType="ns12:RPMPriceCostChangeExportOutputCollection_msg"/>
+    <variable name="Invoke_MDMCreateCostChangeDetails_InVar" messageType="ns14:CchEventsDetailsCollection_msg"/>
+    <variable name="Invoke_MDMCreateCostChangeDetails_OutVar" messageType="ns14:CchEventsDetailsCollection_msg"/>
+    <variable name="insertCostChange_insert_InputVariable" messageType="ns16:CchEventsCollection_msg"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CostChangeApprovedProcessBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="costchangeapprovedprocessbpel_client" portType="ns1:CostChangeApprovedProcessPType" operation="saveCostChange" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignIdChange">
+      <copy>
+        <from>$inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:id</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RPMFindCostChangeDetails_InVar.RPMPriceCostChangeExportInput_msg/ns13:pHeadId</to>
+      </copy>
+    </assign>
+    <invoke name="Invoke_RPMFindCostChangeDetails" partnerLink="RPMFindCostChangeDetailsPXY"
+            portType="ns12:RPMPriceCostChangeExport_ptt" operation="RPMPriceCostChangeExport"
+            inputVariable="Invoke_RPMFindCostChangeDetails_InVar"
+            outputVariable="Invoke_RPMFindCostChangeDetails_OutVar" bpelx:invokeAsDetail="no"/>
+    <if name="validateSource">
+      <condition>$inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:userRequestor/ns5:id='AGARCIA_SOA'</condition>
+      <sequence><assign name="TrMDMCreateCostChangeDetailsReq"
+                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <bpelx:annotation xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+         <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+         <from>ora:doXSLTransformForDoc("../Transformations/TrMDMCreateCostChangeDetailsReq.xsl", $Invoke_RPMFindCostChangeDetails_OutVar.RPMPriceCostChangeExportOutputCollection)</from>
+         <to variable="Invoke_MDMCreateCostChangeDetails_InVar" part="CchEventsDetailsCollection"/>
+      </copy>
+   </assign><invoke name="Invoke_MDMCreateCostChangeDetails" partnerLink="MDMCreateCostChangeDetails"
+                portType="ns14:MDMCreateCostChangeDetails_ptt" operation="insert"
+                inputVariable="Invoke_MDMCreateCostChangeDetails_InVar"
+                outputVariable="Invoke_MDMCreateCostChangeDetails_OutVar" bpelx:invokeAsDetail="no"/>
+        <assign name="AssignStatusRead">
+          <copy>
+            <from>$inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:id</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMUpdateCostChange_InVar.CchEventsCollection/ns11:CchEvents/ns11:id</to>
+          </copy>
+          <copy>
+            <from>"RPMAPR"</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMUpdateCostChange_InVar.CchEventsCollection/ns11:CchEvents/ns11:statusCode</to>
+          </copy>
+          <copy>
+            <from>1</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMUpdateCostChange_InVar.CchEventsCollection/ns11:CchEvents/ns11:exportFlag</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_MDMUpdateCostChange" partnerLink="MDMUpdateCostChange"
+                portType="ns10:MDMUpdateCostChange_ptt" operation="update"
+                inputVariable="Invoke_MDMUpdateCostChange_InVar" bpelx:invokeAsDetail="no"/></sequence>
+      <else>
+        <documentation>
+          <![CDATA[RPM]]>
+        </documentation>
+        <sequence name="Sequence2">
+          <assign name="insertEvent">
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:id</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$insertCostChange_insert_InputVariable.CchEventsCollection/ns17:CchEvents/ns17:id</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:id/@Name</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$insertCostChange_insert_InputVariable.CchEventsCollection/ns17:CchEvents/ns17:name</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>concat($inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:id/@Name,$inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:id)</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$insertCostChange_insert_InputVariable.CchEventsCollection/ns17:CchEvents/ns17:description</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:effectiveDate</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$insertCostChange_insert_InputVariable.CchEventsCollection/ns17:CchEvents/ns17:effectiveDate</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:expirationDate</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$insertCostChange_insert_InputVariable.CchEventsCollection/ns17:CchEvents/ns17:expirationDate</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:scope</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$insertCostChange_insert_InputVariable.CchEventsCollection/ns17:CchEvents/ns17:scope</to>
+            </copy>
+            <copy>
+              <from>'RPMAPR'</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$insertCostChange_insert_InputVariable.CchEventsCollection/ns17:CchEvents/ns17:statusCode</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:userRequestor/ns5:id</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$insertCostChange_insert_InputVariable.CchEventsCollection/ns17:CchEvents/ns17:userRequestor</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:currency</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$insertCostChange_insert_InputVariable.CchEventsCollection/ns17:CchEvents/ns17:currency</to>
+            </copy>
+            <copy>
+              <from>0</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$insertCostChange_insert_InputVariable.CchEventsCollection/ns17:CchEvents/ns17:exportFlag</to>
+            </copy>
+          </assign>
+          <invoke name="insertCostChange" bpelx:invokeAsDetail="no" partnerLink="InsertCostChange"
+                  portType="ns16:InsertCostChange_ptt" operation="insert"
+                  inputVariable="insertCostChange_insert_InputVariable"/><assign name="TrMDMCreateCostChangeDetailsReq"
+                                                                                 xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <bpelx:annotation xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+         <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+         <from>ora:doXSLTransformForDoc("../Transformations/TrMDMCreateCostChangeDetailsReq.xsl", $Invoke_RPMFindCostChangeDetails_OutVar.RPMPriceCostChangeExportOutputCollection)</from>
+         <to variable="Invoke_MDMCreateCostChangeDetails_InVar" part="CchEventsDetailsCollection"/>
+      </copy>
+   </assign><invoke name="Invoke_MDMCreateCostChangeDetails" partnerLink="MDMCreateCostChangeDetails"
+                portType="ns14:MDMCreateCostChangeDetails_ptt" operation="insert"
+                inputVariable="Invoke_MDMCreateCostChangeDetails_InVar"
+                outputVariable="Invoke_MDMCreateCostChangeDetails_OutVar" bpelx:invokeAsDetail="no"
+                xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/><assign name="AssignStatusRead"
+                                                                                          xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$inputVariable.saveCostChangeEventDataRequest/ns9:event/ns5:id</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMUpdateCostChange_InVar.CchEventsCollection/ns11:CchEvents/ns11:id</to>
+      </copy>
+      <copy>
+         <from>"RPMAPR"</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMUpdateCostChange_InVar.CchEventsCollection/ns11:CchEvents/ns11:statusCode</to>
+      </copy>
+      <copy>
+         <from>1</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMUpdateCostChange_InVar.CchEventsCollection/ns11:CchEvents/ns11:exportFlag</to>
+      </copy>
+   </assign><invoke name="Invoke_MDMUpdateCostChange" partnerLink="MDMUpdateCostChange"
+                    portType="ns10:MDMUpdateCostChange_ptt" operation="update"
+                    inputVariable="Invoke_MDMUpdateCostChange_InVar" bpelx:invokeAsDetail="no"
+                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/></sequence>
+      </else>
+    </if>
+  </sequence>
+</process>

@@ -1,0 +1,321 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Jun 29 11:38:33 CDT 2016
+  Author:  dalia-reyes
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ValidarReservaBPEL"
+               targetNamespace="http://xmlns.oracle.com/BusinessRulesServices/ValidarReserva/ValidarReservaBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/BusinessRulesServices/ValidarReserva/ValidarReservaBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ClienteService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://xmlns.oracle.com/ValidarReserva/ValidarReserva_DecisionService_1"
+         xmlns:ns3="http://xmlns.bcie.com/ClienteService" xmlns:ns4="http://www.bcie.org/ConsultarClienteREPSAD"
+         xmlns:ns5="http://xmlns.oracle.com/ValidarReserva/ValidarReserva_DecisionService"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns6="http://www.bcie.org/ClienteMO" xmlns:ns7="http://www.bcie.org/ClienteBO"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns9="http://www.bcie.org/ResultBO"
+         xmlns:ns8="http://www.bcie.org/CatalogoBO" xmlns:ns10="http://www.bcie.org/ErrorBO"
+         xmlns:ns12="http://www.bcie.org" xmlns:ns11="http://xmlns.oracle.com/bpel"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/ClienteService" location="../WSDLs/ValidarReservaSORWrapper1.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="ConsultarClienteByID" partnerLinkType="ns3:ConsultarClienteByID" partnerRole="ClientePT"/>
+    <partnerLink name="ConsultarClienteREP" partnerLinkType="ns4:ConsultarClienteREP"
+                 partnerRole="ConsultarClienteREP"/>
+    <partnerLink name="ValidarReserva"
+                 partnerLinkType="ns2:ValidarReserva.ValidarReserva_DecisionService_1" partnerRole="IDecisionService"/>
+    <partnerLink name="validarreservabpel_client_ep" partnerLinkType="ns3:validarreservabpel_client_ep"
+                 myRole="ValidarReservaPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestValidarReservaMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseValidarReservaMessage"/>
+    <variable name="setTitleInstance" type="xsd:string"/>
+    <variable name="IdFacturador" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceError">
+        <assign name="Assign_Error">
+          <copy>
+            <from>'Error'</from>
+            <to>$outputVariable.response/ns6:Resultado/ns9:result</to>
+          </copy>
+          <copy>
+            <from>'Error en validar reserva'</from>
+            <to>$outputVariable.response/ns6:Resultado/ns9:message</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns6:Resultado/ns9:error/ns10:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="validarreservabpel_client_ep"
+               portType="ns3:ValidarReservaPT" operation="validarReserva"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ValidarReservaBPEL.wsdl) -->
+    <receive name="receiveInput" variable="inputVariable" createInstance="yes"
+             partnerLink="validarreservabpel_client_ep" portType="ns3:ValidarReservaPT" operation="validarReserva"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("IdCliente: ",string($inputVariable.request/ns7:idCliente)))</from>
+        <to>$setTitleInstance</to>
+      </copy>
+    </assign>
+    <assign name="AssignIdFacturador">
+      <copy>
+        <from>$inputVariable.request/ns7:idFacturador</from>
+        <to>$IdFacturador</to>
+      </copy>
+    </assign>
+    <if name="IfValidarIdFacturador">
+      <documentation>
+        <![CDATA[Sin_Valor]]>
+      </documentation>
+      <condition>$IdFacturador= ''</condition>
+      <scope name="ScopeConsultarClienteById">
+        <variables>
+          <variable name="inInvoke_ConsultarClienteById" messageType="ns3:requestConsultarClienteMessageByIdCliente"/>
+          <variable name="outInvoke_ConsultarClienteById" messageType="ns3:responseConsultarClienteMessageByIdCliente"/>
+        </variables>
+        <sequence name="SequenceConsultarClienteById">
+          <assign name="Assign_ConsultarClienteById">
+            <copy>
+              <from>$inputVariable.request/ns7:idCliente</from>
+              <to>$inInvoke_ConsultarClienteById.request/ns6:idCliente</to>
+            </copy>
+            <copy>
+              <from>false()</from>
+              <to>$inInvoke_ConsultarClienteById.request/ns6:infoMora</to>
+            </copy>
+            <copy>
+              <from>false()</from>
+              <to>$inInvoke_ConsultarClienteById.request/ns6:infoDeterioro</to>
+            </copy>
+          </assign>
+          <invoke name="Invoke_ConsultarClienteById" bpelx:invokeAsDetail="no" partnerLink="ConsultarClienteByID"
+                  portType="ns3:ClientePT" operation="consultarByIdCliente"
+                  inputVariable="inInvoke_ConsultarClienteById" outputVariable="outInvoke_ConsultarClienteById"/>
+          <if name="IfResultado">
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <condition>$outInvoke_ConsultarClienteById.response/ns6:Resultado/ns9:result='ERROR'</condition>
+            <sequence name="SequenceErrorConsultaCliente">
+              <assign name="Assign_ERROR_ConsultarCliente">
+                <copy>
+                  <from>'Error'</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns9:result</to>
+                </copy>
+                <copy>
+                  <from>'Error al consultar cliente'</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns9:message</to>
+                </copy>
+                <copy>
+                  <from>$outInvoke_ConsultarClienteById.response/ns6:Resultado/ns9:message</from>
+                  <to>$outputVariable.response/ns6:Resultado/ns9:error/ns10:errorDescription</to>
+                </copy>
+              </assign>
+              <reply name="ReplyErrorConsultaCliente" variable="outputVariable"
+                     partnerLink="validarreservabpel_client_ep" portType="ns1:ValidarReservaPT"
+                     operation="validarReserva"/>
+              <exit name="ExitErrorConsultaCliente"/>
+            </sequence>
+            <else>
+              <documentation>
+                <![CDATA[OK]]>
+              </documentation>
+              <sequence name="SequenceConsultaIdFacturador">
+                <assign name="Assign_DatosCliente">
+                  <copy>
+                    <from>$outInvoke_ConsultarClienteById.response/ns6:Cliente[1]</from>
+                    <to>$outputVariable.response/ns6:Cliente[1]</to>
+                  </copy>
+                  <copy>
+                    <from>$outInvoke_ConsultarClienteById.response/ns6:Cliente[1]/ns7:idFacturador</from>
+                    <to>$IdFacturador</to>
+                  </copy>
+                </assign>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+      <else>
+        <documentation>
+          <![CDATA[Con_Valor]]>
+        </documentation>
+        <assign name="Assign_DatosEntrada">
+          <copy>
+            <from>$inputVariable.request/ns7:idCliente</from>
+            <to>$outputVariable.response/ns6:Cliente/ns7:idCliente</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.request/ns7:idFacturador</from>
+            <to>$outputVariable.response/ns6:Cliente/ns7:idFacturador</to>
+          </copy>
+        </assign>
+      </else>
+    </if>
+    <scope name="ScopeConsultarClienteREP">
+      <variables>
+        <variable name="inInvoke_ConsultarClienteREP" messageType="ns4:ConsultarClienteREPRequestMessage"/>
+        <variable name="outInvoke_ConsultarClienteREP" messageType="ns4:ConsultarClienteREPResponseMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarClienteREP">
+        <if name="IfValidarIdFacturador">
+          <documentation>
+            <![CDATA[Sin_Valor]]>
+          </documentation>
+          <condition>$IdFacturador=''</condition><assign name="Assign_TipoReserva"
+                                                         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+   <copy bpelx:insertMissingToData="yes">
+         <from>"1"</from>
+         <to>$outputVariable.response/ns6:Cliente/ns7:reserva/ns7:tipoReserva</to>
+      </copy></assign><else>
+            <documentation>
+              <![CDATA[Con_Valor]]>
+            </documentation>
+            <sequence>
+              <assign name="Assign_ConsultarClienteREP">
+                <copy>
+                  <from>$IdFacturador</from>
+                  <to>$inInvoke_ConsultarClienteREP.ConsultarClienteREPRequest/ns7:idFacturador</to>
+                </copy>
+              </assign>
+              <invoke name="Invoke_ConsultarClienteREP" bpelx:invokeAsDetail="no" partnerLink="ConsultarClienteREP"
+                      portType="ns4:ConsultarClienteREP" operation="consultarClienteREP"
+                      inputVariable="inInvoke_ConsultarClienteREP" outputVariable="outInvoke_ConsultarClienteREP"/>
+              <if name="IfResultado">
+                <documentation>
+                  <![CDATA[OK]]>
+                </documentation>
+                <condition>$outInvoke_ConsultarClienteREP.ConsultarClienteREPResponse/ns6:Resultado/ns9:result = 'OK'</condition>
+                <sequence>
+                  <assign name="Assign_Reserva">
+                    <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                      <from>$outInvoke_ConsultarClienteREP.ConsultarClienteREPResponse/ns6:Cliente/ns7:reserva/ns7:importeReserva</from>
+                      <to>$outputVariable.response/ns6:Cliente/ns7:reserva/ns7:importeReserva</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>$outInvoke_ConsultarClienteREP.ConsultarClienteREPResponse/ns6:Cliente/ns7:reserva/ns7:tipoReserva</from>
+                      <to>$outputVariable.response/ns6:Cliente/ns7:reserva/ns7:tipoReserva</to>
+                    </copy>
+                  </assign>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[Error]]>
+                  </documentation>
+                  <sequence>
+                    <assign name="Assign_TipoReserva">
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>"1"</from>
+                        <to>$outputVariable.response/ns6:Cliente/ns7:reserva/ns7:tipoReserva</to>
+                      </copy>
+                    </assign>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </else>
+        </if>
+        <scope name="ScopeValidarReserva">
+          <variables>
+            <variable name="inInvoke_ValidarReserva" messageType="ns2:callFunctionStatelessMessage"/>
+            <variable name="outInvoke_ValidarReserva" messageType="ns2:callFunctionStatelessDecisionMessage"/>
+          </variables>
+          <sequence name="SequenceValidarReserva">
+            <assign name="Assign_ValidarReserva">
+              <copy>
+                <from>number($outputVariable.response/ns6:Cliente/ns7:reserva/ns7:tipoReserva)</from>
+                <to>$inInvoke_ValidarReserva.payload/ns2:parameterList/ns12:ValidarReservaRequest/ns12:tipoReserva</to>
+              </copy>
+              <copy>
+                <from>'ValidarReserva_DecisionService_1'</from>
+                <to>$inInvoke_ValidarReserva.payload/@name</to>
+              </copy>
+            </assign>
+            <invoke name="Invoke_ValidarReserva" partnerLink="ValidarReserva" portType="ns2:IDecisionService"
+                    operation="callFunctionStateless" inputVariable="inInvoke_ValidarReserva"
+                    outputVariable="outInvoke_ValidarReserva" bpelx:invokeAsDetail="no"/>
+            <assign name="Assign_Deterioro">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$outInvoke_ValidarReserva.payload/ns2:resultList/ns12:ValidarReservaResponse/ns12:deterioro</from>
+                <to>$outputVariable.response/ns6:Cliente/ns7:deteriorado</to>
+              </copy>
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns6:Resultado/ns9:result</to>
+              </copy>
+              <copy>
+                <from>'Operación Exitosa'</from>
+                <to>$outputVariable.response/ns6:Resultado/ns9:message</to>
+              </copy>
+              <extensionAssignOperation>
+                <bpelx:remove>
+                  <bpelx:target>$outputVariable.response/ns6:Resultado/ns9:error</bpelx:target>
+                </bpelx:remove>
+              </extensionAssignOperation>
+            </assign>
+          </sequence>
+        </scope>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" variable="outputVariable" partnerLink="validarreservabpel_client_ep"
+           portType="ns3:ValidarReservaPT" operation="validarReserva"/>
+  </sequence>
+</process>

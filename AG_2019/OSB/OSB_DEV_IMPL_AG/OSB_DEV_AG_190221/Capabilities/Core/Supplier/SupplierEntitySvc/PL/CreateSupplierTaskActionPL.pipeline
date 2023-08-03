@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <con:wsdl ref="Capabilities/Core/Supplier/SupplierEntitySvc/Resources/WSDL/SupplierEntitySvc"/>
+            <con:binding>
+                <con:name>SupplierEntityBinding</con:name>
+                <con:namespace>http://mx.agarcia.ea/Capabilities/Core/Suppliers/SupplierEntitySvc/v1.0</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline name="_onErrorHandler-N53efece6.3abdfbb8.d.16bfc1b7415.N7fe1" type="error">
+            <con:stage name="stage1" errorHandler="_onErrorHandler-N53efece6.1a55a4fd.3.16b7af4e8cf.N7feb">
+                <con:context>
+                    <con1:userNsDecl prefix="v1" namespace="http://mx.agarcia.ea/RetailOperations/SellService/PriceChangeTaskSvc/v1" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="v11" namespace="http://mx.agarcia.ea/RetailOperations/SellService/PriceChangeTaskSvc/v1.0" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="upd" namespace="http://mx.agarcia.ea/Capabilities/Core/Items/UpdateItemEntity" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="ags" namespace="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="sup" namespace="http://mx.agarcia.ea/Capabilities/Foundation/Party/SupplierEntitySvc" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+                <con:actions>
+                    <con1:assign varName="alertaId" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.d.16bfc1b7415.N7fe0</con2:id>
+                        <con1:expr>
+                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">fn-bea:execute-sql('jdbc/MDMSOA','alertId','SELECT ID_SERV_SEC.NEXTVAL FROM DUAL')</con:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:wsCallout xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.d.16bfc1b7415.N7fdf</con2:id>
+                        <con1:service ref="Applications/Governance/PS/GovernanceAPIProducePXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+                        <con1:operation>audit</con1:operation>
+                        <con1:request>
+                            <con1:body wrapped="false">activityRequest</con1:body>
+                            <con1:header/>
+                        </con1:request>
+                        <con1:response>
+                            <con1:body wrapped="false">activityResponse</con1:body>
+                            <con1:header/>
+                        </con1:response>
+                        <con1:requestTransform>
+                            <con2:assign varName="activityRequest" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con1="http://www.bea.com/wli/sb/stages/publish/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.d.16bfc1b7415.N7fde</con3:id>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<gov:audit xmlns:gov="http://mx.agarcia.ea/Applications/Governance">
+	<gov:request>
+		<gov:header>
+			<gov:operation>FinishActivity</gov:operation>
+			<gov:interfaceId>{$interfaceId}</gov:interfaceId>
+			<gov:activityId>{$activityId}</gov:activityId>
+
+			<gov:parameters>
+				        <gov:entry>
+					<gov:key>date</gov:key>
+					<gov:value>{fn:current-dateTime()}</gov:value>
+				        </gov:entry>
+
+                                         <gov:entry>
+					<gov:key>alertId</gov:key>
+					<gov:value>{$alertaId//*:NEXTVAL/text()}</gov:value>
+				        </gov:entry>
+                                       <gov:entry>
+					<gov:key>statusCode</gov:key>
+					<gov:value>FINERR</gov:value>
+				        </gov:entry>
+                                       <gov:entry>
+					<gov:key>component</gov:key>
+					<gov:value>CreateSupplierProcess</gov:value>
+				        </gov:entry>
+                                          <gov:entry>
+					<gov:key>message</gov:key>
+					<gov:value>Fallo alta de proveedor en JDA</gov:value>
+				        </gov:entry>
+			</gov:parameters>
+			<gov:data>Fault AG001: Fallo ejecucion</gov:data>
+		</gov:header>
+	</gov:request>
+</gov:audit>]]></con:xqueryText>
+                                </con2:expr>
+                            </con2:assign>
+                        </con1:requestTransform>
+                        <con1:responseTransform/>
+                    </con1:wsCallout>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline name="PipelinePairNode1_response" type="response"/>
+        <con:pipeline name="PipelinePairNode1_request" type="request">
+            <con:stage name="stage1">
+                <con:context>
+                    <con1:userNsDecl prefix="v1" namespace="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="ags" namespace="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="sup" namespace="http://mx.agarcia.ea/Capabilities/Foundation/Party/SupplierEntitySvc" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+                <con:disabled>true</con:disabled>
+                <con:actions>
+                    <con1:ifThenElse xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.8ff18e4.14.16b06e98ce1.N8000</con2:id>
+                        <con1:case>
+                            <con1:condition>
+                                <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$body/sup:createSupplierRequest/sup:suppliers/v1:supplier/v1:supplierID</con:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:validate>
+                                    <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.8ff18e4.15.16b06eab412.N8000</con2:id>
+                                    <con1:schema ref="Capabilities/Foundation/Schemas/Commons/SupplierCommonSchema"/>
+                                    <con1:schemaType xmlns:v1="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1">v1:SupplierCommonBase</con1:schemaType>
+                                    <con1:varName>body</con1:varName>
+                                    <con1:location>
+                                        <con:xpathText xmlns:con="http://www.bea.com/wli/sb/stages/config">./sup:createSupplierRequest/sup:suppliers/v1:supplier/v1:supplierID</con:xpathText>
+                                    </con1:location>
+                                    <con1:resultVarName/>
+                                </con1:validate>
+                                <con1:Error>
+                                    <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.8ff18e4.16.16b06ec0134.N8000</con2:id>
+                                    <con1:errCode>CSUP-001</con1:errCode>
+                                    <con1:message>Campo ID obligatorio</con1:message>
+                                </con1:Error>
+                            </con1:actions>
+                        </con1:case>
+                    </con1:ifThenElse>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PipelinePairNode1">
+                <con:request>PipelinePairNode1_request</con:request>
+                <con:response>PipelinePairNode1_response</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteNode1" error-handler="_onErrorHandler-N53efece6.3abdfbb8.d.16bfc1b7415.N7fe1">
+                <con:comment/>
+                <con:context>
+                    <con1:varNsDecl prefix="ags" namespace="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="sup" namespace="http://mx.agarcia.ea/Capabilities/Foundation/Party/SupplierEntitySvc" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+                <con:actions>
+                    <con1:route xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N73199334.a.16a8d06560a.N7ffd</con2:id>
+                        <con1:service ref="RetailOperations/Buy/Supplier/SupplierTaskSvc/BS/CreateSupplierProcessBS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+                        <con1:operation>createSupplier</con1:operation>
+                        <con1:outboundTransform/>
+                        <con1:responseTransform/>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

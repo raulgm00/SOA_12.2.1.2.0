@@ -1,0 +1,308 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Sep 14 16:57:53 CDT 2015
+  Author:  luis-morales
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CrearCliente"
+               targetNamespace="http://xmlns.oracle.com/Prueba/CrearCliente/CrearCliente"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/Prueba/CrearCliente/CrearCliente"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ClienteService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns4="http://www.bcie.org/CatalogoBO"
+         xmlns:ns2="http://www.bcie.org/ClienteMO" xmlns:ns3="http://www.bcie.org/ClienteBO"
+         xmlns:ns5="http://www.bcie.org/ResultBO" xmlns:ns6="http://www.bcie.org/ErrorBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns7="http://xmlns.bcie.com/UsuarioService"
+         xmlns:ns8="http://www.bcie.org/UsuarioMO" xmlns:ns9="http://www.bcie.org/UsuarioBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ClienteService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/Cliente/V1/Wsdl/ADAPTER/EliminarClientesSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ClienteService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/Cliente/V1/Wsdl/ADAPTER/CrearClienteSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ClienteService" location="../WSDLs/CrearClienteSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="CrearCliente_client" partnerLinkType="ns1:CrearCliente" myRole="ClientePT"/>
+    <partnerLink name="EliminarClienteSB" partnerLinkType="ns1:EliminarClienteSB" partnerRole="ClientePT"/>
+    <partnerLink name="CrearClienteSB" partnerLinkType="ns1:CrearClienteSB" partnerRole="ClientePT"/>
+    <partnerLink name="CrearClienteGeccoSB" partnerLinkType="ns1:CrearClienteGeccoSB" partnerRole="ClientePT"/>
+    <partnerLink name="ConsultarAtributoUsuario" partnerLinkType="ns7:ConsultarAtributoUsuario"
+                 partnerRole="UsuarioPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestCrearClienteMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseCrearClienteMessage"/>
+    <variable name="inCrearCliente" messageType="ns1:requestCrearClienteMessage"/>
+    <variable name="outCrearCliente" messageType="ns1:responseCrearClienteMessage"/>
+    <variable name="idEjecutivo" type="xsd:string"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CrearCliente.wsdl) -->
+    <receive name="receiveInput" partnerLink="CrearCliente_client" portType="ns1:ClientePT" operation="crearCliente" variable="inputVariable" createInstance="yes"/>
+    <scope name="ConsultarAtributoUsuarioScope">
+      <variables>
+        <variable name="inConsultarAtributoUsuario" messageType="ns7:requestConsultarAtributosUsuarioMessage"/>
+        <variable name="outConsultarAtributoUsuario" messageType="ns7:responseConsultarAtributosUsuarioMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="ErrorConsultarAtributo"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="CathcErrorConsultarSequence">
+            <assign name="AssignErrorConsultarAtributo">
+              <copy>
+                <from>$ErrorConsultarAtributo.code</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:error/ns6:errorCode</to>
+              </copy>
+              <copy>
+                <from>$ErrorConsultarAtributo.detail</from>
+                <to>$outputVariable.response/ns2:Resultado/ns5:error/ns6:errorDescription</to>
+              </copy>
+            </assign>
+            <rethrow name="RethrowError"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <assign name="AssignError">
+            <copy>
+              <from>'Error'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+            </copy>
+            <copy>
+              <from>'No se ha podido consultar al usuario'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+            </copy>
+          </assign>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="ConsultarAtributoSequence">
+        <assign name="ConsultarAtributoAssign">
+          <copy>
+            <from>$inputVariable.request/ns2:Cliente/ns3:ejecutivo</from>
+            <to>$inConsultarAtributoUsuario.request/ns8:listaNombres/ns9:nombreUsuario</to>
+          </copy>
+        </assign>
+        <invoke name="ConsultarAtributoInvok" bpelx:invokeAsDetail="no" partnerLink="ConsultarAtributoUsuario"
+                portType="ns7:UsuarioPT" operation="consultarAtributosUsuario"
+                inputVariable="inConsultarAtributoUsuario" outputVariable="outConsultarAtributoUsuario"/>
+        <assign name="AssignIdEjecutivo">
+          <copy>
+            <from>$outConsultarAtributoUsuario.response/ns8:listaUsuarios/ns9:usuario/ns9:employeeNumber</from>
+            <to>$idEjecutivo</to>
+          </copy>
+        </assign>
+      </sequence>
+    </scope>
+    <assign name="CrearclienteAssign">
+      <copy>
+        <from>$inputVariable.request</from>
+        <to>$inCrearCliente.request</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>1</from>
+        <to>$inCrearCliente.request/ns2:Cliente/ns3:tipoCliente/ns4:Id</to>
+      </copy>
+    </assign>
+    <scope name="CrearCliente">
+      <variables>
+        <variable name="setTitleVar" type="xsd:string"/>
+      </variables>
+      <sequence name="CrearClienteSequence">
+        <invoke name="InvokeToCrearClienteSB" bpelx:invokeAsDetail="no" partnerLink="CrearClienteSB"
+                portType="ns1:ClientePT" operation="crearCliente" inputVariable="inCrearCliente"
+                outputVariable="outCrearCliente"/>
+        <assign name="setTitleVar">
+          <copy>
+            <from>oraext:setFlowInstanceTitle(concat("idCliente: ",string($outCrearCliente.response/ns2:Cliente/ns3:idCliente)))</from>
+            <to>$setTitleVar</to>
+          </copy>
+        </assign>
+        <scope name="CrearClienteGecco">
+          <variables>
+            <variable name="inCrearClienteGecco" messageType="ns1:requestCrearClienteMessage"/>
+            <variable name="outCrearClienteGecco" messageType="ns1:responseCrearClienteMessage"/>
+            <variable name="inInvokeErrorEliminarCliente" messageType="ns1:requestEliminarClienteMessage"/>
+            <variable name="outInvokeErrorEliminarCliente" messageType="ns1:responseEliminarClienteMessage"/>
+          </variables>
+          <faultHandlers>
+            <catchAll><sequence name="Sequence3"><sequence name="SequenceError"><assign name="EliminarClienteAssign"
+                                                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+   <copy>
+                      <from>$outCrearCliente.response/ns2:Cliente/ns3:idCliente</from>
+                      <to>$inInvokeErrorEliminarCliente.request/ns2:idCliente</to>
+                    </copy></assign><invoke name="InvokeErrorEliminarCliente" bpelx:invokeAsDetail="no" partnerLink="EliminarClienteSB"
+                    portType="ns1:ClientePT" operation="eliminarCliente" inputVariable="inInvokeErrorEliminarCliente"
+                    outputVariable="outInvokeErrorEliminarCliente"/>
+                  <assign name="ErrorAssign" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+      
+      
+      
+   <copy>
+         <from>'ERROR'</from>
+         <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+      </copy><copy>
+                      <from>ora:getFaultAsString()</from>
+                      <to>$outputVariable.response/ns2:Resultado/ns5:error/ns6:errorDescription</to>
+                    </copy><copy>
+         <from>'Error general no se ha podido realizar la inserción en Gecco'</from>
+         <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+      </copy></assign>
+                </sequence></sequence></catchAll>
+          </faultHandlers>
+          <sequence name="CrearClienteSequence">
+            <assign name="CrearClienteGeccoAssign">
+              <copy>
+                <from>$outCrearCliente.response/ns2:Cliente/ns3:idCliente</from>
+                <to>$inCrearClienteGecco.request/ns2:Cliente/ns3:idCliente</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.request/ns2:Cliente/ns3:razonSocial</from>
+                <to>$inCrearClienteGecco.request/ns2:Cliente/ns3:razonSocial</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.request/ns2:Cliente/ns3:sector/ns4:Id</from>
+                <to>$inCrearClienteGecco.request/ns2:Cliente/ns3:sector/ns4:Id</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.request/ns2:Cliente/ns3:tipoInstitucion/ns4:Id</from>
+                <to>$inCrearClienteGecco.request/ns2:Cliente/ns3:tipoInstitucion/ns4:Id</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.request/ns2:Cliente/ns3:pais/ns4:Id</from>
+                <to>$inCrearClienteGecco.request/ns2:Cliente/ns3:pais/ns4:Id</to>
+              </copy>
+              <copy>
+                <from>$idEjecutivo</from>
+                <to>$inCrearClienteGecco.request/ns2:Cliente/ns3:ejecutivo</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeToCrearCliente" bpelx:invokeAsDetail="no" partnerLink="CrearClienteGeccoSB"
+                    portType="ns1:ClientePT" operation="crearCliente" inputVariable="inCrearClienteGecco"
+                    outputVariable="outCrearClienteGecco"/>
+            <if name="Error">
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <condition>$outCrearClienteGecco.response/ns2:Resultado/ns5:error/ns6:errorCode = 'OSB-997' or $outCrearClienteGecco.response/ns2:Resultado/ns5:error/ns6:errorCode &gt; 0</condition>
+              <sequence name="Sequence1">
+                <scope name="EliminarCliente">
+                  <variables>
+                    <variable name="inEliminarCliente" messageType="ns1:requestEliminarClienteMessage"/>
+                    <variable name="outEliminarCliente" messageType="ns1:responseEliminarClienteMessage"/>
+                  </variables>
+                  <sequence name="EliminarClienteSequence">
+                    <assign name="EliminarClienteAssign">
+                      <copy>
+                        <from>$outCrearCliente.response/ns2:Cliente/ns3:idCliente</from>
+                        <to>$inEliminarCliente.request/ns2:idCliente</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeToEliminarCliente" bpelx:invokeAsDetail="no" partnerLink="EliminarClienteSB"
+                            portType="ns1:ClientePT" operation="eliminarCliente" inputVariable="inEliminarCliente"
+                            outputVariable="outEliminarCliente"/>
+                    <assign name="ErrorAssign">
+                      <copy>
+                        <from>'ERROR'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+                      </copy>
+                      <copy>
+                        <from>$outCrearClienteGecco.response/ns2:Resultado/ns5:error/ns6:errorCode</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns5:error/ns6:errorCode</to>
+                      </copy>
+                      <copy>
+                        <from>$outCrearClienteGecco.response/ns2:Resultado/ns5:error/ns6:errorDescription</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns5:error/ns6:errorDescription</to>
+                      </copy>
+                      <copy>
+                        <from>$outCrearClienteGecco.response/ns2:Resultado/ns5:error/ns6:errorType</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns5:error/ns6:errorType</to>
+                      </copy>
+                      <copy>
+                        <from>'No se ha podido realizar la inserción en Gecco'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+                      </copy>
+                    </assign>
+                  </sequence>
+                </scope>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[SUCCESS]]>
+                </documentation>
+                <assign name="AssignSuccess">
+                  <copy>
+                    <from>'OK'</from>
+                    <to>$outputVariable.response/ns2:Resultado/ns5:result</to>
+                  </copy>
+                  <copy>
+                    <from>$outCrearCliente.response/ns2:Cliente/ns3:idCliente</from>
+                    <to>$outputVariable.response/ns2:Cliente/ns3:idCliente</to>
+                  </copy>
+                  <copy>
+                    <from>concat('La inserción se ha realizado correctamente, ID:', $outCrearCliente.response/ns2:Cliente/ns3:idCliente)</from>
+                    <to>$outputVariable.response/ns2:Resultado/ns5:message</to>
+                  </copy>
+                </assign>
+              </else>
+            </if>
+          </sequence>
+        </scope>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="CrearCliente_client" portType="ns1:ClientePT" operation="crearCliente" variable="outputVariable"/>
+  </sequence>
+</process>

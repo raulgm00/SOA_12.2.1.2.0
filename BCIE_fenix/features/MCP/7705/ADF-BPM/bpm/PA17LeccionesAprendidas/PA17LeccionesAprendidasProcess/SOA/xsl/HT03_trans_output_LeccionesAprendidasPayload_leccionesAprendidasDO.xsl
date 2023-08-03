@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xsl:stylesheet version="1.0"
+                xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+                xmlns:oraxsl="http://www.oracle.com/XSL/Transform/java"
+                xmlns:mhdr="http://www.oracle.com/XSL/Transform/java/oracle.tip.mediator.service.common.functions.MediatorExtnFunction"
+                xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xmlns:oracle-xsl-mapper="http://www.oracle.com/xsl/mapper/schemas"
+                xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns0="http://xmlns.oracle.com/bpel/workflow/task"
+                xmlns:socket="http://www.oracle.com/XSL/Transform/java/oracle.tip.adapter.socket.ProtocolTranslator"
+                xmlns:ns1="http://xmlns.bcie.org/ObjetoProceso/LeccionesAprendidas/Payload/V1"
+                exclude-result-prefixes="xsi oracle-xsl-mapper xsl xsd ns0 ns1 xp20 oraxsl mhdr oraext dvm xref socket"
+                xmlns:ns3="http://www.bcie.org/TerminoBO" xmlns:ns4="http://www.bcie.org/ReglaBO"
+                xmlns:ns5="http://www.bcie.org/OperacionBO" xmlns:ns2="http://xmlns.oracle.com/bpel/workflow/common"
+                xmlns:evidence="http://xmlns.oracle.com/bpel/workflow/TaskEvidenceService"
+                xmlns:ns6="http://www.bcie.org/CommonBO"
+                xmlns:parameter="http://xmlns.bcie.org/ObjetoProceso/Comun/Parameter/V1"
+                xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" xmlns:leccion="http://www.bcie.org/LeccionAprendidaBO"
+                xmlns:ns7="http://www.bcie.org/LineaCreditoBO" xmlns:ns8="http://www.bcie.org/MatrizTCCBO"
+                xmlns:ns9="http://xmlns.bcie.org/ObjetoProceso/Comun/Operacion/V1"
+                xmlns:ns10="http://xmlns.bcie.org/ObjetoProceso/Comun/Proceso/V1"
+                xmlns:ns12="http://www.bcie.org/CondicionBO" xmlns:ns11="http://www.bcie.org/ProductoBO"
+                xmlns:ns13="http://www.bcie.org/DeclaracionJuradaBO"
+                xmlns:header="http://xmlns.bcie.org/ObjetoProceso/Comun/Header/V1"
+                xmlns:ns14="http://www.bcie.org/DocumentoBO" xmlns:ns15="http://www.bcie.org/HerramientaCEBO"
+                xmlns:ns16="http://www.bcie.org/ComisionBO" xmlns:ns17="http://www.bcie.org/CatalogoBO"
+                xmlns:ns18="http://www.bcie.org/DesembolsoBO" xmlns:ns19="http://www.bcie.org/ContratoBO"
+                xmlns:ns20="http://www.bcie.org/ClienteBO" xmlns:ns21="http://www.bcie.org/AtributoBO"
+                xmlns:ns23="http://xmlns.bcie.org/ObjetoProceso/Comun/Tarea/V1"
+                xmlns:ns22="http://xmlns.bcie.org/ObjetoProceso/Comun/Cliente/V1">
+  <oracle-xsl-mapper:schema>
+    <!--SPECIFICATION OF MAP SOURCES AND TARGETS, DO NOT MODIFY.-->
+    <oracle-xsl-mapper:mapSources>
+      <oracle-xsl-mapper:source type="XSD">
+        <oracle-xsl-mapper:schema location="oramds:/soa/shared/workflow/WorkflowTask.xsd"/>
+        <oracle-xsl-mapper:rootElement name="task" namespace="http://xmlns.oracle.com/bpel/workflow/task"/>
+        <oracle-xsl-mapper:param name="execData"/>
+      </oracle-xsl-mapper:source>
+      <oracle-xsl-mapper:source type="XSD">
+        <oracle-xsl-mapper:schema location="oramds:/apps/Resources/BPM/Schema/PA17/LeccionesAprendidasPayload.xsd"/>
+        <oracle-xsl-mapper:rootElement name="LeccionesAprendidasPayload"
+                                       namespace="http://xmlns.bcie.org/ObjetoProceso/LeccionesAprendidas/Payload/V1"/>
+        <oracle-xsl-mapper:param name="leccionesAprendidasPayload"/>
+      </oracle-xsl-mapper:source>
+      <oracle-xsl-mapper:source type="XSD">
+        <oracle-xsl-mapper:schema location="oramds:/apps/Resources/BPM/Schema/PA17/LeccionesAprendidasPayload.xsd"/>
+        <oracle-xsl-mapper:rootElement name="LeccionesAprendidasPayload"
+                                       namespace="http://xmlns.bcie.org/ObjetoProceso/LeccionesAprendidas/Payload/V1"/>
+        <oracle-xsl-mapper:param name="leccionesAprendidasDO"/>
+      </oracle-xsl-mapper:source>
+    </oracle-xsl-mapper:mapSources>
+    <oracle-xsl-mapper:mapTargets>
+      <oracle-xsl-mapper:target type="XSD">
+        <oracle-xsl-mapper:schema location="oramds:/apps/Resources/BPM/Schema/PA17/LeccionesAprendidasPayload.xsd"/>
+        <oracle-xsl-mapper:rootElement name="LeccionesAprendidasPayload"
+                                       namespace="http://xmlns.bcie.org/ObjetoProceso/LeccionesAprendidas/Payload/V1"/>
+      </oracle-xsl-mapper:target>
+    </oracle-xsl-mapper:mapTargets>
+    <!--GENERATED BY ORACLE XSL MAPPER 12.1.3.0.0(XSLT Build 140529.0700.0211) AT [TUE MAY 11 18:21:18 CST 2021].-->
+  </oracle-xsl-mapper:schema>
+  <!--User Editing allowed BELOW this line - DO NOT DELETE THIS LINE-->
+  <xsl:param name="leccionesAprendidasPayload"/>
+  <xsl:param name="leccionesAprendidasDO"/>
+  <xsl:template match="/">
+    <ns1:LeccionesAprendidasPayload>
+      <ns1:Header>
+        <header:Operacion>
+          <ns9:CodigoOperacion>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:CodigoOperacion"/>
+          </ns9:CodigoOperacion>
+          <ns9:NombreOperacion>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:NombreOperacion"/>
+          </ns9:NombreOperacion>
+          <ns9:ResponsableOperacion>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:ResponsableOperacion"/>
+          </ns9:ResponsableOperacion>
+          <ns9:CodigoCliente>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:CodigoCliente"/>
+          </ns9:CodigoCliente>
+          <ns9:NombreCliente>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:NombreCliente"/>
+          </ns9:NombreCliente>
+          <ns9:CodigoProducto>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:CodigoProducto"/>
+          </ns9:CodigoProducto>
+          <ns9:NombreProducto>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:NombreProducto"/>
+          </ns9:NombreProducto>
+          <ns9:MontoSolicitado>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:MontoSolicitado"/>
+          </ns9:MontoSolicitado>
+          <ns9:Pais>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:Pais"/>
+          </ns9:Pais>
+          <ns9:idSectorInstitucional>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:idSectorInstitucional"/>
+          </ns9:idSectorInstitucional>
+          <ns9:idEncargado>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:idEncargado"/>
+          </ns9:idEncargado>
+          <ns9:idRol>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:idRol"/>
+          </ns9:idRol>
+          <ns9:descripcionRol>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Operacion/ns9:descripcionRol"/>
+          </ns9:descripcionRol>
+        </header:Operacion>
+        <header:Cliente>
+          <ns22:IdCliente>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:IdCliente"/>
+          </ns22:IdCliente>
+          <ns22:IdFlexCube>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:IdFlexCube"/>
+          </ns22:IdFlexCube>
+          <ns22:RazonSocial>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:RazonSocial"/>
+          </ns22:RazonSocial>
+          <ns22:Abreviatura>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:Abreviatura"/>
+          </ns22:Abreviatura>
+          <ns22:IdSector>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:IdSector"/>
+          </ns22:IdSector>
+          <ns22:Sector>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:Sector"/>
+          </ns22:Sector>
+          <ns22:IdPais>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:IdPais"/>
+          </ns22:IdPais>
+          <ns22:Pais>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:Pais"/>
+          </ns22:Pais>
+          <ns22:IdOficina>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:IdOficina"/>
+          </ns22:IdOficina>
+          <ns22:Oficina>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:Oficina"/>
+          </ns22:Oficina>
+          <ns22:ResponsableCliente>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:ResponsableCliente"/>
+          </ns22:ResponsableCliente>
+          <ns22:bicCode>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:bicCode"/>
+          </ns22:bicCode>
+          <ns22:direccion>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Cliente/ns22:direccion"/>
+          </ns22:direccion>
+        </header:Cliente>
+        <header:Tarea>
+          <ns23:CodigoTarea>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Tarea/ns23:CodigoTarea"/>
+          </ns23:CodigoTarea>
+          <ns23:NombreTarea>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Tarea/ns23:NombreTarea"/>
+          </ns23:NombreTarea>
+          <ns23:CodigoRol>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Tarea/ns23:CodigoRol"/>
+          </ns23:CodigoRol>
+          <ns23:NombreRol>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Tarea/ns23:NombreRol"/>
+          </ns23:NombreRol>
+          <ns23:CodigoProceso>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Tarea/ns23:CodigoProceso"/>
+          </ns23:CodigoProceso>
+          <ns23:NombreProceso>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Tarea/ns23:NombreProceso"/>
+          </ns23:NombreProceso>
+        </header:Tarea>
+        <header:Proceso>
+          <ns10:IdProceso>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Proceso/ns10:IdProceso"/>
+          </ns10:IdProceso>
+          <ns10:CodigoProceso>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Proceso/ns10:CodigoProceso"/>
+          </ns10:CodigoProceso>
+          <ns10:NombreProceso>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Proceso/ns10:NombreProceso"/>
+          </ns10:NombreProceso>
+          <ns10:EsProcesoCore>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Proceso/ns10:EsProcesoCore"/>
+          </ns10:EsProcesoCore>
+          <ns10:RolIniciaProceso>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Proceso/ns10:RolIniciaProceso"/>
+          </ns10:RolIniciaProceso>
+          <ns10:UsuarioIniciaProceso>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Proceso/ns10:UsuarioIniciaProceso"/>
+          </ns10:UsuarioIniciaProceso>
+          <ns10:InstanciaProceso>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Proceso/ns10:InstanciaProceso"/>
+          </ns10:InstanciaProceso>
+          <ns10:IdFlujo>
+            <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/header:Proceso/ns10:IdFlujo"/>
+          </ns10:IdFlujo>
+        </header:Proceso>
+        <xsl:for-each select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Header/parameter:ParameterType">
+          <parameter:ParameterType>
+            <parameter:parameterName>
+              <xsl:value-of select="parameter:parameterName"/>
+            </parameter:parameterName>
+            <parameter:parameterValue>
+              <xsl:value-of select="parameter:parameterValue"/>
+            </parameter:parameterValue>
+          </parameter:ParameterType>
+        </xsl:for-each>
+      </ns1:Header>
+      <ns1:Configuration>
+        <ns1:retorno>
+          <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Configuration/ns1:retorno"/>
+        </ns1:retorno>
+        <ns1:resultado>
+          <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:Configuration/ns1:resultado"/>
+        </ns1:resultado>
+      </ns1:Configuration>
+      <ns1:LeccionesAprendidas>
+        <xsl:for-each select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:LeccionesAprendidas/ns1:LeccionAprendida">
+          <ns1:LeccionAprendida>
+            <leccion:idLeccionAprendida>
+              <xsl:value-of select="leccion:idLeccionAprendida"/>
+            </leccion:idLeccionAprendida>
+            <leccion:descripcion>
+              <xsl:value-of select="leccion:descripcion"/>
+            </leccion:descripcion>
+            <leccion:recomendacion>
+              <xsl:value-of select="leccion:recomendacion"/>
+            </leccion:recomendacion>
+            <leccion:nivelIncidencia>
+              <xsl:value-of select="leccion:nivelIncidencia"/>
+            </leccion:nivelIncidencia>
+            <leccion:usuario>
+              <xsl:value-of select="leccion:usuario"/>
+            </leccion:usuario>
+            <leccion:estado>
+              <ns17:Id>
+                <xsl:value-of select="leccion:estado/ns17:Id"/>
+              </ns17:Id>
+              <ns17:Descripcion>
+                <xsl:value-of select="leccion:estado/ns17:Descripcion"/>
+              </ns17:Descripcion>
+              <ns17:DescripcionCorta>
+                <xsl:value-of select="leccion:estado/ns17:DescripcionCorta"/>
+              </ns17:DescripcionCorta>
+              <ns17:estatus>
+                <xsl:value-of select="leccion:estado/ns17:estatus"/>
+              </ns17:estatus>
+              <ns17:codigoExterno>
+                <xsl:value-of select="leccion:estado/ns17:codigoExterno"/>
+              </ns17:codigoExterno>
+            </leccion:estado>
+            <leccion:producto>
+              <ns11:idProducto>
+                <xsl:value-of select="leccion:producto/ns11:idProducto"/>
+              </ns11:idProducto>
+              <ns11:descripcion>
+                <xsl:value-of select="leccion:producto/ns11:descripcion"/>
+              </ns11:descripcion>
+              <ns11:descripcionCorta>
+                <xsl:value-of select="leccion:producto/ns11:descripcionCorta"/>
+              </ns11:descripcionCorta>
+              <ns11:fechaRegistro>
+                <xsl:value-of select="leccion:producto/ns11:fechaRegistro"/>
+              </ns11:fechaRegistro>
+              <ns11:codExterno>
+                <xsl:value-of select="leccion:producto/ns11:codExterno"/>
+              </ns11:codExterno>
+            </leccion:producto>
+            <leccion:operacion>
+              <ns5:idOperacion>
+                <xsl:value-of select="leccion:operacion/ns5:idOperacion"/>
+              </ns5:idOperacion>
+              <ns5:responsable>
+                <xsl:value-of select="leccion:operacion/ns5:responsable"/>
+              </ns5:responsable>
+              <ns5:oficina>
+                <xsl:value-of select="leccion:operacion/ns5:oficina"/>
+              </ns5:oficina>
+              <ns5:nombre>
+                <xsl:value-of select="leccion:operacion/ns5:nombre"/>
+              </ns5:nombre>
+            </leccion:operacion>
+            <leccion:proceso>
+              <ns10:IdProceso>
+                <xsl:value-of select="leccion:proceso/ns10:IdProceso"/>
+              </ns10:IdProceso>
+              <ns10:CodigoProceso>
+                <xsl:value-of select="leccion:proceso/ns10:CodigoProceso"/>
+              </ns10:CodigoProceso>
+              <ns10:NombreProceso>
+                <xsl:value-of select="leccion:proceso/ns10:NombreProceso"/>
+              </ns10:NombreProceso>
+              <ns10:EsProcesoCore>
+                <xsl:value-of select="leccion:proceso/ns10:EsProcesoCore"/>
+              </ns10:EsProcesoCore>
+              <ns10:RolIniciaProceso>
+                <xsl:value-of select="leccion:proceso/ns10:RolIniciaProceso"/>
+              </ns10:RolIniciaProceso>
+              <ns10:UsuarioIniciaProceso>
+                <xsl:value-of select="leccion:proceso/ns10:UsuarioIniciaProceso"/>
+              </ns10:UsuarioIniciaProceso>
+              <ns10:InstanciaProceso>
+                <xsl:value-of select="leccion:proceso/ns10:InstanciaProceso"/>
+              </ns10:InstanciaProceso>
+              <ns10:IdFlujo>
+                <xsl:value-of select="leccion:proceso/ns10:IdFlujo"/>
+              </ns10:IdFlujo>
+            </leccion:proceso>
+            <leccion:tarea>
+              <ns23:CodigoTarea>
+                <xsl:value-of select="leccion:tarea/ns23:CodigoTarea"/>
+              </ns23:CodigoTarea>
+              <ns23:NombreTarea>
+                <xsl:value-of select="leccion:tarea/ns23:NombreTarea"/>
+              </ns23:NombreTarea>
+              <ns23:CodigoRol>
+                <xsl:value-of select="leccion:tarea/ns23:CodigoRol"/>
+              </ns23:CodigoRol>
+              <ns23:NombreRol>
+                <xsl:value-of select="leccion:tarea/ns23:NombreRol"/>
+              </ns23:NombreRol>
+              <ns23:CodigoProceso>
+                <xsl:value-of select="leccion:tarea/ns23:CodigoProceso"/>
+              </ns23:CodigoProceso>
+              <ns23:NombreProceso>
+                <xsl:value-of select="leccion:tarea/ns23:NombreProceso"/>
+              </ns23:NombreProceso>
+            </leccion:tarea>
+            <leccion:categorias>
+              <xsl:for-each select="leccion:categorias/leccion:categoria">
+                <leccion:categoria>
+                  <ns17:Id>
+                    <xsl:value-of select="ns17:Id"/>
+                  </ns17:Id>
+                  <ns17:Descripcion>
+                    <xsl:value-of select="ns17:Descripcion"/>
+                  </ns17:Descripcion>
+                  <ns17:DescripcionCorta>
+                    <xsl:value-of select="ns17:DescripcionCorta"/>
+                  </ns17:DescripcionCorta>
+                  <ns17:estatus>
+                    <xsl:value-of select="ns17:estatus"/>
+                  </ns17:estatus>
+                  <ns17:codigoExterno>
+                    <xsl:value-of select="ns17:codigoExterno"/>
+                  </ns17:codigoExterno>
+                  <leccion:rol>
+                    <ns17:Id>
+                      <xsl:value-of select="leccion:rol/ns17:Id"/>
+                    </ns17:Id>
+                    <ns17:Descripcion>
+                      <xsl:value-of select="leccion:rol/ns17:Descripcion"/>
+                    </ns17:Descripcion>
+                    <ns17:DescripcionCorta>
+                      <xsl:value-of select="leccion:rol/ns17:DescripcionCorta"/>
+                    </ns17:DescripcionCorta>
+                    <ns17:estatus>
+                      <xsl:value-of select="leccion:rol/ns17:estatus"/>
+                    </ns17:estatus>
+                    <ns17:codigoExterno>
+                      <xsl:value-of select="leccion:rol/ns17:codigoExterno"/>
+                    </ns17:codigoExterno>
+                  </leccion:rol>
+                  <leccion:usuario>
+                    <xsl:value-of select="leccion:usuario"/>
+                  </leccion:usuario>
+                  <leccion:respuesta>
+                    <xsl:value-of select="leccion:respuesta"/>
+                  </leccion:respuesta>
+                </leccion:categoria>
+              </xsl:for-each>
+            </leccion:categorias>
+          </ns1:LeccionAprendida>
+        </xsl:for-each>
+      </ns1:LeccionesAprendidas>
+      <ns1:EquipoPayload>
+        <ns1:UsuarioInicio>
+          <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:EquipoPayload/ns1:UsuarioInicio"/>
+        </ns1:UsuarioInicio>
+        <ns1:EmisorOpinion>
+          <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:EquipoPayload/ns1:EmisorOpinion"/>
+        </ns1:EmisorOpinion>
+        <ns1:RevisorResultados>
+          <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:EquipoPayload/ns1:RevisorResultados"/>
+        </ns1:RevisorResultados>
+        <ns1:GerenteCredito>
+          <xsl:value-of select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/ns1:EquipoPayload/ns1:GerenteCredito"/>
+        </ns1:GerenteCredito>
+      </ns1:EquipoPayload>
+      <ns1:EquipoEjecucionPayload>
+        <ns1:UsuarioInicio>
+          <xsl:value-of select="$leccionesAprendidasDO/ns1:LeccionesAprendidasPayload/ns1:EquipoEjecucionPayload/ns1:UsuarioInicio"/>
+        </ns1:UsuarioInicio>
+        <ns1:EmisorOpinion>
+          <xsl:value-of select="$leccionesAprendidasDO/ns1:LeccionesAprendidasPayload/ns1:EquipoEjecucionPayload/ns1:EmisorOpinion"/>
+        </ns1:EmisorOpinion>
+        <ns1:RevisorResultados>
+          <xsl:value-of select="/ns0:task/ns0:systemAttributes/ns0:updatedBy/ns0:id"/>
+        </ns1:RevisorResultados>
+        <ns1:GerenteCredito>
+          <xsl:value-of select="$leccionesAprendidasDO/ns1:LeccionesAprendidasPayload/ns1:EquipoEjecucionPayload/ns1:GerenteCredito"/>
+        </ns1:GerenteCredito>
+      </ns1:EquipoEjecucionPayload>
+      <xsl:for-each select="$leccionesAprendidasPayload/ns1:LeccionesAprendidasPayload/parameter:ParameterType">
+        <parameter:ParameterType>
+          <parameter:parameterName>
+            <xsl:value-of select="parameter:parameterName"/>
+          </parameter:parameterName>
+          <parameter:parameterValue>
+            <xsl:value-of select="parameter:parameterValue"/>
+          </parameter:parameterValue>
+        </parameter:ParameterType>
+      </xsl:for-each>
+    </ns1:LeccionesAprendidasPayload>
+  </xsl:template>
+</xsl:stylesheet>

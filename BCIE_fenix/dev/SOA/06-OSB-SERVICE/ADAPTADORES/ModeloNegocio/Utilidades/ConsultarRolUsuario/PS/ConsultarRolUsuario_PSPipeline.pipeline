@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/Utilidades/ConsultarRolUsuario/V1/WSDL/ConsultarRolUsuario"/>
+            <con:binding>
+                <con:name>ConsultarRolUsuario12Bnd</con:name>
+                <con:namespace>http://www.bcie.org/ConsultarRolUsuarioService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="error" name="error-a050af3.4c4c1bb3.0.1527aeeb906.N7f3d" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+            <con:stage id="_StageId-a050af3.4c4c1bb3.0.1527aeeb906.N7f3c" name="StageError">
+                <con:context/>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a050af3.4c4c1bb3.0.1527aeeb906.N7f3b</con4:id>
+                        <con1:case id="_BranchId-a050af3.4c4c1bb3.0.1527aeeb906.N7f3a">
+                            <con1:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError)=0</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:assign varName="codigoError">
+                                    <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a050af3.4c4c1bb3.0.1527aeeb906.N7f39</con4:id>
+                                    <con1:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:assign>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default/>
+                    </con1:ifThenElse>
+                    <con1:assign varName="mapeoErrorRequest">
+                        <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a050af3.4c4c1bb3.0.1527aeeb906.N7f38</con4:id>
+                        <con1:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(data($codigoError))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:wsCallout>
+                        <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a050af3.4c4c1bb3.0.1527aeeb906.N7f37</con4:id>
+                        <con1:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>MapearError</con1:operation>
+                        <con1:request>
+                            <con1:body wrapped="false">mapeoErrorRequest</con1:body>
+                        </con1:request>
+                        <con1:response>
+                            <con1:body wrapped="false">mapeoErrorResponse</con1:body>
+                        </con1:response>
+                        <con1:requestTransform/>
+                        <con1:responseTransform/>
+                    </con1:wsCallout>
+                    <con1:replace varName="body" contents-only="true">
+                        <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a050af3.4c4c1bb3.0.1527aeeb906.N7f36</con4:id>
+                        <con1:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con4:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con4:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/ConsultarRolUsuario/XQUERY/Error_TO_ConsultarRolUsuario_PS_Response"/>
+                                <con4:param name="message">
+                                    <con4:path>xs:string(fn:data($fault/ctx:reason))</con4:path>
+                                </con4:param>
+                                <con4:param name="responseMapeoErrorMessage">
+                                    <con4:path>$outMapeoError</con4:path>
+                                </con4:param>
+                            </con4:xqueryTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con2:reply isError="true" xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-a050af3.4c4c1bb3.0.1527aeeb906.N7f35</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteNode1" error-handler="error-a050af3.4c4c1bb3.0.1527aeeb906.N7f3d">
+                <con:context>
+                    <con1:userNsDecl prefix="con" namespace="http://www.bcie.org/ConsultarRolUsuarioMO"/>
+                </con:context>
+                <con:actions>
+                    <con2:route>
+                        <con1:id>_ActionId-a050af3.4c4c1bb3.0.1527aeeb906.N7ff4</con1:id>
+                        <con2:service ref="ADAPTADORES/ModeloNegocio/Utilidades/ConsultarRolUsuario/BS/ConsultarRolUsuario_DB" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:operation>ConsultarRolUsuario_DB</con2:operation>
+                        <con2:outboundTransform>
+                            <con4:log>
+                                <con1:id>_ActionId-N3f579bc0.N5af5b8db.0.15351d75984.N7e9b</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>ConsultarRolUsuario-Request</con4:message>
+                            </con4:log>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a050af3.4c4c1bb3.0.1527aeeb906.N7ff1</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/ConsultarRolUsuario/XQUERY/ConsultarRolUsuario_PS_TO_ConsultarRolUsuario_BS_Request"/>
+                                        <con1:param name="ConsultarRolUsuarioRequest">
+                                            <con1:path>$body/con:ConsultarRolUsuarioRequest</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con2:outboundTransform>
+                        <con2:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a050af3.4c4c1bb3.0.1527aeeb906.N7fee</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/ConsultarRolUsuario/XQUERY/ConsultarRolUsuario_BS_TO_ConsultarRolUsuario_PS_Response"/>
+                                        <con1:param name="ConsultarRolUsuario_Output">
+                                            <con1:path>$body/*[1]</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con4:log>
+                                <con1:id>_ActionId-N3f579bc0.N5af5b8db.0.15351d75984.N7e98</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>ConsultarRolUsuario-Response</con4:message>
+                            </con4:log>
+                        </con2:responseTransform>
+                    </con2:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

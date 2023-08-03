@@ -1,0 +1,86 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Jun 28 13:02:04 CDT 2019
+  Author:  offic
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ItemDiffColorProcess"
+               targetNamespace="http://xmlns.oracle.com/ItemCataloApp/ItemDiffColorProcess/ItemDiffColorProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ItemCataloApp/ItemDiffColorProcess/ItemDiffColorProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://xmlns.oracle.com/pcbpel/adapter/db/ItemCataloApp/ItemDiffColorProcess/getColorDB"
+         xmlns:ns2="http://xmlns.oracle.com/pcbpel/adapter/db/top/getColorDB"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/ItemCataloApp/ItemDiffColorProcess/ItemDiffColorProcess" location="../WSDLs/ItemDiffColorProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="ItemDiffColorService" partnerLinkType="client:ItemDiffColorProcess" myRole="ItemDiffColorProcessProvider"/>
+    <partnerLink name="getColorDB" partnerLinkType="ns1:getColorDB_plt" partnerRole="getColorDB_role"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:ItemDiffColorProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:ItemDiffColorProcessResponseMessage"/>
+    <variable name="getColor_InputVariable" messageType="ns1:getColorDBSelect_inputParameters"/>
+    <variable name="getColor_OutputVariable" messageType="ns1:MdmItemsDiffsCollection_msg"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ItemDiffColorProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="ItemDiffColorService" portType="client:ItemDiffColorProcess" operation="translateColor" variable="inputVariable" createInstance="yes"/>
+    <assign name="putData">
+      <copy>
+        <from>$inputVariable.payload</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$getColor_InputVariable.getColorDBSelect_inputParameters</to>
+      </copy>
+    </assign>
+    <invoke name="getColor" bpelx:invokeAsDetail="no" partnerLink="getColorDB" portType="ns1:getColorDB_ptt"
+            operation="getColorDBSelect" inputVariable="getColor_InputVariable"
+            outputVariable="getColor_OutputVariable"/>
+    <assign name="replay">
+      <copy>
+        <from>$getColor_OutputVariable.MdmItemsDiffsCollection</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="ItemDiffColorService" portType="client:ItemDiffColorProcess" operation="translateColor" variable="outputVariable"/>
+  </sequence>
+</process>

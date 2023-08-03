@@ -1,0 +1,274 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Dec 22 23:12:31 CST 2015
+  Author:  Perla Osorio
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="PropagarFuente"
+               targetNamespace="http://xmlns.oracle.com/DominioLineaCredito/PropagarFuente/PropagarFuente"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioLineaCredito/PropagarFuente/PropagarFuente"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bice.org/PropagarLineaCreditoService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/ActualizarFuenteLCSAD"
+         xmlns:ns3="http://www.bice.org/ActualizarLineaCreditoService" xmlns:ns6="http://www.bcie.org/CondicionBO"
+         xmlns:ns8="http://www.bcie.org/TerminoBO" xmlns:ns10="http://www.bcie.org/ResultBO"
+         xmlns:ns9="http://www.bcie.org/ComisionBO" xmlns:ns5="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns7="http://www.bcie.org/CatalogoBO" xmlns:ns11="http://www.bcie.org/ErrorBO"
+         xmlns:ns4="http://www.bcie.org/LineaCreditoMO"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns13="http://www.bcie.org/DocumentoBO" xmlns:ns12="http://www.bcie.org/AtributoBO"
+         xmlns:ns14="http://www.bcie.org/ConsultarAsignacionARE" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bice.org/PropagarLineaCreditoService" location="../WSDLs/PropagarFuenteSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="propagarfuente_client" partnerLinkType="ns1:PropagarFuente" myRole="PropagarFuentePT"/>
+    <partnerLink name="ActualizarFuenteLC_SB" partnerLinkType="ns2:ActualizarFuenteLC_SB"
+                 partnerRole="ActualizarFuenteLC_PT"/>
+    <partnerLink name="ActualizarLineaCredito_SB" partnerLinkType="ns3:ActualizarLineaCredito_SB"
+                 partnerRole="ActualizarLineaCreditoPT"/>
+    <partnerLink name="PropagarFuente_SB" partnerLinkType="ns3:PropagarFuente_SB" partnerRole="PropagarFuentePT"/>
+    <partnerLink name="ConsultarAsignacionARE_SB" partnerLinkType="ns14:ConsultarAsignacionARE_SB"
+                 partnerRole="ConsultarAsignacionARE_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:PropagarFuenteRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:PropagarFuenteResponseMessage"/>
+    <variable name="inActualizarFuenteLC_SB" messageType="ns2:ActualizarFuenteLCRequest"/>
+    <variable name="outActualizarFuenteLC_SB" messageType="ns2:ActualizarFuenteLCResponse"/>
+    <variable name="inActualizarLineaCredito_SB" messageType="ns3:ActualizarLineaCreditoRequestMessage"/>
+    <variable name="outActualizarLineaCredito_SB" messageType="ns3:ActualizarLineaCreditoResponseMessage"/>
+    <variable name="inPropagarFuenteSB" messageType="ns3:PropagarFuenteRequestMessage"/>
+    <variable name="outPropagarFuenteSB" messageType="ns3:PropagarFuenteResponseMessage"/>
+    <variable name="setInstanceTitle" type="xsd:string"/>
+    <variable name="inConsultarAsignacionARE" messageType="ns14:requestConsultarAsignacionAREMessage"/>
+    <variable name="outConsultarAsignacionARE" messageType="ns14:responseConsultarAsignacionAREMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="CatchAll">
+        <assign name="FaultAll">
+          <copy>
+            <from>"ERROR"</from>
+            <to>$outputVariable.response/ns4:Resultado/ns10:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns4:Resultado/ns10:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyFaultAll" variable="outputVariable" partnerLink="propagarfuente_client"
+               portType="ns1:PropagarFuentePT" operation="propagarFuente"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in PropagarFuente.wsdl) -->
+    <receive name="receiveInput" partnerLink="propagarfuente_client" portType="ns1:PropagarFuentePT" operation="propagarFuente" variable="inputVariable" createInstance="yes"/>
+    <assign name="setInstanceTitle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("IdLineaCredito: ",$inputVariable.request/ns4:LineaCredito/ns5:idLineaCredito ))</from>
+        <to>$setInstanceTitle</to>
+      </copy>
+    </assign>
+    <if name="IfValidaCodigoAsignacion">
+      <documentation>
+        <![CDATA[TieneCodigoAsignacion]]>
+      </documentation>
+      <condition>string-length(string($inputVariable.request/ns4:LineaCredito/ns5:CodigoAsignacion)) &gt; 0</condition>
+      <sequence name="TieneCodigoAsignacionSequence">
+        <assign name="requestConsultarAsignacion">
+          <copy>
+            <from>$inputVariable.request/ns4:LineaCredito/ns5:CodigoAsignacion</from>
+            <to>$inConsultarAsignacionARE.request/ns4:codigoAsignacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarAsignacionARE_SB" bpelx:invokeAsDetail="no" partnerLink="ConsultarAsignacionARE_SB"
+                portType="ns14:ConsultarAsignacionARE_PT" operation="ConsultarAsignacionARE"
+                inputVariable="inConsultarAsignacionARE" outputVariable="outConsultarAsignacionARE"/>
+        <assign name="ConsultarAsignacionARE_TO_PropagarFuenteInput">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:processXQuery10('../Transformations/ConsultarAsignacionARE_TO_PropagarFuenteInput.xqy', 'inputVariable.request', $inputVariable.request, 'outConsultarAsignacionARE.response', $outConsultarAsignacionARE.response)</from>
+            <to variable="inputVariable" part="request"/>
+          </copy>
+        </assign>
+      </sequence>
+      <else>
+        <documentation/>
+        <sequence name="ConsultarAsignacionARE">
+          <empty name="Empty"/>
+        </sequence>
+      </else>
+    </if>
+    <assign name="PropagarFuenteRequest">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:processXQuery10('../Transformations/PropagarFuente_TO_PropagarFuente_SB_Request.xqy', 'inputVariable.request', $inputVariable.request)</from>
+        <to variable="inPropagarFuenteSB" part="request"/>
+      </copy>
+    </assign>
+    <invoke name="InvokePropagarFuenteSB" bpelx:invokeAsDetail="no" partnerLink="PropagarFuente_SB"
+            portType="ns3:PropagarFuentePT" operation="propagarFuente" inputVariable="inPropagarFuenteSB"
+            outputVariable="outPropagarFuenteSB"/>
+    <if name="IfValidaError">
+      <documentation>
+        <![CDATA[ErrorProveedor]]>
+      </documentation>
+      <condition>string($outPropagarFuenteSB.response/ns4:Resultado/ns10:result) = 'ERROR'</condition>
+      <sequence name="ValidaErrorProveedor">
+        <assign name="ErrorResponse">
+          <copy>
+            <from>"ERROR"</from>
+            <to>$outputVariable.response/ns4:Resultado/ns10:result</to>
+          </copy>
+          <copy>
+            <from>$outPropagarFuenteSB.response/ns4:Resultado/ns10:message</from>
+            <to>$outputVariable.response/ns4:Resultado/ns10:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" partnerLink="propagarfuente_client" portType="ns1:PropagarFuentePT"
+               operation="propagarFuente" variable="outputVariable"/>
+        <exit name="ExitError"/>
+      </sequence>
+    </if>
+    <if name="IfValidaIdLineaCredito">
+      <documentation>
+        <![CDATA[IdLineaCreditoNULL]]>
+      </documentation>
+      <condition>string-length(string($inputVariable.request/ns4:LineaCredito/ns5:idLineaCredito )) = 0 or string($inputVariable.request/ns4:LineaCredito/ns5:idLineaCredito) = '0'</condition>
+      <sequence name="ValidaLineaCredito">
+        <assign name="ErrorIdLineaCredito">
+          <copy>
+            <from>"ERROR"</from>
+            <to>$outputVariable.response/ns4:Resultado/ns10:result</to>
+          </copy>
+          <copy>
+            <from>"IdLineaCredito es requerido"</from>
+            <to>$outputVariable.response/ns4:Resultado/ns10:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyErrorIdLineaCreditoNull" variable="outputVariable" partnerLink="propagarfuente_client"
+               portType="ns1:PropagarFuentePT" operation="propagarFuente"/>
+        <exit name="ExitError"/>
+      </sequence>
+    </if>
+    <assign name="ActualizarLineaCredito">
+      <copy>
+        <from>$inputVariable.request/ns4:LineaCredito/ns5:idLineaCredito</from>
+        <to>$inActualizarLineaCredito_SB.request/ns4:LineaCredito/ns5:idLineaCredito</to>
+      </copy>
+      <copy>
+        <from>$outPropagarFuenteSB.response/ns4:LineaCredito/ns5:CodigoAsignacion</from>
+        <to>$inActualizarLineaCredito_SB.request/ns4:LineaCredito/ns5:CodigoAsignacion</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeActualizarLineaCredito_SB" bpelx:invokeAsDetail="no" partnerLink="ActualizarLineaCredito_SB"
+            portType="ns3:ActualizarLineaCreditoPT" operation="actualizarLineaCredito"
+            inputVariable="inActualizarLineaCredito_SB" outputVariable="outActualizarLineaCredito_SB"/>
+    <if name="IfValidaActualizarLC">
+      <documentation>
+        <![CDATA[ERROR]]>
+      </documentation>
+      <condition>$outActualizarLineaCredito_SB.response/ns4:Resultado/ns10:result = 'ERROR'</condition>
+      <sequence name="ValidaActualizarLC">
+        <assign name="ErrorActualizarLC">
+          <copy>
+            <from>$outActualizarLineaCredito_SB.response/ns4:Resultado/ns10:result</from>
+            <to>$outputVariable.response/ns4:Resultado/ns10:result</to>
+          </copy>
+          <copy>
+            <from>$outActualizarLineaCredito_SB.response/ns4:Resultado/ns10:message</from>
+            <to>$outputVariable.response/ns4:Resultado/ns10:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="propagarfuente_client"
+               portType="ns1:PropagarFuentePT" operation="propagarFuente"/>
+        <exit name="ExitError"/>
+      </sequence>
+    </if>
+    <forEach parallel="no" counterName="contador" name="ForEachPropagarFuenteSBResponse">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($outPropagarFuenteSB.response/ns4:LineaCredito/ns5:Fuente)</finalCounterValue>
+      <scope name="ForEachPropagarFuenteSB">
+        <sequence>
+          <assign name="ActualizarFuente">
+            <copy>
+              <from>$outPropagarFuenteSB.response/ns4:LineaCredito/ns5:Fuente[$contador]/ns5:idFuente</from>
+              <to>$inActualizarFuenteLC_SB.ActualizarFuenteRequest/ns4:Fuente/ns5:idFuente</to>
+            </copy>
+            <copy bpelx:insertMissingToData="yes">
+              <from>$outPropagarFuenteSB.response/ns4:LineaCredito/ns5:Fuente[$contador]/ns5:NumeroAsignacion</from>
+              <to>$inActualizarFuenteLC_SB.ActualizarFuenteRequest/ns4:Fuente/ns5:NumeroAsignacion</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeActualizarFuenteLC_SB" bpelx:invokeAsDetail="no" partnerLink="ActualizarFuenteLC_SB"
+                  portType="ns2:ActualizarFuenteLC_PT" operation="actualizarFuenteLC"
+                  inputVariable="inActualizarFuenteLC_SB" outputVariable="outActualizarFuenteLC_SB"/>
+        </sequence>
+      </scope>
+    </forEach>
+    <assign name="Response">
+      <copy>
+        <from>"OK"</from>
+        <to>$outputVariable.response/ns4:Resultado/ns10:result</to>
+      </copy>
+      <copy>
+        <from>"Operacion Exitosa"</from>
+        <to>$outputVariable.response/ns4:Resultado/ns10:message</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="propagarfuente_client" portType="ns1:PropagarFuentePT" operation="propagarFuente" variable="outputVariable"/>
+  </sequence>
+</process>

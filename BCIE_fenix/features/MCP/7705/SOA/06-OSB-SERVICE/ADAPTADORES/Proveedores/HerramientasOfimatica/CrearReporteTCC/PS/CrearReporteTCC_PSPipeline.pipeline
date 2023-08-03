@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/Wsdl/ADAPTER/CrearReporteTCCSAD"/>
+            <con:binding>
+                <con:name>crearReporte12Bnd</con:name>
+                <con:namespace>http://www.bcie.org/CrearReporteTCCService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-a050a0b.6d653132.0.153a0c20195.N7e09">
+        <con:pipeline type="request" name="request-a050a8b.747be3d8.0.153385a413b.N7ff2">
+            <con:stage id="_StageId-a050a8b.747be3d8.0.153385a413b.N7f89" name="StageCrearReporteTCCRequest">
+                <con:context>
+                    <con1:userNsDecl prefix="mat" namespace="http://www.bcie.org/MatrizTCCMO"/>
+                </con:context>
+                <con:actions>
+                    <con3:assign varName="inCrearReporteTCC">
+                        <con1:id>_ActionId-a050a8b.747be3d8.0.153385a413b.N7f82</con1:id>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteTCC/XQUERY/CrearReporteTCC_PS_TO_CrearReporteTCC_BS_Request"/>
+                                <con1:param name="idOperacion">
+                                    <con1:path>$body/mat:CrearReporteTCCRequest</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con1:id>_ActionId-a050a8b.747be3d8.0.153385a413b.N7f85</con1:id>
+                        <con3:service ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteTCC/BS/CrearReporteTCC_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>crearReporteTCC</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inCrearReporteTCC</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outCrearReporteTCC</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-a050a8b.747be3d8.0.153385a413b.N7ff1">
+            <con:stage id="_StageId-a050a8b.747be3d8.0.153385a413b.N7fec" name="StageCrearReporteTCCResponse">
+                <con:context/>
+                <con:actions>
+                    <con3:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-a050a8b.747be3d8.0.153385a413b.N7f7f</con1:id>
+                        <con3:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteTCC/XQUERY/CrearReporteTCC_BS_TO_CrearReporteTCC_PS_Response"/>
+                                <con1:param name="Reporte">
+                                    <con1:path>$outCrearReporteTCC</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-a050a0b.6d653132.0.153a0c20195.N7e09">
+            <con:stage id="_StageId-a050a0b.6d653132.0.153a0c20195.N7b2e" name="StageError" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con3:assign varName="inMapeoError" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a050a0b.6d653132.0.153a0c20195.N7b2d</con2:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(fn:data($fault/ctx:errorCode))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a050a0b.6d653132.0.153a0c20195.N7b2c</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS.proxyPipeline" xsi:type="con:PipelineRef"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapeoError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapeoError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a050a0b.6d653132.0.153a0c20195.N7b2b</con2:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteTCC/XQUERY/Error_TO_CrearReporteTCC_PS_Response"/>
+                                <con2:param name="message">
+                                    <con2:path>xs:string(fn:data($fault/ctx:reason))</con2:path>
+                                </con2:param>
+                                <con2:param name="ErrorResponse">
+                                    <con2:path>$outMapeoError</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-a050a0b.6d653132.0.153a0c20195.N7b2a</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PipelinePairNode1">
+                <con:request>request-a050a8b.747be3d8.0.153385a413b.N7ff2</con:request>
+                <con:response>response-a050a8b.747be3d8.0.153385a413b.N7ff1</con:response>
+            </con:pipeline-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

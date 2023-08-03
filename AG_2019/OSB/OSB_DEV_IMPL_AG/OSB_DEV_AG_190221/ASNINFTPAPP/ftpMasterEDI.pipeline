@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/stages/publish/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="ASNINFTPAPP/Resources/ftpMasterEDIZ-concrete"/>
+            <con:binding>
+                <con:name>Get_ptt-binding</con:name>
+                <con:namespace>http://xmlns.oracle.com/pcbpel/adapter/ftp/ASNINBUS/ASNINFTPAPP/ftpMasterEDIZ</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="request" name="request-afffa4e.N503958fe.0.175dcfcd370.N8000">
+            <con:stage id="_StageId-afffa4e.N503958fe.0.175dcfcd370.N7ffe" name="Stage1">
+                <con:context>
+                    <con1:userNsDecl prefix="ftp1" namespace="http://www.agarcia.mx/EnterpriseObjects/ftpMasterEDIZ"/>
+                </con:context>
+                <con:actions>
+                    <con3:assign varName="nameFile">
+                        <con1:id>_ActionId-afffa4e.N6576e690.0.175dd4aef93.N7ffa</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>data($inbound/ctx:transport/ctx:request/tp:headers/jca:jca.ftp.FileName)</con1:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:assign varName="Buro">
+                        <con1:id>_ActionId-N3f57febd.3e647a11.0.176f734b489.N7f57</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>'MasterEDI'</con1:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-afffa4e.N6576e690.0.175dd4aef93.N7ff7</con1:id>
+                        <con3:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con1:xsltTransform>
+                                <con1:resource ref="ASNINFTPAPP/Resources/ASNIN"/>
+                                <con1:input>$body/ftp1:Root-Element</con1:input>
+                                <con1:param name="nameFile">
+                                    <con1:path>$nameFile</con1:path>
+                                </con1:param>
+                                <con1:param name="Buro">
+                                    <con1:path>$Buro</con1:path>
+                                </con1:param>
+                            </con1:xsltTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con3:assign varName="FileGeneral">
+                        <con1:id>_ActionId-afffaa6.70d0cf39.0.17600a21388.N7e9b</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>fn:substring-before($nameFile,'Z')</con1:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con4:route>
+                        <con1:id>_ActionId-afffaa6.70d0cf39.0.17600a21388.N7f68</con1:id>
+                        <con4:service ref="ASNINFTPAPP/FtpWriteASNIN" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con4:operation>execute</con4:operation>
+                        <con4:outboundTransform/>
+                    </con4:route>
+                    <con3:wsCallout>
+                        <con1:id>_ActionId-afffa40.N7dc0bea0.0.1760a4ccbfa.N7fcd</con1:id>
+                        <con3:service ref="ASNINFTPAPP/ftpMasterEDIA" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>Get</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="true">body</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="true">body</con3:body>
+                        </con3:response>
+                        <con3:requestTransform>
+                            <con3:assign varName="FileGeneralA">
+                                <con1:id>_ActionId-afffa40.N7dc0bea0.0.1760a4ccbfa.N7f67</con1:id>
+                                <con3:expr>
+                                    <con1:xqueryText>fn:concat($FileGeneral,'A.CSV')</con1:xqueryText>
+                                </con3:expr>
+                            </con3:assign>
+                            <con3:transport-headers>
+                                <con1:id>_ActionId-afffa40.N3cc1a0ef.0.1760b2f2070.N7ffe</con1:id>
+                                <con3:header-set>outbound-request</con3:header-set>
+                                <con3:header value="expression" name="jca.ftp.FileName">
+                                    <con1:xqueryText>$FileGeneralA</con1:xqueryText>
+                                </con3:header>
+                            </con3:transport-headers>
+                        </con3:requestTransform>
+                        <con3:responseTransform>
+                            <con2:log>
+                                <con1:id>_ActionId-afffa40.N3cc1a0ef.0.1760b2f2070.N7ffb</con1:id>
+                                <con2:logLevel>warning</con2:logLevel>
+                                <con2:expr>
+                                    <con1:xqueryText>$body/ftp1:Root-Element</con1:xqueryText>
+                                </con2:expr>
+                                <con2:message>[[[[[[[[[[[[[[[[[[[[
+
+Archivo leido A
+
+]]]]]]]]]]]]]]]]]]</con2:message>
+                            </con2:log>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7ffe</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xsltTransform>
+                                        <con1:resource ref="ASNINFTPAPP/Resources/ASNIN"/>
+                                        <con1:input>$body/ftp1:Root-Element</con1:input>
+                                        <con1:param name="nameFile">
+                                            <con1:path>$FileGeneralA</con1:path>
+                                        </con1:param>
+                                        <con1:param name="Buro">
+                                            <con1:path>$Buro</con1:path>
+                                        </con1:param>
+                                    </con1:xsltTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con4:route>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7f98</con1:id>
+                                <con4:service ref="ASNINFTPAPP/FtpWriteASNIN" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con4:operation>execute</con4:operation>
+                                <con4:outboundTransform/>
+                            </con4:route>
+                        </con3:responseTransform>
+                    </con3:wsCallout>
+                    <con3:wsCallout>
+                        <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7ef0</con1:id>
+                        <con3:service ref="ASNINFTPAPP/ftpMasterEDIA" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>Get</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="true">body</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="true">body</con3:body>
+                        </con3:response>
+                        <con3:requestTransform>
+                            <con3:assign varName="FileGeneralB">
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7eef</con1:id>
+                                <con3:expr>
+                                    <con1:xqueryText>fn:concat($FileGeneral,'B.CSV')</con1:xqueryText>
+                                </con3:expr>
+                            </con3:assign>
+                            <con3:transport-headers>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7eee</con1:id>
+                                <con3:header-set>outbound-request</con3:header-set>
+                                <con3:header value="expression" name="jca.ftp.FileName">
+                                    <con1:xqueryText>$FileGeneralB</con1:xqueryText>
+                                </con3:header>
+                            </con3:transport-headers>
+                        </con3:requestTransform>
+                        <con3:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7eed</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xsltTransform>
+                                        <con1:resource ref="ASNINFTPAPP/Resources/ASNIN"/>
+                                        <con1:input>$body/ftp1:Root-Element</con1:input>
+                                        <con1:param name="nameFile">
+                                            <con1:path>$FileGeneralB</con1:path>
+                                        </con1:param>
+                                        <con1:param name="Buro">
+                                            <con1:path>$Buro</con1:path>
+                                        </con1:param>
+                                    </con1:xsltTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con2:log>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7eec</con1:id>
+                                <con2:logLevel>warning</con2:logLevel>
+                                <con2:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con2:expr>
+                                <con2:message>[[[[[[[[[[[[[[[[[[[[
+
+Archivo leido B
+
+]]]]]]]]]]]]]]]]]]</con2:message>
+                            </con2:log>
+                            <con4:route>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7eeb</con1:id>
+                                <con4:service ref="ASNINFTPAPP/FtpWriteASNIN" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con4:operation>execute</con4:operation>
+                                <con4:outboundTransform/>
+                            </con4:route>
+                        </con3:responseTransform>
+                    </con3:wsCallout>
+                    <con3:wsCallout>
+                        <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7e46</con1:id>
+                        <con3:service ref="ASNINFTPAPP/ftpMasterEDIA" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>Get</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="true">body</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="true">body</con3:body>
+                        </con3:response>
+                        <con3:requestTransform>
+                            <con3:assign varName="FileGeneralC">
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7e45</con1:id>
+                                <con3:expr>
+                                    <con1:xqueryText>fn:concat($FileGeneral,'C.CSV')</con1:xqueryText>
+                                </con3:expr>
+                            </con3:assign>
+                            <con3:transport-headers>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7e44</con1:id>
+                                <con3:header-set>outbound-request</con3:header-set>
+                                <con3:header value="expression" name="jca.ftp.FileName">
+                                    <con1:xqueryText>$FileGeneralC</con1:xqueryText>
+                                </con3:header>
+                            </con3:transport-headers>
+                        </con3:requestTransform>
+                        <con3:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7e43</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xsltTransform>
+                                        <con1:resource ref="ASNINFTPAPP/Resources/ASNIN"/>
+                                        <con1:input>$body/ftp1:Root-Element</con1:input>
+                                        <con1:param name="nameFile">
+                                            <con1:path>$FileGeneralC</con1:path>
+                                        </con1:param>
+                                        <con1:param name="Buro">
+                                            <con1:path>$Buro</con1:path>
+                                        </con1:param>
+                                    </con1:xsltTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con2:log>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7e42</con1:id>
+                                <con2:logLevel>warning</con2:logLevel>
+                                <con2:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con2:expr>
+                                <con2:message>[[[[[[[[[[[[[[[[[[[[
+
+Archivo leido C
+
+]]]]]]]]]]]]]]]]]]</con2:message>
+                            </con2:log>
+                            <con4:route>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7e41</con1:id>
+                                <con4:service ref="ASNINFTPAPP/FtpWriteASNIN" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con4:operation>execute</con4:operation>
+                                <con4:outboundTransform/>
+                            </con4:route>
+                        </con3:responseTransform>
+                    </con3:wsCallout>
+                    <con3:wsCallout>
+                        <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7d4d</con1:id>
+                        <con3:service ref="ASNINFTPAPP/ftpMasterEDIA" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>Get</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="true">body</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="true">body</con3:body>
+                        </con3:response>
+                        <con3:requestTransform>
+                            <con3:assign varName="FileGeneralD">
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7d4c</con1:id>
+                                <con3:expr>
+                                    <con1:xqueryText>fn:concat($FileGeneral,'D.CSV')</con1:xqueryText>
+                                </con3:expr>
+                            </con3:assign>
+                            <con3:transport-headers>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7d4b</con1:id>
+                                <con3:header-set>outbound-request</con3:header-set>
+                                <con3:header value="expression" name="jca.ftp.FileName">
+                                    <con1:xqueryText>$FileGeneralD</con1:xqueryText>
+                                </con3:header>
+                            </con3:transport-headers>
+                        </con3:requestTransform>
+                        <con3:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7d4a</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xsltTransform>
+                                        <con1:resource ref="ASNINFTPAPP/Resources/ASNIN"/>
+                                        <con1:input>$body/ftp1:Root-Element</con1:input>
+                                        <con1:param name="nameFile">
+                                            <con1:path>$FileGeneralD</con1:path>
+                                        </con1:param>
+                                        <con1:param name="Buro">
+                                            <con1:path>$Buro</con1:path>
+                                        </con1:param>
+                                    </con1:xsltTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con2:log>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7d49</con1:id>
+                                <con2:logLevel>warning</con2:logLevel>
+                                <con2:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con2:expr>
+                                <con2:message>[[[[[[[[[[[[[[[[[[[[
+
+Archivo leido D
+
+]]]]]]]]]]]]]]]]]]</con2:message>
+                            </con2:log>
+                            <con4:route>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7d48</con1:id>
+                                <con4:service ref="ASNINFTPAPP/FtpWriteASNIN" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con4:operation>execute</con4:operation>
+                                <con4:outboundTransform/>
+                            </con4:route>
+                        </con3:responseTransform>
+                    </con3:wsCallout>
+                    <con3:wsCallout>
+                        <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7cbb</con1:id>
+                        <con3:service ref="ASNINFTPAPP/ftpMasterEDIA" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>Get</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="true">body</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="true">body</con3:body>
+                        </con3:response>
+                        <con3:requestTransform>
+                            <con3:assign varName="FileGeneralE">
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7cba</con1:id>
+                                <con3:expr>
+                                    <con1:xqueryText>fn:concat($FileGeneral,'E.CSV')</con1:xqueryText>
+                                </con3:expr>
+                            </con3:assign>
+                            <con3:transport-headers>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7cb9</con1:id>
+                                <con3:header-set>outbound-request</con3:header-set>
+                                <con3:header value="expression" name="jca.ftp.FileName">
+                                    <con1:xqueryText>$FileGeneralE</con1:xqueryText>
+                                </con3:header>
+                            </con3:transport-headers>
+                        </con3:requestTransform>
+                        <con3:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7cb8</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xsltTransform>
+                                        <con1:resource ref="ASNINFTPAPP/Resources/ASNIN"/>
+                                        <con1:input>$body/ftp1:Root-Element</con1:input>
+                                        <con1:param name="nameFile">
+                                            <con1:path>$FileGeneralE</con1:path>
+                                        </con1:param>
+                                        <con1:param name="Buro">
+                                            <con1:path>$Buro</con1:path>
+                                        </con1:param>
+                                    </con1:xsltTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con2:log>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7cb7</con1:id>
+                                <con2:logLevel>warning</con2:logLevel>
+                                <con2:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con2:expr>
+                                <con2:message>[[[[[[[[[[[[[[[[[[[[
+
+Archivo leido E
+
+]]]]]]]]]]]]]]]]]]</con2:message>
+                            </con2:log>
+                            <con4:route>
+                                <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7cb6</con1:id>
+                                <con4:service ref="ASNINFTPAPP/FtpWriteASNIN" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con4:operation>execute</con4:operation>
+                                <con4:outboundTransform/>
+                            </con4:route>
+                        </con3:responseTransform>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7c6e</con1:id>
+                        <con3:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con1:xqueryText>&lt;pkg:InputParameters xmlns:pkg="http://xmlns.oracle.com/pcbpel/adapter/db/sp/PKG_MDM_ASNIN">
+    &lt;pkg:VFILE>{$nameFile}&lt;/pkg:VFILE>
+&lt;/pkg:InputParameters></con1:xqueryText>
+                        </con3:expr>
+                    </con3:replace>
+                    <con4:route>
+                        <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7c74</con1:id>
+                        <con4:service ref="ASNINFTPAPP/PKG_MDM_ASNIN" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con4:operation>PKG_MDM_ASNIN</con4:operation>
+                        <con4:outboundTransform/>
+                    </con4:route>
+                    <con2:log>
+                        <con1:id>_ActionId-afffa94.7b7b69cf.0.1760b87e1b2.N7c6b</con1:id>
+                        <con2:logLevel>warning</con2:logLevel>
+                        <con2:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con2:expr>
+                        <con2:message>[[[[[[[[[[[[[[[[[[[[[[[[[
+
+Body PKG
+
+]]]]]]]]]]]]]]]]]]]]]]]]</con2:message>
+                    </con2:log>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-afffa4e.N503958fe.0.175dcfcd370.N7fff">
+            <con:stage id="_StageId-afffa4e.N503958fe.0.175dcfcd370.N7ffd" name="Stage1">
+                <con:context/>
+                <con:actions/>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="Pipeline Pair Node1">
+                <con:request>request-afffa4e.N503958fe.0.175dcfcd370.N8000</con:request>
+                <con:response>response-afffa4e.N503958fe.0.175dcfcd370.N7fff</con:response>
+            </con:pipeline-node>
+        </con:flow>
+        <con:partner-links/>
+    </con:router>
+</con:pipelineEntry>

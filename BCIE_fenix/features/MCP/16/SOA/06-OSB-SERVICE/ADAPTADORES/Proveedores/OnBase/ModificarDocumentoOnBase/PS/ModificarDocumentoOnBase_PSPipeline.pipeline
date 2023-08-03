@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Wsdl/ADAPTER/ModificarDocumentoOnBaseSAD"/>
+            <con:binding>
+                <con:name>Documento12Bnd</con:name>
+                <con:namespace>http://xmlns.bcie.com/DocumentoService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7f9c">
+        <con:pipeline type="error" name="error-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7f9c">
+            <con:stage id="_StageId-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7f62" name="StageError">
+                <con:context/>
+                <con:actions>
+                    <con3:assign varName="inMapeoError">
+                        <con2:id>_ActionId-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7f61</con2:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(fn:data($fault/ctx:errorCode))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con2:id>_ActionId-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7f60</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS.proxyPipeline" xsi:type="con:PipelineRef"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapeoError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapeoError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7f5f</con2:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/OnBase/ModificarDocumentoOnBase/XQUERY/Error_TO_ModificarDocumentoOnBase_PS"/>
+                                <con2:param name="message">
+                                    <con2:path>xs:string(fn:data($fault/ctx:reason))</con2:path>
+                                </con2:param>
+                                <con2:param name="responseMapeoErrorMessage">
+                                    <con2:path>$outMapeoError</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7f5e</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="request" name="request-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7eca">
+            <con:stage id="_StageId-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7ec8" name="StageRequest">
+                <con:context>
+                    <con2:userNsDecl prefix="doc" namespace="http://www.bcie.org/DocumentoMO"/>
+                </con:context>
+                <con:actions>
+                    <con3:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7e95</con2:id>
+                        <con3:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/OnBase/ModificarDocumentoOnBase/XQUERY/ModificarDocumentoOnBase_PS_TO_OnBase_Request"/>
+                                <con2:param name="ModificarDocumentoOnBaseRequest">
+                                    <con2:path>$body/doc:ModificarDocumentoOnBaseRequest</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con4:log>
+                        <con2:id>_ActionId-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7e60</con2:id>
+                        <con4:logLevel>info</con4:logLevel>
+                        <con4:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con4:expr>
+                        <con4:message>RequestModificarDocumento</con4:message>
+                    </con4:log>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7ec9">
+            <con:stage id="_StageId-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7ec7" name="StageResponse">
+                <con:context/>
+                <con:actions>
+                    <con3:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7e63</con2:id>
+                        <con3:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/OnBase/ModificarDocumentoOnBase/XQUERY/OnBase_BS_TO_ModificarDocumentoOnBase_PS_Response"/>
+                                <con2:param name="updateDataResponse">
+                                    <con2:path>$body/*[1]</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con4:log>
+                        <con2:id>_ActionId-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7e5d</con2:id>
+                        <con4:logLevel>info</con4:logLevel>
+                        <con4:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con4:expr>
+                        <con4:message>ResponseModificarDocumento</con4:message>
+                    </con4:log>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PipelinePairNode1">
+                <con:request>request-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7eca</con:request>
+                <con:response>response-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7ec9</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteNode1">
+                <con:context/>
+                <con:actions>
+                    <con1:route>
+                        <con2:id>_ActionId-N3f57c7ff.N1e961a34.0.14ff26af4f3.N7efb</con2:id>
+                        <con1:service ref="ADAPTADORES/Proveedores/OnBase/BS/OnBase_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>UpdateData</con1:operation>
+                        <con1:outboundTransform>
+                            <con4:log xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con1="http://www.bea.com/wli/sb/stages/config">
+                                <con1:id>_ActionId-N3f57c7ff.2a29ed2b.0.15362b475f4.N7f06</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>ModificarDocumeto_ONBASE_BS_Request</con4:message>
+                            </con4:log>
+                        </con1:outboundTransform>
+                        <con1:responseTransform>
+                            <con4:log xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con1="http://www.bea.com/wli/sb/stages/config">
+                                <con1:id>_ActionId-N3f57c7ff.2a29ed2b.0.15362b475f4.N7ed4</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>ModificarDocumeto_ONBASE_BS_Response</con4:message>
+                            </con4:log>
+                        </con1:responseTransform>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

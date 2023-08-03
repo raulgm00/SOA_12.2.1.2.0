@@ -1,0 +1,275 @@
+/*
+----------------------------------
+ARCHIVO: 1-DB UPDATE 1.4.sql
+DESCRIPCION: Registrar todos los cambios existentes en la base de datos, con el fin de llevar total trazabilidad de cambios para fase 2.
+FECHA: 12 DE FEBRERO DE 2016
+AUTOR: LATBC 
+VERSION: 1.0
+----------------------------------
+*/
+
+
+
+--1.1		05 de Febrero de 2016 Se ingresan triggers para la bitácora de clientes y contactos  -- Se va PROD
+
+CREATE OR REPLACE TRIGGER CLIENTE_UPD_TGR 
+AFTER UPDATE ON CLIENTES
+FOR EACH ROW
+DECLARE 
+v_id_tbi_cliente NUMBER;
+v_id_tbi_cliente2 NUMBER;
+v_id_flexcube    NUMBER;
+v_ejecutivo      VARCHAR2(20);
+v_autorizo       VARCHAR2(20);
+v_ban_estatus    NUMBER; 
+
+BEGIN
+
+  SELECT TBI_CLIENTE_SEQ.NEXTVAL INTO v_id_tbi_cliente FROM DUAL;
+  
+  v_ban_estatus := :NEW.BAN_ESTATUS;
+  
+IF ( v_ban_estatus = 0) THEN
+
+    INSERT INTO TBI_CLIENTE  VALUES(v_id_tbi_cliente,:NEW.ID_CLIENTE,:NEW.ID_FLEXCUBE,'ELIMINAR_CLIENTE',:NEW.EJECUTIVO,SYSDATE,:NEW.AUTORIZO,NULL,NULL); 
+    INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'BAN_ESTATUS',:NEW.BAN_ESTATUS,:OLD.BAN_ESTATUS);
+ELSE    
+
+    INSERT INTO TBI_CLIENTE  VALUES(v_id_tbi_cliente,:NEW.ID_CLIENTE,:NEW.ID_FLEXCUBE,'MODIFICAR_CLIENTE',:NEW.EJECUTIVO,SYSDATE,:NEW.AUTORIZO,NULL,NULL); 
+    
+IF UPDATING ('ID_FLEXCUBE') THEN
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES (v_id_tbi_cliente,'ID_FLEXCUBE',:NEW.ID_FLEXCUBE,:OLD.ID_FLEXCUBE);
+END IF;  
+IF UPDATING ('RAZON_SOCIAL')THEN
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'RAZON_SOCIAL',:NEW.RAZON_SOCIAL,:OLD.RAZON_SOCIAL);
+END IF;  
+IF UPDATING('ABREVIATURA')THEN
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'ABREVIATURA',:NEW.ABREVIATURA,:OLD.ABREVIATURA);
+END IF;  
+IF UPDATING('TIPO_PERSONA')THEN
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'TIPO_PERSONA',:NEW.TIPO_PERSONA,:OLD.TIPO_PERSONA);
+END IF;  
+IF UPDATING('TIPO_CLIENTE')THEN
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'TIPO_CLIENTE',:NEW.TIPO_CLIENTE,:OLD.TIPO_CLIENTE);
+END IF;  
+IF UPDATING('SECTOR')THEN
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'SECTOR',:NEW.SECTOR,:OLD.SECTOR);
+END IF;  
+IF UPDATING('TIPO_INSTITUCION')THEN  
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'TIPO_INSTITUCION',:NEW.TIPO_INSTITUCION,:OLD.TIPO_INSTITUCION);
+END IF;  
+IF UPDATING('PAIS')THEN  
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'PAIS',:NEW.PAIS,:OLD.PAIS);
+END IF;  
+IF UPDATING('GRUPO_ECONOMICO')THEN  
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'GRUPO_ECONOMICO',:NEW.GRUPO_ECONOMICO,:OLD.GRUPO_ECONOMICO);
+END IF;  
+IF UPDATING('TIPO_IDENTIFICACION')THEN  
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'TIPO_IDENTIFICACION',:NEW.TIPO_IDENTIFICACION,:OLD.TIPO_IDENTIFICACION);
+END IF;  
+IF UPDATING('NUMERO_IDENTIFICACION')THEN
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'NUMERO_IDENTIFICACION',:NEW.NUMERO_IDENTIFICACION,:OLD.NUMERO_IDENTIFICACION);
+END IF;  
+IF UPDATING('OFICINA')THEN  
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'OFICINA',:NEW.OFICINA,:OLD.OFICINA);
+END IF;  
+IF UPDATING('FECHA_REGISTRO')THEN  
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'FECHA_REGISTRO',:NEW.FECHA_REGISTRO,:OLD.FECHA_REGISTRO);
+END IF;  
+IF UPDATING('FECHA_APROBACION')THEN  
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'FECHA_APROBACION',:NEW.FECHA_APROBACION,:OLD.FECHA_APROBACION);
+END IF;  
+IF UPDATING('EJECUTIVO')THEN  
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'EJECUTIVO',:NEW.EJECUTIVO,:OLD.EJECUTIVO);
+END IF;  
+IF UPDATING('COMENTARIO_APROBACION')THEN  
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'COMENTARIO_APROBACION',:NEW.COMENTARIO_APROBACION,:OLD.COMENTARIO_APROBACION);
+END IF;  
+IF UPDATING('AUTORIZO')THEN  
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'AUTORIZO',:NEW.AUTORIZO,:OLD.AUTORIZO);
+END IF;  
+IF UPDATING('BAN_ESTATUS')THEN 
+   INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'BAN_ESTATUS',:NEW.BAN_ESTATUS,:OLD.BAN_ESTATUS);
+END IF;  
+IF UPDATING('FECHA_BAJA')THEN  
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'FECHA_BAJA',:NEW.FECHA_BAJA,:OLD.FECHA_BAJA);
+END IF;  
+IF UPDATING('DIA_PAGO')THEN  
+  INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'DIA_PAGO',:NEW.DIA_PAGO,:OLD.DIA_PAGO);
+END IF;
+
+END IF;
+
+END;
+
+
+/
+
+
+CREATE OR REPLACE TRIGGER CONTACTOS_INS_TGR AFTER
+  INSERT ON CONTACTOS_CLIENTE FOR EACH ROW DECLARE v_id_tbi_cliente NUMBER;
+  v_id_cliente         NUMBER;
+  v_id_flexcube        VARCHAR2(40);
+  v_ejecutivo          VARCHAR2(20);
+  v_autorizo           VARCHAR2(20);
+  v_id_contacto        NUMBER;
+  v_nombre_contacto    VARCHAR2(60);
+  v_telefono_contacto  VARCHAR2(20);
+  v_correo_contacto    VARCHAR2(40);
+  v_fecha_reg_contacto DATE;
+  v_cargo_contacto     VARCHAR2(40);
+
+BEGIN
+ 
+
+    SELECT TBI_CLIENTE_SEQ.NEXTVAL INTO v_id_tbi_cliente FROM DUAL;
+
+    SELECT C.ID_CONTACTO,C.NOMBRE, C.TELEFONO, C.CORREO_ELECTRONICO, C.FECHA_REGISTRO, C.CARGO
+    INTO v_id_contacto, v_nombre_contacto, v_telefono_contacto, v_correo_contacto, v_fecha_reg_contacto, v_cargo_contacto
+    FROM CONTACTOS C
+    WHERE C.ID_CONTACTO = :NEW.ID_CONTACTO;
+
+    SELECT CT.ID_CLIENTE, CT.ID_FLEXCUBE, CT.EJECUTIVO, CT.AUTORIZO
+    INTO v_id_cliente,v_id_flexcube,v_ejecutivo, v_autorizo
+    FROM CLIENTES CT
+    WHERE CT.ID_CLIENTE = :NEW.ID_CLIENTE;
+
+    INSERT INTO TBI_CLIENTE  VALUES(v_id_tbi_cliente,v_id_cliente,v_id_flexcube,'AGREGAR_CONTACTO',v_ejecutivo,SYSDATE,v_autorizo,NULL,NULL);
+  
+    INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'ID_CONTACTO',v_id_contacto,NULL);
+    INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'NOMBRE',v_nombre_contacto,NULL);
+    INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'CORREO_ELECTRONICO',v_correo_contacto,NULL);
+    INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'CARGO',v_cargo_contacto,NULL);
+    INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'TELEFONO', v_telefono_contacto,NULL);
+    INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'FECHA_REGISTRO',v_fecha_reg_contacto,NULL);
+
+END;
+
+/ 
+
+
+
+CREATE OR REPLACE TRIGGER CONTACTOS_UPD_TGR 
+AFTER UPDATE ON CONTACTOS
+FOR EACH ROW
+DECLARE 
+
+v_id_tbi_cliente NUMBER;
+v_id_cliente     NUMBER;
+v_id_flexcube    VARCHAR(40);
+v_ejecutivo      VARCHAR2(20);
+v_autorizo       VARCHAR2(20);
+
+
+BEGIN
+      
+      SELECT CCT.ID_CLIENTE 
+      INTO v_id_cliente
+      FROM CONTACTOS_CLIENTE CCT
+      WHERE CCT.ID_CONTACTO = :NEW.ID_CONTACTO;
+      
+      SELECT CT.ID_CLIENTE, CT.ID_FLEXCUBE, CT.EJECUTIVO, CT.AUTORIZO 
+      INTO v_id_cliente, v_id_flexcube, v_ejecutivo, v_autorizo
+      FROM CLIENTES CT
+      WHERE CT.ID_CLIENTE = v_id_cliente;
+      
+      
+      SELECT TBI_CLIENTE_SEQ.NEXTVAL INTO v_id_tbi_cliente FROM DUAL;
+
+      INSERT INTO TBI_CLIENTE  VALUES(v_id_tbi_cliente,v_id_cliente,v_id_flexcube,'MODIFICAR_CONTACTO',v_ejecutivo,SYSDATE,v_autorizo,NULL,NULL); 
+
+      IF UPDATING('NOMBRE')THEN  
+        INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'NOMBRE',:NEW.NOMBRE,:OLD.NOMBRE);
+      END IF;  
+      IF UPDATING ('CORREO_ELECTRONICO')THEN
+        INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'CORREO_ELECTRONICO',:NEW.CORREO_ELECTRONICO,:OLD.CORREO_ELECTRONICO);
+      END IF;  
+      IF UPDATING ('CARGO')THEN
+        INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'CARGO',:NEW.CARGO,:OLD.CARGO);
+      END IF;  
+      IF UPDATING ('TELEFONO')THEN
+        INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'TELEFONO',:NEW.TELEFONO,:OLD.TELEFONO);
+      END IF; 
+END;
+
+/
+
+
+
+CREATE OR REPLACE TRIGGER CONTACTOS_DEL_TGR 
+AFTER DELETE ON CONTACTOS_CLIENTE
+FOR EACH ROW
+DECLARE 
+
+v_id_tbi_cliente NUMBER;
+v_id_cliente     NUMBER;
+v_id_flexcube    VARCHAR(40);
+v_ejecutivo      VARCHAR2(20);
+v_autorizo       VARCHAR2(20);
+v_id_contacto        NUMBER;
+v_nombre_contacto    VARCHAR2(60);
+v_telefono_contacto  VARCHAR2(20);
+v_correo_contacto    VARCHAR2(40);
+v_fecha_reg_contacto DATE;
+v_cargo_contacto     VARCHAR2(40);
+
+BEGIN
+
+    SELECT C.ID_CONTACTO,C.NOMBRE, C.TELEFONO, C.CORREO_ELECTRONICO, C.FECHA_REGISTRO, C.CARGO
+    INTO v_id_contacto, v_nombre_contacto, v_telefono_contacto, v_correo_contacto, v_fecha_reg_contacto, v_cargo_contacto
+    FROM CONTACTOS C
+    WHERE C.ID_CONTACTO = :OLD.ID_CONTACTO;
+
+    SELECT CT.ID_CLIENTE, CT.ID_FLEXCUBE, CT.EJECUTIVO, CT.AUTORIZO
+    INTO v_id_cliente,v_id_flexcube,v_ejecutivo, v_autorizo
+    FROM CLIENTES CT
+    WHERE CT.ID_CLIENTE = :OLD.ID_CLIENTE;
+
+      SELECT TBI_CLIENTE_SEQ.NEXTVAL INTO v_id_tbi_cliente FROM DUAL;
+      
+      INSERT INTO TBI_CLIENTE  VALUES(v_id_tbi_cliente,v_id_cliente,v_id_flexcube,'ELIMINAR_CONTACTO',v_ejecutivo,SYSDATE,v_autorizo,NULL,NULL);
+  
+      INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'ID_CONTACTO',NULL,v_id_contacto);
+      INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'NOMBRE',NULL,v_nombre_contacto);
+      INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'CORREO_ELECTRONICO',NULL,v_correo_contacto);
+      INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'CARGO',NULL,v_cargo_contacto);
+      INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'TELEFONO',NULL,v_telefono_contacto);
+      INSERT INTO TBI_CLIENTE_CAMPO VALUES(v_id_tbi_cliente,'FECHA_REGISTRO',NULL,v_fecha_reg_contacto);
+
+END;
+
+/
+
+
+COMMIT;
+
+--1.2	07 de Febrero de 2016 Se corrige rol de la tarea Cumplir Condiciones -- Se va PROD
+
+UPDATE TCA_TAREA_BPM SET  ID_ROL_BPM = 1 where ID = 69;
+COMMIT;
+
+--1.3	08 de Febrero de 2016 Se ingresan los registros a la tabla TCA_PLANTILLA_CORREO
+
+
+INSERT INTO TCA_PLANTILLA_CORREO (ID, DESCRIPCION, REMITENTE, MENSAJE, ASUNTO, FECHA_REGISTRO, BAN_ESTATUS, CC_DESTINATARIOS) VALUES (30, 'PLANTILLA_REVISION_CONDICION_ASJUR', 'BCIE', 'Estimado [RESPONSABLE], <br/> Se le notifica que las condiciones establecidas  para la operación [OPERACION] han sido revisadas satisfactoriamente.  Espacio de Trabajo de Fénix: [URL_WORKSPACE]<br/> Atte: BCIE.', 'NOTIFICACION REVISION CONDICION ASJUR', SYSDATE, 1, 'fenix-notificaciones@bcie.org');
+INSERT INTO TCA_PLANTILLA_CORREO (ID, DESCRIPCION, REMITENTE, MENSAJE, ASUNTO, FECHA_REGISTRO, BAN_ESTATUS, CC_DESTINATARIOS) VALUES (31, 'PLANTILLA_REVISION_CONDICION_SEPRI', 'BCIE', 'Estimado [RESPONSABLE], <br/> Se le notifica que las condiciones establecidas  para la operación [OPERACION] han sido revisadas satisfactoriamente.  Espacio de Trabajo de Fénix: [URL_WORKSPACE]<br/> Atte: BCIE.', 'NOTIFICACION REVISION CONDICION SEPRI', SYSDATE, 1, 'fenix-notificaciones@bcie.org');
+INSERT INTO TCA_PLANTILLA_CORREO (ID, DESCRIPCION, REMITENTE, MENSAJE, ASUNTO, FECHA_REGISTRO, BAN_ESTATUS, CC_DESTINATARIOS) VALUES (32, 'PLANTILLA_REVISION_CONDICION_SUPERVISOR', 'BCIE', 'Estimado [RESPONSABLE], <br/> Se le notifica que las condiciones establecidas  para la operación [OPERACION] han sido revisadas satisfactoriamente.  Espacio de Trabajo de Fénix: [URL_WORKSPACE]<br/> Atte: BCIE.', 'NOTIFICACION REVISION CONDICION SUPERVISOR', SYSDATE, 1, 'fenix-notificaciones@bcie.org');
+INSERT INTO TCA_PLANTILLA_CORREO (ID, DESCRIPCION, REMITENTE, MENSAJE, ASUNTO, FECHA_REGISTRO, BAN_ESTATUS, CC_DESTINATARIOS) VALUES (33, 'PLANTILLA_REVISION_CONDICION_AED', 'BCIE', 'Estimado [RESPONSABLE], <br/> Se le notifica que las condiciones establecidas  para la operación [OPERACION] han sido revisadas satisfactoriamente.  Espacio de Trabajo de Fénix: [URL_WORKSPACE]<br/> Atte: BCIE.', 'NOTIFICACION REVISION CONDICION AED', SYSDATE, 1, 'fenix-notificaciones@bcie.org');
+INSERT INTO TCA_PLANTILLA_CORREO (ID, DESCRIPCION, REMITENTE, MENSAJE, ASUNTO, FECHA_REGISTRO, BAN_ESTATUS, CC_DESTINATARIOS) VALUES (34, 'PLANTILLA_REVISION_CONDICION_PCT', 'BCIE', 'Estimado [RESPONSABLE], <br/> Se le notifica que las condiciones establecidas  para la operación [OPERACION] han sido revisadas satisfactoriamente.  Espacio de Trabajo de Fénix: [URL_WORKSPACE]<br/> Atte: BCIE.', 'NOTIFICACION REVISION CONDICION PCT', SYSDATE, 1, 'fenix-notificaciones@bcie.org');
+INSERT INTO TCA_PLANTILLA_CORREO (ID, DESCRIPCION, REMITENTE, MENSAJE, ASUNTO, FECHA_REGISTRO, BAN_ESTATUS, CC_DESTINATARIOS) VALUES (35, 'PLANTILLA_REVISION_CONDICION_COFI', 'BCIE', 'Estimado [RESPONSABLE], <br/> Se le notifica que las condiciones establecidas  para la operación [OPERACION] han sido revisadas satisfactoriamente.  Espacio de Trabajo de Fénix: [URL_WORKSPACE]<br/> Atte: BCIE.', 'NOTIFICACION REVISION CONDICION COFI', SYSDATE, 1, 'fenix-notificaciones@bcie.org');
+INSERT INTO TCA_PLANTILLA_CORREO (ID, DESCRIPCION, REMITENTE, MENSAJE, ASUNTO, FECHA_REGISTRO, BAN_ESTATUS, CC_DESTINATARIOS) VALUES (36, 'PLANTILLA_VALIDACION_CONDICION', 'BCIE', 'Estimado [RESPONSABLE] se le informa que el Reporte de condiciones se genero correctamente.', 'REPORTE DE CONDICIONES', SYSDATE, 1, 'fenix-notificaciones@bcie.org');
+
+
+commit;
+
+
+--1.4	11 de Febrero de 2016 Se elimina el trigger CAT_ETAPA_TGR  -- Se va a PROD
+
+DROP TRIGGER  CAT_ETAPA_TGR;
+
+--1.5	12 de Febrero de 2016 Se actualizan registros de TCA_TAG_PLANTILLA   -- Se va a PROD
+
+update TCA_TAG_PLANTILLA set BAN_GENERICO = 1 where ID = 8;
+update TCA_TAG_PLANTILLA set BAN_GENERICO = 1 where ID = 12;
+
+commit;

@@ -1,0 +1,893 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Sep 05 09:26:29 CDT 2016
+  Author:  perla-osorio
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="AplicarCompensacionDesembolso"
+               targetNamespace="http://xmlns.oracle.com/DominioDesembolso/AplicarCompensacionDesembolso/AplicarCompensacionDesembolso"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioDesembolso/AplicarCompensacionDesembolso/AplicarCompensacionDesembolso"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/AplicarCompensacionDesembolsoSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://www.bcie.org/ConsultarDetalleTransaccionByIdDesembolsoSAD"
+         xmlns:ns3="http://www.bcie.org/DesembolsoMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns6="http://www.bcie.org/ResultBO" xmlns:ns5="http://www.bcie.org/CommonBO"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns4="http://www.bcie.org/DesembolsoBO" xmlns:ns7="http://www.bcie.org/ErrorBO"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns8="urn:EliminarUtilizacionARESAD" xmlns:ns9="http://www.bcie.org/LineaCreditoService"
+         xmlns:ns10="http://www.bcie.org/ConsultarDesembolsosByIdSAD" xmlns:ns15="http://www.bcie.org/TerminoBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns11="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns12="http://www.bcie.org/CondicionBO" xmlns:ns14="http://www.bcie.org/DocumentoBO"
+         xmlns:ns16="http://www.bcie.org/ComisionBO" xmlns:ns13="http://www.bcie.org/CatalogoBO"
+         xmlns:ns17="http://www.bcie.org/AtributoBO" xmlns:ns18="http://www.bcie.org/LineaCreditoMO"
+         xmlns:ns19="http://www.bice.org/ActualizarLineaCreditoService" xmlns:ns20="http://www.bcie.org/OperacionBO"
+         xmlns:ns25="http://www.bcie.org/AprobacionBO" xmlns:ns22="http://www.bcie.org/ProductoBO"
+         xmlns:ns23="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns24="http://www.bcie.org/ContratoBO"
+         xmlns:ns21="http://www.bcie.org/ClienteBO" xmlns:ns26="www.bcie.org/CrearActualizarDetalleTransaccionSAD"
+         xmlns:ns27="http://www.bcie.org/EliminarReservaFondosMFCSAD"
+         xmlns:ns28="http://www.bcie.org/ConsultarTransferenciasBancariasByIdSAD"
+         xmlns:ns30="http://www.bcie.org/MatrizTCCBO" xmlns:ns29="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns31="http://www.bcie.org/UpsertTransferenciaSAD">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/ConsultarDetalleTransaccionByIdDesembolsoSAD"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/Wsdl/ADAPTER/ConsultarDetalleTransaccionByIdDesembolsoSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/AplicarCompensacionDesembolsoSOR"
+          location="../WSDLs/AplicarCompensacionDesembolsoSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="aplicarcompensaciondesembolso_client" partnerLinkType="ns1:AplicarCompensacionDesembolso" myRole="AplicarCompensacionDesembolso_PT"/>
+    <partnerLink name="ConsultarDetalleTransaccionByIdDesembolso_SB"
+                 partnerLinkType="ns2:ConsultarDetalleTransaccionByIdDesembolso_SB"
+                 partnerRole="ConsultarDetalleTransaccionByIdDesembolso_PT"/>
+    <partnerLink name="EliminarUtilizacionARE_SB" partnerLinkType="ns8:EliminarUtilizacionARE_SB"
+                 partnerRole="eliminarUtilizacion_PT"/>
+    <partnerLink name="ConsultarLineaCreditoByIdLineaCredito_SB"
+                 partnerLinkType="ns19:ConsultarLineaCreditoByIdLineaCredito_SB"
+                 partnerRole="ConsultarLineaCreditoByIdLineaCreditoPT"/>
+    <partnerLink name="CrearActualizarDetalleTransaccion_SB" partnerLinkType="ns26:CrearActualizarDetalleTransaccion_SB"
+                 partnerRole="crearActualizarDetalleTransaccionSAD_pt"/>
+    <partnerLink name="ConsultaDesembolsoById_SB" partnerLinkType="ns10:ConsultaDesembolsoById_SB"
+                 partnerRole="ConsultarDesembolsosById_PT"/>
+    <partnerLink name="EliminarReservaFondos_SB" partnerLinkType="ns27:EliminarReservaFondos_SB"
+                 partnerRole="EliminarReservaFondosMFC_PT"/>
+    <partnerLink name="ConsultarTransferenciasBancariasById_SB"
+                 partnerLinkType="ns28:ConsultarTransferenciasBancariasById_SB"
+                 partnerRole="ConsultarTransferenciasBancariasById_PT"/>
+    <partnerLink name="UpsertTransferencias_DB" partnerLinkType="ns31:UpsertTransferencias_DB"
+                 partnerRole="UpsertTransferencia_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestAplicarCompensacionDesembolsoMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseAplicarCompensacionDesembolsoMessage"/>
+    <variable name="outConsultarDetalleTransaccion" messageType="ns2:responseConsultarDetalleTransaccionMessage"/>
+    <variable name="flagCompensarTodo" type="xsd:boolean"/>
+    <variable name="inEliminarUtilizacionARE" messageType="ns8:EliminarUtilizacionARERequestMessage"/>
+    <variable name="outEliminarUtilizacionARE" messageType="ns8:EliminarUtilizacionAREResponseMessage"/>
+    <variable name="outConsultarDesembolsosById" messageType="ns10:responseConsultarDesembolsosByIdMessage"/>
+    <variable name="outConsultarLineaCreditoByIdLineaCredito"
+              messageType="ns19:ConsultarLineaCreditoByIdLineaCreditoResponseMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="outDetalleCompensacion" messageType="ns2:responseConsultarDetalleTransaccionMessage"/>
+    <variable name="operacionCompensar" type="xsd:string"/>
+    <variable name="inCrearActualizarDetalleTransaccion"
+              messageType="ns26:CrearActualizarDetalleTransaccionSADRequestMessage"/>
+    <variable name="outCrearActualizarDetalleTransaccion"
+              messageType="ns26:CrearActualizarDetalleTransaccionSADResponseMessage"/>
+    <variable name="faultVariable" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="outEliminarReservaFondos" messageType="ns27:responseEliminarReservaFondosMFCMessage"/>
+    <variable name="outConsultarTransferenciasById"
+              messageType="ns28:responseConsultarTransferenciasBancariasByIdMessage"/>
+    <variable name="detalleCompensacion" messageType="ns2:responseConsultarDetalleTransaccionMessage"/>
+    <variable name="eliminarReserva" messageType="ns2:responseConsultarDetalleTransaccionMessage"/>
+    <variable name="UpsertTransferencia_InputVariable" messageType="ns31:requestUpsertTransferenciasMessage"/>
+    <variable name="UpsertTransferencia_OutputVariable" messageType="ns31:responseUpsertTransferenciasMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence9">
+        <assign name="allFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.detail</from>
+            <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+          </copy>
+        </assign>
+        <compensate name="Compensate"/>
+        <reply name="ReplyAllFault" variable="outputVariable" partnerLink="aplicarcompensaciondesembolso_client"
+               portType="ns1:AplicarCompensacionDesembolso_PT" operation="AplicarCompensacionDesembolso"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in AplicarCompensacionDesembolso.wsdl) -->
+    <receive name="receiveInput" partnerLink="aplicarcompensaciondesembolso_client" portType="ns1:AplicarCompensacionDesembolso_PT" operation="AplicarCompensacionDesembolso" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idDesembolso: ",string($inputVariable.request/ns3:idDesembolso)))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <scope name="ConsultarDetalleTransaccionByIdDesembolso_SB">
+      <variables>
+        <variable name="inConsultarDetalleTransaccion" messageType="ns2:requestConsultarDetalleTransaccionMessage"/>
+      </variables>
+      <sequence name="ConsultarDetalleTransaccionByIdDesembolso">
+        <if name="IfValidaIdDesembolso">
+          <documentation>
+            <![CDATA[IdNull]]>
+          </documentation>
+          <condition>string-length(string($inputVariable.request/ns3:idDesembolso)) = 0 or $inputVariable.request/ns3:idDesembolso = 0</condition>
+          <sequence name="ValidaIdDesembolsoSequence">
+            <assign name="ErrorCampoRequerido">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+              </copy>
+              <copy>
+                <from>'El Id de Desembolso es requerido'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyErrorCampoRequerido" variable="outputVariable"
+                   partnerLink="aplicarcompensaciondesembolso_client" portType="ns1:AplicarCompensacionDesembolso_PT"
+                   operation="AplicarCompensacionDesembolso"/>
+            <exit name="Exit"/>
+          </sequence>
+          <else>
+            <empty name="Empty"/>
+          </else>
+        </if>
+        <if name="IfValidaPlataforma"
+                                                                     xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         <![CDATA[TienePlataformas]]>
+      </documentation>
+      <condition>count($inputVariable.request/ns3:plataforma)&gt;0</condition>
+      <empty name="Empty"/>
+      <else>
+            <documentation>
+              <![CDATA[CompensaTodo]]>
+            </documentation>
+            <assign name="CompensarTodo">
+            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>'ARE'</from>
+               <to>$inputVariable.request/ns3:plataforma[1]</to>
+            </copy>
+            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>'MFC'</from>
+               <to>$inputVariable.request/ns3:plataforma[2]</to>
+            </copy>
+         </assign>
+      </else>
+   </if><assign name="requestConsultarDetalleTransaccion">
+          <copy>
+            <from>$inputVariable.request/ns3:idDesembolso</from>
+            <to>$inConsultarDetalleTransaccion.request/ns3:idDesembolso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarDetalleTransaccion_SB" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarDetalleTransaccionByIdDesembolso_SB"
+                portType="ns2:ConsultarDetalleTransaccionByIdDesembolso_PT"
+                operation="ConsultarDetalleTransaccionByIdDesembolso" inputVariable="inConsultarDetalleTransaccion"
+                outputVariable="outConsultarDetalleTransaccion"/>
+        <if name="IfValidaOK">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outConsultarDetalleTransaccion.response/ns3:Resultado/ns6:result = 'OK'</condition>
+          <sequence name="ConsultarDetalleTransaccionOK">
+            <if name="IfValidaRegistro">
+              <documentation>
+                <![CDATA[TieneRegistros]]>
+              </documentation>
+              <condition>count($outConsultarDetalleTransaccion.response/ns3:TransaccionDesembolso)&gt;0</condition>
+              <sequence name="Sequence24">
+                <assign name="XQ_ValidarDetalleCompensacion">
+                  <bpelx:skipCondition>count($inputVariable.request/ns3:plataforma)&lt;=0</bpelx:skipCondition>
+                  <bpelx:annotation>
+                    <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                  </bpelx:annotation>
+                  <copy>
+                    <from>ora:processXQuery10('../Transformations/XQ_ValidarDetalleCompensacion.xqy', 'inputVariable.request', $inputVariable.request, 'outConsultarDetalleTransaccion.response', $outConsultarDetalleTransaccion.response)</from>
+                    <to variable="outDetalleCompensacion" part="response"/>
+                  </copy>
+                </assign>
+                <assign name="ValidarDetalle">
+                  <bpelx:skipCondition>count($inputVariable.request/ns3:plataforma)&lt;=0 or count($outDetalleCompensacion.response/ns3:TransaccionDesembolso)&lt;=0</bpelx:skipCondition>
+                  <extensionAssignOperation>
+                    <bpelx:copyList>
+                      <bpelx:from>$outDetalleCompensacion.response/ns3:TransaccionDesembolso</bpelx:from>
+                      <bpelx:to>$outConsultarDetalleTransaccion.response/ns3:TransaccionDesembolso</bpelx:to>
+                    </bpelx:copyList>
+                  </extensionAssignOperation>
+                  <copy>
+                    <from>$outDetalleCompensacion.response/ns3:Resultado</from>
+                    <to>$outConsultarDetalleTransaccion.response/ns3:Resultado</to>
+                  </copy>
+                </assign>
+                <assign name="XQ_ValidarParametros">
+                  <bpelx:skipCondition>count($inputVariable.request/ns3:DetalleTransaccion)&lt;=0</bpelx:skipCondition>
+                  <bpelx:annotation>
+                    <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                  </bpelx:annotation>
+                  <copy>
+                    <from>ora:processXQuery10('../Transformations/XQ_ValidarPametros.xqy', 'inputVariable.request', $inputVariable.request, 'outConsultarDetalleTransaccion.response', $outConsultarDetalleTransaccion.response)</from>
+                    <to variable="outDetalleCompensacion" part="response"/>
+                  </copy>
+                </assign>
+                <sequence name="SinCompensar">
+                  <bpelx:skipCondition>count($outDetalleCompensacion.response/ns3:TransaccionDesembolso)&gt;0</bpelx:skipCondition>
+                  <assign name="SinCompensar">
+                    <copy>
+                      <from>'OK'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                    </copy>
+                    <copy>
+                      <from>'No existen parámetros para realizar compensación'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplySinCompensacion" variable="outputVariable"
+                         partnerLink="aplicarcompensaciondesembolso_client"
+                         portType="ns1:AplicarCompensacionDesembolso_PT" operation="AplicarCompensacionDesembolso"/>
+                  <exit name="Exit"/>
+                </sequence>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[SinCompensar]]>
+                </documentation>
+                <sequence name="SinCompensar">
+                  <assign name="SinCompensar">
+                    <copy>
+                      <from>'OK'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                    </copy>
+                    <copy>
+                      <from>'No existen parámetros para realizar compensación'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplySinCompensacion" variable="outputVariable"
+                         partnerLink="aplicarcompensaciondesembolso_client"
+                         portType="ns1:AplicarCompensacionDesembolso_PT" operation="AplicarCompensacionDesembolso"/>
+                  <exit name="Exit"/>
+                </sequence>
+              </else>
+            </if>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="ErrorConsultarDetalleTransaccion">
+              <assign name="ErrorConsultarDetalleTransaccion">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                </copy>
+                <copy>
+                  <from>concat("Error en el servicio ConsultarDetalleTransaccion ",$outConsultarDetalleTransaccion.response/ns3:Resultado/ns6:message)</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyErrorConsultarDetalleTransaccion" variable="outputVariable"
+                     partnerLink="aplicarcompensaciondesembolso_client"
+                     portType="ns1:AplicarCompensacionDesembolso_PT" operation="AplicarCompensacionDesembolso"/>
+            </sequence>
+          </else>
+        </if>
+        <scope name="ConsultarDesembolsoById">
+          <variables>
+            <variable name="inConsultarDesembolsosById" messageType="ns10:requestConsultarDesembolsosByIdMessage"/>
+          </variables>
+          <sequence name="ConsultarDesembolsoId">
+            <assign name="requestConsultarDesembolsos">
+              <copy>
+                <from>$inputVariable.request/ns3:idDesembolso</from>
+                <to>$inConsultarDesembolsosById.request/ns3:idContratoDesembolso</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarDesembolsosById_SB"
+                    partnerLink="ConsultaDesembolsoById_SB" portType="ns10:ConsultarDesembolsosById_PT"
+                    operation="ConsultarDesembolsosById" inputVariable="inConsultarDesembolsosById"
+                    outputVariable="outConsultarDesembolsosById" bpelx:invokeAsDetail="no"/>
+            <if name="IfValidaOK">
+              <documentation>
+                <![CDATA[OK]]>
+              </documentation>
+              <condition>$outConsultarDesembolsosById.response/ns3:Resultado/ns6:result = 'OK'</condition>
+              <empty name="Empty"/>
+              <else>
+                <documentation>
+                  <![CDATA[ERROR]]>
+                </documentation>
+                <sequence name="ErrorConsultarDesemolsoId">
+                  <assign name="ErrorConsultarDesembolsos">
+                    <copy>
+                      <from>'ERROR'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                    </copy>
+                    <copy>
+                      <from>concat("Error en el servicio ConsultarDesembolso ",$outConsultarDesembolsosById.response/ns3:Resultado/ns6:message)</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplyErrorConsultarDesembolsos" variable="outputVariable"
+                         partnerLink="aplicarcompensaciondesembolso_client"
+                         portType="ns1:AplicarCompensacionDesembolso_PT" operation="AplicarCompensacionDesembolso"/>
+                  <exit name="Exit"/>
+                </sequence>
+              </else>
+            </if>
+            <scope name="ConsultarLineaCreditoById">
+              <variables>
+                <variable name="inConsultarLineaCreditoByIdLineaCredito"
+                          messageType="ns19:ConsultarLineaCreditoByIdLineaCreditoRequestMessage"/>
+              </variables>
+              <sequence>
+                <assign name="requestConsultarLineaCredito">
+                  <copy>
+                    <from>$outConsultarDesembolsosById.response/ns3:ContratoDesembolso/ns4:idLinea</from>
+                    <to>$inConsultarLineaCreditoByIdLineaCredito.request/ns18:idLineaCredito</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeConsultarLineaCreditoByIdLineaCredito_SB" bpelx:invokeAsDetail="no"
+                        partnerLink="ConsultarLineaCreditoByIdLineaCredito_SB"
+                        portType="ns19:ConsultarLineaCreditoByIdLineaCreditoPT"
+                        operation="consultarLineaCreditoByIdLineaCredito"
+                        inputVariable="inConsultarLineaCreditoByIdLineaCredito"
+                        outputVariable="outConsultarLineaCreditoByIdLineaCredito"/>
+                <if name="IfValidaOK">
+                  <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                  <condition>$outConsultarLineaCreditoByIdLineaCredito.response/ns18:Resultado/ns6:result = 'OK'</condition>
+                  <empty name="Empty"/>
+                  <else>
+                    <documentation>
+                      <![CDATA[ERROR]]>
+                    </documentation>
+                    <sequence name="ErrorConsultarLinea">
+                      <assign name="ErrorConsultarLinea">
+                        <copy>
+                          <from>'ERROR'</from>
+                          <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                        </copy>
+                        <copy>
+                          <from>concat("Error en el servicio ConsultarLineaCredito ",$outConsultarLineaCreditoByIdLineaCredito.response/ns18:Resultado/ns6:message)</from>
+                          <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                        </copy>
+                      </assign>
+                      <reply name="ReplyErrorConsultarLineaCredito" variable="outputVariable"
+                             partnerLink="aplicarcompensaciondesembolso_client"
+                             portType="ns1:AplicarCompensacionDesembolso_PT" operation="AplicarCompensacionDesembolso"/>
+                      <exit name="Exit"/>
+                    </sequence>
+                  </else>
+                </if>
+              </sequence>
+            </scope>
+          </sequence>
+        </scope>
+        <scope name="ConsultarTransaccionesById_SB">
+          <variables>
+            <variable name="inConsultarTransferenciasById"
+                      messageType="ns28:requestConsultarTransferenciasBancariasByIdMessage"/>
+          </variables>
+          <sequence name="Sequence19">
+            <if name="IfValidaPlataformaMFC">
+              <documentation>
+                <![CDATA[MFC]]>
+              </documentation>
+              <condition>$inputVariable.request/ns3:plataforma['MFC']</condition>
+              <sequence>
+                <assign name="requestConsultarTransferenciaById">
+                  <copy>
+                    <from>$inputVariable.request/ns3:idDesembolso</from>
+                    <to>$inConsultarTransferenciasById.request/ns3:idDesembolso</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeConsultarTransferenciasById_SB" bpelx:invokeAsDetail="no"
+                        partnerLink="ConsultarTransferenciasBancariasById_SB"
+                        portType="ns28:ConsultarTransferenciasBancariasById_PT"
+                        operation="consultarTransferenciasBancariasById" inputVariable="inConsultarTransferenciasById"
+                        outputVariable="outConsultarTransferenciasById"/>
+                <if name="IfValidaOK">
+                  <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                  <condition>$outConsultarTransferenciasById.response/ns3:Resultado/ns6:result = 'OK'</condition>
+                  <empty name="Empty"/>
+                  <else>
+                    <documentation>
+                      <![CDATA[ERROR]]>
+                    </documentation>
+                    <sequence name="Sequence20">
+                      <assign name="errorConsultarTransferenciasById">
+                        <copy>
+                          <from>'ERROR'</from>
+                          <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                        </copy>
+                        <copy>
+                          <from>concat('Error en el servicio ConsultarTransferenciasById ', $outConsultarTransferenciasById.response/ns3:Resultado/ns6:message)</from>
+                          <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                        </copy>
+                      </assign>
+                      <reply name="ReplyErrorConsultarTransferencias" variable="outputVariable"
+                             partnerLink="aplicarcompensaciondesembolso_client"
+                             portType="ns1:AplicarCompensacionDesembolso_PT" operation="AplicarCompensacionDesembolso"/>
+                      <exit name="Exit"/>
+                    </sequence>
+                  </else>
+                </if>
+              </sequence>
+              <else>
+                <empty name="Empty"/>
+              </else>
+            </if>
+          </sequence>
+        </scope>
+        <forEach parallel="no" counterName="contador" name="ForEachTransaccion">
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($outDetalleCompensacion.response/ns3:TransaccionDesembolso)</finalCounterValue>
+          <scope name="ForEachPlataforma">
+            <sequence name="Sequence10">
+              <assign name="operacionCompensar">
+                <copy>
+                  <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/DVM/Compensaciones.dvm","Operacion",$outDetalleCompensacion.response/ns3:TransaccionDesembolso[$contador]/ns4:operacion,"Compensacion","NotFound","Plataforma",$outDetalleCompensacion.response/ns3:TransaccionDesembolso[$contador]/ns4:plataforma)</from>
+                  <to>$operacionCompensar</to>
+                </copy>
+              </assign>
+              <if name="IfValidaOperacionACompensar">
+                <documentation>
+                  <![CDATA[eliminarUtilizacion]]>
+                </documentation>
+                <condition>$operacionCompensar = 'eliminarUtilizacion'</condition>
+                <sequence name="Sequence11">
+                  <scope name="CrearActualizarDetalleTransaccion">
+                    <faultHandlers>
+                      <catchAll>
+                        <sequence name="CatchAll">
+                          <assign name="allFault">
+                            <copy>
+                              <from>-1</from>
+                              <to>$faultVariable.code</to>
+                            </copy>
+                            <copy>
+                              <from>'Error en el servicio CrearActualizarDetalleTransaccion'</from>
+                              <to>$faultVariable.summary</to>
+                            </copy>
+                            <copy>
+                              <from>ora:getFaultAsString()</from>
+                              <to>$faultVariable.detail</to>
+                            </copy>
+                          </assign>
+                          <throw name="Throw" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                        </sequence>
+                      </catchAll>
+                    </faultHandlers>
+                    <compensationHandler>
+                      <sequence name="CompensationHandler">
+                        <assign name="requestActualizarDetalleTransaccion">
+                          <copy>
+                            <from>$outDetalleCompensacion.response/ns3:TransaccionDesembolso[$contador]/ns4:id</from>
+                            <to>$inCrearActualizarDetalleTransaccion.CrearActualizarDetalleTransaccionSADRequest/ns3:TransaccionDesembolso/ns4:id</to>
+                          </copy>
+                          <copy>
+                            <from>true()</from>
+                            <to>$inCrearActualizarDetalleTransaccion.CrearActualizarDetalleTransaccionSADRequest/ns3:TransaccionDesembolso/ns4:estatus</to>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeActualizarDetalleTransaccion" bpelx:invokeAsDetail="no"
+                                partnerLink="CrearActualizarDetalleTransaccion_SB"
+                                portType="ns26:crearActualizarDetalleTransaccionSAD_pt"
+                                operation="crearActualizarDetalleTransaccionSAD"
+                                inputVariable="inCrearActualizarDetalleTransaccion"
+                                outputVariable="outCrearActualizarDetalleTransaccion"/>
+                      </sequence>
+                    </compensationHandler>
+                    <sequence name="CrearActualizarDetalleTransaccion">
+                      <assign name="requestCrearActualizarDetalleTransaccion">
+                        <copy>
+                          <from>$outDetalleCompensacion.response/ns3:TransaccionDesembolso[$contador]/ns4:id</from>
+                          <to>$inCrearActualizarDetalleTransaccion.CrearActualizarDetalleTransaccionSADRequest/ns3:TransaccionDesembolso/ns4:id</to>
+                        </copy>
+                        <copy>
+                          <from>false()</from>
+                          <to>$inCrearActualizarDetalleTransaccion.CrearActualizarDetalleTransaccionSADRequest/ns3:TransaccionDesembolso/ns4:estatus</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeCrearActualizarDetalleTransaccion" bpelx:invokeAsDetail="no"
+                              partnerLink="CrearActualizarDetalleTransaccion_SB"
+                              portType="ns26:crearActualizarDetalleTransaccionSAD_pt"
+                              operation="crearActualizarDetalleTransaccionSAD"
+                              inputVariable="inCrearActualizarDetalleTransaccion"
+                              outputVariable="outCrearActualizarDetalleTransaccion"/>
+                      <if name="IfValidaOK">
+                        <documentation>
+                          <![CDATA[OK]]>
+                        </documentation>
+                        <condition>$outCrearActualizarDetalleTransaccion.CrearActualizarDetalleTransaccionSADResponse/ns3:Resultado/ns6:result = 'OK'</condition>
+                        <empty name="Empty"/>
+                        <else>
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <sequence name="Sequence21">
+                            <assign name="errorCrearActualizarDetalle">
+                              <copy>
+                                <from>-1</from>
+                                <to>$faultVariable.code</to>
+                              </copy>
+                              <copy>
+                                <from>'Error al CrearActualizarDetalleTransaccion'</from>
+                                <to>$faultVariable.summary</to>
+                              </copy>
+                              <copy>
+                                <from>$outCrearActualizarDetalleTransaccion.CrearActualizarDetalleTransaccionSADResponse/ns3:Resultado/ns6:message</from>
+                                <to>$faultVariable.detail</to>
+                              </copy>
+                            </assign>
+                            <throw name="Throw" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                          </sequence>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                  <scope name="EliminarUtilizacionARE_SB">
+                    <faultHandlers>
+                      <catchAll>
+                        <sequence name="CatchAll">
+                          <assign name="allFault">
+                            <copy>
+                              <from>-1</from>
+                              <to>$faultVariable.code</to>
+                            </copy>
+                            <copy>
+                              <from>'Error en el servicio EliminarUtilizacionARE'</from>
+                              <to>$faultVariable.summary</to>
+                            </copy>
+                          </assign>
+                          <throw name="Throw" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                        </sequence>
+                      </catchAll>
+                    </faultHandlers>
+                    <sequence name="Sequence4">
+                      <assign name="XQ_RequestEliminarUtilizacionARE">
+                        <bpelx:annotation>
+                          <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                        </bpelx:annotation>
+                        <copy>
+                          <from>ora:processXQuery10('../Transformations/XQ_RequestEliminarUtilizacionARE.xqy', 'outConsultarLineaCreditoByIdLineaCredito.response', $outConsultarLineaCreditoByIdLineaCredito.response, 'outDetalleCompensacion.response', $outDetalleCompensacion.response)</from>
+                          <to variable="inEliminarUtilizacionARE" part="EliminarUtilizacionARERequest"/>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeEliminarUtilizacionARE_SB" bpelx:invokeAsDetail="no"
+                              partnerLink="EliminarUtilizacionARE_SB" portType="ns8:eliminarUtilizacion_PT"
+                              operation="eliminarUtilizacion" inputVariable="inEliminarUtilizacionARE"
+                              outputVariable="outEliminarUtilizacionARE"/>
+                      <if name="IfValidaOK">
+                        <documentation>
+                          <![CDATA[OK]]>
+                        </documentation>
+                        <condition>$outEliminarUtilizacionARE.EliminarUtilizacionAREResponse/ns18:Resultado/ns6:result = 'OK'</condition>
+                        <sequence name="Sequence18">
+                          <empty name="OK"/>
+                        </sequence>
+                        <else>
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <sequence name="ErrorEliminarUtilizacion">
+                            <assign name="ErrorEliminarUtilizacionARE">
+                              <copy>
+                                <from>-1</from>
+                                <to>$faultVariable.code</to>
+                              </copy>
+                              <copy>
+                                <from>'Error en el servicio EliminarUtilizacionARE'</from>
+                                <to>$faultVariable.summary</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$outEliminarUtilizacionARE.EliminarUtilizacionAREResponse/ns18:Resultado/ns6:message</from>
+                                <to>$faultVariable.detail</to>
+                              </copy>
+                            </assign>
+                            <throw name="ThrowEliminarUtilizacion" faultName="bpelx:remoteFault"
+                                   faultVariable="faultVariable"/>
+                          </sequence>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                </sequence>
+                <elseif>
+                  <documentation>
+                    <![CDATA[eliminarReserva]]>
+                  </documentation>
+                  <condition>$operacionCompensar = 'eliminarReserva'</condition>
+                  <sequence name="Sequence15">
+                    <assign name="detalleCompensacion">
+                      <extensionAssignOperation>
+                        <bpelx:copyList>
+                          <bpelx:from>$outDetalleCompensacion.response/ns3:TransaccionDesembolso[$contador]</bpelx:from>
+                          <bpelx:to>$detalleCompensacion.response/ns3:TransaccionDesembolso</bpelx:to>
+                        </bpelx:copyList>
+                      </extensionAssignOperation>
+                    </assign>
+                    <scope name="CrearActualizarDetalleTransaccionMFC">
+                      <variables>
+                        <variable name="inCrearActualizarDetalleTransaccionMFC"
+                                  messageType="ns26:CrearActualizarDetalleTransaccionSADRequestMessage"/>
+                        <variable name="inActualizarDetalleTransaccion"
+                                  messageType="ns26:CrearActualizarDetalleTransaccionSADRequestMessage"/>
+                      </variables>
+                      <faultHandlers>
+                        <catchAll>
+                          <sequence name="Sequence14">
+                            <assign name="faultAll">
+                              <copy>
+                                <from>-1</from>
+                                <to>$faultVariable.code</to>
+                              </copy>
+                              <copy>
+                                <from>'Error en el servicios CrearActualizarDetalleTransaccion'</from>
+                                <to>$faultVariable.summary</to>
+                              </copy>
+                              <copy>
+                                <from>ora:getFaultAsString()</from>
+                                <to>$faultVariable.detail</to>
+                              </copy>
+                            </assign>
+                            <throw name="Throw" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                          </sequence>
+                        </catchAll>
+                      </faultHandlers>
+                      <compensationHandler>
+                        <sequence name="Sequence13">
+                          <assign name="requestActualizarDetalleTransaccion"
+                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                            <copy>
+                              <from>$detalleCompensacion.response/ns3:TransaccionDesembolso/ns4:id</from>
+                              <to>$inActualizarDetalleTransaccion.CrearActualizarDetalleTransaccionSADRequest/ns3:TransaccionDesembolso/ns4:id</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>true()</from>
+                              <to>$inActualizarDetalleTransaccion.CrearActualizarDetalleTransaccionSADRequest/ns3:TransaccionDesembolso/ns4:estatus</to>
+                            </copy>
+                          </assign>
+                          <invoke name="InvokeActualizarDetalleTransaccion"
+                                  partnerLink="CrearActualizarDetalleTransaccion_SB"
+                                  portType="ns26:crearActualizarDetalleTransaccionSAD_pt"
+                                  operation="crearActualizarDetalleTransaccionSAD"
+                                  inputVariable="inActualizarDetalleTransaccion"
+                                  outputVariable="outCrearActualizarDetalleTransaccion"
+                                  xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+                                  bpelx:invokeAsDetail="no"/>
+                        </sequence>
+                      </compensationHandler>
+                      <sequence name="Sequence12">
+                        <assign name="requestCrearActualizarDetalleTransaccion">
+                          <copy>
+                            <from>$detalleCompensacion.response/ns3:TransaccionDesembolso/ns4:id</from>
+                            <to>$inCrearActualizarDetalleTransaccion.CrearActualizarDetalleTransaccionSADRequest/ns3:TransaccionDesembolso/ns4:id</to>
+                          </copy>
+                          <copy>
+                            <from>false()</from>
+                            <to>$inCrearActualizarDetalleTransaccion.CrearActualizarDetalleTransaccionSADRequest/ns3:TransaccionDesembolso/ns4:estatus</to>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeCrearActualizarDetalleTransaccion_SB"
+                                partnerLink="CrearActualizarDetalleTransaccion_SB"
+                                portType="ns26:crearActualizarDetalleTransaccionSAD_pt"
+                                operation="crearActualizarDetalleTransaccionSAD"
+                                inputVariable="inCrearActualizarDetalleTransaccion"
+                                outputVariable="outCrearActualizarDetalleTransaccion" bpelx:invokeAsDetail="no"/>
+                        <if name="IfValidaOK">
+                          <documentation>
+                            <![CDATA[OK]]>
+                          </documentation>
+                          <condition>$outCrearActualizarDetalleTransaccion.CrearActualizarDetalleTransaccionSADResponse/ns3:Resultado/ns6:result = 'OK'</condition>
+                          <empty name="Empty"/>
+                          <else>
+                            <documentation>
+                              <![CDATA[ERROR]]>
+                            </documentation>
+                            <sequence name="Sequence23">
+                              <assign name="faultAll">
+                                <copy>
+                                  <from>-1</from>
+                                  <to>$faultVariable.code</to>
+                                </copy>
+                                <copy>
+                                  <from>'Error al CrearActualizarDetalleTransaccion'</from>
+                                  <to>$faultVariable.summary</to>
+                                </copy>
+                                <copy>
+                                  <from>$outCrearActualizarDetalleTransaccion.CrearActualizarDetalleTransaccionSADResponse/ns3:Resultado/ns6:message</from>
+                                  <to>$faultVariable.detail</to>
+                                </copy>
+                              </assign>
+                              <throw name="Throw" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                            </sequence>
+                          </else>
+                        </if>
+                        <scope name="EliminarReservaFondos">
+                          <variables>
+                            <variable name="inEliminarReservaFondos"
+                                      messageType="ns27:requestEliminarReservaFondosMFCMessage"/>
+                          </variables>
+                          <faultHandlers>
+                            <catchAll>
+                              <sequence name="Sequence22">
+                                <assign name="faultAll">
+                                  <copy>
+                                    <from>-1</from>
+                                    <to>$faultVariable.code</to>
+                                  </copy>
+                                  <copy>
+                                    <from>'Error al EliminarReserva'</from>
+                                    <to>$faultVariable.summary</to>
+                                  </copy>
+                                  <copy>
+                                    <from>$outEliminarReservaFondos.response/ns3:Resultado/ns6:message</from>
+                                    <to>$faultVariable.detail</to>
+                                  </copy>
+                                </assign>
+                                <throw name="Throw" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                              </sequence>
+                            </catchAll>
+                          </faultHandlers>
+                          <sequence name="Sequence16">
+                            <assign name="requestEliminarReserva">
+                              <copy>
+                                <from>$detalleCompensacion.response/ns3:TransaccionDesembolso/ns4:detalleTransaccion/ns4:Parameters[ns5:name='numeroReserva']/ns5:value</from>
+                                <to>$inEliminarReservaFondos.request/ns3:NumeroReserva</to>
+                              </copy>
+                            </assign>
+                            <invoke name="InvokeEliminarReservaFondos_SB" bpelx:invokeAsDetail="no"
+                                    partnerLink="EliminarReservaFondos_SB" portType="ns27:EliminarReservaFondosMFC_PT"
+                                    operation="eliminarReservaFondosMFC" inputVariable="inEliminarReservaFondos"
+                                    outputVariable="outEliminarReservaFondos"/>
+                            <if name="IfEliminarReservaFondosOK">
+                              <documentation>
+                                <![CDATA[OK]]>
+                              </documentation>
+                              <condition>$outEliminarReservaFondos.response/ns3:Resultado/ns6:result = 'OK'</condition>
+                              <empty name="OK"/>
+                              <else>
+                                <documentation>
+                                  <![CDATA[ERROR]]>
+                                </documentation>
+                                <sequence name="Sequence17">
+                                  <assign name="ErrorEliminarReservaFondos">
+                                    <copy>
+                                      <from>-1</from>
+                                      <to>$faultVariable.code</to>
+                                    </copy>
+                                    <copy>
+                                      <from>'Error en el servicio EliminarReservaFondosMFC'</from>
+                                      <to>$faultVariable.summary</to>
+                                    </copy>
+                                    <copy>
+                                      <from>$outEliminarReservaFondos.response/ns3:Resultado/ns6:message</from>
+                                      <to>$faultVariable.detail</to>
+                                    </copy>
+                                  </assign>
+                                  <throw name="ThrowErrorEliminarReservaFondos" faultName="bpelx:remoteFault"
+                                         faultVariable="faultVariable"/>
+                                </sequence>
+                              </else>
+                            </if>
+                            <scope name="ActualizarNumeroReserva">
+                              <faultHandlers>
+                                <catchAll>
+                                  <empty name="Empty"/>
+                                </catchAll>
+                              </faultHandlers>
+                              <sequence name="Sequence25">
+                                <assign name="AssignNumeroReserva">
+                                  <copy>
+                                    <from>$detalleCompensacion.response/ns3:TransaccionDesembolso/ns4:detalleTransaccion/ns4:Parameters[ns5:name='transferencia']/ns5:value</from>
+                                    <to>$UpsertTransferencia_InputVariable.request/ns3:ContratoDesembolso/ns4:Transferencia/ns4:idTransferencia</to>
+                                  </copy>
+                                  <copy>
+                                    <from>-1</from>
+                                    <to>$UpsertTransferencia_InputVariable.request/ns3:ContratoDesembolso/ns4:Transferencia/ns4:NumeroReserva</to>
+                                  </copy>
+                                </assign>
+                                <invoke name="InvokeUpsertTransfrencias" bpelx:invokeAsDetail="no"
+                                        partnerLink="UpsertTransferencias_DB" portType="ns31:UpsertTransferencia_PT"
+                                        operation="UpsertTransferencia"
+                                        inputVariable="UpsertTransferencia_InputVariable"
+                                        outputVariable="UpsertTransferencia_OutputVariable"/>
+                              </sequence>
+                            </scope>
+                          </sequence>
+                        </scope>
+                      </sequence>
+                    </scope>
+                  </sequence>
+                </elseif>
+                <else>
+                  <documentation>
+                    <![CDATA[Otros]]>
+                  </documentation>
+                  <sequence name="Otros">
+                    <empty name="Empty"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+        </forEach>
+      </sequence>
+    </scope>
+    <assign name="responseOK">
+      <copy>
+        <from>'OK'</from>
+        <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+      </copy>
+      <copy>
+        <from>'Compensación exitosa'</from>
+        <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="aplicarcompensaciondesembolso_client" portType="ns1:AplicarCompensacionDesembolso_PT" operation="AplicarCompensacionDesembolso" variable="outputVariable"/>
+  </sequence>
+</process>

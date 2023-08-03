@@ -1,0 +1,570 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Jun 05 16:46:22 GMT-06:00 2019
+  Author:  User
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CostChangeRequestProcessBPEL"
+               targetNamespace="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/CostChangeRequestProcessBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/CostChangeRequestProcessBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/CostChangeRequestProcess/v1.0"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/CostChangeExcelParsing/v1.0"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Foundation/Party/CostChangeTask"
+         xmlns:ns4="http://mx.agarcia.ea/Applications/RetailMerchandising/RMS/CostChange/v1.0"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ns5="http://mx.agarcia.ea/Commons/Schemas/AGStandardHeader"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns6="http://www.oracle.com/retail/igs/integration/services/XCostChgPublishingService/v1"
+         xmlns:ns8="http://mx.agarcia.ea/Canonical/Commons/RetailStore/v1"
+         xmlns:ns7="http://mx.agarcia.ea/Canonical/Commons/ChangeCost/v1"
+         xmlns:ns9="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns10="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns11="http://www.oracle.com/retail/integration/base/bo/XCostChgDesc/v1"
+         xmlns:ns12="http://www.oracle.com/retail/integration/bus/gateway/services/BusinessObjectId/v1"
+         xmlns:ns13="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:ns14="http://xmlns.oracle.com/pcbpel/adapter/db/RMSCreateChangeEvent/RMSCreateChangeEvent/RMSCreateChangeEvent"
+         xmlns:ns15="http://xmlns.oracle.com/pcbpel/adapter/db/AGSOABpelApplication/CostChangeRequestProcess/MDMCreateCostChangeEventExport"
+         xmlns:ns16="http://xmlns.oracle.com/pcbpel/adapter/db/sp/RMSCreateChangeEvent"
+         xmlns:ns17="http://xmlns.oracle.com/pcbpel/adapter/db/XXRMS/BPEL_RMSCREATECHANGEEVENT/XX_CARGAR_CAMBIO_DE_PRECIOS-24C/"
+         xmlns:ns18="http://xmlns.oracle.com/pcbpel/adapter/db/MDMCreateCostChange/MDMCreateCostChange/MDMCreateCostChange"
+         xmlns:ns19="http://xmlns.oracle.com/pcbpel/adapter/db/top/MDMCreateCostChange"
+         xmlns:ns20="http://msoffice.utils.ea.agarcia.mx/">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+          location="../Schemas/Commons/AGStandardMessageSchema.xsd" importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/CostChangeExcelParsing/v1.0"
+          location="http://uat-osb.agarcia.com.mx:7004/RetailOperations/Buy/CostChangeTaskSvc/CostChangeExcelParsing/PS/CostChangeExcelParsingPXY?wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/CostChangeRequestProcess/v1.0"
+          location="../WSDLs/CostChangeRequestProcessWSDL.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/RetailOperations/Buy/CostChange/CostChangeRequestProcess/v1.0"
+          location="../WSDLs/CostChangeRequestProcessWSDLWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="costchangerequestprocessbpel_client" partnerLinkType="ns1:CostChangeRequestProcessBPEL" myRole="CostChangeRequestProcessPType"/>
+    <partnerLink name="CostChangeExcelParsingPXY" partnerLinkType="ns2:CostChangeExcelParsingPXY"
+                 partnerRole="ExcelParsingPType"/>
+    <partnerLink name="RMSCreateChangeEventPXY" partnerLinkType="ns14:RMSCreateChangeEvent_plt"
+                 partnerRole="RMSCreateChangeEvent_role"/>
+    <partnerLink name="MDMCreateCostChangePXY" partnerLinkType="ns18:MDMCreateCostChange_plt"
+                 partnerRole="MDMCreateCostChange_role"/>
+    <partnerLink name="ExcelParsingUtilPXY" partnerLinkType="ns20:ExcelParsingUtilPXY" partnerRole="ExcelParsingUtil"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestCostChangeRequest"/>
+    <variable name="Invoke_CostChangeExcelParsing_InVar" messageType="ns2:costChangeExcelParsingRequest"/>
+    <variable name="Invoke_CostChangeExcelParsing_OutVar" messageType="ns2:costChangeExcelParsingResponse"/>
+    <variable name="header" messageType="ns1:standardMessageHeader"/>
+    <variable name="interfaceId" type="xsd:string"/>
+    <variable name="CostChangeRquestVar" element="ns3:costChangeExcelParsingResponse"/>
+    <variable name="MessageErrorVar" element="ns13:messageError"/>
+    <variable name="Invoke_RMSCreateCostChangeEvent_InVar" messageType="ns14:args_in_msg"/>
+    <variable name="Invoke_RMSCreateCostChangeEvent_OutVar" messageType="ns14:args_out_msg"/>
+    <variable name="SKUVar" type="xsd:string"/>
+    <variable name="STYLEVar" type="xsd:string"/>
+    <variable name="Invoke_MDMCreateCostChange_InVar" messageType="ns18:CchEventsCollection_msg"/>
+    <variable name="Invoke_MDMCreateCostChange_OutVar" messageType="ns18:CchEventsCollection_msg"/>
+    <variable name="idEventVar" type="xsd:string"/>
+    <variable name="CountNumLineasVar" type="xsd:int"/>
+    <variable name="TotalNodesVar" type="xsd:int"/>
+    <variable name="Null" type="xsd:string"/>
+    <variable name="ExcelParsingUtilPXY_parse_InputVariable" messageType="ns20:parse"/>
+    <variable name="ExcelParsingUtilPXY_parse_OutputVariable" messageType="ns20:parseResponse"/>
+    <variable name="dateVar" type="xsd:string"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CostChangeRequestProcessBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="costchangerequestprocessbpel_client" portType="ns1:CostChangeRequestProcessPType" operation="requestCostChange" variable="inputVariable" createInstance="yes"
+             bpelx:headerVariable="header"/>
+    <assign name="AssignIdGovernance">
+      <copy ignoreMissingFromData="yes">
+        <from>$header.header/ns5:parameters/ns5:parameter[@Key='gov.interface.id']</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$interfaceId</to>
+      </copy>
+    </assign>
+    <flow name="Flow1">
+      <sequence name="Sequence">
+        <scope name="Scope1">
+          <faultHandlers>
+            <catchAll>
+              <sequence name="Sequence3">
+                <assign name="AssignError">
+                  <copy>
+                    <from>'[AG-ERR-PARSING-001]'</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:errorCode</to>
+                  </copy>
+                  <copy>
+                    <from>"Error al parsear archivo de cambio de costos"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:errorDescription</to>
+                  </copy>
+                  <copy>
+                    <from>"Técnico"</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:errorType</to>
+                  </copy>
+                  <copy>
+                    <from>1</from>
+                    <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:severity</to>
+                  </copy>
+                </assign>
+                <exit name="FinishInstance"/>
+              </sequence>
+            </catchAll>
+          </faultHandlers>
+          <sequence>
+            <assign name="AssignBinary">
+              <copy>
+                <from>$inputVariable.requestCostChangeRequest/ns3:file</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_CostChangeExcelParsing_InVar.costChangeExcelParsingRequest/ns3:file</to>
+              </copy>
+            </assign>
+            <invoke name="Invoke_CostChangeExcelParsing" partnerLink="CostChangeExcelParsingPXY"
+                    portType="ns2:ExcelParsingPType" operation="parsing"
+                    inputVariable="Invoke_CostChangeExcelParsing_InVar"
+                    outputVariable="Invoke_CostChangeExcelParsing_OutVar" bpelx:invokeAsDetail="no"/>
+          </sequence>
+        </scope>
+      </sequence>
+      <sequence name="Sequence8">
+        <scope name="Scope4">
+          <faultHandlers>
+            <catchAll>
+              <empty name="Empty2"/>
+            </catchAll>
+          </faultHandlers>
+          <sequence name="Sequence9"><assign name="AssignBinary"
+                                             xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+   <copy ignoreMissingFromData="yes">
+         <from>$inputVariable.requestCostChangeRequest/ns3:file</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$ExcelParsingUtilPXY_parse_InputVariable.parameters/request/document</to>
+      </copy></assign><invoke name="ExcelParsingUtilPXY" bpelx:invokeAsDetail="no" partnerLink="ExcelParsingUtilPXY"
+                    portType="ns20:ExcelParsingUtil" operation="parse"
+                    inputVariable="ExcelParsingUtilPXY_parse_InputVariable"
+                    outputVariable="ExcelParsingUtilPXY_parse_OutputVariable"/>
+          </sequence>
+        </scope>
+      </sequence>
+    </flow>
+    <assign name="TrCosChangeReq">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/TrCosChangeReq.xsl", $Invoke_CostChangeExcelParsing_OutVar.costChangeExcelParsingResponse)</from>
+        <to variable="CostChangeRquestVar"/>
+      </copy>
+    </assign>
+    <if name="validateSupplier">
+      <condition>string-length($CostChangeRquestVar/ns3:event[1]/ns7:supplierID/ns10:supplierID)&gt;1 or $CostChangeRquestVar/ns3:event[1]/ns7:supplierID/ns10:supplierID=1 or $CostChangeRquestVar/ns3:event[1]/ns7:supplierID/ns10:supplierID=2 or $CostChangeRquestVar/ns3:event[1]/ns7:supplierID/ns10:supplierID=3 or $CostChangeRquestVar/ns3:event[1]/ns7:supplierID/ns10:supplierID=4 or $CostChangeRquestVar/ns3:event[1]/ns7:supplierID/ns10:supplierID=5 or $CostChangeRquestVar/ns3:event[1]/ns7:supplierID/ns10:supplierID=6 or $CostChangeRquestVar/ns3:event[1]/ns7:supplierID/ns10:supplierID=7 or $CostChangeRquestVar/ns3:event[1]/ns7:supplierID/ns10:supplierID=8 or $CostChangeRquestVar/ns3:event[1]/ns7:supplierID/ns10:supplierID=9</condition>
+      <assign name="assignSupplier">
+        <copy>
+          <from>number($CostChangeRquestVar/ns3:event[1]/ns7:supplierID/ns10:supplierID)</from>
+          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:supplierId</to>
+        </copy>
+      </assign>
+      <else>
+        <assign name="null">
+          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+            <from>$Null</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:supplierId</to>
+          </copy>
+        </assign>
+      </else>
+    </if><if name="IfDateMDM" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <condition>string-length($ExcelParsingUtilPXY_parse_OutputVariable.parameters/return/row[@num=1]/cell[@xPos='4']/data)&gt;1</condition>
+      <assign name="date">
+         
+      <copy>
+          <from>$ExcelParsingUtilPXY_parse_OutputVariable.parameters/return/row[@num=1]/cell[@xPos='4']/data</from>
+          <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$dateVar</to>
+        </copy><copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                     xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>$dateVar</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:effectiveDate</to>
+         </copy></assign>
+      <else>
+         
+      <sequence name="Sequence12"><scope name="ScopeReintento" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <faultHandlers>
+         <catchAll>
+            <empty name="Empty2"/>
+         </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence9">
+         <assign name="AssignBinary" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+            <copy ignoreMissingFromData="yes">
+               <from>$inputVariable.requestCostChangeRequest/ns3:file</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$ExcelParsingUtilPXY_parse_InputVariable.parameters/request/document</to>
+            </copy>
+         </assign>
+         <invoke name="ExcelParsingUtilPXY" bpelx:invokeAsDetail="no" partnerLink="ExcelParsingUtilPXY"
+                 portType="ns20:ExcelParsingUtil" operation="parse"
+                 inputVariable="ExcelParsingUtilPXY_parse_InputVariable"
+                 outputVariable="ExcelParsingUtilPXY_parse_OutputVariable"
+                 xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/>
+      <assign name="date" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+         
+      <copy>
+                  <from>$ExcelParsingUtilPXY_parse_OutputVariable.parameters/return/row[@num=1]/cell[@xPos='4']/data</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$dateVar</to>
+                </copy><copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                             xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>$dateVar</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:effectiveDate</to>
+         </copy></assign></sequence>
+   </scope></sequence></else>
+   </if><assign name="AssignMDMReq">
+      <copy>
+        <from>oraext:sequence-next-val('PRC_EVENTS_SEQ','jdbc/MDMSOA')</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$idEventVar</to>
+      </copy>
+      <copy>
+        <from>$CostChangeRquestVar/ns3:event[1]/ns7:scope</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:scope</to>
+      </copy>
+      <copy>
+        <from>"CAMBIO DE COSTOS"</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:name</to>
+      </copy>
+      <copy>
+        <from>"RPMENV"</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:statusCode</to>
+      </copy>
+      <copy>
+        <from>"SOA"</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:userRequestor</to>
+      </copy>
+      <copy>
+        <from>"MXN"</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:currency</to>
+      </copy>
+      <copy>
+        <from>0</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:exportFlag</to>
+      </copy>
+      <copy>
+        <from>$Null</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:expirationDate</to>
+      </copy>
+      <copy>
+        <from>$CostChangeRquestVar/ns3:event[1]/ns7:changes/ns7:change/ns7:item/ns9:description</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:description</to>
+      </copy>
+      <copy>
+        <from>$idEventVar</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:id</to>
+      </copy>
+    </assign><forEach parallel="no" counterName="ForEach1Counter" name="ForEachFila"
+                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <bpelx:skipCondition>1=1</bpelx:skipCondition><startCounterValue>0</startCounterValue>
+      <finalCounterValue>$ExcelParsingUtilPXY_parse_OutputVariable.parameters/return/@rowsCount - 1</finalCounterValue>
+      <scope name="Scope5">
+         <variables>
+          <variable name="Null" type="xsd:decimal"/>
+        </variables><assign name="AssignDate">
+            
+            
+         <copy ignoreMissingFromData="yes" keepSrcElementName="no" bpelx:insertMissingToData="yes"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>$ExcelParsingUtilPXY_parse_OutputVariable.parameters/return/row[@num=1]/cell[@xPos='4']/data</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:effectiveDate</to>
+            </copy><copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                         xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>$Null</from>
+               <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMCreateCostChange_InVar.CchEventsCollection/ns19:CchEvents/ns19:expirationDate</to>
+            </copy></assign>
+      </scope>
+   </forEach><invoke name="Invoke_MDMCreateCostChange" partnerLink="MDMCreateCostChangePXY"
+            portType="ns18:MDMCreateCostChange_ptt" operation="insert" inputVariable="Invoke_MDMCreateCostChange_InVar"
+            outputVariable="Invoke_MDMCreateCostChange_OutVar" bpelx:invokeAsDetail="no"/>
+    <assign name="AssignStartCounterRows">
+      <copy>
+        <from>0</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$CountNumLineasVar</to>
+      </copy>
+    </assign>
+    <forEach parallel="no" counterName="Counter" name="ForEach">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>ora:countNodes('CostChangeRquestVar','ns3:event')</finalCounterValue>
+      <scope name="Scope3">
+        <variables>
+          <variable name="Null" type="xsd:string"/>
+        </variables>
+        <faultHandlers>
+          <catch faultName="bpelx:timeout" faultVariable="FaultVariable" faultMessageType="bpelx:RuntimeFaultMessage">
+            <sequence name="Sequence6">
+              <assign name="AssignTimeOutFault">
+                <copy>
+                  <from>substring($FaultVariable.summary,1,500)</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:errorDescription</to>
+                </copy>
+                <copy>
+                  <from>'[AG-ERR-RMS-003]'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:errorCode</to>
+                </copy>
+                <copy>
+                  <from>'Aplicación'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:errorType</to>
+                </copy>
+                <copy>
+                  <from>3</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:severity</to>
+                </copy>
+              </assign>
+              <exit name="ExitTimeOutFault"/>
+            </sequence>
+          </catch>
+          <catch faultName="bpelx:remoteFault" faultVariable="FaultVariable"
+                 faultMessageType="bpelx:RuntimeFaultMessage">
+            <sequence name="Sequence5">
+              <assign name="AssignRemoteFault">
+                <copy>
+                  <from>'[AG-ERR-RMS-002]'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:errorCode</to>
+                </copy>
+                <copy>
+                  <from>substring($FaultVariable.summary,1,500)</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:errorDescription</to>
+                </copy>
+                <copy>
+                  <from>'Aplicación'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:errorType</to>
+                </copy>
+                <copy>
+                  <from>2</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:severity</to>
+                </copy>
+              </assign>
+              <exit name="ExitRemoteFault"/>
+            </sequence>
+          </catch>
+          <catch faultName="bpelx:bindingFault" faultVariable="FaultVariable"
+                 faultMessageType="bpelx:RuntimeFaultMessage">
+            <sequence name="Sequence4">
+              <assign name="AssignBindingFault">
+                <copy>
+                  <from>'[AG-ERR-RMS-001]'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:errorCode</to>
+                </copy>
+                <copy>
+                  <from>substring($FaultVariable.summary,1,500)</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:errorDescription</to>
+                </copy>
+                <copy>
+                  <from>'Aplicación'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:errorType</to>
+                </copy>
+                <copy>
+                  <from>3</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$MessageErrorVar/ns13:severity</to>
+                </copy>
+              </assign>
+              <exit name="ExitBindingFault"/>
+            </sequence>
+          </catch>
+          <catchAll>
+            <sequence name="Sequence7">
+              <empty name="Empty1"/>
+              <exit name="ExitAll"/>
+            </sequence>
+          </catchAll>
+        </faultHandlers>
+        <sequence name="Sequence2">
+          <assign name="AssignIncreaseCounter">
+            <copy>
+              <from>$CountNumLineasVar + 1</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$CountNumLineasVar</to>
+            </copy>
+            <copy>
+              <from>ora:countNodes('CostChangeRquestVar','ns3:event/ns7:changes/ns7:change')</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$TotalNodesVar</to>
+            </copy>
+          </assign>
+          <if name="If1">
+            <documentation>
+              <![CDATA[SKU]]>
+            </documentation>
+            <condition>contains($CostChangeRquestVar/ns3:event[$Counter]/ns7:changes/ns7:change/ns7:item/ns9:id/@Type,'SKU')</condition><sequence name="Sequence11"><assign name="AssignSKU">
+                <copy>
+                  <from>number($CostChangeRquestVar/ns3:event[$Counter]/ns7:changes/ns7:change/ns7:item/ns9:id)</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_SKU</to>
+                </copy>
+              </assign><assign name="AssignSTYLE"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                     xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+   <copy bpelx:insertMissingToData="yes">
+         <from>$Null</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_ESTILO</to>
+      </copy></assign></sequence><else>
+              <documentation>
+                <![CDATA[STYLE]]>
+              </documentation><sequence name="Sequence10"><assign name="AssignSTYLE"><copy><from>$CostChangeRquestVar/ns3:event[$Counter]/ns7:changes/ns7:change/ns7:item/ns9:id</from><to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_ESTILO</to></copy></assign><assign name="AssignSKU"
+                                                                                                                                                                                                                                                                                                                                                                xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+   <copy bpelx:insertMissingToData="yes">
+         <from>$Null</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_SKU</to>
+      </copy></assign></sequence></else>
+          </if>
+          <if name="Nivel">
+            <documentation>
+              <![CDATA[Cadena]]>
+            </documentation>
+            <condition>$CostChangeRquestVar/ns3:event[1]/ns7:scope = 'C'</condition>
+            <assign name="AssignCadena">
+              <copy>
+                <from>1</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_NIVEL</to>
+              </copy>
+            </assign>
+            <else>
+              <documentation>
+                <![CDATA[Tienda]]>
+              </documentation>
+              <assign name="AssignTienda">
+                <copy>
+                  <from>3</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_NIVEL</to>
+                </copy>
+              </assign>
+            </else>
+          </if>
+          <if name="If2">
+            <documentation>
+              <![CDATA[FinishEvent]]>
+            </documentation>
+            <condition>$CountNumLineasVar = $TotalNodesVar</condition>
+            <assign name="AssignEndEventTrue">
+              <copy>
+                <from>1</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_FIN_DE_ARCHIVO</to>
+              </copy>
+            </assign>
+            <else>
+              <assign name="AssignEndEventFalse">
+                <copy>
+                  <from>0</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_FIN_DE_ARCHIVO</to>
+                </copy>
+              </assign>
+            </else>
+          </if>
+          <if name="If3">
+            <condition>string-length($CostChangeRquestVar/ns3:event[1]/ns7:businessStores/ns7:businessUnit)=0</condition>
+            <assign name="null">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$CostChangeRquestVar/ns3:event[1]/ns7:businessStores/ns7:businessUnit</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_TIENDA</to>
+              </copy>
+            </assign>
+            <else><assign name="tienda" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+   <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+         xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+         <from>number($CostChangeRquestVar/ns3:event[1]/ns7:businessStores/ns7:businessUnit)</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_TIENDA</to>
+      </copy></assign></else>
+          </if>
+          <if name="If4">
+            <condition>string-length($dateVar)&gt;1</condition>
+            <assign name="date">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$dateVar</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_FECHA_INICIAL</to>
+              </copy>
+            </assign>
+            <else>
+              <empty name="noDate"/>
+            </else>
+          </if>
+          <assign name="AssignRMSCreateEventReq">
+            <copy>
+              <from>number($idEventVar)</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_ID</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$CostChangeRquestVar/ns3:event[$Counter]/ns7:changes/ns7:change/ns7:item/ns9:description</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_DESCRIPCION</to>
+            </copy>
+            <copy>
+              <from>"C"</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_TIPO</to>
+            </copy>
+            <copy>
+              <from>7</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_RAZON</to>
+            </copy>
+            <copy>
+              <from>1</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_BASE</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$CostChangeRquestVar/ns3:event[$Counter]/ns7:changes/ns7:change/ns7:cost</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_PRECIO</to>
+            </copy>
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>$Null</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_FECHA_FINAL</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>number($CostChangeRquestVar/ns3:event[1]/ns7:supplierID/ns10:supplierID)</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RMSCreateCostChangeEvent_InVar.InputParameters/ns17:I_PROVEEDOR</to>
+            </copy>
+          </assign>
+          <invoke name="Invoke_RMSCreateCostChangeEvent" partnerLink="RMSCreateChangeEventPXY"
+                  portType="ns14:RMSCreateChangeEvent_ptt" operation="RMSCreateChangeEvent"
+                  inputVariable="Invoke_RMSCreateCostChangeEvent_InVar"
+                  outputVariable="Invoke_RMSCreateCostChangeEvent_OutVar" bpelx:invokeAsDetail="no"/>
+        </sequence>
+      </scope>
+    </forEach>
+  </sequence>
+</process>

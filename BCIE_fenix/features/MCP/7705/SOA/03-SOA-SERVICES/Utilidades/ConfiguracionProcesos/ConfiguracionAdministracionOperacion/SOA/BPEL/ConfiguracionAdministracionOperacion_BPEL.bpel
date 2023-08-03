@@ -1,0 +1,219 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Dec 14 19:57:49 CST 2020
+  Author:  NGS
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionAdministracionOperacion_BPEL"
+               targetNamespace="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionAdministracionOperacion/ConfiguracionAdministracionOperacion_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionAdministracionOperacion/ConfiguracionAdministracionOperacion_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns2="http://www.bcie.org/ConfiguracionProcesosMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns13="http://www.bcie.org/TerminoBO"
+         xmlns:ns3="http://www.bcie.org/ConfiguracionProcesosBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns4="http://www.bcie.org/OperacionBO" xmlns:ns17="http://www.bcie.org/ResultBO"
+         xmlns:ns15="http://www.bcie.org/CommonBO" xmlns:ns11="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns12="http://www.bcie.org/CondicionBO" xmlns:ns7="http://www.bcie.org/ProductoBO"
+         xmlns:ns8="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns16="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns14="http://www.bcie.org/ComisionBO" xmlns:ns6="http://www.bcie.org/CatalogoBO"
+         xmlns:ns9="http://www.bcie.org/DesembolsoBO" xmlns:ns10="http://www.bcie.org/ContratoBO" 
+         xmlns:ns19="http://xmlns.bcie.com/ProductoService" xmlns:ns20="http://www.bcie.org/ProductoMO"
+         xmlns:ns22="http://www.bcie.org/DocumentoBO" xmlns:ns21="http://www.bcie.org/AtributoBO"
+         xmlns:ns5="http://www.bcie.org/ClienteBO" xmlns:ns18="http://www.bcie.org/ErrorBO"
+         xmlns:ns23="http://www.bcie.com/ConsultarRolesPorProceso"
+         xmlns:ns24="http://www.bcie.org/ConsultarRolesPorProcesoMO"
+         xmlns:ns25="http://www.bcie.org/ConsultarRolesPorProcesoBO"
+         xmlns:ns26="http://xmlns.bcie.com/OperacionService" xmlns:ns27="http://www.bcie.org/OperacionMO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionAdministracionOperacionSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configuracionadministracionoperacion_bpel_client" partnerLinkType="ns1:ConfiguracionAdministracionOperacion_BPEL" myRole="ConfiguracionAdministracionOperacionPT"/>
+    <partnerLink name="ProductoService" partnerLinkType="ns19:ProductoService" partnerRole="ProductoPT"/>
+    <partnerLink name="ConsultarRolServer" partnerLinkType="ns23:ConsultarRolServer"
+                 partnerRole="ConsultarRolesPorProceso_ptt"/>
+    <partnerLink name="OperacionService" partnerLinkType="ns26:OperacionService" partnerRole="Operacion12Port"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestconfiguracionAdministracionOperacionmessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseconfiguracionAdministracionOperacionmessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="InConsultarProducto"
+              messageType="ns19:requestConsultarByIdOperacionMessage"/>
+    <variable name="OutConsultarProducto"
+              messageType="ns19:responseConsultarByIdOperacionMessage"/>
+    <variable name="InConsultarRol" messageType="ns23:requestMessage"/>
+    <variable name="OutConsultarRol" messageType="ns23:replyMessage"/>
+    <variable name="CountROL" type="xsd:integer">
+      <from>0</from>
+    </variable>
+    <variable name="InConsultarOperacion_InputVariable"
+              messageType="ns26:requestConsultarOperacionesMessageByIdOperacion"/>
+    <variable name="OutConsultarOperacion_OutputVariable" messageType="ns26:responseConsultarOperacionMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence>
+        <assign name="Assign_Error">
+          <copy>
+            <from>'ERROR'  </from>
+            <to>$outputVariable.response/ns2:Resultado/ns17:result</to>
+          </copy>
+          <copy>
+            <from>'Error en ConfiguracionAdministracionOperacion'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns17:message</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString() </from>
+            <to>$outputVariable.response/ns2:Resultado/ns17:error/ns18:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="Reply_Error" variable="outputVariable"
+               partnerLink="configuracionadministracionoperacion_bpel_client"
+               portType="ns1:ConfiguracionAdministracionOperacionPT" operation="configuracionAdministracionOperacion"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionAdministracionOperacion_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="configuracionadministracionoperacion_bpel_client" portType="ns1:ConfiguracionAdministracionOperacionPT" operation="configuracionAdministracionOperacion" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignFlowName">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion= ",$inputVariable.request/ns2:idOperacion))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <assign name="AssignConsultarProducto">
+      <copy>
+        <from>$inputVariable.request/ns2:idOperacion</from>
+        <to>$InConsultarProducto.request/ns20:idOperacion</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultarProducto" bpelx:invokeAsDetail="no" partnerLink="ProductoService"
+            portType="ns19:ProductoPT" operation="consultarByIdOperacion"
+            inputVariable="InConsultarProducto"
+            outputVariable="OutConsultarProducto"/>
+    <assign name="AssignConsultarOperacion">
+      <copy>
+        <from>$inputVariable.request/ns2:idOperacion</from>
+        <to>$InConsultarOperacion_InputVariable.request/ns27:idOperacion</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultarOperacion" bpelx:invokeAsDetail="no" partnerLink="OperacionService"
+            portType="ns26:Operacion12Port" operation="consultarOperacionByIdOperacion"
+            inputVariable="InConsultarOperacion_InputVariable" outputVariable="OutConsultarOperacion_OutputVariable"/>
+    <if name="IfRespuesta">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>$OutConsultarProducto.response/ns20:Resultado/ns17:result='OK'  and $OutConsultarOperacion_OutputVariable.response/ns27:Resultado/ns17:result='OK' </condition>
+      <sequence name="Sequence2">
+        <assign name="AssignOutConsultarProducto" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+          <copy>
+            <from>$OutConsultarProducto.response/ns20:Producto</from>
+            <to>$outputVariable.response/ns2:configuracionAdministracionOperacion/ns3:producto</to>
+          </copy>
+          <copy>
+            <from>$OutConsultarProducto.response/ns20:Resultado</from>
+            <to>$outputVariable.response/ns2:Resultado</to>
+          </copy>
+          <copy>
+            <from>$OutConsultarOperacion_OutputVariable.response/ns27:Operacion</from>
+            <to>$outputVariable.response/ns2:configuracionAdministracionOperacion/ns3:operacion</to>
+          </copy>
+        </assign>
+        <sequence name="Sequence1">
+          <assign name="AssignINConsultarRol">
+            <copy>
+              <from>37</from>
+              <to>$InConsultarRol.request/ns24:Proceso/ns25:idProceso</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeConsultarRol" bpelx:invokeAsDetail="no" partnerLink="ConsultarRolServer"
+                  portType="ns23:ConsultarRolesPorProceso_ptt" operation="ConsultarRolesPorProceso"
+                  inputVariable="InConsultarRol" outputVariable="OutConsultarRol"/>
+          <assign name="AssignCountRol">
+            <copy>
+              <from>count($OutConsultarRol.response/ns24:ListadoRoles/ns25:listadoRoles)</from>
+              <to>$CountROL</to>
+            </copy>
+          </assign>
+          <forEach parallel="no" counterName="CounterROL" name="ForEachRol">
+            <bpelx:skipCondition>$CountROL=0</bpelx:skipCondition>
+            <startCounterValue>1</startCounterValue>
+            <finalCounterValue>$CountROL</finalCounterValue>
+            <scope name="Scope1">
+              <assign name="AssignOutRol">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$OutConsultarRol.response/ns24:ListadoRoles/ns25:listadoRoles[$CounterROL]</from>
+                  <to>$outputVariable.response/ns2:configuracionAdministracionOperacion/ns3:RolesEquipoTrabajo/ns3:Rol[$CounterROL]</to>
+                </copy>
+              </assign>
+            </scope>
+          </forEach>
+        </sequence>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[Error]]>
+        </documentation>
+        <assign name="AssignError">
+          <copy>
+            <from>$OutConsultarProducto.response/ns20:Resultado/ns17:error</from>
+            <to>$outputVariable.response/ns2:Resultado/ns17:error</to>
+          </copy>
+        </assign>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configuracionadministracionoperacion_bpel_client" portType="ns1:ConfiguracionAdministracionOperacionPT" operation="configuracionAdministracionOperacion" variable="outputVariable"/>
+  </sequence>
+</process>

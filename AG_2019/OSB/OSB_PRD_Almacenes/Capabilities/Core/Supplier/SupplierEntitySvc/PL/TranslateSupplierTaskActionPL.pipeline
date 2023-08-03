@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <con:wsdl ref="Capabilities/Core/Supplier/SupplierEntitySvc/Resources/TranslateSupplierTaskActionWSLD"/>
+            <con:binding>
+                <con:name>TranslateSupplierTaskActionBinding</con:name>
+                <con:namespace>http://mx.agarcia.ea/Capabilities/Core/Suppliers/TranslateSupplierTaskAction</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:flow>
+            <con:route-node name="RouteNode1">
+                <con:context>
+                    <con1:userNsDecl prefix="quer" namespace="http://xmlns.oracle.com/pcbpel/adapter/db/top/querySupplier" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:userNsDecl prefix="v1" namespace="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="tran" namespace="http://mx.agarcia.ea/Capabilities/Core/Suppliers/TranslateSupplierTaskAction" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:variable name="BPEL" path="$ID" xmlns:con1="http://www.bea.com/wli/sb/typesystem/config">
+                        <con1:service>
+                            <con1:reference ref="Capabilities/Core/Supplier/SupplierEntitySvc/PS/TranslateSupplierProcessPXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+                        </con1:service>
+                    </con1:variable>
+                </con:context>
+                <con:actions>
+                    <con1:route xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.1a1f9111.9.16adf6408a9.N7ffc</con2:id>
+                        <con1:service ref="Capabilities/Core/Supplier/SupplierEntitySvc/PS/TranslateSupplierProcessPXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+                        <con1:operation>translate</con1:operation>
+                        <con1:outboundTransform>
+                            <con2:assign varName="body" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.1a1f9111.c.16ae026e152.N8000</con3:id>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<soapenv:Body xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+<onec:oneCaseDbSelect_idC1_appCodeC1_targetAppCodeC1InputParameters xmlns:onec="http://xmlns.oracle.com/pcbpel/adapter/db/top/oneCaseDb">
+    <onec:idC1>{$body/tran:translateRequest/tran:pId/text()}</onec:idC1>
+    <onec:appCodeC1>{dvm:lookup('Capabilities/Support/Commons/ItemCatalogEntitySvc/Resource/MDM_APPLICATIONS.dvm','NAME',($body/tran:translateRequest/tran:pAppCode),'CODE','')}
+</onec:appCodeC1>
+    <onec:targetAppCodeC1>{dvm:lookup('Capabilities/Support/Commons/ItemCatalogEntitySvc/Resource/MDM_APPLICATIONS.dvm','NAME',($body/tran:translateRequest/tran:pPrimaryAppCode),'CODE','')}</onec:targetAppCodeC1>
+</onec:oneCaseDbSelect_idC1_appCodeC1_targetAppCodeC1InputParameters>
+</soapenv:Body>]]></con:xqueryText>
+                                </con2:expr>
+                            </con2:assign>
+                        </con1:outboundTransform>
+                        <con1:responseTransform>
+                            <con2:replace varName="body" contents-only="false" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.1a1f9111.c.16ae026e152.N7fff</con3:id>
+                                <con2:location>
+                                    <con:xpathText xmlns:con="http://www.bea.com/wli/sb/stages/config">./*</con:xpathText>
+                                </con2:location>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<tran:translateResponse xmlns:tran="http://mx.agarcia.ea/Capabilities/Core/Suppliers/TranslateSupplierTaskAction">
+		
+	
+{
+ let $catItemsCursor := $body//*:MdmSuppliers
+return 
+ for $item in $catItemsCursor 
+return 
+
+<tran:suppliersList xmlns:v1="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1">
+{
+
+
+
+<v1:supplier  AppCode="   {dvm:lookup('Capabilities/Support/Commons/ItemCatalogEntitySvc/Resource/MDM_APPLICATIONS.dvm','CODE',($item//*:appCode/text()),'NAME','')}">
+
+				<v1:id>{$item//*:id/text()}</v1:id>
+				<v1:name>{$item//*:name/text()}</v1:name>
+				
+	</v1:supplier>
+ 
+
+}
+</tran:suppliersList>
+
+	  }
+
+	</tran:translateResponse>]]></con:xqueryText>
+                                </con2:expr>
+                            </con2:replace>
+                        </con1:responseTransform>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

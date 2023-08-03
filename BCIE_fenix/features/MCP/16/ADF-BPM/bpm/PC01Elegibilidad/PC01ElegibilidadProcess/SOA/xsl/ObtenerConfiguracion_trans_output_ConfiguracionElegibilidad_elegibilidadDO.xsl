@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xsl:stylesheet version="1.0" xmlns:oraxsl="http://www.oracle.com/XSL/Transform/java"
+                xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+                xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+                xmlns:ns0="http://www.bcie.org/ConfiguracionProcesosMO"
+                xmlns:mhdr="http://www.oracle.com/XSL/Transform/java/oracle.tip.mediator.service.common.functions.MediatorExtnFunction"
+                xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+                xmlns:oracle-xsl-mapper="http://www.oracle.com/xsl/mapper/schemas"
+                xmlns:ns1="http://xmlns.bcie.org/ObjetoProceso/Elegibilidad/Payload/V1"
+                xmlns:socket="http://www.oracle.com/XSL/Transform/java/oracle.tip.adapter.socket.ProtocolTranslator"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                exclude-result-prefixes="xsd xsi oracle-xsl-mapper xsl ns0 ns1 oraxsl xp20 xref mhdr oraext dvm socket"
+                xmlns:ns2="http://www.bcie.org/ProductoBO" xmlns:confBO="http://www.bcie.org/ConfiguracionProcesosBO"
+                xmlns:ns4="http://www.bcie.org/DeclaracionJuradaBO" xmlns:operBO="http://www.bcie.org/OperacionBO"
+                xmlns:header="http://xmlns.bcie.org/ObjetoProceso/Comun/Header/V1"
+                xmlns:resBO="http://www.bcie.org/ResultBO"
+                xmlns:parameter="http://xmlns.bcie.org/ObjetoProceso/Comun/Parameter/V1"
+                xmlns:notificacion="http://xmlns.bcie.org/ObjetoProceso/Comun/Notificacion/V1"
+                xmlns:ns3="http://www.bcie.org/CatalogoBO"
+                xmlns:ns7="http://xmlns.bcie.org/ObjetoProceso/Comun/Operacion/V1"
+                xmlns:ns5="http://www.bcie.org/ClienteBO" xmlns:ns8="http://xmlns.bcie.org/ObjetoProceso/Comun/Tarea/V1"
+                xmlns:ns6="http://www.bcie.org/ErrorBO" xmlns:ns9="http://www.bcie.org/TerminoBO"
+                xmlns:ns10="http://www.bcie.org/ReglaBO" xmlns:cmnBO="http://www.bcie.org/CommonBO"
+                xmlns:ns13="http://www.bcie.org/MatrizTCCBO" xmlns:ns12="http://www.bcie.org/LineaCreditoBO"
+                xmlns:ns11="http://www.bcie.org/CrearBitacoraProcesoBO"
+                xmlns:ns14="http://xmlns.bcie.org/ObjetoProceso/Comun/Proceso/V1"
+                xmlns:ns15="http://www.bcie.org/CondicionBO" xmlns:ns16="http://www.bcie.org/ImplementacionPctBO"
+                xmlns:ns17="http://www.bcie.org/DocumentoBO" xmlns:ns18="http://www.bcie.org/HerramientaCEBO"
+                xmlns:ns19="http://www.bcie.org/ComisionBO" xmlns:desBO="http://www.bcie.org/DesembolsoBO"
+                xmlns:ns20="http://www.bcie.org/AdquisicionBO" xmlns:ns21="http://www.bcie.org/ContratoBO"
+                xmlns:ns22="http://www.bcie.org/AtributoBO"
+                xmlns:ns23="http://xmlns.bcie.org/ObjetoProceso/Comun/Cliente/V1"
+                xmlns:lecciones="http://www.bcie.org/LeccionAprendidaBO">
+    <oracle-xsl-mapper:schema>
+        <!--SPECIFICATION OF MAP SOURCES AND TARGETS, DO NOT MODIFY.-->
+        <oracle-xsl-mapper:mapSources>
+            <oracle-xsl-mapper:source type="XSD">
+                <oracle-xsl-mapper:schema location="oramds:/apps/Resources/ComponentesComunes/Utilidades/ConfiguracionProcesos/V1/Schema/ConfiguracionProcesosMO.xsd"/>
+                <oracle-xsl-mapper:rootElement name="configuracionElegibilidadResponse"
+                                               namespace="http://www.bcie.org/ConfiguracionProcesosMO"/>
+                <oracle-xsl-mapper:param name="configuracionElegibilidadResponse"/>
+            </oracle-xsl-mapper:source>
+            <oracle-xsl-mapper:source type="XSD">
+                <oracle-xsl-mapper:schema location="oramds:/apps/Resources/BPM/Schema/PC01/ElegibilidadPayload.xsd"/>
+                <oracle-xsl-mapper:rootElement name="ElegibilidadPayload"
+                                               namespace="http://xmlns.bcie.org/ObjetoProceso/Elegibilidad/Payload/V1"/>
+                <oracle-xsl-mapper:param name="elegibilidadDO"/>
+            </oracle-xsl-mapper:source>
+        </oracle-xsl-mapper:mapSources>
+        <oracle-xsl-mapper:mapTargets>
+            <oracle-xsl-mapper:target type="XSD">
+                <oracle-xsl-mapper:schema location="oramds:/apps/Resources/BPM/Schema/PC01/ElegibilidadPayload.xsd"/>
+                <oracle-xsl-mapper:rootElement name="ElegibilidadPayload"
+                                               namespace="http://xmlns.bcie.org/ObjetoProceso/Elegibilidad/Payload/V1"/>
+            </oracle-xsl-mapper:target>
+        </oracle-xsl-mapper:mapTargets>
+        <!--GENERATED BY ORACLE XSL MAPPER 12.1.3.0.1(XSLT Build 150816.0404) AT [THU FEB 04 13:32:57 CST 2016].-->
+    </oracle-xsl-mapper:schema>
+    <!--User Editing allowed BELOW this line - DO NOT DELETE THIS LINE-->
+    <xsl:param name="elegibilidadDO"/>
+    <xsl:template match="/">
+        <ns1:ElegibilidadPayload>
+            <ns1:Header>
+                <header:Operacion>
+                    <ns7:CodigoOperacion>
+                        <xsl:value-of select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:operacion/operBO:idOperacion"/>
+                    </ns7:CodigoOperacion>
+                    <ns7:NombreOperacion>
+                        <xsl:value-of select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:operacion/operBO:nombre"/>
+                    </ns7:NombreOperacion>
+                    <ns7:ResponsableOperacion>
+                        <xsl:value-of select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:operacion/operBO:responsable"/>
+                    </ns7:ResponsableOperacion>
+                    <ns7:CodigoCliente>
+                        <xsl:value-of select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:operacion/operBO:cliente/ns5:idCliente"/>
+                    </ns7:CodigoCliente>
+                    <ns7:NombreCliente>
+                        <xsl:value-of select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:operacion/operBO:cliente/ns5:razonSocial"/>
+                    </ns7:NombreCliente>
+                    <ns7:CodigoProducto>
+                        <xsl:value-of select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:producto/ns2:idProducto"/>
+                    </ns7:CodigoProducto>
+                    <ns7:NombreProducto>
+                        <xsl:value-of select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:producto/ns2:descripcion"/>
+                    </ns7:NombreProducto>
+                    <xsl:for-each select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:operacion/operBO:montoOperacion/operBO:montoOperacion">
+                        <xsl:if test="operBO:id = 2">
+                            <ns7:MontoSolicitado>
+                                <xsl:value-of select="operBO:monto"/>
+                            </ns7:MontoSolicitado>
+                        </xsl:if>
+                    </xsl:for-each>
+                    <ns7:Pais>
+                        <xsl:value-of select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:operacion/operBO:cliente/ns5:pais/ns3:Descripcion"/>
+                    </ns7:Pais>
+                </header:Operacion>
+                <header:Tarea>
+                    <ns8:CodigoTarea/>
+                    <ns8:NombreTarea/>
+                    <ns8:CodigoRol/>
+                    <ns8:NombreRol/>
+                    <ns8:CodigoProceso/>
+                    <ns8:NombreProceso/>
+                </header:Tarea>
+                <header:Proceso>
+                    <ns14:IdProceso>1</ns14:IdProceso>
+                    <ns14:CodigoProceso>PC01</ns14:CodigoProceso>
+                    <ns14:NombreProceso>Elegibilidad</ns14:NombreProceso>
+                    <ns14:EsProcesoCore>true</ns14:EsProcesoCore>
+                    <ns14:RolIniciaProceso>FENIX_REPRESENTANTES</ns14:RolIniciaProceso>
+                    <ns14:UsuarioIniciaProceso>
+                        <xsl:value-of select="$elegibilidadDO/ns1:ElegibilidadPayload/ns1:Header/header:Proceso/ns14:UsuarioIniciaProceso"/>
+                    </ns14:UsuarioIniciaProceso>
+                    <ns14:InstanciaProceso>
+                        <xsl:value-of select="$elegibilidadDO/ns1:ElegibilidadPayload/ns1:Header/header:Proceso/ns14:InstanciaProceso"/>
+                    </ns14:InstanciaProceso>
+                    <ns14:IdFlujo/>
+                </header:Proceso>
+                <xsl:for-each select="$elegibilidadDO/ns1:ElegibilidadPayload/parameter:ParameterType">
+                    <parameter:ParameterType>
+                        <parameter:parameterName>
+                            <xsl:value-of select="parameter:parameterName"/>
+                        </parameter:parameterName>
+                        <parameter:parameterValue>
+                            <xsl:value-of select="parameter:parameterValue"/>
+                        </parameter:parameterValue>
+                    </parameter:ParameterType>
+                </xsl:for-each>
+            </ns1:Header>
+            <ns1:Configuration>
+                <ns1:requiereElegibilidad>
+                    <xsl:value-of select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:producto/ns2:reglas/ns2:requiereElegibilidad"/>
+                </ns1:requiereElegibilidad>
+                <ns1:requiereAsjur>
+                    <xsl:value-of select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:configuration/confBO:requiereAsjur"/>
+                </ns1:requiereAsjur>
+                <ns1:requiereGeries>
+                    <xsl:value-of select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:configuration/confBO:requiereGeries"/>
+                </ns1:requiereGeries>
+                <ns1:requiereOej>
+                    <xsl:value-of select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:configuration/confBO:requiereOej"/>
+                </ns1:requiereOej>
+                <ns1:requiereAjustesAsjur/>
+                <ns1:requiereAjustesGeries/>
+                <ns1:requiereAjustesOej/>
+                <ns1:esUnaReformulacion>
+                    <xsl:value-of select="$elegibilidadDO/ns1:ElegibilidadPayload/ns1:Configuration/ns1:esUnaReformulacion"/>
+                </ns1:esUnaReformulacion>
+                <ns1:reformuloProducto>
+                    <xsl:value-of select="$elegibilidadDO/ns1:ElegibilidadPayload/ns1:Configuration/ns1:reformuloProducto"/>
+                </ns1:reformuloProducto>
+                <ns1:reformuloCliente>
+                    <xsl:value-of select="$elegibilidadDO/ns1:ElegibilidadPayload/ns1:Configuration/ns1:reformuloCliente"/>
+                </ns1:reformuloCliente>
+                <ns1:reformuloMontoSolicitado>
+                    <xsl:value-of select="$elegibilidadDO/ns1:ElegibilidadPayload/ns1:Configuration/ns1:reformuloMontoSolicitado"/>
+                </ns1:reformuloMontoSolicitado>
+                <ns1:reformuloMontoSolicitadoMasMenos>
+                    <xsl:value-of select="$elegibilidadDO/ns1:ElegibilidadPayload/ns1:Configuration/ns1:reformuloMontoSolicitadoMasMenos"/>
+                </ns1:reformuloMontoSolicitadoMasMenos>
+                <ns1:reformuloMontoSolicitadoMenosMas>
+                    <xsl:value-of select="$elegibilidadDO/ns1:ElegibilidadPayload/ns1:Configuration/ns1:reformuloMontoSolicitadoMenosMas"/>
+                </ns1:reformuloMontoSolicitadoMenosMas>
+                <ns1:reformuloUnidadEjecutora>
+                    <xsl:value-of select="$elegibilidadDO/ns1:ElegibilidadPayload/ns1:Configuration/ns1:reformuloUnidadEjecutora"/>
+                </ns1:reformuloUnidadEjecutora>
+                <ns1:requiereCuestionario>
+                    <xsl:value-of select="$elegibilidadDO/ns1:ElegibilidadPayload/ns1:Configuration/ns1:requiereCuestionario"/>
+                </ns1:requiereCuestionario>
+                <ns1:unidadEjecutora>
+                    <xsl:value-of select="$elegibilidadDO/ns1:ElegibilidadPayload/ns1:Configuration/ns1:unidadEjecutora"/>
+                </ns1:unidadEjecutora>
+            </ns1:Configuration>
+            <xsl:for-each select="/ns0:configuracionElegibilidadResponse/ns0:configuracionElegibilidad/confBO:RolesEquipoTrabajo/confBO:Rol">
+                <ns1:EquipoPayload>
+                    <xsl:if test="ns3:Id = 11">
+                        <ns1:abogado>
+                            <xsl:value-of select="ns3:DescripcionCorta"/>
+                        </ns1:abogado>
+                    </xsl:if>
+                    <xsl:if test="ns3:Id = 16">
+                        <ns1:geries>
+                            <xsl:value-of select="ns3:DescripcionCorta"/>
+                        </ns1:geries>
+                    </xsl:if>
+                    <xsl:if test="ns3:Id = 84">
+                        <ns1:oej>
+                            <xsl:value-of select="ns3:DescripcionCorta"/>
+                        </ns1:oej>
+                    </xsl:if>
+                    <ns1:gerente/>
+                    <ns1:control/>
+                </ns1:EquipoPayload>
+            </xsl:for-each>
+            <ns1:EquipoEjecucion>
+                <ns1:abogado/>
+                <ns1:geries/>
+                <ns1:oej/>
+                <ns1:gerente/>
+                <ns1:control/>
+            </ns1:EquipoEjecucion>
+            <xsl:for-each select="$elegibilidadDO/ns1:ElegibilidadPayload/parameter:ParameterType">
+                <parameter:ParameterType>
+                    <parameter:parameterName>
+                        <xsl:value-of select="parameter:parameterName"/>
+                    </parameter:parameterName>
+                    <parameter:parameterValue>
+                        <xsl:value-of select="parameter:parameterValue"/>
+                    </parameter:parameterValue>
+                </parameter:ParameterType>
+            </xsl:for-each>
+        </ns1:ElegibilidadPayload>
+    </xsl:template>
+</xsl:stylesheet>

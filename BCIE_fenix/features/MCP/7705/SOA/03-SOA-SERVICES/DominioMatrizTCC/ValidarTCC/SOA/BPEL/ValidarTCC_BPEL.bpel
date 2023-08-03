@@ -1,0 +1,583 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Jan 11 18:16:25 CST 2016
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ValidarTCC_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioMatrizTCC/ValidarTCC/ValidarTCC_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioMatrizTCC/ValidarTCC/ValidarTCC_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/MatrizTCCService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/TerminoService"
+         xmlns:ns3="http://www.bcie.org/ConsultarTreTerminoService" xmlns:ns4="http://www.bcie.org/CondicionService"
+         xmlns:ns5="http://www.bcie.org/MatrizTCCMO" xmlns:ns6="http://www.bcie.org/TerminoMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns8="http://www.bcie.org/ResultBO" xmlns:ns7="http://www.bcie.org/MatrizTCCBO"
+         xmlns:ns9="http://www.bcie.org/ErrorBO" xmlns:ns10="http://www.bcie.org/TerminoBO"
+         xmlns:ns11="http://www.bcie.org/CatalogoBO" xmlns:ns12="http://www.bcie.org/AtributoBO"
+         xmlns:ns13="http://www.bcie.org/CondicionMO" xmlns:ns14="http://www.bcie.org/CondicionBO"
+         xmlns:ns15="http://www.bcie.org/DocumentoBO" xmlns:ns16="http://www.bcie.org/LineaCreditoService"
+         xmlns:ns17="http://www.bcie.org/LineaCreditoMO" xmlns:ns23="http://www.bcie.org/ReglaBO"
+         xmlns:ns21="http://www.bcie.org/OperacionBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns20="http://www.bcie.org/CommonBO" xmlns:ns19="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns24="http://www.bcie.org/ProductoBO" xmlns:ns25="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns26="http://www.bcie.org/ComisionBO" xmlns:ns22="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns18="http://www.bcie.org/ContratoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/TerminoMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioContrato/Termino/V1/Schema/TerminoMO.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://www.bcie.org/MatrizTCCService" location="../WSDLs/ValidarTCCSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="ValidarTCC" partnerLinkType="ns1:ValidarTCC_BPEL" myRole="ValidarTCCPT"/>
+    <partnerLink name="ConsultarTreTerminoService" partnerLinkType="ns3:ConsultarTreTerminoService"
+                 partnerRole="TreTerminoPT"/>
+    <partnerLink name="ConsultarCondicionByIdOperacionService"
+                 partnerLinkType="ns4:ConsultarCondicionByIdOperacionService"
+                 partnerRole="ConsultarCondicionbyIdOperacionPT"/>
+    <partnerLink name="ConsultarTerminoService" partnerLinkType="ns2:ConsultarTerminoService"
+                 partnerRole="ConsultarTerminoPT"/>
+    <partnerLink name="ConsultarContratoLineaCreditoService" partnerLinkType="ns16:ConsultarContratoLineaCreditoService"
+                 partnerRole="consultarLineaCreditoPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ValidarTCCRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ValidarTCCResponseMessage"/>
+    <variable name="listaTcaTermino" type="ns10:listaTerminos"/>
+    <variable name="consultarCondicionbyIdOperacion_OutputVariable"
+                  messageType="ns4:ConsultarCondicionbyIdOperacionResponseMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="inConsultarContratoLineaCreditoService" messageType="ns16:ConsultarLineaCreditoRequestMessage"/>
+    <variable name="outConsultarContratoLineaCreditoService" messageType="ns16:ConsultarLineaCreditoResponseMessage"/>
+    <variable name="FechaValidacion" type="xsd:date"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence6">
+        <assign name="Assign_ErrorCatchAll">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns5:Resultado/ns8:result</to>
+          </copy>
+          <copy>
+            <from>$outputVariable.response/ns5:Resultado/ns8:message</from>
+            <to>$outputVariable.response/ns5:Resultado/ns8:error/ns9:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyOutput" variable="outputVariable" partnerLink="ValidarTCC" portType="ns1:ValidarTCCPT"
+               operation="validarTCC"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ValidarTCC_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="ValidarTCC" portType="ns1:ValidarTCCPT" operation="validarTCC" variable="inputVariable" createInstance="yes"/>
+   <assign name="AssignFlowName">
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion= ",string($inputVariable.request/ns5:idOperacion)))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeListaTerminos">
+      <if name="IfProceso">
+        <documentation>
+          <![CDATA[Formalizacion]]>
+        </documentation>
+        <condition>$inputVariable.request/ns5:idProceso = 5</condition>
+        <assign name="Assign_descripcionTerminoProceso">
+          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+            <from>'T101'</from>
+            <to>$listaTcaTermino/ns10:Termino[1]/ns10:tipoTermino/ns10:descripcion</to>
+          </copy>
+        </assign>
+        <else>
+          <documentation>
+            <![CDATA[Desconocido]]>
+          </documentation>
+          <sequence name="Sequence2">
+            <assign name="Assign_ProcesoNoSoportado">
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns5:Resultado/ns8:result</to>
+              </copy>
+              <copy>
+                <from>'Proceso NO Soportado'</from>
+                <to>$outputVariable.response/ns5:Resultado/ns8:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyOutput" variable="outputVariable" partnerLink="ValidarTCC" portType="ns1:ValidarTCCPT"
+                   operation="validarTCC"/>
+          </sequence>
+        </else>
+      </if>
+    </scope>
+    <scope name="ScopeConsultarTreTermino">
+      <variables>
+        <variable name="consultarTreTermino_InputVariable" messageType="ns3:ConsultarTreTerminoRequestMessage"/>
+        <variable name="consultarTreTermino_OutputVariable" messageType="ns3:ConsultarTreTerminoResponseMessage"/>
+      </variables>
+      <sequence>
+        <forEach parallel="no" counterName="listaTcaTerminoCounter" name="ForEachListaTcaTermino">
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($listaTcaTermino/ns10:Termino)</finalCounterValue>
+          <scope name="ScopeDescripcionesTermino">
+            <faultHandlers>
+              <catch faultName="bpelx:remoteFault" faultVariable="remotefault"
+                     faultMessageType="bpelx:RuntimeFaultMessage">
+                <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="remotefault"/>
+              </catch>
+              <catchAll>
+                <sequence name="Sequence7">
+                  <assign name="Assign_ErrorCatchAll">
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>'1'</from>
+                      <to>$outputVariable.response/ns5:Resultado/ns8:error/ns9:errorCode</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>ora:getFaultAsString()</from>
+                      <to>$outputVariable.response/ns5:Resultado/ns8:error/ns9:errorDescription</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>''</from>
+                      <to>$outputVariable.response/ns5:Resultado/ns8:error/ns9:errorType</to>
+                    </copy>
+                  </assign>
+                  <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                </sequence>
+              </catchAll>
+            </faultHandlers>
+            <sequence>
+              <assign name="Assign_ConsultarTreTerminoInput">
+                <copy>
+                  <from>$inputVariable.request/ns5:idOperacion</from>
+                  <to>$consultarTreTermino_InputVariable.request/ns6:idOperacion</to>
+                </copy>
+                <copy>
+                  <from>$listaTcaTermino/ns10:Termino[1]/ns10:tipoTermino/ns10:descripcion</from>
+                  <to>$consultarTreTermino_InputVariable.request/ns6:descripcionCorta</to>
+                </copy>
+              </assign>
+              <invoke name="Invoke_ConsultarTreTermino" partnerLink="ConsultarTreTerminoService"
+                      portType="ns3:TreTerminoPT" operation="consultarTreTermino"
+                      inputVariable="consultarTreTermino_InputVariable" bpelx:invokeAsDetail="no"
+                      outputVariable="consultarTreTermino_OutputVariable"/>
+              <if name="IfConsultarTreTerminoERROR">
+                <documentation>
+                  <![CDATA[ERROR_ConsultarTreTermino]]>
+                </documentation>
+                <condition>$consultarTreTermino_OutputVariable.response/ns6:Respuesta/ns8:result = 'ERROR'</condition>
+                <sequence name="Sequence8">
+                  <assign name="Assign_ErrorCatchAll">
+                    <copy>
+                      <from>concat('Error General al Consultar Tre Termino', ' - ',$consultarTreTermino_OutputVariable.response/ns6:Respuesta/ns8:message)</from>
+                      <to>$outputVariable.response/ns5:Resultado/ns8:message</to>
+                    </copy>
+                  </assign>
+                          <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                </sequence>
+                <elseif>
+                  <documentation>
+                    <![CDATA[0 Resultados]]>
+                  </documentation>
+                  <condition>count($consultarTreTermino_OutputVariable.response/ns6:Termino)&lt;=0</condition>
+                  <sequence name="Sequence10">
+                   <assign name="Assign_ErrorCatchAll">
+                      <copy>
+                        <from>'Consulta sin Resultados,operación sin Termino T101 necesario para la validación'</from>
+                        <to>$outputVariable.response/ns5:Resultado/ns8:message</to>
+                      </copy>
+                    </assign>
+                          <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                  </sequence>
+                </elseif>
+                <else>
+                  <documentation>
+                    <![CDATA[OK_ConsultarTreTermino]]>
+                  </documentation>
+                  <scope name="ScopeConsultarTermino">
+                    <variables>
+                      <variable name="consultarTermino_InputVariable" messageType="ns2:ConsultarTerminoRequestMessage"/>
+                      <variable name="consultarTermino_OutputVariable"
+                                messageType="ns2:ConsultarTerminoResponseMessage"/>
+                    </variables>
+                    <faultHandlers>
+                      <catch faultName="bpelx:remoteFault" faultVariable="remotefault"
+                             faultMessageType="bpelx:RuntimeFaultMessage">
+                        <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="remotefault"/>
+                      </catch>
+                      <catchAll>
+                        <sequence name="Sequence7">
+                          <assign name="Assign_ErrorCatchAll">
+                            <copy>
+                              <from>'Error General al Consultar Termino'</from>
+                              <to>$outputVariable.response/ns5:Resultado/ns8:message</to>
+                            </copy>
+                          </assign>
+                          <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                        </sequence>
+                      </catchAll>
+                    </faultHandlers>
+                    <sequence name="Sequence3">
+                      <assign name="Assign_ConsultarTermino">
+                        <copy>
+                          <from>$consultarTreTermino_OutputVariable.response/ns6:Termino[1]/ns10:idTermino</from>
+                          <to>$consultarTermino_InputVariable.request/ns6:idTermino</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeConsultarTermino" bpelx:invokeAsDetail="no"
+                              partnerLink="ConsultarTerminoService" portType="ns2:ConsultarTerminoPT"
+                              operation="consultarTermino" inputVariable="consultarTermino_InputVariable"
+                              outputVariable="consultarTermino_OutputVariable"/>
+                      <assign name="Assign_ConsultaTermino">
+                        <copy>
+                          <from>$consultarTermino_OutputVariable.response/ns6:Termino</from>
+                          <to>$listaTcaTermino/ns10:Termino[$listaTcaTerminoCounter]</to>
+                        </copy>
+                      </assign>
+                    </sequence>
+                  </scope>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+        </forEach>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarCondiciones">
+      <variables>
+        <variable name="consultarCondicionbyIdOperacion_InputVariable"
+                  messageType="ns4:ConsultarCondicionbyIdOperacionRequestMessage"/>
+        
+      </variables>
+      <faultHandlers>
+              <catch faultName="bpelx:remoteFault" faultVariable="remotefault"
+                     faultMessageType="bpelx:RuntimeFaultMessage">
+                <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="remotefault"/>
+              </catch>
+              <catchAll>
+                <sequence name="Sequence7">
+                  <assign name="Assign_ErrorCatchAll">
+                    <copy>
+                      <from>'Error General al Consultar Condicion'</from>
+                      <to>$outputVariable.response/ns5:Resultado/ns8:message</to>
+                    </copy>
+                  </assign>
+                  <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                </sequence>
+              </catchAll>
+            </faultHandlers>
+      <sequence name="Sequence4">
+        <assign name="Assign_ConsultarCondicionInput">
+          <copy>
+            <from>$inputVariable.request/ns5:idOperacion</from>
+            <to>$consultarCondicionbyIdOperacion_InputVariable.request/ns13:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarCondicion" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarCondicionByIdOperacionService" portType="ns4:ConsultarCondicionbyIdOperacionPT"
+                operation="consultarCondicionbyIdOperacion"
+                inputVariable="consultarCondicionbyIdOperacion_InputVariable"
+                outputVariable="consultarCondicionbyIdOperacion_OutputVariable"/>
+      </sequence>
+    </scope>
+    <scope name="ScopeValidaciones">
+      <sequence name="Sequence5">
+        <if name="IfProceso">
+          <documentation>
+            <![CDATA[Formalizacion]]>
+          </documentation>
+          <condition>$inputVariable.request/ns5:idProceso = 5</condition>
+          <sequence>
+            <assign name="Assign_OutputVariable">
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns5:Resultado/ns8:result</to>
+              </copy>
+              <copy>
+                <from>'Ejecución exitosa'</from>
+                <to>$outputVariable.response/ns5:Resultado/ns8:message</to>
+              </copy>
+            </assign>
+            <scope name="ScopeT101">
+              <sequence name="Sequence12">
+                <if name="IfTieneContrato">
+                  <documentation>
+                    <![CDATA[contrato]]>
+                  </documentation>
+                  <condition>string($inputVariable.request/ns5:idContrato) != '0'</condition>
+                  <sequence>
+                    <assign name="AssignConsultarContratoLineaCredito">
+                      <copy>
+                        <from>$inputVariable.request/ns5:idOperacion</from>
+                        <to>$inConsultarContratoLineaCreditoService.request/ns17:idOperacion</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeConsultarContratoLineaCreditoService"
+                            partnerLink="ConsultarContratoLineaCreditoService" portType="ns16:consultarLineaCreditoPT"
+                            operation="consultarLineaCredito" inputVariable="inConsultarContratoLineaCreditoService"
+                            outputVariable="outConsultarContratoLineaCreditoService" bpelx:invokeAsDetail="no"/>
+                    <if name="IfConsultarContratoLineaCredito">
+                      <documentation>
+                        <![CDATA[OK]]>
+                      </documentation>
+                      <condition>$outConsultarContratoLineaCreditoService.response/ns17:Resultado/ns8:result = 'OK'</condition>
+                      <if name="IfObtenerFechaFirma">
+                        <documentation>
+                          <![CDATA[ExisteFechaFirma]]>
+                        </documentation>
+                        <condition>string($outConsultarContratoLineaCreditoService.response/ns17:clienteContrato[ns18:idContrato = $inputVariable.request/ns5:idContrato]/ns18:fechaFirma) != ''</condition>
+                        <assign name="AssignFechaValidaEsFechaFirma">
+                          <copy>
+                            <from>$outConsultarContratoLineaCreditoService.response/ns17:clienteContrato[ns18:idContrato = $inputVariable.request/ns5:idContrato]/ns18:fechaFirma</from>
+                            <to>$FechaValidacion</to>
+                          </copy>
+                        </assign>
+                        <else>
+                          <documentation>
+                            <![CDATA[NoExisteFechaFirma]]>
+                          </documentation>
+                          <assign name="AssignFechaValidacionEsSysdate">
+                            <copy>
+                              <from> xp20:current-date()</from>
+                              <to>$FechaValidacion</to>
+                            </copy>
+                          </assign>
+                        </else>
+                      </if>
+                      <else>
+                        <documentation>
+                          <![CDATA[Error]]>
+                        </documentation>
+                        <assign name="AssignfechaValidaIgualHoy">
+                          <copy>
+                            <from> xp20:current-date()</from>
+                            <to>$FechaValidacion</to>
+                          </copy>
+                        </assign>
+                      </else>
+                    </if>
+                  </sequence>
+                  <else>
+                    <documentation>
+                      <![CDATA[SinContrato]]>
+                    </documentation>
+                    <assign name="AssignfechaValidaIgualHoy">
+                      <copy>
+                        <from>xp20:current-date()</from>
+                        <to>$FechaValidacion</to>
+                      </copy>
+                    </assign>
+                  </else>
+                </if>
+                <sequence name="Sequence9">
+                  <if name="IfFechaVencimientoT101">
+                    <documentation>
+                      <![CDATA[AunNoVence]]>
+                    </documentation>
+                    <condition>$listaTcaTermino/ns10:Termino/ns10:fechaVencimiento &gt;= $FechaValidacion</condition>
+                    <assign name="Assign_PlazoFormalizacion">
+                      <copy>
+                        <from>'PlazoFormalizacion'</from>
+                        <to>$outputVariable.response/ns5:ListaValidaciones/ns7:Validacion[1]/ns7:tipo</to>
+                      </copy>
+                      <copy>
+                        <from>'true'</from>
+                        <to>$outputVariable.response/ns5:ListaValidaciones/ns7:Validacion[1]/ns7:resultado</to>
+                      </copy>
+                    </assign>
+                    <else>
+                      <documentation>
+                        <![CDATA[Vencida]]>
+                      </documentation>
+                      <assign name="Assign_PlazoFormalizacionFalse">
+                        <copy>
+                          <from>'PlazoFormalizacion'</from>
+                          <to>$outputVariable.response/ns5:ListaValidaciones/ns7:Validacion[1]/ns7:tipo</to>
+                        </copy>
+                        <copy>
+                          <from>'false'</from>
+                          <to>$outputVariable.response/ns5:ListaValidaciones/ns7:Validacion[1]/ns7:resultado</to>
+                        </copy>
+                      </assign>
+                    </else>
+                  </if>
+                  <scope name="ScopeValidarCondiciones">
+                    <variables>
+                      <variable name="ConteoNoValida" type="xsd:int"/>
+                    </variables>
+                    <sequence name="Sequence11">
+                      <if name="IfCondiciones">
+                        <documentation>
+                          <![CDATA[Condiciones>0]]>
+                        </documentation>
+                        <condition>count($consultarCondicionbyIdOperacion_OutputVariable.response/ns13:ListaCondiciones/ns14:Condicion)&gt;0</condition>
+                        <sequence>
+                          <assign name="Assign_ValidacionConteo0">
+                            <copy>
+                              <from>0</from>
+                              <to>$ConteoNoValida</to>
+                            </copy>
+                          </assign>
+                          <forEach parallel="no" counterName="condicionCounter" name="ForEachCondicion">
+                            <bpelx:skipCondition>count($consultarCondicionbyIdOperacion_OutputVariable.response/ns13:ListaCondiciones/ns14:Condicion)=0</bpelx:skipCondition>
+                            <startCounterValue>1</startCounterValue>
+                            <finalCounterValue>count($consultarCondicionbyIdOperacion_OutputVariable.response/ns13:ListaCondiciones/ns14:Condicion)</finalCounterValue>
+                            <scope name="ScopeCondiciones">
+                              <forEach parallel="no" counterName="eventoCounter" name="ForEachEvento">
+                                <bpelx:skipCondition>count($consultarCondicionbyIdOperacion_OutputVariable.response/ns13:ListaCondiciones/ns14:Condicion[$condicionCounter]/ns14:eventoCondicion)=0</bpelx:skipCondition>
+                                <startCounterValue>1</startCounterValue>
+                                <finalCounterValue>count($consultarCondicionbyIdOperacion_OutputVariable.response/ns13:ListaCondiciones/ns14:Condicion[$condicionCounter]/ns14:eventoCondicion)</finalCounterValue>
+                                <scope name="ScopeEventos">
+                                  <if name="IfEventoEntrada">
+                                    <documentation>
+                                      <![CDATA[ValidacionEventoCondicionFormalizacionValidada]]>
+                                    </documentation>
+                                    <condition>$consultarCondicionbyIdOperacion_OutputVariable.response/ns13:ListaCondiciones/ns14:Condicion[$condicionCounter]/ns14:eventoCondicion[$eventoCounter]/ns11:Id = $inputVariable.request/ns5:idEvento and( $consultarCondicionbyIdOperacion_OutputVariable.response/ns13:ListaCondiciones/ns14:Condicion[$condicionCounter]/ns14:estadoTCC/ns12:id = 26 or  $consultarCondicionbyIdOperacion_OutputVariable.response/ns13:ListaCondiciones/ns14:Condicion[$condicionCounter]/ns14:estadoTCC/ns12:id = 15)</condition>
+                                    <empty name="Valida"/>
+                                    <elseif>
+                                      <documentation>
+                                        <![CDATA[ValidacionEventoCondicionFormalizacionNoValidada]]>
+                                      </documentation>
+                                      <condition>$consultarCondicionbyIdOperacion_OutputVariable.response/ns13:ListaCondiciones/ns14:Condicion[$condicionCounter]/ns14:eventoCondicion[$eventoCounter]/ns11:Id = $inputVariable.request/ns5:idEvento and( $consultarCondicionbyIdOperacion_OutputVariable.response/ns13:ListaCondiciones/ns14:Condicion[$condicionCounter]/ns14:estadoTCC/ns12:id != 26 or $consultarCondicionbyIdOperacion_OutputVariable.response/ns13:ListaCondiciones/ns14:Condicion[$condicionCounter]/ns14:estadoTCC/ns12:id != 15 ) and $consultarCondicionbyIdOperacion_OutputVariable.response/ns13:ListaCondiciones/ns14:Condicion[$condicionCounter]/ns14:estadoTCC/ns12:id != 14</condition>
+                                      <assign name="Assign_UnoNovalido">
+                                        <copy>
+                                          <from>$ConteoNoValida+1</from>
+                                          <to>$ConteoNoValida</to>
+                                        </copy>
+                                      </assign>
+                                    </elseif>
+                                    <else>
+                                      <documentation>
+                                        <![CDATA[EventoDistinto]]>
+                                      </documentation>
+                                      <sequence name="Sequence14">
+                                        <empty name="Valida"/>
+                                      </sequence>
+                                    </else>
+                                  </if>
+                                </scope>
+                              </forEach>
+                            </scope>
+                          </forEach>
+                          <if name="IfConteoValidacion">
+                            <documentation>
+                              <![CDATA[Valida]]>
+                            </documentation>
+                            <condition>$ConteoNoValida = 0</condition>
+                            <assign name="Assign_FormalizacionValidada">
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>'CondicionEventoFormalizacion'</from>
+                                <to>$outputVariable.response/ns5:ListaValidaciones/ns7:Validacion[2]/ns7:tipo</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>'true'</from>
+                                <to>$outputVariable.response/ns5:ListaValidaciones/ns7:Validacion[2]/ns7:resultado</to>
+                              </copy>
+                            </assign>
+                            <else>
+                              <documentation>
+                                <![CDATA[NoValida]]>
+                              </documentation>
+                              <assign name="Assign_FormalizacionNoValidada">
+                                <copy bpelx:insertMissingToData="yes">
+                                  <from>'CondicionEventoFormalizacion'</from>
+                                  <to>$outputVariable.response/ns5:ListaValidaciones/ns7:Validacion[2]/ns7:tipo</to>
+                                </copy>
+                                <copy bpelx:insertMissingToData="yes">
+                                  <from>'false'</from>
+                                  <to>$outputVariable.response/ns5:ListaValidaciones/ns7:Validacion[2]/ns7:resultado</to>
+                                </copy>
+                              </assign>
+                            </else>
+                          </if>
+                        </sequence>
+                        <else>
+                          <assign name="Assign_FormalizacionNoValidada">
+                            <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                              <from>'CondicionEventoFormalizacion'</from>
+                              <to>$outputVariable.response/ns5:ListaValidaciones/ns7:Validacion[2]/ns7:tipo</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                              <from>'true'</from>
+                              <to>$outputVariable.response/ns5:ListaValidaciones/ns7:Validacion[2]/ns7:resultado</to>
+                            </copy>
+                          </assign>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                </sequence>
+              </sequence>
+            </scope>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[No Soportado]]>
+            </documentation>
+            <assign name="Assign_NoSoportado">
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns5:Resultado/ns8:result</to>
+              </copy>
+              <copy>
+                <from>'Proceso No Soportado'</from>
+                <to>$outputVariable.response/ns5:Resultado/ns8:message</to>
+              </copy>
+            </assign>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="ValidarTCC" portType="ns1:ValidarTCCPT" operation="validarTCC" variable="outputVariable"/>
+  </sequence>
+</process>

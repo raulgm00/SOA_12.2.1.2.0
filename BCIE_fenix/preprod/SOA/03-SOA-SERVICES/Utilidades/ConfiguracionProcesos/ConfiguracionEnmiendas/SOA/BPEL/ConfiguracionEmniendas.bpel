@@ -1,0 +1,441 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Dec 08 20:40:51 CST 2015
+  Author:  francisco-taboada
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionEmniendas"
+               targetNamespace="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionEnmiendas/ConfiguracionEmniendas"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionEnmiendas/ConfiguracionEmniendas"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/ProductoService"
+         xmlns:ns3="http://www.bcie.com/ConsultarRolesPorProceso"
+         xmlns:ns4="http://www.bcie.org/ConfiguracionProcesosMO" xmlns:ns5="http://www.bcie.org/ProductoMO"
+         xmlns:ns10="http://www.bcie.org/ProductoBO" xmlns:ns6="http://www.bcie.org/ConfiguracionProcesosBO"
+         xmlns:ns11="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns7="http://www.bcie.org/OperacionBO"
+         xmlns:ns12="http://www.bcie.org/ResultBO" xmlns:ns9="http://www.bcie.org/CatalogoBO"
+         xmlns:ns8="http://www.bcie.org/ClienteBO" xmlns:ns13="http://www.bcie.org/ErrorBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns15="http://www.bcie.org/ConsultarRolesPorProcesoBO"
+         xmlns:ns14="http://www.bcie.org/ConsultarRolesPorProcesoMO" xmlns:ns16="http://www.bcie.org/TerminoService"
+         xmlns:ns17="http://xmlns.bcie.com/ComisionService" xmlns:ns18="http://www.bcie.org/CondicionService"
+         xmlns:ns19="http://www.bcie.org/MatrizTCCBO" xmlns:ns20="http://www.bcie.org/CondicionMO"
+         xmlns:ns21="http://www.bcie.org/ComisionMO" xmlns:ns22="http://www.bcie.org/TerminoMO"
+         xmlns:ns23="http://www.bcie.org/CondicionBO" xmlns:ns25="http://www.bcie.org/DocumentoBO"
+         xmlns:ns24="http://www.bcie.org/AtributoBO" xmlns:ns26="http://www.bcie.org/ComisionBO"
+         xmlns:ns27="http://www.bcie.org/TerminoBO" xmlns:ns28="http://www.bcie.org/MatrizTCCService"
+         xmlns:ns29="http://www.bcie.org/MatrizTCCMO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionEnmiendasSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configuracionemniendas_client" partnerLinkType="ns1:ConfiguracionEmniendas" myRole="ConfiguracionEnmiendasPT"/>
+    <partnerLink name="ProductoServer" partnerLinkType="ns2:ProductoServer" partnerRole="ProductoPT"/>
+    <partnerLink name="ConsuiltarRol" partnerLinkType="ns3:ConsuiltarRol" partnerRole="ConsultarRolesPorProceso_ptt"/>
+    <partnerLink name="ConsultarTermino" partnerLinkType="ns16:ConsultarTermino" partnerRole="ConsultarTerminoPT"/>
+    <partnerLink name="ConsultarComision" partnerLinkType="ns17:ConsultarComision" partnerRole="ConsultarComisionPT"/>
+    <partnerLink name="ConsultarCondiciones" partnerLinkType="ns18:ConsultarCondiciones"
+                 partnerRole="ConsultarCondicionbyIdOperacionPT"/>
+    <partnerLink name="ConsultarEnmiendas" partnerLinkType="ns28:ConsultarEnmiendas"
+                 partnerRole="ConsultarEnmiendasTCCPT"/>
+    <partnerLink name="CrearEnmienda" partnerLinkType="ns28:CrearEnmienda" partnerRole="MatrizTCCPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestconfiguracionEnmiendasmessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseconfiguracionEmniendasmessage"/>
+    <variable name="InConsultarProdicto" messageType="ns2:requestConsultarByIdOperacionMessage"/>
+    <variable name="OutConsultarProdicto" messageType="ns2:responseConsultarByIdOperacionMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence3">
+        <assign name="AssignERROR">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns12:error/ns13:errorCode</to>
+          </copy>
+          <copy>
+            <from>'Error en el servicio'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns12:error/ns13:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyERROR" variable="outputVariable" partnerLink="configuracionemniendas_client"
+               portType="ns1:ConfiguracionEnmiendasPT" operation="configuracionEnmiendas"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionEmniendas.wsdl) -->
+    <receive name="receiveInput" partnerLink="configuracionemniendas_client" portType="ns1:ConfiguracionEnmiendasPT" operation="configuracionEnmiendas" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignFlowName">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion= ", $inputVariable.request/ns4:idOperacion))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <assign name="AssignOutConsultarProducto">
+      <copy>
+        <from>$inputVariable.request/ns4:idOperacion</from>
+        <to>$InConsultarProdicto.request/ns5:idOperacion</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultarProdicto" partnerLink="ProductoServer"
+            portType="ns2:ProductoPT" operation="consultarByIdOperacion" inputVariable="InConsultarProdicto"
+            outputVariable="OutConsultarProdicto" bpelx:invokeAsDetail="no"/>
+    <if name="IfResultado">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>$OutConsultarProdicto.response/ns5:Resultado/ns12:result='OK'</condition>
+      <sequence>
+        <assign name="AssignOutCounsultarProducto">
+          <copy>
+            <from>$OutConsultarProdicto.response/ns5:Producto</from>
+            <to>$outputVariable.response/ns4:configuracionEnmiendas/ns6:producto</to>
+          </copy>
+          <copy>
+            <from>$OutConsultarProdicto.response/ns5:Operacion</from>
+            <to>$outputVariable.response/ns4:configuracionEnmiendas/ns6:operacion</to>
+          </copy>
+          <copy>
+            <from>$OutConsultarProdicto.response/ns5:Resultado</from>
+            <to>$outputVariable.response/ns4:Resultado</to>
+          </copy>
+        </assign>
+        <scope name="Scope1">
+          <variables>
+            <variable name="countRol" type="xsd:unsignedInt"/>
+            <variable name="InConsultarRol" messageType="ns3:requestMessage"/>
+            <variable name="OutConsultarRol" messageType="ns3:replyMessage"/>
+          </variables>
+          <sequence>
+            <assign name="AssignInConsultarRol">
+              <copy>
+                <from>10</from>
+                <to>$InConsultarRol.request/ns14:Proceso/ns15:idProceso</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarRol" partnerLink="ConsuiltarRol" portType="ns3:ConsultarRolesPorProceso_ptt"
+                    operation="ConsultarRolesPorProceso" inputVariable="InConsultarRol" outputVariable="OutConsultarRol"
+                    bpelx:invokeAsDetail="no"/>
+            <assign name="AssignCountRol">
+              <copy>
+                <from>count($OutConsultarRol.response/ns14:ListadoRoles/ns15:listadoRoles)</from>
+                <to>$countRol</to>
+              </copy>
+            </assign>
+            <forEach parallel="no" counterName="Counterrol" name="ForEachrol">
+              <bpelx:skipCondition>$countRol=0</bpelx:skipCondition>
+              <startCounterValue>1</startCounterValue>
+              <finalCounterValue>$countRol</finalCounterValue>
+              <scope name="Scope2">
+                <assign name="AssignOutRol">
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$OutConsultarRol.response/ns14:ListadoRoles/ns15:listadoRoles[$Counterrol]/ns9:Id</from>
+                    <to>$outputVariable.response/ns4:configuracionEnmiendas/ns6:RolesEquipoTrabajo/ns6:Rol[$Counterrol]/ns9:Id</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$OutConsultarRol.response/ns14:ListadoRoles/ns15:listadoRoles[$Counterrol]/ns9:Descripcion</from>
+                    <to>$outputVariable.response/ns4:configuracionEnmiendas/ns6:RolesEquipoTrabajo/ns6:Rol[$Counterrol]/ns9:Descripcion</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$OutConsultarRol.response/ns14:ListadoRoles/ns15:listadoRoles[$Counterrol]/ns9:DescripcionCorta</from>
+                    <to>$outputVariable.response/ns4:configuracionEnmiendas/ns6:RolesEquipoTrabajo/ns6:Rol[$Counterrol]/ns9:DescripcionCorta</to>
+                  </copy>
+                </assign>
+              </scope>
+            </forEach>
+          </sequence>
+        </scope>
+        <scope name="Scope3">
+          <variables>
+            <variable name="InCondicion_consultar" messageType="ns18:ConsultarCondicionbyIdOperacionRequestMessage"/>
+            <variable name="OutCondicion_consultar" messageType="ns18:ConsultarCondicionbyIdOperacionResponseMessage"/>
+            <variable name="Incomision_Consultar" messageType="ns17:requestConsultarComisionMessage"/>
+            <variable name="Outcomision_Consultar" messageType="ns17:responseConsultarComisionMessage"/>
+            <variable name="InTermino_consultar" messageType="ns16:ConsultarTerminoRequestMessage"/>
+            <variable name="OutTermino_consultar" messageType="ns16:ConsultarTerminoResponseMessage"/>
+            <variable name="countTCC" type="xsd:int"/>
+            <variable name="TotalTCC" type="xsd:int"/>
+            <variable name="InEnmiendas" messageType="ns28:ConsultarEnmiendasTCCRequestMessage"/>
+            <variable name="OutEnmiendas" messageType="ns28:ConsultarEnmiendasTCCResponseMessage"/>
+          </variables>
+          <sequence name="Sequence4">
+            <assign name="AssignEnmiendas">
+              <copy>
+                <from>$inputVariable.request/ns4:idEnmienda</from>
+                <to>$InEnmiendas.request/ns29:idEnmienda</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeEnmiendas" partnerLink="ConsultarEnmiendas"
+                    portType="ns28:ConsultarEnmiendasTCCPT" operation="consultarEnmiendasTCC"
+                    inputVariable="InEnmiendas" outputVariable="OutEnmiendas" bpelx:invokeAsDetail="no"/>
+            <assign name="AssignCount">
+              <copy>
+                <from>1</from>
+                <to>$countTCC</to>
+              </copy>
+              <copy>
+                <from>count($OutEnmiendas.response/ns29:enmiendaTCC/ns19:detalleEnmiendaTCC)</from>
+                <to>$TotalTCC</to>
+              </copy>
+            </assign>
+            <while name="WhileValidarCofi">
+              <condition>$countTCC&lt;=$TotalTCC</condition>
+              <if name="IfValidacionTCC">
+                <documentation>
+                  <![CDATA[CONDICION]]>
+                </documentation>
+                <condition>$OutEnmiendas.response/ns29:enmiendaTCC/ns19:detalleEnmiendaTCC[$countTCC]/ns19:tipoTCC='CONDICION'</condition>
+                <sequence>
+                  <assign name="AssignCondicion">
+                    <copy>
+                      <from>$OutEnmiendas.response/ns29:enmiendaTCC/ns19:detalleEnmiendaTCC[$countTCC]/ns19:idTCC</from>
+                      <to>$InCondicion_consultar.request/ns20:idCondicion</to>
+                    </copy>
+                  </assign>
+                  <invoke name="InvokeCondicion" partnerLink="ConsultarCondiciones"
+                          portType="ns18:ConsultarCondicionbyIdOperacionPT" operation="consultarCondicionbyIdOperacion"
+                          inputVariable="InCondicion_consultar" outputVariable="OutCondicion_consultar"
+                          bpelx:invokeAsDetail="no"/>
+                  <if name="IfValidaCOFI">
+                    <documentation>
+                      <![CDATA[true]]>
+                    </documentation>
+                    <condition>$OutCondicion_consultar.response/ns20:ListaCondiciones/ns23:Condicion/ns23:tipoCondicion/ns23:requiereValidarCOFI='true'</condition>
+                    <sequence name="Sequence11">
+                      <assign name="AssignTrue">
+                        <copy>
+                          <from>true()</from>
+                          <to>$outputVariable.response/ns4:configuracionEnmiendas/ns6:requiereCOFI</to>
+                        </copy>
+                      </assign>
+                      <assign name="AssignCountTotal">
+                        <copy>
+                          <from>$TotalTCC + 1</from>
+                          <to>$countTCC</to>
+                        </copy>
+                      </assign>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[false]]>
+                      </documentation>
+                      <sequence name="Sequence8">
+                        <assign name="Assignfalse">
+                          <copy>
+                            <from>false()</from>
+                            <to>$outputVariable.response/ns4:configuracionEnmiendas/ns6:requiereCOFI</to>
+                          </copy>
+                        </assign>
+                        <assign name="AssignCount">
+                          <copy>
+                            <from>$countTCC+1</from>
+                            <to>$countTCC</to>
+                          </copy>
+                        </assign>
+                      </sequence>
+                    </else>
+                  </if>
+                </sequence>
+                <elseif>
+                  <documentation>
+                    <![CDATA[TERMINO]]>
+                  </documentation>
+                  <condition>$OutEnmiendas.response/ns29:enmiendaTCC/ns19:detalleEnmiendaTCC[$countTCC]/ns19:tipoTCC='TERMINO'</condition>
+                  <sequence name="Sequence6">
+                    <assign name="AssignTermino">
+                      <copy>
+                        <from>$OutEnmiendas.response/ns29:enmiendaTCC/ns19:detalleEnmiendaTCC[$countTCC]/ns19:idTCC</from>
+                        <to>$InTermino_consultar.request/ns22:idTermino</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeTermino" partnerLink="ConsultarTermino" portType="ns16:ConsultarTerminoPT"
+                            operation="consultarTermino" inputVariable="InTermino_consultar" bpelx:invokeAsDetail="no"
+                            outputVariable="OutTermino_consultar"/>
+                    <if name="IfValidaCofi">
+                      <documentation>
+                        <![CDATA[true]]>
+                      </documentation>
+                      <condition>$OutTermino_consultar.response/ns22:Termino/ns27:tipoTermino/ns27:requiereValidarCOFI='true'</condition>
+                      <sequence name="Sequence12">
+                        <assign name="Assigntrue">
+                          <copy>
+                            <from>true()</from>
+                            <to>$outputVariable.response/ns4:configuracionEnmiendas/ns6:requiereCOFI</to>
+                          </copy>
+                        </assign>
+                        <assign name="AssignCountTotal">
+                          <copy>
+                            <from>$TotalTCC + 1</from>
+                            <to>$countTCC</to>
+                          </copy>
+                        </assign>
+                      </sequence>
+                      <else>
+                        <documentation>
+                          <![CDATA[false]]>
+                        </documentation>
+                        <sequence name="Sequence9">
+                          <assign name="Assignfalse">
+                            <copy>
+                              <from>false()</from>
+                              <to>$outputVariable.response/ns4:configuracionEnmiendas/ns6:requiereCOFI</to>
+                            </copy>
+                          </assign>
+                          <assign name="AssignCount">
+                            <copy>
+                              <from>$countTCC + 1</from>
+                              <to>$countTCC</to>
+                            </copy>
+                          </assign>
+                        </sequence>
+                      </else>
+                    </if>
+                  </sequence>
+                </elseif>
+                <else>
+                  <documentation>
+                    <![CDATA[COMISION]]>
+                  </documentation>
+                  <sequence name="Sequence7">
+                    <assign name="AssignComision">
+                      <copy>
+                        <from>$OutEnmiendas.response/ns29:enmiendaTCC/ns19:detalleEnmiendaTCC[$countTCC]/ns19:idTCC</from>
+                        <to>$Incomision_Consultar.request/ns21:idComision</to>
+                      </copy>
+                    </assign>
+                    <invoke name="Invokecomision" partnerLink="ConsultarComision" portType="ns17:ConsultarComisionPT"
+                            operation="ConsultarComision" inputVariable="Incomision_Consultar"
+                            outputVariable="Outcomision_Consultar" bpelx:invokeAsDetail="no"/>
+                    <if name="IfValidaCofi">
+                      <documentation>
+                        <![CDATA[true]]>
+                      </documentation>
+                      <condition>$Outcomision_Consultar.response/ns21:Comision/ns26:tipoComision/ns26:requiereValidarCOFI=true()</condition>
+                      <sequence name="Sequence13">
+                        <assign name="Assigntrue">
+                          <copy>
+                            <from>true()</from>
+                            <to>$outputVariable.response/ns4:configuracionEnmiendas/ns6:requiereCOFI</to>
+                          </copy>
+                        </assign>
+                        <assign name="AssignCountTotal">
+                          <copy>
+                            <from>$TotalTCC +1</from>
+                            <to>$countTCC</to>
+                          </copy>
+                        </assign>
+                      </sequence>
+                      <else>
+                        <documentation>
+                          <![CDATA[false]]>
+                        </documentation>
+                        <sequence name="Sequence10">
+                          <assign name="Assignfalse">
+                            <copy>
+                              <from>false()</from>
+                              <to>$outputVariable.response/ns4:configuracionEnmiendas/ns6:requiereCOFI</to>
+                            </copy>
+                          </assign>
+                          <assign name="AssignCount">
+                            <copy>
+                              <from>$countTCC + 1</from>
+                              <to>$countTCC</to>
+                            </copy>
+                          </assign>
+                        </sequence>
+                      </else>
+                    </if>
+                  </sequence>
+                </else>
+              </if>
+            </while>
+          </sequence>
+        </scope>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[ERRROR]]>
+        </documentation>
+        <sequence name="Sequence2">
+          <assign name="AssignERROR">
+            <copy>
+              <from>$OutConsultarProdicto.response/ns5:Resultado/ns12:error</from>
+              <to>$outputVariable.response/ns4:Resultado/ns12:error</to>
+            </copy>
+          </assign>
+        </sequence>
+      </else>
+    </if>
+    <scope name="ScopeCrearEnmienda">
+      <variables>
+        <variable name="InCrearEnmienda" messageType="ns28:RegistrarEnmiendaRequestMessage"/>
+        <variable name="OutCrearEnmienda" messageType="ns28:RegistrarEnmiendaResponseMessage"/>
+      </variables>
+      <sequence name="Sequence14">
+        <assign name="AssignCrearEnmienda">
+          <copy>
+            <from>$inputVariable.request/ns4:idEnmienda</from>
+            <to>$InCrearEnmienda.request/ns29:idEnmienda</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeCrearEnmienda" partnerLink="CrearEnmienda"
+                portType="ns28:MatrizTCCPT" operation="registrarEnmienda" inputVariable="InCrearEnmienda"
+                outputVariable="OutCrearEnmienda" bpelx:invokeAsDetail="no"/>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configuracionemniendas_client" portType="ns1:ConfiguracionEnmiendasPT" operation="configuracionEnmiendas" variable="outputVariable"/>
+  </sequence>
+</process>

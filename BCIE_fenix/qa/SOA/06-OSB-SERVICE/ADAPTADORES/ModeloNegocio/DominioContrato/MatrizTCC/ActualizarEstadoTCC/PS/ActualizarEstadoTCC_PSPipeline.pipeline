@@ -1,0 +1,628 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con3="http://www.bea.com/wli/sb/typesystem/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con5="http://www.bea.com/wli/sb/stages/publish/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/Wsdl/ADAPTER/ActualizarEstadoTCCSAD"/>
+            <con:binding>
+                <con:name>ActualizarEstadoTCC12Bnd</con:name>
+                <con:namespace>http://www.bcie.org/MatrizTCCService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7d19">
+        <con:pipeline type="error" name="error-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7d19">
+            <con:stage id="_StageId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7c6f" name="StageError" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/typesystem/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                <con:context/>
+                <con:actions>
+                    <con3:ifThenElse xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7c6e</con2:id>
+                        <con3:case id="_BranchId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7c6d">
+                            <con3:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError) = 0</con2:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:assign varName="codigoError">
+                                    <con2:id>_ActionId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7c6c</con2:id>
+                                    <con3:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con3:expr>
+                                </con3:assign>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default/>
+                    </con3:ifThenElse>
+                    <con3:assign varName="inMapError" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7c6b</con2:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(data($codigoError))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7c6a</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7c69</con2:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ActualizarEstadoTCC/XQUERY/Error_TO_ActualizarEstadoTCC_PS_Response"/>
+                                <con2:param name="message">
+                                    <con2:path>xs:string(fn:data($fault/ctx:reason))</con2:path>
+                                </con2:param>
+                                <con2:param name="responseMapeoErrorMessage">
+                                    <con2:path>$outMapeoError</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7c68</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="request" name="request-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7bd7">
+            <con:stage id="_StageId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7bd5" name="StageRequest">
+                <con:context>
+                    <con1:userNsDecl prefix="con" namespace="http://xmlns.oracle.com/pcbpel/adapter/db/ConsultarValidacionCondicionByIdCondicion"/>
+                    <con1:userNsDecl prefix="mat1" namespace="http://www.bcie.org/MatrizTCCBO"/>
+                    <con1:userNsDecl prefix="mat" namespace="http://www.bcie.org/MatrizTCCMO"/>
+                    <con3:variable name="requestValidacionCondicion" path="$requestValidacionCondicion">
+                        <con3:service>
+                            <con3:reference ref="ADAPTADORES/ModeloNegocio/DominioContrato/Condicion/ConsultarValidacionCondicionByIdCondicion/BS/ConsultarValidacionCondicionByIdCondicion_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        </con3:service>
+                    </con3:variable>
+                    <con3:variable name="outValidarEstadoTCC" path="$outValidarEstadoTCC">
+                        <con3:service operation="validarEstadoTCC">
+                            <con3:reference ref="COMPOSICIONES/Entidades/Contrato/PS/MatrizTCCService_PSPipeline" xsi:type="con:PipelineRef"/>
+                        </con3:service>
+                    </con3:variable>
+                </con:context>
+                <con:actions>
+                    <con2:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-a0a280c.4453d991.0.173fc6ef851.N7ffe</con1:id>
+                        <con2:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con2:location>
+                        <con2:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ActualizarEstadoTCC/XQUERY/ActualizarEstadoTCC_PS_TO_ActualizarEstadoTCC_PS_Request"/>
+                                <con1:param name="actualizarEstadoTCCRequest">
+                                    <con1:path>$body/*:ActualizarEstadoTCCRequest</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con2:expr>
+                    </con2:replace>
+                    <con4:log>
+                        <con1:id>_ActionId-N3f579bc0.N5b956be1.0.1533d5b7f2a.N7f7f</con1:id>
+                        <con4:logLevel>info</con4:logLevel>
+                        <con4:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con4:expr>
+                        <con4:message>ActualizarEstadoTCC-Request</con4:message>
+                    </con4:log>
+                    <con2:foreach>
+                        <con1:id>_ActionId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7b72</con1:id>
+                        <con2:variable>body</con2:variable>
+                        <con2:expression>
+                            <con1:xpathText>./mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC</con1:xpathText>
+                        </con2:expression>
+                        <con2:value-variable>tccValue</con2:value-variable>
+                        <con2:index-variable>tccIndex</con2:index-variable>
+                        <con2:total-variable>tccCount</con2:total-variable>
+                        <con2:actions>
+                            <con2:ifThenElse>
+                                <con1:id>_ActionId-N3f57c7ff.N42fd8105.0.152d346941b.N7f8e</con1:id>
+                                <con2:case id="_BranchId-N3f57c7ff.N42fd8105.0.152d346941b.N7f8d">
+                                    <con2:condition>
+                                        <con1:xqueryText>fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=0</con1:xqueryText>
+                                    </con2:condition>
+                                    <con2:actions>
+                                        <con2:replace varName="body" contents-only="true">
+                                            <con1:id>_ActionId-N3f57c7ff.N42fd8105.0.152d346941b.N7f8a</con1:id>
+                                            <con2:location>
+                                                <con1:xpathText>./mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado</con1:xpathText>
+                                            </con2:location>
+                                            <con2:expr>
+                                                <con1:xqueryText>''</con1:xqueryText>
+                                            </con2:expr>
+                                        </con2:replace>
+                                    </con2:actions>
+                                </con2:case>
+                                <con2:default/>
+                            </con2:ifThenElse>
+                            <con2:ifThenElse>
+                                <con1:id>_ActionId-N3f57c7ff.N42fd8105.0.152d346941b.N7f20</con1:id>
+                                <con2:case id="_BranchId-N3f57c7ff.N42fd8105.0.152d346941b.N7f1f">
+                                    <con2:condition>
+                                        <con1:xqueryText>fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:subEstado)=0 or ((fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=13 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=14 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=15 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=5 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=22) and (fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:subEstado)= 0 or (fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:subEstado)!=21 and fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:subEstado)!= 28)))</con1:xqueryText>
+                                    </con2:condition>
+                                    <con2:actions>
+                                        <con2:replace varName="body" contents-only="true">
+                                            <con1:id>_ActionId-N3f57c7ff.N42fd8105.0.152d346941b.N7f1e</con1:id>
+                                            <con2:location>
+                                                <con1:xpathText>./mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:subEstado</con1:xpathText>
+                                            </con2:location>
+                                            <con2:expr>
+                                                <con1:xqueryText>''</con1:xqueryText>
+                                            </con2:expr>
+                                        </con2:replace>
+                                    </con2:actions>
+                                </con2:case>
+                                <con2:default/>
+                            </con2:ifThenElse>
+                            <con2:wsCallout>
+                                <con1:id>_ActionId-N3f579bc0.N5b956be1.0.1533d5b7f2a.N7ece</con1:id>
+                                <con2:service ref="COMPOSICIONES/Entidades/Contrato/PS/MatrizTCCService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con2:operation>validarEstadoTCC</con2:operation>
+                                <con2:request>
+                                    <con2:body wrapped="false">inValidarEstadoTCC</con2:body>
+                                </con2:request>
+                                <con2:response>
+                                    <con2:body wrapped="false">outValidarEstadoTCC</con2:body>
+                                </con2:response>
+                                <con2:requestTransform>
+                                    <con2:assign varName="inValidarEstadoTCC">
+                                        <con1:id>_ActionId-N3f579bc0.N5b956be1.0.1533d5b7f2a.N7ec8</con1:id>
+                                        <con2:expr>
+                                            <con1:xqueryText><![CDATA[<mat:ValidarEstadoTCCRequest>
+   <mat:tcc>
+        <mat1:id>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:id/text()}</mat1:id>
+        <mat1:tipo>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:tipo/text()}</mat1:tipo>
+        <mat1:estado>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado/text()}</mat1:estado>
+        <mat1:subEstado>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:subEstado/text()}</mat1:subEstado>
+  </mat:tcc>
+</mat:ValidarEstadoTCCRequest>]]></con1:xqueryText>
+                                        </con2:expr>
+                                    </con2:assign>
+                                    <con4:log>
+                                        <con1:id>_ActionId-a050a93.46dc7280.0.15343934705.N7ff8</con1:id>
+                                        <con4:logLevel>info</con4:logLevel>
+                                        <con4:expr>
+                                            <con1:xqueryText>$inValidarEstadoTCC</con1:xqueryText>
+                                        </con4:expr>
+                                        <con4:message>ValidarEstadoTCC-Request</con4:message>
+                                    </con4:log>
+                                </con2:requestTransform>
+                                <con2:responseTransform>
+                                    <con4:log>
+                                        <con1:id>_ActionId-a050a93.46dc7280.0.15343934705.N7ff5</con1:id>
+                                        <con4:logLevel>info</con4:logLevel>
+                                        <con4:expr>
+                                            <con1:xqueryText>$outValidarEstadoTCC</con1:xqueryText>
+                                        </con4:expr>
+                                        <con4:message>ValidarEstadoTCC-Response</con4:message>
+                                    </con4:log>
+                                </con2:responseTransform>
+                            </con2:wsCallout>
+                            <con2:assign varName="estadoTCC">
+                                <con1:id>_ActionId-N3f579bc0.N5b956be1.0.1533d5b7f2a.N7ec5</con1:id>
+                                <con2:expr>
+                                    <con1:xqueryText>$outValidarEstadoTCC/mat:validacionEstados</con1:xqueryText>
+                                </con2:expr>
+                            </con2:assign>
+                            <con2:ifThenElse>
+                                <con1:id>_ActionId-N3f579bc0.N5b956be1.0.1533d5b7f2a.N7ebb</con1:id>
+                                <con2:case id="_BranchId-N3f579bc0.N5b956be1.0.1533d5b7f2a.N7eba">
+                                    <con2:condition>
+                                        <con1:xqueryText>$estadoTCC = true()</con1:xqueryText>
+                                    </con2:condition>
+                                    <con2:actions>
+                                        <con2:ifThenElse>
+                                            <con1:id>_ActionId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7ade</con1:id>
+                                            <con2:case id="_BranchId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7add">
+                                                <con2:condition>
+                                                    <con1:xqueryText>$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:tipo='TERMINO'</con1:xqueryText>
+                                                </con2:condition>
+                                                <con2:actions>
+                                                    <con2:wsCallout>
+                                                        <con1:id>_ActionId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7985</con1:id>
+                                                        <con2:service ref="ADAPTADORES/ModeloNegocio/DominioContrato/Termino/ActualizarTermino/PS/ActualizarTermino_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                                        <con2:operation>actualizarTermino</con2:operation>
+                                                        <con2:request>
+                                                            <con2:body wrapped="false">bodyIn</con2:body>
+                                                        </con2:request>
+                                                        <con2:response>
+                                                            <con2:body wrapped="false">bodyOut</con2:body>
+                                                        </con2:response>
+                                                        <con2:requestTransform>
+                                                            <con2:assign varName="bodyIn">
+                                                                <con1:id>_ActionId-N3f57c7ff.4b5c5baa.0.1522416e5e8.N7ff2</con1:id>
+                                                                <con2:expr>
+                                                                    <con1:xqueryTransform>
+                                                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ActualizarEstadoTCC/XQUERY/TCC_TO_ActualizarTermino_PS"/>
+                                                                        <con1:param name="tcc">
+                                                                            <con1:path>$tccValue</con1:path>
+                                                                        </con1:param>
+                                                                    </con1:xqueryTransform>
+                                                                </con2:expr>
+                                                            </con2:assign>
+                                                            <con4:log>
+                                                                <con1:id>_ActionId-a050a93.46dc7280.0.15343934705.N7ff2</con1:id>
+                                                                <con4:logLevel>info</con4:logLevel>
+                                                                <con4:expr>
+                                                                    <con1:xqueryText>$bodyIn</con1:xqueryText>
+                                                                </con4:expr>
+                                                                <con4:message>ActualizarTermino_PS-Request</con4:message>
+                                                            </con4:log>
+                                                        </con2:requestTransform>
+                                                        <con2:responseTransform>
+                                                            <con4:log>
+                                                                <con1:id>_ActionId-a050a93.46dc7280.0.15343934705.N7fef</con1:id>
+                                                                <con4:logLevel>info</con4:logLevel>
+                                                                <con4:expr>
+                                                                    <con1:xqueryText>$bodyOut</con1:xqueryText>
+                                                                </con4:expr>
+                                                                <con4:message>ActualizarTermino_PS-Response</con4:message>
+                                                            </con4:log>
+                                                        </con2:responseTransform>
+                                                    </con2:wsCallout>
+                                                    <con2:ifThenElse>
+                                                        <con1:id>_ActionId-N3f57c7ff.2f14002f.0.15411f1fbfa.N7ff7</con1:id>
+                                                        <con2:case id="_BranchId-N3f57c7ff.2f14002f.0.15411f1fbfa.N7ff6">
+                                                            <con2:condition>
+                                                                <con1:xqueryText>fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=13 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=14 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=15 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=5 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=22</con1:xqueryText>
+                                                            </con2:condition>
+                                                            <con2:actions>
+                                                                <con5:route>
+                                                                    <con1:id>_ActionId-N3f57c7ff.2f14002f.0.15411f1fbfa.N7ff0</con1:id>
+                                                                    <con5:service ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ActualizarEstadoTCC/BS/ActualizarEstadoTermino_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                                                    <con5:operation>ActualizarEstadoTermino</con5:operation>
+                                                                    <con5:outboundTransform>
+                                                                        <con2:assign varName="body">
+                                                                            <con1:id>_ActionId-N3f57c7ff.2f14002f.0.15411f1fbfa.N7fbc</con1:id>
+                                                                            <con2:expr>
+                                                                                <con1:xqueryText><![CDATA[<soap:Body 	xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+<act:ActualizarEstadoTerminoInput xmlns:act="http://xmlns.oracle.com/pcbpel/adapter/db/ActualizarEstadoTermino">
+    <act:estado>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado/text()}</act:estado>
+    <act:subestado>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:subEstado/text()}</act:subestado>
+    <act:idTermino>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:id/text()}</act:idTermino>
+</act:ActualizarEstadoTerminoInput>
+</soap:Body>]]></con1:xqueryText>
+                                                                            </con2:expr>
+                                                                        </con2:assign>
+                                                                    </con5:outboundTransform>
+                                                                </con5:route>
+                                                            </con2:actions>
+                                                        </con2:case>
+                                                        <con2:default/>
+                                                    </con2:ifThenElse>
+                                                </con2:actions>
+                                            </con2:case>
+                                            <con2:case id="_BranchId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7a79">
+                                                <con2:condition>
+                                                    <con1:xqueryText>$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:tipo='CONDICION'</con1:xqueryText>
+                                                </con2:condition>
+                                                <con2:actions>
+                                                    <con2:ifThenElse>
+                                                        <con1:id>_ActionId-N3f57c7ff.595be811.0.152c439bd8a.N7ffa</con1:id>
+                                                        <con2:case id="_BranchId-N3f57c7ff.595be811.0.152c439bd8a.N7ff9">
+                                                            <con2:condition>
+                                                                <con1:xqueryText>$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado=26</con1:xqueryText>
+                                                            </con2:condition>
+                                                            <con2:actions>
+                                                                <con2:wsCallout>
+                                                                    <con1:id>_ActionId-N3f57c7ff.595be811.0.152c439bd8a.N7fc7</con1:id>
+                                                                    <con2:service ref="ADAPTADORES/ModeloNegocio/DominioContrato/Condicion/ConsultarValidacionCondicionByIdCondicion/BS/ConsultarValidacionCondicionByIdCondicion_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                                                    <con2:operation>ConsultarValidacionCondicionByIdCondicion</con2:operation>
+                                                                    <con2:request>
+                                                                        <con2:body wrapped="false">requestValidacionCondicion</con2:body>
+                                                                    </con2:request>
+                                                                    <con2:response>
+                                                                        <con2:body wrapped="false">responseValidacionCondicion</con2:body>
+                                                                    </con2:response>
+                                                                    <con2:requestTransform>
+                                                                        <con2:assign varName="requestValidacionCondicion">
+                                                                            <con1:id>_ActionId-N3f57c7ff.595be811.0.152c439bd8a.N7ec5</con1:id>
+                                                                            <con2:expr>
+                                                                                <con1:xqueryTransform>
+                                                                                    <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ActualizarEstadoTCC/XQUERY/ActualizarEstadoTCC_PS_TO_ConsultarValidarCondicion_BS_Request"/>
+                                                                                    <con1:param name="ActualizarEstadoTCCRequest">
+                                                                                        <con1:path>$body/mat:ActualizarEstadoTCCRequest</con1:path>
+                                                                                    </con1:param>
+                                                                                    <con1:param name="tccIndex">
+                                                                                        <con1:path>$tccIndex</con1:path>
+                                                                                    </con1:param>
+                                                                                </con1:xqueryTransform>
+                                                                            </con2:expr>
+                                                                        </con2:assign>
+                                                                        <con4:log>
+                                                                            <con1:id>_ActionId-a050a93.46dc7280.0.15343934705.N7fec</con1:id>
+                                                                            <con4:logLevel>info</con4:logLevel>
+                                                                            <con4:expr>
+                                                                                <con1:xqueryText>$requestValidacionCondicion</con1:xqueryText>
+                                                                            </con4:expr>
+                                                                            <con4:message>ConsultarValidacionCondicionByIdCondicion_BS-Request</con4:message>
+                                                                        </con4:log>
+                                                                    </con2:requestTransform>
+                                                                    <con2:responseTransform>
+                                                                        <con4:log>
+                                                                            <con1:id>_ActionId-a050a93.46dc7280.0.15343934705.N7fe9</con1:id>
+                                                                            <con4:logLevel>info</con4:logLevel>
+                                                                            <con4:expr>
+                                                                                <con1:xqueryText>$responseValidacionCondicion</con1:xqueryText>
+                                                                            </con4:expr>
+                                                                            <con4:message>ConsultarValidacionCondicionByIdCondicion_BS-Response</con4:message>
+                                                                        </con4:log>
+                                                                    </con2:responseTransform>
+                                                                </con2:wsCallout>
+                                                                <con2:foreach>
+                                                                    <con1:id>_ActionId-N3f57c7ff.595be811.0.152c439bd8a.N7ec2</con1:id>
+                                                                    <con2:variable>responseValidacionCondicion</con2:variable>
+                                                                    <con2:expression>
+                                                                        <con1:xpathText>./con:ConsultarValidacionCondicionByIdCondicionOutput</con1:xpathText>
+                                                                    </con2:expression>
+                                                                    <con2:value-variable>condVar</con2:value-variable>
+                                                                    <con2:index-variable>condIndex</con2:index-variable>
+                                                                    <con2:total-variable>condCount</con2:total-variable>
+                                                                    <con2:actions>
+                                                                        <con2:assign varName="estado">
+                                                                            <con1:id>_ActionId-N3f57c7ff.Ne4c9f17.0.152c765761f.N7e0a</con1:id>
+                                                                            <con2:expr>
+                                                                                <con1:xqueryText>fn:data($responseValidacionCondicion/con:ConsultarValidacionCondicionByIdCondicionOutput[$condIndex]/con:ESTADO)</con1:xqueryText>
+                                                                            </con2:expr>
+                                                                        </con2:assign>
+                                                                        <con2:ifThenElse>
+                                                                            <con1:id>_ActionId-N3f57c7ff.595be811.0.152c439bd8a.N7ebb</con1:id>
+                                                                            <con2:case id="_BranchId-N3f57c7ff.595be811.0.152c439bd8a.N7eba">
+                                                                                <con2:condition>
+                                                                                    <con1:xqueryText>$estado!='1' or fn:empty($estado)</con1:xqueryText>
+                                                                                </con2:condition>
+                                                                                <con2:actions>
+                                                                                    <con2:replace varName="body" contents-only="true">
+                                                                                        <con1:id>_ActionId-N3f57c7ff.595be811.0.152c439bd8a.N7eb7</con1:id>
+                                                                                        <con2:location>
+                                                                                            <con1:xpathText>.</con1:xpathText>
+                                                                                        </con2:location>
+                                                                                        <con2:expr>
+                                                                                            <con1:xqueryTransform>
+                                                                                                <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ActualizarEstadoTCC/XQUERY/ActualizarEstadoTCC_PS_Response"/>
+                                                                                            </con1:xqueryTransform>
+                                                                                        </con2:expr>
+                                                                                    </con2:replace>
+                                                                                    <con1:reply>
+                                                                                        <con1:id>_ActionId-N3f57c7ff.595be811.0.152c439bd8a.N7eb4</con1:id>
+                                                                                    </con1:reply>
+                                                                                </con2:actions>
+                                                                            </con2:case>
+                                                                            <con2:default/>
+                                                                        </con2:ifThenElse>
+                                                                    </con2:actions>
+                                                                </con2:foreach>
+                                                            </con2:actions>
+                                                        </con2:case>
+                                                        <con2:default/>
+                                                    </con2:ifThenElse>
+                                                    <con2:wsCallout>
+                                                        <con1:id>_ActionId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7920</con1:id>
+                                                        <con2:service ref="ADAPTADORES/ModeloNegocio/DominioContrato/Condicion/ActualizarCondicion/PS/ActualizarCondicion_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                                        <con2:operation>actualizarCondicion</con2:operation>
+                                                        <con2:request>
+                                                            <con2:body wrapped="false">bodyIn</con2:body>
+                                                        </con2:request>
+                                                        <con2:response>
+                                                            <con2:body wrapped="false">bodyOut</con2:body>
+                                                        </con2:response>
+                                                        <con2:requestTransform>
+                                                            <con2:assign varName="bodyIn">
+                                                                <con1:id>_ActionId-N3f57c7ff.4b5c5baa.0.1522416e5e8.N7ff5</con1:id>
+                                                                <con2:expr>
+                                                                    <con1:xqueryTransform>
+                                                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ActualizarEstadoTCC/XQUERY/TCC_TO_ActualizarCondicion_PS"/>
+                                                                        <con1:param name="tcc">
+                                                                            <con1:path>$tccValue</con1:path>
+                                                                        </con1:param>
+                                                                    </con1:xqueryTransform>
+                                                                </con2:expr>
+                                                            </con2:assign>
+                                                            <con4:log>
+                                                                <con1:id>_ActionId-a050a93.46dc7280.0.15343934705.N7fe0</con1:id>
+                                                                <con4:logLevel>info</con4:logLevel>
+                                                                <con4:expr>
+                                                                    <con1:xqueryText>$bodyIn</con1:xqueryText>
+                                                                </con4:expr>
+                                                                <con4:message>ActualizarCondicion_PS-Request</con4:message>
+                                                            </con4:log>
+                                                        </con2:requestTransform>
+                                                        <con2:responseTransform>
+                                                            <con4:log>
+                                                                <con1:id>_ActionId-a050a93.46dc7280.0.15343934705.N7fdd</con1:id>
+                                                                <con4:logLevel>info</con4:logLevel>
+                                                                <con4:expr>
+                                                                    <con1:xqueryText>$bodyOut</con1:xqueryText>
+                                                                </con4:expr>
+                                                                <con4:message>ActualizarCondicion_PS-Response</con4:message>
+                                                            </con4:log>
+                                                        </con2:responseTransform>
+                                                    </con2:wsCallout>
+                                                    <con2:ifThenElse>
+                                                        <con1:id>_ActionId-N3f57c7ff.2f14002f.0.15411f1fbfa.N7f33</con1:id>
+                                                        <con2:case id="_BranchId-N3f57c7ff.2f14002f.0.15411f1fbfa.N7f32">
+                                                            <con2:condition>
+                                                                <con1:xqueryText>fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=13 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=14 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=15 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=5 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=22</con1:xqueryText>
+                                                            </con2:condition>
+                                                            <con2:actions>
+                                                                <con5:route>
+                                                                    <con1:id>_ActionId-N3f57c7ff.2f14002f.0.15411f1fbfa.N7f2e</con1:id>
+                                                                    <con5:service ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ActualizarEstadoTCC/BS/ActualizarEstadoCondicion_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                                                    <con5:operation>ActualizarEstadoCondicion</con5:operation>
+                                                                    <con5:outboundTransform>
+                                                                        <con2:assign varName="body">
+                                                                            <con1:id>_ActionId-N3f57c7ff.2f14002f.0.15411f1fbfa.N7f2b</con1:id>
+                                                                            <con2:expr>
+                                                                                <con1:xqueryText><![CDATA[<soap:Body 	xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+<act:ActualizarEstadoCondicionInput xmlns:act="http://xmlns.oracle.com/pcbpel/adapter/db/ActualizarEstadoCondicion">
+<act:idEstado>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado/text()}</act:idEstado>
+    <act:idSubEstado>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:subEstado/text()}</act:idSubEstado>
+    <act:idCondicion>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:id/text()}</act:idCondicion>
+</act:ActualizarEstadoCondicionInput>
+</soap:Body>]]></con1:xqueryText>
+                                                                            </con2:expr>
+                                                                        </con2:assign>
+                                                                    </con5:outboundTransform>
+                                                                </con5:route>
+                                                            </con2:actions>
+                                                        </con2:case>
+                                                        <con2:default/>
+                                                    </con2:ifThenElse>
+                                                </con2:actions>
+                                            </con2:case>
+                                            <con2:case id="_BranchId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7a47">
+                                                <con2:condition>
+                                                    <con1:xqueryText>$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:tipo='COMISION'</con1:xqueryText>
+                                                </con2:condition>
+                                                <con2:actions>
+                                                    <con2:wsCallout>
+                                                        <con1:id>_ActionId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7953</con1:id>
+                                                        <con2:service ref="ADAPTADORES/ModeloNegocio/DominioLineaCredito/ActualizarComision/PS/ActualizarComision_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                                        <con2:operation>ActualizarComision</con2:operation>
+                                                        <con2:request>
+                                                            <con2:body wrapped="false">bodyIn</con2:body>
+                                                        </con2:request>
+                                                        <con2:response>
+                                                            <con2:body wrapped="false">bodyOut</con2:body>
+                                                        </con2:response>
+                                                        <con2:requestTransform>
+                                                            <con2:assign varName="bodyIn">
+                                                                <con1:id>_ActionId-N3f57c7ff.4b5c5baa.0.1522416e5e8.N7ff8</con1:id>
+                                                                <con2:expr>
+                                                                    <con1:xqueryTransform>
+                                                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ActualizarEstadoTCC/XQUERY/TCC_TO_ActualizarComision_PS"/>
+                                                                        <con1:param name="tcc">
+                                                                            <con1:path>$tccValue</con1:path>
+                                                                        </con1:param>
+                                                                    </con1:xqueryTransform>
+                                                                </con2:expr>
+                                                            </con2:assign>
+                                                            <con4:log>
+                                                                <con1:id>_ActionId-a050a93.46dc7280.0.15343934705.N7fe6</con1:id>
+                                                                <con4:logLevel>info</con4:logLevel>
+                                                                <con4:expr>
+                                                                    <con1:xqueryText>$bodyIn</con1:xqueryText>
+                                                                </con4:expr>
+                                                                <con4:message>ActualizarComision_PS-Request</con4:message>
+                                                            </con4:log>
+                                                        </con2:requestTransform>
+                                                        <con2:responseTransform>
+                                                            <con4:log>
+                                                                <con1:id>_ActionId-a050a93.46dc7280.0.15343934705.N7fe3</con1:id>
+                                                                <con4:logLevel>info</con4:logLevel>
+                                                                <con4:expr>
+                                                                    <con1:xqueryText>$bodyOut</con1:xqueryText>
+                                                                </con4:expr>
+                                                                <con4:message>ActualizarComision_PS-Response</con4:message>
+                                                            </con4:log>
+                                                        </con2:responseTransform>
+                                                    </con2:wsCallout>
+                                                    <con2:ifThenElse>
+                                                        <con1:id>_ActionId-N3f57c7ff.2f14002f.0.15411f1fbfa.N7f3e</con1:id>
+                                                        <con2:case id="_BranchId-N3f57c7ff.2f14002f.0.15411f1fbfa.N7f3d">
+                                                            <con2:condition>
+                                                                <con1:xqueryText>fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=13 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=14 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=15 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=5 or fn:data($body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado)=22</con1:xqueryText>
+                                                            </con2:condition>
+                                                            <con2:actions>
+                                                                <con5:route>
+                                                                    <con1:id>_ActionId-N3f57c7ff.2f14002f.0.15411f1fbfa.N7fae</con1:id>
+                                                                    <con5:service ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ActualizarEstadoTCC/BS/ActualizarEstadoComision_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                                                    <con5:operation>ActualizarEstadoComision</con5:operation>
+                                                                    <con5:outboundTransform>
+                                                                        <con2:assign varName="body">
+                                                                            <con1:id>_ActionId-N3f57c7ff.2f14002f.0.15411f1fbfa.N7fab</con1:id>
+                                                                            <con2:expr>
+                                                                                <con1:xqueryText><![CDATA[<soap:Body 	xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+<act:ActualizarEstadoComisionInput xmlns:act="http://xmlns.oracle.com/pcbpel/adapter/db/ActualizarEstadoComision">    
+	<act:idEstado>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:estado/text()}</act:idEstado>
+    <act:idSubEstado>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:subEstado/text()}</act:idSubEstado>
+    <act:idComision>{$body/mat:ActualizarEstadoTCCRequest/mat:ListaTCC/mat1:TCC[$tccIndex]/mat1:id/text()}</act:idComision>
+</act:ActualizarEstadoComisionInput>
+</soap:Body>]]></con1:xqueryText>
+                                                                            </con2:expr>
+                                                                        </con2:assign>
+                                                                    </con5:outboundTransform>
+                                                                </con5:route>
+                                                            </con2:actions>
+                                                        </con2:case>
+                                                        <con2:default/>
+                                                    </con2:ifThenElse>
+                                                </con2:actions>
+                                            </con2:case>
+                                            <con2:default/>
+                                        </con2:ifThenElse>
+                                    </con2:actions>
+                                </con2:case>
+                                <con2:default>
+                                    <con2:replace contents-only="true" varName="body">
+                                        <con1:id>_ActionId-N3f579bc0.N5b956be1.0.1533d5b7f2a.N7ea0</con1:id>
+                                        <con2:location>
+                                            <con1:xpathText>.</con1:xpathText>
+                                        </con2:location>
+                                        <con2:expr>
+                                            <con1:xqueryTransform>
+                                                <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ActualizarEstadoTCC/XQUERY/ValidarEstadoTCC_Response_TO_ActualizarEstadoTCC_Response"/>
+                                            </con1:xqueryTransform>
+                                        </con2:expr>
+                                    </con2:replace>
+                                    <con1:reply isError="false">
+                                        <con1:id>_ActionId-N3f579bc0.N5b956be1.0.1533d5b7f2a.N7e9d</con1:id>
+                                    </con1:reply>
+                                </con2:default>
+                            </con2:ifThenElse>
+                        </con2:actions>
+                    </con2:foreach>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7bd6">
+            <con:stage id="_StageId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7bd4" name="StageResponse">
+                <con:context/>
+                <con:actions>
+                    <con2:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N788e</con1:id>
+                        <con2:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con2:location>
+                        <con2:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/MatrizTCC/ActualizarEstadoTCC/XQUERY/ActualizarEstadoTCC_PS_Response"/>
+                            </con1:xqueryTransform>
+                        </con2:expr>
+                    </con2:replace>
+                    <con4:log>
+                        <con1:id>_ActionId-N3f579bc0.N5b956be1.0.1533d5b7f2a.N7f82</con1:id>
+                        <con4:logLevel>info</con4:logLevel>
+                        <con4:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con4:expr>
+                        <con4:message>ActualizarEstadoTCC-Response</con4:message>
+                    </con4:log>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PipelineActualizarTCC">
+                <con:request>request-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7bd7</con:request>
+                <con:response>response-N3f57c7ff.37d5b2c3.0.1521eabe8f3.N7bd6</con:response>
+            </con:pipeline-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

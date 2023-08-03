@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioCliente/GestionCobro/V1/Wsdl/ADAPTER/GenerarAvisoCobroV2SAD"/>
+            <con:binding>
+                <con:name>GenerarAvisoCobroV2PT12Bnd</con:name>
+                <con:namespace>http://www.bcie.org/GestionCobroMO</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="request" name="request-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fd0">
+            <con:stage id="_StageId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fce" name="GenerarAvisoCobroV2Request">
+                <con:context>
+                    <con2:userNsDecl prefix="ges" namespace="http://www.bcie.org/GestionCobroMO"/>
+                    <con2:userNsDecl prefix="ges1" namespace="http://www.bcie.org/GestionCobroBO"/>
+                </con:context>
+                <con:actions>
+                    <con1:log>
+                        <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fca</con2:id>
+                        <con1:logLevel>info</con1:logLevel>
+                        <con1:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con1:expr>
+                        <con1:message>GenerarAvisoCobroV2 - Request</con1:message>
+                    </con1:log>
+                    <con3:assign varName="varXML">
+                        <con2:id>_ActionId-N3f57df51.3c2e5634.0.16b9a9e62bd.N7ffe</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>$body/ges:GeneraReporteAvisoCobroV2Request/ges:AvisoCobro/ges1:aviso[1]/ges1:xml/CLIENTES</con2:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:assign varName="AvisoCobroXML">
+                        <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fc4</con2:id>
+                        <con3:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearAvisoCobro/V2/XSL/AvisoCobro_docx"/>
+                                <con2:input>$varXML</con2:input>
+                            </con2:xsltTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:assign varName="InConsultarConfiguracion">
+                        <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fc1</con2:id>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearAvisoCobro/V2/XQUERY/CrearAvisoCobro_PS_TO_ConsultarConfiguracion_BS_Request"/>
+                                <con2:param name="llaveConsultar">
+                                    <con2:path>"REPOSITORIO_FILE_SYSTEM"</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fbe</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/ConsultarConfiguracion/BS/ConsultarConfiguracion_db" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>ConsultarConfiguracion</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">InConsultarConfiguracion</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">OutConsultarConfiguracion</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:assign varName="InCrearReporteZip">
+                        <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fbb</con2:id>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearAvisoCobro/V2/XQUERY/CrearAvisoCobro_PS_TO_CrearReporteZip_BS"/>
+                                <con2:param name="configuracion">
+                                    <con2:path>$OutConsultarConfiguracion</con2:path>
+                                </con2:param>
+                                <con2:param name="avisoXML">
+                                    <con2:path>$AvisoCobroXML</con2:path>
+                                </con2:param>
+                                <con2:param name="plantilla">
+                                    <con2:path>"BCIE_REPORTS/AvisoVencimiento"</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fb8</con2:id>
+                        <con3:service ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearReporteZip/BS/CrearReporteZipPort" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>generarReporte</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">InCrearReporteZip</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">OutCrearReporteZip</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fcf">
+            <con:stage id="_StageId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fcd" name="GenerarAvisoCobroV2Response">
+                <con:context>
+                    <con2:userNsDecl prefix="ges" namespace="http://www.bcie.org/GestionCobroMO"/>
+                    <con2:userNsDecl prefix="ges1" namespace="http://www.bcie.org/GestionCobroBO"/>
+                </con:context>
+                <con:actions>
+                    <con3:assign varName="ReporteZipBs">
+                        <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fb5</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>fn-bea:inlinedXML($OutCrearReporteZip)</con2:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con1:log>
+                        <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fc7</con2:id>
+                        <con1:logLevel>info</con1:logLevel>
+                        <con1:expr>
+                            <con2:xqueryText>$ReporteZipBs</con2:xqueryText>
+                        </con1:expr>
+                        <con1:message>ReporteZipBS  - Response</con1:message>
+                    </con1:log>
+                    <con3:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fb1</con2:id>
+                        <con3:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/HerramientasOfimatica/CrearAvisoCobro/V2/XQUERY/CrearReporteZip_BS_TO_CrearAvisoCobro_PS"/>
+                                <con2:param name="archivos">
+                                    <con2:path>$ReporteZipBs</con2:path>
+                                </con2:param>
+                                <con2:param name="tipoDocumento">
+                                    <con2:path>fn:concat('', $body/ges:GeneraReporteAvisoCobroV2Request/ges:AvisoCobro/ges1:aviso[1]/ges1:xml/CLIENTES/CONFIGURACION/TIPO_DOCUMENTO)</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con1:log>
+                        <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fae</con2:id>
+                        <con1:logLevel>info</con1:logLevel>
+                        <con1:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con1:expr>
+                        <con1:message>GenerarAvisoCobroV2 - Response</con1:message>
+                    </con1:log>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fa0" name="StageEnviarNotificacion">
+                <con:context>
+                    <con2:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO"/>
+                    <con2:userNsDecl prefix="ges" namespace="http://www.bcie.org/GestionCobroMO"/>
+                    <con2:userNsDecl prefix="err" namespace="http://www.bcie.org/ErrorBO"/>
+                </con:context>
+                <con:actions>
+                    <con3:ifThenElse>
+                        <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7f69</con2:id>
+                        <con3:case id="_BranchId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7f68">
+                            <con3:condition>
+                                <con2:xqueryText>$body/ges:GeneraReporteAvisoCobroV2Response/ges:Resultado/res:result != 'OK'</con2:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:assign varName="varEnviarCorreoElectronicoRq">
+                                    <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7f65</con2:id>
+                                    <con3:expr>
+                                        <con2:xqueryTransform>
+                                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                                            <con2:param name="Accion">
+                                                <con2:path>'Generar Aviso de Cobro V2'</con2:path>
+                                            </con2:param>
+                                            <con2:param name="MensajeDeError">
+                                                <con2:path>concat($body/ges:GeneraReporteAvisoCobroV2Response/ges:Resultado/res:message, ' ',$body/ges:GeneraReporteAvisoCobroV2Response/ges:Resultado/res:error/err:errorDescription)</con2:path>
+                                            </con2:param>
+                                        </con2:xqueryTransform>
+                                    </con3:expr>
+                                </con3:assign>
+                                <con3:wsCallout>
+                                    <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7f62</con2:id>
+                                    <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoElectronico_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con3:operation>enviarCorreoElectronico</con3:operation>
+                                    <con3:request>
+                                        <con3:body wrapped="false">varEnviarCorreoElectronicoRq</con3:body>
+                                    </con3:request>
+                                    <con3:response>
+                                        <con3:body wrapped="false">varEnviarCorreoElectronicoRs</con3:body>
+                                    </con3:response>
+                                    <con3:requestTransform>
+                                        <con1:log>
+                                            <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7f57</con2:id>
+                                            <con1:logLevel>info</con1:logLevel>
+                                            <con1:expr>
+                                                <con2:xqueryText>$varEnviarCorreoElectronicoRq</con2:xqueryText>
+                                            </con1:expr>
+                                            <con1:message>varEnviarCorreoElectronicoRq-GenerarAvisoCobroV2_PsPipeline</con1:message>
+                                        </con1:log>
+                                    </con3:requestTransform>
+                                    <con3:responseTransform>
+                                        <con1:log>
+                                            <con2:id>_ActionId-N3f57df51.N544cdc26.0.16b95fa7a5d.N7f54</con2:id>
+                                            <con1:logLevel>info</con1:logLevel>
+                                            <con1:expr>
+                                                <con2:xqueryText>$varEnviarCorreoElectronicoRs</con2:xqueryText>
+                                            </con1:expr>
+                                            <con1:message>varEnviarCorreoElectronicoRs-GenerarAvisoCobroV2_PsPipeline</con1:message>
+                                        </con1:log>
+                                    </con3:responseTransform>
+                                </con3:wsCallout>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default/>
+                    </con3:ifThenElse>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PipelinePairNode1">
+                <con:request>request-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fd0</con:request>
+                <con:response>response-N3f57df51.N544cdc26.0.16b95fa7a5d.N7fcf</con:response>
+            </con:pipeline-node>
+        </con:flow>
+        <con:shared-variables>
+            <con:variable>AvisoCobroXML</con:variable>
+            <con:variable>InConsultarConfiguracion</con:variable>
+            <con:variable>OutConsultarConfiguracion</con:variable>
+            <con:variable>InCrearReporteZip</con:variable>
+            <con:variable>OutCrearReporteZip</con:variable>
+            <con:variable>ReporteZipBs</con:variable>
+            <con:variable>varEnviarCorreoElectronicoRq</con:variable>
+            <con:variable>varEnviarCorreoElectronicoRs</con:variable>
+            <con:variable>varXML</con:variable>
+        </con:shared-variables>
+    </con:router>
+</con:pipelineEntry>

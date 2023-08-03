@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/typesystem/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/Utilidades/EnviarCorreoElectronico/V1/WSDL/EnviarCorreoElectronico"/>
+            <con:binding>
+                <con:name>CorreoElectronico12Bnd</con:name>
+                <con:namespace>http://xmlns.bcie.com/CorreoElectronicoService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-N3f579bc0.f1d0c6f.0.155e6102077.N7f90">
+        <con:pipeline type="error" name="error-N3f579bc0.f1d0c6f.0.155e6102077.N7f90">
+            <con:stage id="_StageId-N3f579bc0.f1d0c6f.0.155e6102077.N7f4d" name="StageError" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con5="http://www.bea.com/wli/sb/stages/publish/config" xmlns:con4="http://www.bea.com/wli/sb/typesystem/config" xmlns:con6="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con3:ifThenElse>
+                        <con7:id xmlns:con7="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579bc0.f1d0c6f.0.155e6102077.N7f4c</con7:id>
+                        <con3:case id="_BranchId-N3f579bc0.f1d0c6f.0.155e6102077.N7f4b">
+                            <con3:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError)=0</con2:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:assign varName="codigoError">
+                                    <con7:id xmlns:con7="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579bc0.f1d0c6f.0.155e6102077.N7f4a</con7:id>
+                                    <con3:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con3:expr>
+                                </con3:assign>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default/>
+                    </con3:ifThenElse>
+                    <con3:assign varName="inMapeoError">
+                        <con7:id xmlns:con7="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579bc0.f1d0c6f.0.155e6102077.N7f49</con7:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(data($codigoError))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con7:id xmlns:con7="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579bc0.f1d0c6f.0.155e6102077.N7f48</con7:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS.proxyPipeline" xsi:type="con:PipelineRef"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapeoError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapeoError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true">
+                        <con7:id xmlns:con7="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579bc0.f1d0c6f.0.155e6102077.N7f47</con7:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con7:xqueryTransform xmlns:con7="http://www.bea.com/wli/sb/stages/config">
+                                <con7:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/EnviarCorreoElectronico/XQUERY/Error_TO_EnviarCorreoElectronico_PS_Response"/>
+                                <con7:param name="message">
+                                    <con7:path>xs:string(fn:data($fault/ctx:reason))</con7:path>
+                                </con7:param>
+                                <con7:param name="responseMapeoErrorMessage">
+                                    <con7:path>$outMapeoError</con7:path>
+                                </con7:param>
+                            </con7:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-N3f579bc0.f1d0c6f.0.155e6102077.N7f46</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteNodeEnviarCorreo">
+                <con:context>
+                    <con1:userNsDecl prefix="cor1" namespace="http://www.bcie.org/CorreoBO"/>
+                    <con1:userNsDecl prefix="cor" namespace="http://www.bcie.org/CorreoMO"/>
+                    <con2:variable name="enviarCorreoElectronicoRequest" path="$enviarCorreoElectronicoRequest" asChild="false">
+                        <con2:schema ref="MDS/Resources/ComponentesComunes/Utilidades/EnviarCorreoElectronico/V1/Schema/CorreoElectronicoMO" element="enviarCorreoElectronicoRequest"/>
+                    </con2:variable>
+                </con:context>
+                <con:actions>
+                    <con2:route xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con5="http://www.bea.com/wli/sb/stages/publish/config" xmlns:con4="http://www.bea.com/wli/sb/typesystem/config" xmlns:con6="http://www.bea.com/wli/sb/stages/logging/config">
+                        <con1:id>_ActionId-N3f579bc0.29934f88.0.155c63129be.N7ec5</con1:id>
+                        <con2:service ref="ADAPTADORES/ModeloNegocio/Utilidades/EnviarCorreoElectronico/BS/EnviarCorreoElectronico_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:outboundTransform>
+                            <con6:log>
+                                <con1:id>_ActionId-N3f579bc0.f1d0c6f.0.155e6102077.N7f13</con1:id>
+                                <con6:logLevel>info</con6:logLevel>
+                                <con6:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con6:expr>
+                                <con6:message>EnviarCorreoElectronico_PS_REQUEST</con6:message>
+                            </con6:log>
+                            <con3:ifThenElse>
+                                <con1:id>_ActionId-N3f579bc0.29934f88.0.155c63129be.N7ec4</con1:id>
+                                <con3:case id="_BranchId-N3f579bc0.29934f88.0.155c63129be.N7ec3">
+                                    <con3:condition>
+                                        <con1:xqueryText>count($body/cor:enviarCorreoElectronicoRequest/cor:CorreoElectronico/cor1:attachment)>0 and $body/cor:enviarCorreoElectronicoRequest/cor:CorreoElectronico/cor1:attachment//cor1:content !=''</con1:xqueryText>
+                                    </con3:condition>
+                                    <con3:actions>
+                                        <con3:foreach>
+                                            <con1:id>_ActionId-N56016aa9.N72672e89.0.1575325ab9e.N7ffe</con1:id>
+                                            <con3:variable>body</con3:variable>
+                                            <con3:expression>
+                                                <con1:xpathText>./cor:enviarCorreoElectronicoRequest/cor:CorreoElectronico/cor1:attachment</con1:xpathText>
+                                            </con3:expression>
+                                            <con3:value-variable>attachment</con3:value-variable>
+                                            <con3:index-variable>Index</con3:index-variable>
+                                            <con3:total-variable>Count</con3:total-variable>
+                                            <con3:actions>
+                                                <con3:assign varName="adjunto">
+                                                    <con1:id>_ActionId-N3f579bc0.29934f88.0.155c63129be.N7ec2</con1:id>
+                                                    <con3:expr>
+                                                        <con1:xqueryTransform>
+                                                            <con1:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/EnviarCorreoElectronico/XQUERY/EnviarCorreoElectronico_PS_AdjuntarDocumento_Request"/>
+                                                            <con1:param name="Index">
+                                                                <con1:path>$Index</con1:path>
+                                                            </con1:param>
+                                                            <con1:param name="enviarCorreoElectronicoRequest">
+                                                                <con1:path>$body/cor:enviarCorreoElectronicoRequest</con1:path>
+                                                            </con1:param>
+                                                        </con1:xqueryTransform>
+                                                    </con3:expr>
+                                                </con3:assign>
+                                                <con3:javaCallout varName="decodedattachmentsContent">
+                                                    <con1:id>_ActionId-N3f579bc0.29934f88.0.155c63129be.N7ec1</con1:id>
+                                                    <con3:archive ref="ADAPTADORES/ModeloNegocio/Utilidades/EnviarCorreoElectronico/JAR/DecodeBase64"/>
+                                                    <con3:className>DecodeBase64Binary</con3:className>
+                                                    <con3:method>public static [B decode(java.lang.String)</con3:method>
+                                                    <con3:expr>
+                                                        <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$adjunto</con:xqueryText>
+                                                    </con3:expr>
+                                                    <con3:return-param-as-ref>false</con3:return-param-as-ref>
+                                                </con3:javaCallout>
+                                                <con3:insert varName="attachments">
+                                                    <con1:id>_ActionId-N3f579bc0.29934f88.0.155c63129be.N7ec0</con1:id>
+                                                    <con3:location>
+                                                        <con1:xpathText>.</con1:xpathText>
+                                                    </con3:location>
+                                                    <con3:where>last-child</con3:where>
+                                                    <con3:expr>
+                                                        <con1:xqueryText><![CDATA[<con:attachment xmlns:con="http://www.bea.com/wli/sb/context"> 
+    <con:Content-Type>{fn:data($body/cor:enviarCorreoElectronicoRequest/cor:CorreoElectronico/cor1:attachment[cor1:content/text() != ''][$Index]/cor1:type)}</con:Content-Type> 
+    <con:Content-Transfer-Encoding>base64</con:Content-Transfer-Encoding> 
+    <con:Content-Disposition>attachment; filename={$body/cor:enviarCorreoElectronicoRequest/cor:CorreoElectronico/cor1:attachment[cor1:content/text() != ''][$Index]/cor1:name}</con:Content-Disposition> 
+    <con:body>{$decodedattachmentsContent}</con:body> 
+  </con:attachment>]]></con1:xqueryText>
+                                                    </con3:expr>
+                                                </con3:insert>
+                                            </con3:actions>
+                                        </con3:foreach>
+                                    </con3:actions>
+                                </con3:case>
+                                <con3:default/>
+                            </con3:ifThenElse>
+                            <con3:assign varName="CorreoDestinatarios">
+                                <con1:id>_ActionId-N3f579bc0.f1d0c6f.0.155e6102077.N7ffe</con1:id>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/EnviarCorreoElectronico/XQUERY/EnviarCorreoElectronico_PS_TO_EnviarCorreoElectronico_BS_Request"/>
+                                        <con1:param name="enviarCorreoElectronicoRequest">
+                                            <con1:path>$body/cor:enviarCorreoElectronicoRequest</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:assign>
+                            <con3:assign varName="CorreoCC">
+                                <con1:id>_ActionId-N3f579bc0.f1d0c6f.0.155e6102077.N7ffb</con1:id>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/EnviarCorreoElectronico/XQUERY/EnviarCorreoElectronico_PS_TO_EnviarCorreoElectronicoCC_BS_Request"/>
+                                        <con1:param name="enviarCorreoElectronicoRequest">
+                                            <con1:path>$body/cor:enviarCorreoElectronicoRequest</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:assign>
+                            <con3:assign varName="CorreoBCC">
+                                <con1:id>_ActionId-N3f579bc0.f1d0c6f.0.155e6102077.N7ff8</con1:id>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/EnviarCorreoElectronico/XQUERY/EnviarCorreoElectronico_PS_TO_EnviarCorreoElectronicoBCC_BS_Request"/>
+                                        <con1:param name="enviarCorreoElectronicoRequest">
+                                            <con1:path>$body/cor:enviarCorreoElectronicoRequest</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:assign>
+                            <con6:log>
+                                <con1:id>_ActionId-N3f57c7ff.N32d4d24f.0.161955075e7.N7ffe</con1:id>
+                                <con6:logLevel>info</con6:logLevel>
+                                <con6:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con6:expr>
+                                <con6:message>envioNotificacion</con6:message>
+                            </con6:log>
+                            <con3:transport-headers copy-all="false">
+                                <con1:id>_ActionId-N3f579bc0.29934f88.0.155c63129be.N7ebf</con1:id>
+                                <con3:header-set>outbound-request</con3:header-set>
+                                <con3:header value="expression" name="Subject">
+                                    <con1:xqueryText>$body/cor:enviarCorreoElectronicoRequest/cor:CorreoElectronico/cor1:subject/text()</con1:xqueryText>
+                                </con3:header>
+                                <con3:header value="expression" name="Cc">
+                                    <con1:xqueryText>fn:data($CorreoCC)</con1:xqueryText>
+                                </con3:header>
+                                <con3:header value="expression" name="To">
+                                    <con1:xqueryText>fn:data($CorreoDestinatarios)</con1:xqueryText>
+                                </con3:header>
+                                <con3:header value="expression" name="Bcc">
+                                    <con1:xqueryText>fn:data($CorreoBCC)</con1:xqueryText>
+                                </con3:header>
+                                <con3:header value="expression" name="Reply-Address">
+                                    <con1:xqueryText>$body/cor:enviarCorreoElectronicoRequest/cor:CorreoElectronico/cor1:to/cor1:usuario/text()</con1:xqueryText>
+                                </con3:header>
+                                <con3:header value="expression" name="Content-Type">
+                                    <con1:xqueryText>"text/html; charset=iso-8859-1"</con1:xqueryText>
+                                </con3:header>
+                            </con3:transport-headers>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-N3f579bc0.29934f88.0.155c63129be.N7e85</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryText>$body/cor:enviarCorreoElectronicoRequest/cor:CorreoElectronico/cor1:mensaje/text()</con1:xqueryText>
+                                </con3:expr>
+                            </con3:replace>
+                        </con2:outboundTransform>
+                        <con2:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-N3f579bc0.29934f88.0.155c63129be.N7eb8</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/EnviarCorreoElectronico/XQUERY/EnviarCorreoElectronico_BS_TO_EnviarCorreoElectronico_PS_Response"/>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con6:log>
+                                <con1:id>_ActionId-N3f579bc0.f1d0c6f.0.155e6102077.N7f10</con1:id>
+                                <con6:logLevel>info</con6:logLevel>
+                                <con6:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con6:expr>
+                                <con6:message>EnviarCorreoElectronico_PS_RESPONSE</con6:message>
+                            </con6:log>
+                        </con2:responseTransform>
+                    </con2:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

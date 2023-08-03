@@ -1,0 +1,1283 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Nov 26 18:01:05 CST 2015
+  Author:  luis-morales
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CrearSolicitudAprobacionBPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/CrearSolicitudAprobacion/CrearSolicitudAprobacionBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/CrearSolicitudAprobacion/CrearSolicitudAprobacionBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/SolicitudAprobacionService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/SolicitudAprobacionMO"
+         xmlns:ns3="http://www.bcie.org/ResultBO" xmlns:ns4="http://www.bcie.org/ErrorBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ns6="http://www.bcie.org/CatalogoBO"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns5="http://www.bcie.org/SolicitudAprobacionBO"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns7="http://xmlns.bcie.com/CorreoElectronicoService" xmlns:ns8="http://www.bcie.org/CorreoMO"
+         xmlns:ns9="http://www.bcie.org/CorreoBO"
+         xmlns:ns10="http://xmlns.oracle.com/DominioOperacion/CrearSolicitudAprobacion/EnviarCorreo_BPEL"
+         xmlns:ns11="http://xmlns.oracle.com/DominioOperacion/CrearSolicitudAprobacion/EnviarCorreoElectronico_BPEL"
+         xmlns:ns12="http://www.bcie.org/EliminarSolicitudAprobacionService"
+         xmlns:ns13="http://ww.bcie.org/EliminarUsuarioAprobacionByIdSolicitudService"
+         xmlns:ns14="http://www.bcie.org/ClienteBO"
+         xmlns:ns15="http://xmlns.oracle.com/Utilidades/EnviarCorreoElectronico/bpelEnviarCorreo">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/SolicitudAprobacionService"
+          location="../WSDLs/CrearSolicitudAprobacionSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="CrearSolicitudAprobacion_Service" partnerLinkType="ns1:CrearSolicitudAprobacionPT_PLT"
+                 myRole="CrearSolicitudAprobacionPT_Role"/>
+    <partnerLink name="CrearSolcitudAprobacion_PS" partnerLinkType="ns1:CrearSolcitudAprobacion_PS"
+                 partnerRole="CrearSolicitudAprobacionPT"/>
+    <partnerLink name="CrearUsuarioReunion_PS" partnerLinkType="ns1:CrearUsuarioReunion_PS"
+                 partnerRole="CrearUsuarioReunionPT"/>
+    <partnerLink name="EliminarSolicitudAprobacion_SB" partnerLinkType="ns12:EliminarSolicitudAprobacion_SB"
+                 partnerRole="EliminarSolciitudAprobacionPT"/>
+    <partnerLink name="EliminarUsuarioAprobacionByIdAprobacion_SB"
+                 partnerLinkType="ns13:EliminarUsuarioAprobacionByIdAprobacion_SB"
+                 partnerRole="EliminarUsuarioAprobacionByIdAprobacionPT"/>
+    <partnerLink name="EnviarCorreoElectronico" partnerLinkType="ns15:bpelEnviarCorreo"
+                 partnerRole="bpelEnviarCorreoProvider" myRole="bpelEnviarCorreoRequester"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestCrearSolicitudAprobacionMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseCrearSolicitudAprobacionMessage"/>
+    <variable name="inCrearSolicitudAprobacion" messageType="ns1:requestCrearSolicitudAprobacionMessage"/>
+    <variable name="outCrearSolicitudAprobacion" messageType="ns1:responseCrearSolicitudAprobacionMessage"/>
+    <variable name="inCrearUsuarioReunion" messageType="ns1:requestCrearUsuarioReunionMessage"/>
+    <variable name="outCrearUsuarioReunion" messageType="ns1:responseCrearUsuarioReunionMessage"/>
+    <variable name="idSolicitud" type="xsd:long"/>
+    <variable name="idOperacion" type="xsd:long"/>
+    <variable name="rolId" type="xsd:int"/>
+    <variable name="EmiteVoto" type="xsd:boolean"/>
+    <variable name="inEliminarSolicitudAprobacion" messageType="ns12:EliminarSolicitudAprobacionRequestMessage"/>
+    <variable name="outEliminarSolicitudAprobacion" messageType="ns12:EliminarSolicitudAprobacionResponseMessage"/>
+    <variable name="idUsuarioReunion" type="xsd:string"/>
+    <variable name="inEliminarUsuarioAprobacion" messageType="ns13:EliminarUsuarioAprobacionRequestMessage"/>
+    <variable name="outEliminarUsuarioAprobacion" messageType="ns13:EliminarUsuarioAprobacionResponseMessage"/>
+    <variable name="idPresidenteEjecutivo" type="xsd:long"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="idCliente" type="xsd:long"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="CompensationHandlerScope">
+        <compensateScope name="CompensateReunionVirtual" target="ReunionVirtualScope"/>
+        <compensateScope name="CompensateNivelPresidencia" target="NivelPresidenciaScope"/>
+        <compensateScope name="CompensateReunionPresencia" target="ReunionPresencialScope"/>
+        <compensateScope name="CompensateScope1" target="CrearUsuariosEmitirVotoScope"/>
+        <assign name="AssignError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+          </copy>
+          <copy>
+            <from>'No se ha podido realizar la inserción'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+          </copy>
+          <copy>
+            <from>'999'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:error/ns4:errorCode</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:error/ns4:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="CrearSolicitudAprobacion_Service"
+               portType="ns1:CrearSolicitudAprobacionPT" operation="CrearSolicitudAprobacion"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CrearSolicitudAprobacionBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="CrearSolicitudAprobacion_Service" portType="ns1:CrearSolicitudAprobacionPT" operation="CrearSolicitudAprobacion" variable="inputVariable" createInstance="yes"/>
+    <if name="IfTipoSolicitud">
+      <documentation>
+        <![CDATA[Operacion]]>
+      </documentation>
+      <condition>string($inputVariable.request/ns2:solicitudAprobacion/ns5:idOperacion) !=''</condition>
+      <sequence name="SequenceOperacion">
+        <assign name="setTitleVar" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+          <copy>
+            <from>oraext:setFlowInstanceTitle(concat("idOperacion: ",string($inputVariable.request/ns2:solicitudAprobacion/ns5:idOperacion)))</from>
+            <to>$setTitleVar</to>
+          </copy>
+        </assign>
+        <assign name="AssignIdOperacion">
+          <copy>
+            <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:idOperacion</from>
+            <to>$idOperacion</to>
+          </copy>
+        </assign>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[Cliente]]>
+        </documentation><sequence name="SequenceCliente"
+                                  xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="setTitleVar" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+         
+      <copy>
+            <from>oraext:setFlowInstanceTitle(concat("idCliente: ",string($inputVariable.request/ns2:solicitudAprobacion/ns5:cliente/ns14:idCliente)))</from>
+            <to>$setTitleVar</to>
+         </copy></assign>
+      <assign name="AssignIdCliente">
+         
+      <copy>
+              <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:cliente/ns14:idCliente</from>
+              <to>$idCliente</to>
+            </copy></assign>
+   </sequence></else>
+    </if><if name="TipoNivel">
+      <documentation>
+        <![CDATA[Gerencia]]>
+      </documentation>
+      <condition>$inputVariable.request/ns2:solicitudAprobacion/ns5:nivelAprobacion/ns6:Id = 1</condition>
+      <sequence name="NivelGerencia">
+        <if name="ReunionVirtual">
+          <documentation>
+            <![CDATA[True]]>
+          </documentation>
+          <condition>$inputVariable.request/ns2:solicitudAprobacion/ns5:esReunionVirtual = 'true'</condition>
+          <scope name="ReunionVirtualScope">
+            <variables>
+              <variable name="inEliminarAprobacion" messageType="ns12:EliminarSolicitudAprobacionRequestMessage"/>
+              <variable name="outEliminarAprobacion" messageType="ns12:EliminarSolicitudAprobacionResponseMessage"/>
+            </variables>
+            <compensationHandler bpelx:name="ElimnarAprobacion">
+              <sequence name="EliminarSolicitudSequence">
+                <assign name="AssignIdAprobacion">
+                  <copy>
+                    <from>$outCrearSolicitudAprobacion.response/ns2:Resultado/ns3:message</from>
+                    <to>$inEliminarAprobacion.request/ns2:idSolicitud</to>
+                  </copy>
+                </assign>
+                <invoke name="EliminarCrearSolicitudAprobacion" bpelx:invokeAsDetail="no"
+                        partnerLink="EliminarSolicitudAprobacion_SB" portType="ns12:EliminarSolciitudAprobacionPT"
+                        operation="eliminarSolicitudAprobacion" inputVariable="inEliminarAprobacion"
+                        outputVariable="outEliminarAprobacion"/>
+              </sequence>
+            </compensationHandler>
+            <sequence name="ReunionVirtualSequence">
+              <assign name="ReunionVirtual">
+                <copy ignoreMissingFromData="yes">
+                  <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:idOperacion</from>
+                  <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:idOperacion</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:tipoSolicitud/ns6:Id</from>
+                  <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:tipoSolicitud/ns6:Id</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:cliente/ns14:idCliente</from>
+                  <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:cliente/ns14:idCliente</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:nivelAprobacion/ns6:Id</from>
+                  <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:nivelAprobacion/ns6:Id</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:esReunionVirtual</from>
+                  <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:esReunionVirtual</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:fechaInicio</from>
+                  <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:fechaInicio</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:loginUsuario</from>
+                  <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:loginUsuario</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:fechaTermino</from>
+                  <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:fechaTermino</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:instanciaProcesoSeguimiento</from>
+                  <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:instanciaProcesoSeguimiento</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeToCrearSolicitud" bpelx:invokeAsDetail="no" partnerLink="CrearSolcitudAprobacion_PS"
+                      portType="ns1:CrearSolicitudAprobacionPT" operation="CrearSolicitudAprobacion"
+                      inputVariable="inCrearSolicitudAprobacion" outputVariable="outCrearSolicitudAprobacion"/>
+            </sequence>
+          </scope>
+          <else>
+            <documentation>
+              <![CDATA[False]]>
+            </documentation>
+            <scope name="ReunionPresencialScope">
+              <variables>
+                <variable name="inEliminarSolicitudAprobacion"
+                          messageType="ns12:EliminarSolicitudAprobacionRequestMessage"/>
+                <variable name="outEliminarSolciitudAprobacion"
+                          messageType="ns12:EliminarSolicitudAprobacionResponseMessage"/>
+              </variables>
+              <compensationHandler bpelx:name="CompesanteReunionPresencial">
+                <sequence name="ReunionPresencialSequence">
+                  <assign name="AssignIdAprobacion">
+                    <copy>
+                      <from>$outCrearSolicitudAprobacion.response/ns2:Resultado/ns3:message</from>
+                      <to>$inEliminarSolicitudAprobacion.request/ns2:idSolicitud</to>
+                    </copy>
+                  </assign>
+                  <invoke name="InvokeEliminarAprobacion" bpelx:invokeAsDetail="no"
+                          partnerLink="EliminarSolicitudAprobacion_SB" portType="ns12:EliminarSolciitudAprobacionPT"
+                          operation="eliminarSolicitudAprobacion" inputVariable="inEliminarSolicitudAprobacion"
+                          outputVariable="outEliminarSolciitudAprobacion"/>
+                </sequence>
+              </compensationHandler>
+              <sequence name="ReunionPresencialSequence">
+                <assign name="ReunionPresencial">
+                  <copy ignoreMissingFromData="yes">
+                    <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:idOperacion</from>
+                    <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:idOperacion</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes">
+                    <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:cliente/ns14:idCliente</from>
+                    <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:cliente/ns14:idCliente</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:loginUsuario</from>
+                    <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:loginUsuario</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:tipoSolicitud/ns6:Id</from>
+                    <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:tipoSolicitud/ns6:Id</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:nivelAprobacion/ns6:Id</from>
+                    <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:nivelAprobacion/ns6:Id</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:esReunionVirtual</from>
+                    <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:esReunionVirtual</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:fechaInicio</from>
+                    <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:fechaInicio</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes">
+                    <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:horaReunion</from>
+                    <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:horaReunion</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes">
+                    <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:lugar</from>
+                    <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:lugar</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:instanciaProcesoSeguimiento</from>
+                    <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:instanciaProcesoSeguimiento</to>
+                  </copy>
+                </assign>
+                <invoke name="CrearSolcitudAprobacion_Invoke" bpelx:invokeAsDetail="no"
+                        partnerLink="CrearSolcitudAprobacion_PS" portType="ns1:CrearSolicitudAprobacionPT"
+                        operation="CrearSolicitudAprobacion" inputVariable="inCrearSolicitudAprobacion"
+                        outputVariable="outCrearSolicitudAprobacion"/>
+              </sequence>
+            </scope>
+          </else>
+        </if>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[Presidencia]]>
+        </documentation>
+        <scope name="NivelPresidenciaScope">
+          <variables>
+            <variable name="inEliminarAprobacion" messageType="ns12:EliminarSolicitudAprobacionRequestMessage"/>
+            <variable name="outEliminarAprobacion" messageType="ns12:EliminarSolicitudAprobacionResponseMessage"/>
+          </variables>
+          <compensationHandler bpelx:name="CompensateNivelPresidencia">
+            <sequence name="EliminarSolicitudAprobacionSequence">
+              <assign name="AssignIdAprobacion">
+                <copy>
+                  <from>$outCrearSolicitudAprobacion.response/ns2:Resultado/ns3:message</from>
+                  <to>$inEliminarAprobacion.request/ns2:idSolicitud</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeEliminarAprobacion" bpelx:invokeAsDetail="no"
+                      partnerLink="EliminarSolicitudAprobacion_SB" portType="ns12:EliminarSolciitudAprobacionPT"
+                      operation="eliminarSolicitudAprobacion" inputVariable="inEliminarAprobacion"
+                      outputVariable="outEliminarAprobacion"/>
+            </sequence>
+          </compensationHandler>
+          <sequence name="NivelPresidenciaSequence">
+            <assign name="AssignSolicitudPresidencia">
+              <copy ignoreMissingFromData="yes">
+                <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:idOperacion</from>
+                <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:idOperacion</to>
+              </copy>
+              <copy ignoreMissingFromData="yes">
+                <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:cliente/ns14:idCliente</from>
+                <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:cliente/ns14:idCliente</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:tipoSolicitud/ns6:Id</from>
+                <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:tipoSolicitud/ns6:Id</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:nivelAprobacion/ns6:Id</from>
+                <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:nivelAprobacion/ns6:Id</to>
+              </copy>
+              <copy>
+                <from>false()</from>
+                <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:esReunionVirtual</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:fechaInicio</from>
+                <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:fechaInicio</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:loginUsuario</from>
+                <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:loginUsuario</to>
+              </copy>
+              <copy>
+                <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:fechaTermino</from>
+                <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:fechaTermino</to>
+              </copy>
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:instanciaProcesoSeguimiento</from>
+                <to>$inCrearSolicitudAprobacion.request/ns2:solicitudAprobacion/ns5:instanciaProcesoSeguimiento</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeToCrearSolicitudAprobacion" bpelx:invokeAsDetail="no"
+                    partnerLink="CrearSolcitudAprobacion_PS" portType="ns1:CrearSolicitudAprobacionPT"
+                    operation="CrearSolicitudAprobacion" inputVariable="inCrearSolicitudAprobacion"
+                    outputVariable="outCrearSolicitudAprobacion"/>
+          </sequence>
+        </scope>
+      </else>
+    </if>
+    <assign name="AssignIdAprobacion">
+      <copy>
+        <from>$outCrearSolicitudAprobacion.response/ns2:Resultado/ns3:message</from>
+        <to>$idSolicitud</to>
+      </copy>
+    </assign>
+    <if name="NoError">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>$outCrearSolicitudAprobacion.response/ns2:Resultado/ns3:result != 'ERROR'</condition>
+      <sequence name="Sequence4">
+        <forEach parallel="no" counterName="EmitirVotoCounter" name="ForEachEmitirVoto">
+          <bpelx:skipCondition>count($inputVariable.request/ns2:listadoEmitirVoto) = 0</bpelx:skipCondition>
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($inputVariable.request/ns2:listadoEmitirVoto)</finalCounterValue>
+          <scope name="CrearUsuariosEmitirVotoScope">
+            <compensationHandler>
+              <sequence name="Sequence17">
+                <assign name="EliminarUsuariosAprobacion">
+                  <copy>
+                    <from>$outCrearSolicitudAprobacion.response/ns2:Resultado/ns3:message</from>
+                    <to>$inEliminarUsuarioAprobacion.request/ns2:idSolicitud</to>
+                  </copy>
+                </assign>
+                <invoke name="EliminarUsuariosAprobacionInvoke" bpelx:invokeAsDetail="no"
+                        partnerLink="EliminarUsuarioAprobacionByIdAprobacion_SB"
+                        portType="ns13:EliminarUsuarioAprobacionByIdAprobacionPT"
+                        operation="eliminarUsuarioAprobacion" inputVariable="inEliminarUsuarioAprobacion"
+                        outputVariable="outEliminarUsuarioAprobacion"/>
+              </sequence>
+            </compensationHandler>
+            <sequence name="CrearUsuariosEmitirVotoSequence">
+              <if name="ExcusadoEmiteVoto">
+                <documentation>
+                  <![CDATA[false]]>
+                </documentation>
+                <condition>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:excusado = 'false'</condition>
+                <if name="Otro">
+                  <documentation>
+                    <![CDATA[false]]>
+                  </documentation>
+                  <condition>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:otro = 'false'</condition>
+                  <scope name="ListadoUsuarioEmitirVotoScope">
+                    <variables>
+                      <variable name="inCrearUsuarioEmitirVoto" messageType="ns1:requestCrearUsuarioReunionMessage"/>
+                      <variable name="outCrearUsuarioEmitirVoto" messageType="ns1:responseCrearUsuarioReunionMessage"/>
+                    </variables>
+                    <sequence name="ListadoUsuarioEmitirVotoSequence">
+                      <assign name="CrearEmitirVotoAssign">
+                        <copy>
+                          <from>$idSolicitud</from>
+                          <to>$inCrearUsuarioEmitirVoto.request/ns2:listadoUsuariosReunion/ns5:idSolicitudAprobacion</to>
+                        </copy>
+                        <copy>
+                          <from>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                          <to>$inCrearUsuarioEmitirVoto.request/ns2:listadoUsuariosReunion/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</to>
+                        </copy>
+                        <copy>
+                          <from>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:nombreUsuario</from>
+                          <to>$inCrearUsuarioEmitirVoto.request/ns2:listadoUsuariosReunion/ns5:listadoUsuarios/ns5:usuario/ns5:nombreUsuario</to>
+                        </copy>
+                        <copy>
+                          <from>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:rol/ns6:Id</from>
+                          <to>$inCrearUsuarioEmitirVoto.request/ns2:listadoUsuariosReunion/ns5:rol/ns6:Id</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>1</from>
+                          <to>$inCrearUsuarioEmitirVoto.request/ns2:listadoUsuariosReunion/ns5:tipoUsuario</to>
+                        </copy>
+                        <copy>
+                          <from>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:emiteVoto</from>
+                          <to>$inCrearUsuarioEmitirVoto.request/ns2:listadoUsuariosReunion/ns5:emiteVoto</to>
+                        </copy>
+                        <copy>
+                          <from>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:notificar</from>
+                          <to>$inCrearUsuarioEmitirVoto.request/ns2:listadoUsuariosReunion/ns5:conNotificacion</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeCrearUsuarioReunion"
+                              partnerLink="CrearUsuarioReunion_PS" portType="ns1:CrearUsuarioReunionPT"
+                              operation="CrearUsuarioReunion" inputVariable="inCrearUsuarioEmitirVoto"
+                              outputVariable="outCrearUsuarioEmitirVoto" bpelx:invokeAsDetail="no"/>
+                      <if name="OK">
+                        <documentation>
+                          <![CDATA[OK]]>
+                        </documentation>
+                        <condition>$outCrearUsuarioEmitirVoto.response/ns2:Resultado/ns3:result != 'ERROR'</condition>
+                        <sequence name="Sequence14"><if name="PresidenteEjecutivo"
+                                                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         
+      <![CDATA[Presidente]]></documentation>
+      <condition>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:rol/ns6:Id = 31</condition>
+      <assign name="AssignIdPresidente">
+                              <copy>
+                                <from>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:rol/ns6:Id</from>
+                                <to>$idPresidenteEjecutivo</to>
+                              </copy>
+                              <copy>
+                                <from>$outCrearUsuarioEmitirVoto.response/ns2:Resultado/ns3:message</from>
+                                <to>$idUsuarioReunion</to>
+                              </copy>
+                            </assign>
+      <else>
+         <documentation>
+            <![CDATA[NoEsPresidente]]>
+         </documentation>
+         <empty name="CrearUsuarioConNotificacion"/>
+      </else>
+   </if></sequence>
+                        <else>
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                  <else>
+                    <documentation>
+                      <![CDATA[true]]>
+                    </documentation>
+                    <scope name="ListadoUsuarioOtroScope">
+                      <variables>
+                        <variable name="inCrearUsuarioOtro" messageType="ns1:requestCrearUsuarioReunionMessage"/>
+                        <variable name="outCrearUsuarioOtro" messageType="ns1:responseCrearUsuarioReunionMessage"/>
+                      </variables>
+                      <sequence name="CrearUsuarioOtroSequence">
+                        <assign name="AssignCrearUsuarioEmitirVoto">
+                          <copy>
+                            <from>$idSolicitud</from>
+                            <to>$inCrearUsuarioOtro.request/ns2:listadoUsuariosReunion/ns5:idSolicitudAprobacion</to>
+                          </copy>
+                          <copy>
+                            <from>1</from>
+                            <to>$inCrearUsuarioOtro.request/ns2:listadoUsuariosReunion/ns5:emiteVoto</to>
+                          </copy>
+                          <copy>
+                            <from>'(otro)'</from>
+                            <to>$inCrearUsuarioOtro.request/ns2:listadoUsuariosReunion/ns5:listadoUsuarios/ns5:usuario/ns5:nombreUsuario</to>
+                          </copy>
+                          <copy ignoreMissingFromData="yes">
+                            <from>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:rol/ns6:Id</from>
+                            <to>$inCrearUsuarioOtro.request/ns2:listadoUsuariosReunion/ns5:rol/ns6:Id</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>1</from>
+                            <to>$inCrearUsuarioOtro.request/ns2:listadoUsuariosReunion/ns5:tipoUsuario</to>
+                          </copy>
+                          <copy>
+                            <from>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:notificar</from>
+                            <to>$inCrearUsuarioOtro.request/ns2:listadoUsuariosReunion/ns5:conNotificacion</to>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeCrearUsuarioOtro"
+                                partnerLink="CrearUsuarioReunion_PS" portType="ns1:CrearUsuarioReunionPT"
+                                operation="CrearUsuarioReunion" inputVariable="inCrearUsuarioOtro"
+                                outputVariable="outCrearUsuarioOtro" bpelx:invokeAsDetail="no"/>
+                        <if name="OK">
+                          <documentation>
+                            <![CDATA[OK]]>
+                          </documentation>
+                          <condition>$outCrearUsuarioOtro.response/ns2:Resultado/ns3:result != 'ERROR'</condition><if name="PresidenteEjecutivo"
+                                                                                                                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         
+      <![CDATA[Presidente]]></documentation>
+      <condition>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:rol/ns6:Id = 31</condition>
+      <assign name="AssignIdPresidente">
+         
+      <copy>
+            <from>$inputVariable.request/ns2:listadoEmitirVoto[$EmitirVotoCounter]/ns5:rol/ns6:Id</from>
+            <to>$idPresidenteEjecutivo</to>
+         </copy><copy>
+                                <from>$outCrearUsuarioOtro.response/ns2:Resultado/ns3:message</from>
+                                <to>$idUsuarioReunion</to>
+                              </copy></assign>
+      <else>
+         <documentation>
+            <![CDATA[NoEsPresidente]]>
+         </documentation>
+         <empty name="CrearUsuarioConNotificacion"/>
+      </else>
+   </if><else>
+                            <documentation>
+                              <![CDATA[ERROR]]>
+                            </documentation>
+                            <sequence name="Sequence16">
+                              <throw name="Throw1" faultName="bpelx:remoteFault"/>
+                            </sequence>
+                          </else>
+                        </if>
+                      </sequence>
+                    </scope>
+                  </else>
+                </if>
+                <else>
+                  <documentation>
+                    <![CDATA[true]]>
+                  </documentation>
+                  <sequence name="ExcusadoSequence">
+                    <empty name="ListadoConNotificacion"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+        </forEach>
+        <scope name="ScopeConNotificacion">
+          <if name="ComiteCredito">
+            <documentation>
+              <![CDATA[EXISTE]]>
+            </documentation>
+            <condition>count($inputVariable.request/ns2:listadoEmitirVoto) != 0</condition>
+            <forEach parallel="no" counterName="listaNotificacionCounter" name="ForEachConNotificacion">
+              <bpelx:skipCondition>count($inputVariable.request/ns2:listadoConNotificacion) = 0</bpelx:skipCondition>
+              <startCounterValue>1</startCounterValue>
+              <finalCounterValue>count($inputVariable.request/ns2:listadoConNotificacion)</finalCounterValue>
+              <scope name="NotificacionScope">
+                <variables>
+                  <variable name="inCrearUsuarioNotificacion" messageType="ns1:requestCrearUsuarioReunionMessage"/>
+                  <variable name="outCrearUsuarioNotificacion" messageType="ns1:responseCrearUsuarioReunionMessage"/>
+                </variables>
+                <sequence name="NotificacionSequence">
+                  <assign name="CrearUsuarioReunionAssign">
+                    <copy>
+                      <from>$idSolicitud</from>
+                      <to>$inCrearUsuarioNotificacion.request/ns2:listadoUsuariosReunion/ns5:idSolicitudAprobacion</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.request/ns2:listadoConNotificacion[$listaNotificacionCounter]/ns5:rol/ns6:Id</from>
+                      <to>$inCrearUsuarioNotificacion.request/ns2:listadoUsuariosReunion/ns5:rol/ns6:Id</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.request/ns2:listadoConNotificacion[$listaNotificacionCounter]/ns5:emiteVoto</from>
+                      <to>$inCrearUsuarioNotificacion.request/ns2:listadoUsuariosReunion/ns5:emiteVoto</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.request/ns2:listadoConNotificacion[$listaNotificacionCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                      <to>$inCrearUsuarioNotificacion.request/ns2:listadoUsuariosReunion/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.request/ns2:listadoConNotificacion[$listaNotificacionCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:nombreUsuario</from>
+                      <to>$inCrearUsuarioNotificacion.request/ns2:listadoUsuariosReunion/ns5:listadoUsuarios/ns5:usuario/ns5:nombreUsuario</to>
+                    </copy>
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>2</from>
+                      <to>$inCrearUsuarioNotificacion.request/ns2:listadoUsuariosReunion/ns5:tipoUsuario</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.request/ns2:listadoConNotificacion[$listaNotificacionCounter]/ns5:notificar</from>
+                      <to>$inCrearUsuarioNotificacion.request/ns2:listadoUsuariosReunion/ns5:conNotificacion</to>
+                    </copy>
+                  </assign>
+                  <invoke name="CrearUsuarioNotificacion" partnerLink="CrearUsuarioReunion_PS"
+                          portType="ns1:CrearUsuarioReunionPT" operation="CrearUsuarioReunion"
+                          inputVariable="inCrearUsuarioNotificacion" outputVariable="outCrearUsuarioNotificacion"
+                          bpelx:invokeAsDetail="no"/>
+                  <if name="OK">
+                    <documentation>
+                      <![CDATA[OK]]>
+                    </documentation>
+                    <condition>$outCrearUsuarioNotificacion.response/ns2:Resultado/ns3:result != 'ERROR'</condition>
+                    <sequence name="Sequence18">
+                      <empty name="CrearUsuarioEquipoTrabajo"/>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[ERROR]]>
+                      </documentation>
+                      <throw name="ThrowErrorEquipoTrabajo" faultName="bpelx:remoteFault"/>
+                    </else>
+                  </if>
+                </sequence>
+              </scope>
+            </forEach>
+            <else>
+              <documentation>
+                <![CDATA[NOEXISTE]]>
+              </documentation>
+              <scope name="NoExisteComiteCredito">
+                <sequence name="NoExisteComiteCreditoSequence">
+                  <assign name="EliminarSolicitudAprobacion">
+                    <copy>
+                      <from>$idSolicitud</from>
+                      <to>$inEliminarSolicitudAprobacion.request/ns2:idSolicitud</to>
+                    </copy>
+                  </assign>
+                  <invoke name="EliminarSolicitudInvoke" partnerLink="EliminarSolicitudAprobacion_SB"
+                          portType="ns12:EliminarSolciitudAprobacionPT" operation="eliminarSolicitudAprobacion"
+                          inputVariable="inEliminarSolicitudAprobacion"
+                          outputVariable="outEliminarSolicitudAprobacion" bpelx:invokeAsDetail="no"/>
+                  <assign name="AssignResponse">
+                    <copy>
+                      <from>'ERROR'</from>
+                      <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                    </copy>
+                    <copy>
+                      <from>'No se puede crear la solicitud sin un comité de crédito'</from>
+                      <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                    </copy>
+                    <copy>
+                      <from>'999'</from>
+                      <to>$outputVariable.response/ns2:Resultado/ns3:error/ns4:errorCode</to>
+                    </copy>
+                    <copy>
+                      <from>'No se puede crear la solicitud sin un comité de crédito'</from>
+                      <to>$outputVariable.response/ns2:Resultado/ns3:error/ns4:errorDescription</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplyError" variable="outputVariable" partnerLink="CrearSolicitudAprobacion_Service"
+                         portType="ns1:CrearSolicitudAprobacionPT" operation="CrearSolicitudAprobacion"/>
+                  <exit name="ExitWithError"/>
+                </sequence>
+              </scope>
+            </else>
+          </if>
+        </scope>
+        <if name="ComiteCredito">
+          <documentation>
+            <![CDATA[EXISTE]]>
+          </documentation>
+          <condition>count($inputVariable.request/ns2:listadoEmitirVoto) != 0</condition>
+          <forEach parallel="no" counterName="EquipoTrabajoCounter" name="ForEachEquipoTrabajo">
+            <bpelx:skipCondition>count($inputVariable.request/ns2:listadoEquipoTrabajo) = 0</bpelx:skipCondition>
+            <startCounterValue>1</startCounterValue>
+            <finalCounterValue>count($inputVariable.request/ns2:listadoEquipoTrabajo)</finalCounterValue>
+            <scope name="EquipoTrabajoScope">
+              <variables>
+                <variable name="inCrearUsuarioEquipoTrabajo" messageType="ns1:requestCrearUsuarioReunionMessage"/>
+                <variable name="outCrearUsuarioEquipoTrabajo" messageType="ns1:responseCrearUsuarioReunionMessage"/>
+              </variables>
+              <sequence name="EquipoTrabajoSequence">
+                <assign name="EquipoTrabajoAssign">
+                  <copy>
+                    <from>$idSolicitud</from>
+                    <to>$inCrearUsuarioEquipoTrabajo.request/ns2:listadoUsuariosReunion/ns5:idSolicitudAprobacion</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:listadoEquipoTrabajo[$EquipoTrabajoCounter]/ns5:rol/ns6:Id</from>
+                    <to>$inCrearUsuarioEquipoTrabajo.request/ns2:listadoUsuariosReunion/ns5:rol/ns6:Id</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:listadoEquipoTrabajo[$EquipoTrabajoCounter]/ns5:emiteVoto</from>
+                    <to>$inCrearUsuarioEquipoTrabajo.request/ns2:listadoUsuariosReunion/ns5:emiteVoto</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:listadoEquipoTrabajo[$EquipoTrabajoCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                    <to>$inCrearUsuarioEquipoTrabajo.request/ns2:listadoUsuariosReunion/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:listadoEquipoTrabajo[$EquipoTrabajoCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:nombreUsuario</from>
+                    <to>$inCrearUsuarioEquipoTrabajo.request/ns2:listadoUsuariosReunion/ns5:listadoUsuarios/ns5:usuario/ns5:nombreUsuario</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>3</from>
+                    <to>$inCrearUsuarioEquipoTrabajo.request/ns2:listadoUsuariosReunion/ns5:tipoUsuario</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:listadoEquipoTrabajo[$EquipoTrabajoCounter]/ns5:notificar</from>
+                    <to>$inCrearUsuarioEquipoTrabajo.request/ns2:listadoUsuariosReunion/ns5:conNotificacion</to>
+                  </copy>
+                </assign>
+                <invoke name="UsuarioEquipoTrabajoInvoke" bpelx:invokeAsDetail="no" partnerLink="CrearUsuarioReunion_PS"
+                        portType="ns1:CrearUsuarioReunionPT" operation="CrearUsuarioReunion"
+                        inputVariable="inCrearUsuarioEquipoTrabajo" outputVariable="outCrearUsuarioEquipoTrabajo"/>
+                <if name="OK">
+                  <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                  <condition>$outCrearUsuarioEquipoTrabajo.response/ns2:Resultado/ns3:result != 'ERROR'</condition>
+                  <empty name="EnviarCorreo"/>
+                  <else>
+                    <documentation>
+                      <![CDATA[ERROR]]>
+                    </documentation>
+                    <throw name="ErrorCrearUsuarioEquipoTrabajo" faultName="bpelx:rollback"/>
+                  </else>
+                </if>
+              </sequence>
+            </scope>
+          </forEach>
+          <else>
+            <documentation>
+              <![CDATA[NO_EXISTE]]>
+            </documentation>
+            <empty name="NoExisteComiteCredito"/>
+          </else>
+        </if>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[ERROR]]>
+        </documentation>
+        <throw name="ThrowErrorSolicitar" faultName="bpelx:remoteFault"/>
+      </else>
+    </if>
+    <forEach parallel="no" counterName="EnviarCorreoEmitirVoto" name="EnviarCorreoAUsuariosEmitirVoto">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($inputVariable.request/ns2:listadoEmitirVoto)</finalCounterValue>
+      <scope name="EnviarCorreoEmitirVotoScope">
+        <variables>
+          <variable name="varInvokeSoaEnviarCorreoRq" messageType="ns15:bpelEnviarCorreoRequestMessage"/>
+        </variables>
+        <sequence name="EnviarCorreoEmitirVotoSequence">
+          <if name="Usuario">
+            <documentation>
+              <![CDATA[ExisteUsuario]]>
+            </documentation>
+            <condition>$inputVariable.request/ns2:listadoEmitirVoto/ns5:listadoUsuarios/ns5:usuario/ns5:usuario != ''</condition>
+            <sequence name="EnviarCorreoAUsuario">
+              <if name="NivelAprobacion">
+                <documentation>
+                  <![CDATA[ComiteCredito]]>
+                </documentation>
+                <condition>$inputVariable.request/ns2:solicitudAprobacion/ns5:nivelAprobacion/ns6:Id != 2</condition>
+                <sequence name="CorreoNivelComiteCredito">
+                  <if name="IfOperacionOCliente">
+                    <documentation>
+                      <![CDATA[Operacion]]>
+                    </documentation>
+                    <condition>string($inputVariable.request/ns2:solicitudAprobacion/ns5:idOperacion) !=''</condition>
+                    <assign name="EnviarCorreoAssign">
+                      <copy ignoreMissingFromData="yes">
+                        <from>$inputVariable.request/ns2:listadoEmitirVoto[$EnviarCorreoEmitirVoto]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                        <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:to/ns9:usuario</to>
+                      </copy>
+                      <copy>
+                        <from>$idOperacion</from>
+                        <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idOperacion</to>
+                      </copy>
+                      <copy>
+                        <from>13</from>
+                        <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:id_plantilla</to>
+                      </copy>
+                      <copy>
+                        <from>'TIPO_REUNION'</from>
+                        <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:tag</to>
+                      </copy>
+                      <copy>
+                        <from>$idSolicitud</from>
+                        <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:valor</to>
+                      </copy>
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>'DATOS_REUNION'</from>
+                        <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:tag</to>
+                      </copy>
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>$idSolicitud</from>
+                        <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:valor</to>
+                      </copy>
+                    </assign>
+                    <else>
+                      <documentation>
+                        <![CDATA[Cliente]]>
+                      </documentation>
+                      <assign name="EnviarCorreoCliente"
+                                              xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                        <copy ignoreMissingFromData="yes">
+                          <from>$inputVariable.request/ns2:listadoEmitirVoto[$EnviarCorreoEmitirVoto]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:to/ns9:usuario</to>
+                        </copy>
+                        <copy>
+                          <from>85</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:id_plantilla</to>
+                        </copy>
+                        <copy>
+                          <from>$idCliente</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idClienteFenix</to>
+                        </copy>
+                        <copy>
+                          <from>'TIPO_REUNION'</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:tag</to>
+                        </copy>
+                        <copy>
+                          <from>$idSolicitud</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:valor</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                          <from>'DATOS_REUNION'</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:tag</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                          <from>$idSolicitud</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:valor</to>
+                        </copy>
+                      </assign></else>
+                  </if>
+                  <invoke name="invokeSoaEnviarCorreo" bpelx:invokeAsDetail="no" partnerLink="EnviarCorreoElectronico"
+                          portType="ns15:bpelEnviarCorreo" operation="process"
+                          inputVariable="varInvokeSoaEnviarCorreoRq"/>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[Presidencia]]>
+                  </documentation>
+                  <sequence name="CorreoNivelPresidencia"
+                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"><if name="IfOperacionOCliente"
+                                                                                                 xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         <![CDATA[Operacion]]>
+      </documentation>
+      <condition>string($inputVariable.request/ns2:solicitudAprobacion/ns5:idOperacion) !=''</condition>
+      
+      <sequence name="SequenceOperacion">
+                        <assign name="EnviarCorreoAssign">
+                          <copy ignoreMissingFromData="yes">
+                            <from>$inputVariable.request/ns2:listadoEmitirVoto[$EnviarCorreoEmitirVoto]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                            <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:to/ns9:usuario</to>
+                          </copy>
+                          <copy ignoreMissingFromData="yes">
+                            <from>$idOperacion</from>
+                            <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idOperacion</to>
+                          </copy>
+                          <copy>
+                            <from>16</from>
+                            <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:id_plantilla</to>
+                          </copy>
+                        </assign>
+                       <invoke name="invokeSoaEnviarCorreo" bpelx:invokeAsDetail="no" partnerLink="EnviarCorreoElectronico"
+                          portType="ns15:bpelEnviarCorreo" operation="process"
+                          inputVariable="varInvokeSoaEnviarCorreoRq"/>
+                      </sequence><else>
+         <documentation>
+            <![CDATA[Cliente]]>
+         </documentation>
+      <empty name="EmptyCliente"/></else>
+   </if>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+            <else>
+              <documentation>
+                <![CDATA[NoExisteUsuario]]>
+              </documentation>
+              <empty name="EnviarCorreoConNotificacion"/>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+    </forEach>
+    <forEach parallel="no" counterName="EnviarCorreoNotificacionCounter" name="EnviarCorreoAUsuarioConNotificacion">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($inputVariable.request/ns2:listadoConNotificacion)</finalCounterValue>
+      <scope name="EnviarCorreoConNotificacionScope">
+        <variables>
+          <variable name="varInvokeSoaEnviarCorreoRq" messageType="ns15:bpelEnviarCorreoRequestMessage"/>
+        </variables>
+        <sequence name="EnviarCorreoConNotificacionSequence">
+          <if name="NivelAprobacion">
+            <documentation>
+              <![CDATA[ComiteCredito]]>
+            </documentation>
+            <condition>$inputVariable.request/ns2:solicitudAprobacion/ns5:nivelAprobacion/ns6:Id != 2</condition>
+            <sequence name="EnviarCorreoNivelComiteCredito">
+              <if name="IfOperacionOCliente">
+                <documentation>
+                  <![CDATA[Operacion]]>
+                </documentation>
+                <condition>string($inputVariable.request/ns2:solicitudAprobacion/ns5:idOperacion) !=''</condition>
+                <assign name="EnviarConNotificacionAssign">
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>$inputVariable.request/ns2:listadoConNotificacion[$EnviarCorreoNotificacionCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:to/ns9:usuario</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>$idOperacion</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idOperacion</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>15</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:id_plantilla</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>'TIPO_REUNION'</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:tag</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes">
+                    <from>$idSolicitud</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:valor</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>'DATOS_REUNION'</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:tag</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$idSolicitud</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:valor</to>
+                  </copy>
+                </assign>
+                <else>
+                  <documentation>
+                    <![CDATA[Cliente]]>
+                  </documentation><assign name="EnviarConNotificacionCliente"
+                                          xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                    <copy>
+                      <from>$inputVariable.request/ns2:listadoConNotificacion[$EnviarCorreoNotificacionCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:to/ns9:usuario</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes">
+                      <from>$idCliente</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idClienteFenix</to>
+                    </copy>
+                    <copy>
+                      <from>87</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:id_plantilla</to>
+                    </copy>
+                    <copy>
+                      <from>'TIPO_REUNION'</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:tag</to>
+                    </copy>
+                    <copy>
+                      <from>$idSolicitud</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:valor</to>
+                    </copy>
+                    <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <from>'DATOS_REUNION'</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:tag</to>
+                    </copy>
+                    <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <from>$idSolicitud</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:valor</to>
+                    </copy>
+                  </assign></else>
+              </if>
+              <invoke name="invokeSoaEnviarCorreo" bpelx:invokeAsDetail="no" partnerLink="EnviarCorreoElectronico"
+                      portType="ns15:bpelEnviarCorreo" operation="process" inputVariable="varInvokeSoaEnviarCorreoRq"/>
+            </sequence>
+            <else>
+              <documentation>
+                <![CDATA[Presidencia]]>
+              </documentation><sequence name="EnviarCorreoNivelPresidencia"
+                                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                <if name="IfOperacionOCliente">
+                  <documentation>
+                    <![CDATA[Operacion]]>
+                  </documentation>
+                  <condition>string($inputVariable.request/ns2:solicitudAprobacion/ns5:idOperacion) !=''</condition>
+                  <if name="SecretarioPresidencia">
+                    <documentation>
+                      <![CDATA[SecretarioPresidencia]]>
+                    </documentation>
+                    <condition>$inputVariable.request/ns2:listadoConNotificacion[$EnviarCorreoNotificacionCounter]/ns5:rol/ns6:Id = 18</condition>
+                    <sequence name="EnviarCorreoSecretarioPresidencia">
+                      <assign name="EnviarCorreoAssign">
+                        <copy>
+                          <from>$inputVariable.request/ns2:listadoConNotificacion[$EnviarCorreoNotificacionCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:to/ns9:usuario</to>
+                        </copy>
+                        <copy ignoreMissingFromData="yes">
+                          <from>$idCliente</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idClienteFenix</to>
+                        </copy>
+                        <copy ignoreMissingFromData="yes">
+                          <from>$idOperacion</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idOperacion</to>
+                        </copy>
+                        <copy>
+                          <from>3</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:id_plantilla</to>
+                        </copy>
+                        <copy>
+                          <from>'ID_SOLICITUD_APROBACION'</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:tag</to>
+                        </copy>
+                        <copy>
+                          <from>$outCrearSolicitudAprobacion.response/ns2:Resultado/ns3:message</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:valor</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>'ID_NIVEL_APROBACION'</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:tag</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>$inputVariable.request/ns2:solicitudAprobacion/ns5:nivelAprobacion/ns6:Id</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:valor</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>'ID_USUARIO'</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[3]/ns9:tag</to>
+                        </copy>
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>$idUsuarioReunion</from>
+                          <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[3]/ns9:valor</to>
+                        </copy>
+                      </assign>
+                     <invoke name="invokeSoaEnviarCorreo" bpelx:invokeAsDetail="no" partnerLink="EnviarCorreoElectronico"
+                      portType="ns15:bpelEnviarCorreo" operation="process" inputVariable="varInvokeSoaEnviarCorreoRq"/>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[NoEsSecretario]]>
+                      </documentation>
+                      <scope name="EnviarCorreoScope">
+                        <variables>
+                        <variable name="varInvokeSoaEnviarCorreoRq" messageType="ns15:bpelEnviarCorreoRequestMessage"/>
+                        </variables>
+                        <sequence xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable" name="EnviarCorreo">
+                          <assign name="EnviarConNotificacionAssign">
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>$inputVariable.request/ns2:listadoConNotificacion[$EnviarCorreoNotificacionCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                              <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:to/ns9:usuario</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>$idCliente</from>
+                              <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idClienteFenix</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes">
+                              <from>$idOperacion</from>
+                              <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idOperacion</to>
+                            </copy>
+                            <copy>
+                              <from>18</from>
+                              <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:id_plantilla</to>
+                            </copy>
+                          </assign>
+                          <invoke name="invokeSoaEnviarCorreo" bpelx:invokeAsDetail="no" partnerLink="EnviarCorreoElectronico"
+                      portType="ns15:bpelEnviarCorreo" operation="process" inputVariable="varInvokeSoaEnviarCorreoRq"/>
+                        </sequence>
+                      </scope>
+                    </else>
+                  </if>
+                  <else>
+                    <documentation>
+                      <![CDATA[Cliente]]>
+                    </documentation>
+                    <empty name="EmptyCliente"/>
+                  </else>
+                </if>
+      
+   </sequence></else>
+          </if>
+        </sequence>
+      </scope>
+    </forEach>
+    <forEach parallel="no" counterName="EnviarCorreoEquipoTrabajoCounter" name="EnviarCorreoEquipoTrabajo">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($inputVariable.request/ns2:listadoEquipoTrabajo)</finalCounterValue>
+      <scope name="EnviarCorreoEquipoTrabajoScope">
+        <variables>
+          <variable name="varInvokeSoaEnviarCorreoRq" messageType="ns15:bpelEnviarCorreoRequestMessage"/>
+        </variables>
+        <sequence name="EnviarCorreoEquipoTrabajoSequence">
+          <if name="NivelAprobacion">
+            <documentation>
+              <![CDATA[ComiteCredito]]>
+            </documentation>
+            <condition>$inputVariable.request/ns2:solicitudAprobacion/ns5:nivelAprobacion/ns6:Id != 2</condition>
+            <sequence name="EnviarCorreoNivelComiteCredito"><if name="IfOperacionOCliente"
+                                                                xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         <![CDATA[Operacion]]>
+      </documentation>
+      <condition>string($inputVariable.request/ns2:solicitudAprobacion/ns5:idOperacion) !=''</condition>
+      
+      <assign name="EquipoTrabajoAssign">
+                  <copy>
+                    <from>$inputVariable.request/ns2:listadoEquipoTrabajo[$EnviarCorreoEquipoTrabajoCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:to/ns9:usuario</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes">
+                    <from>$idOperacion</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idOperacion</to>
+                  </copy>
+                  <copy>
+                    <from>14</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:id_plantilla</to>
+                  </copy>
+                  <copy>
+                    <from>'TIPO_REUNION'</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:tag</to>
+                  </copy>
+                  <copy>
+                    <from>$idSolicitud</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:valor</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>'DATOS_REUNION'</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:tag</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$idSolicitud</from>
+                    <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:valor</to>
+                  </copy>
+                </assign><else>
+         <documentation>
+            <![CDATA[Cliente]]>
+         </documentation>
+         
+      <assign name="EquipoTrabajoCliente" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                    <copy>
+                      <from>$inputVariable.request/ns2:listadoEquipoTrabajo[$EnviarCorreoEquipoTrabajoCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:to/ns9:usuario</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes">
+                      <from>$idCliente</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idClienteFenix</to>
+                    </copy>
+                    <copy>
+                      <from>86</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:id_plantilla</to>
+                    </copy>
+                    <copy>
+                      <from>'TIPO_REUNION'</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:tag</to>
+                    </copy>
+                    <copy>
+                      <from>$idSolicitud</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[1]/ns9:valor</to>
+                    </copy>
+                    <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <from>'DATOS_REUNION'</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:tag</to>
+                    </copy>
+                    <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                      <from>$idSolicitud</from>
+                      <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:parametros[2]/ns9:valor</to>
+                    </copy>
+                  </assign></else>
+   </if>
+              <invoke name="invokeSoaEnviarCorreo" bpelx:invokeAsDetail="no" partnerLink="EnviarCorreoElectronico"
+                      portType="ns15:bpelEnviarCorreo" operation="process" inputVariable="varInvokeSoaEnviarCorreoRq"/>
+            </sequence>
+            <else>
+              <documentation>
+                <![CDATA[Presidencia]]>
+              </documentation><sequence name="EnviarCorreoNivelPresidencia"
+                                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"><if name="IfOperacionOCliente"
+                                                                                                             xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         <![CDATA[Operacion]]>
+      </documentation>
+      <condition>string($inputVariable.request/ns2:solicitudAprobacion/ns5:idOperacion) !=''</condition>
+      
+      <sequence name="SequenceOperacion">
+                    <assign name="EquipoTrabajoAssign">
+                      <copy>
+                        <from>$inputVariable.request/ns2:listadoEquipoTrabajo[$EnviarCorreoEquipoTrabajoCounter]/ns5:listadoUsuarios/ns5:usuario/ns5:usuario</from>
+                        <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:to/ns9:usuario</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$idCliente</from>
+                        <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idClienteFenix</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$idOperacion</from>
+                        <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:idOperacion</to>
+                      </copy>
+                      <copy>
+                        <from>17</from>
+                        <to>$varInvokeSoaEnviarCorreoRq.payload/ns8:correoElectronico/ns9:id_plantilla</to>
+                      </copy>
+                    </assign>
+                      <invoke name="invokeSoaEnviarCorreo" bpelx:invokeAsDetail="no" partnerLink="EnviarCorreoElectronico"
+                      portType="ns15:bpelEnviarCorreo" operation="process" inputVariable="varInvokeSoaEnviarCorreoRq"/>
+                  </sequence><else>
+         <documentation>
+            <![CDATA[Cliente]]>
+         </documentation>
+         
+      <empty name="EmptyCiente"/></else>
+   </if>
+   </sequence></else>
+          </if>
+        </sequence>
+      </scope>
+    </forEach>
+    <assign name="Response">
+      <copy>
+        <from>'OK'</from>
+        <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+      </copy>
+      <copy>
+        <from>concat('La solicitud se ha creado con No. Id: ', $idSolicitud)</from>
+        <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="CrearSolicitudAprobacion_Service" portType="ns1:CrearSolicitudAprobacionPT" operation="CrearSolicitudAprobacion" variable="outputVariable"/>
+  </sequence>
+</process>

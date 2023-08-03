@@ -1,0 +1,1423 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Feb 09 12:13:58 CST 2016
+  Author:  luis-morales
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ActualizarTerminoTCC_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioMatrizTCC/ActualizarTerminoTCC/ActualizarTerminoTCC_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioMatrizTCC/ActualizarTerminoTCC/ActualizarTerminoTCC_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ActualizarTCC"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/TerminoService"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ns4="http://www.bcie.org/TerminoBO" xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:ns8="http://www.bcie.org/CondicionBO"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns9="http://www.bcie.org/DocumentoBO" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ns7="http://www.bcie.org/ComisionBO" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns3="http://www.bcie.org/MatrizTCCMO" xmlns:ns5="http://www.bcie.org/CatalogoBO"
+         xmlns:ns6="http://www.bcie.org/AtributoBO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns10="http://www.bcie.org/EliminarTerminoService" xmlns:ns11="http://www.bcie.org/TerminoMO"
+         xmlns:ns12="http://www.bcie.org/ResultBO" xmlns:ns13="http://www.bcie.org/ErrorBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns14="http://www.bcie.org/MatrizTCCService"
+         xmlns:ns15="http://www.bcie.org/MatrizTCCBO"
+         xmlns:ns16="http://www.bcie.org/ConsultarOperacionEnProcesoService"
+         xmlns:ns18="http://www.bcie.org/ConsultarOperacionEnProcesoBO"
+         xmlns:ns17="http://www.bcie.org/ConsultarOperacionEnProcesoMO"
+         xmlns:ns19="http://www.bcie.org/ConsultarContrapartesTerminoService"
+         xmlns:ns20="http://www.bcie.org/CrearTreContrapartesTerminoService"
+         xmlns:ns21="urn:ActualizarDetalleEnmiendaSAD"
+         xmlns:ns22="http://www.bcie.org/EliminarContrapartesTerminoService" xmlns:ns26="http://www.bcie.org/ReglaBO"
+         xmlns:ns23="http://www.bcie.org/OperacionBO" xmlns:ns25="http://www.bcie.org/CommonBO"
+         xmlns:ns29="http://www.bcie.org/LineaCreditoBO" xmlns:ns27="http://www.bcie.org/ProductoBO"
+         xmlns:ns28="http://www.bcie.org/HerramientaCEBO" xmlns:ns24="http://www.bcie.org/DesembolsoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/ActualizarTCC" location="../WSDLs/ActualizarTCCSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="actualizarTerminoTCC_Service" partnerLinkType="ns1:ActualizarTCCPTSOR_PLT"
+                 myRole="ActualizarTCCPTSOR_Role"/>
+    <partnerLink name="CrearTermino_SB" partnerLinkType="ns2:CrearTermino_SB" partnerRole="TerminoPT"/>
+    <partnerLink name="ActualizarTermino_SB" partnerLinkType="ns2:ActualizarTermino_SB"
+                 partnerRole="ActualizarTerminoPT"/>
+    <partnerLink name="ConsultarTermino_SB" partnerLinkType="ns2:ConsultarTermino_SB" partnerRole="ConsultarTerminoPT"/>
+    <partnerLink name="ValidarEstadoTCC" partnerLinkType="ns14:ValidarEstadoTCC" partnerRole="MatrizTCCPT"/>
+    <partnerLink name="ConsultarOperacionProcesoSB" partnerLinkType="ns16:ConsultarOperacionProcesoSB"
+                 partnerRole="ConsultarOperacionEnProcesoPT"/>
+    <partnerLink name="CrearTreContrapartesTermino_SB" partnerLinkType="ns20:CrearTreContrapartesTermino_SB"
+                 partnerRole="crearTreContrapartesterminoPT"/>
+    <partnerLink name="ActualizarDetalleEnmienda_SB" partnerLinkType="ns21:ActualizarDetalleEnmienda_SB"
+                 partnerRole="ActualizarDetalleEnmiendaRequest_PT"/>
+    <partnerLink name="EliminarTreContrapartes_SB" partnerLinkType="ns22:EliminarTreContrapartes_SB"
+                 partnerRole="EliminarContrapartesPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ActualizarTCCRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ActualizarTCCResponseMessage"/>
+    <variable name="outConsultarOperacionProceso" messageType="ns16:consultarOperacionEnProcesoResponseMessage"/>
+    <variable name="inConsultarTermino" messageType="ns2:ConsultarTerminoRequestMessage"/>
+    <variable name="outConsultarTermino" messageType="ns2:ConsultarTerminoResponseMessage"/>
+    <variable name="outConsultarTerminoActualizado" messageType="ns2:ConsultarTerminoResponseMessage"/>
+  </variables>
+  <faultHandlers>
+    <catch faultName="bpelx:timeout" faultVariable="readTimeout" faultMessageType="bpelx:RuntimeFaultMessage"><sequence name="Sequence9"><sequence name="ErrorGeneralSequence"
+                                                                                                                                                   xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="ErrorGeneralResponse">
+         
+         
+      <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns12:result</to>
+         </copy><copy>
+            <from>'No se pudo establecer comunicación con el servicio'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns12:message</to>
+         </copy><copy><from>$readTimeout.detail</from><to>$outputVariable.response/ns3:Resultado/ns12:error/ns13:errorDescription</to></copy><copy><from>$readTimeout.summary</from><to>$outputVariable.response/ns3:Resultado/ns12:error/ns13:errorType</to></copy></assign>
+      <reply name="ErrorGeneralReply" variable="outputVariable" partnerLink="actualizarTerminoTCC_Service"
+             portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+   <exit name="Exit1" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/></sequence></sequence></catch>
+    <catch bpelx:name="ErrorGeneral" faultName="bpelx:remoteFault" faultVariable="ErrorGeneral"
+           faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="ErrorGeneralSequence">
+        <assign name="ErrorGeneralResponse">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns12:result</to>
+          </copy>
+          <copy>
+            <from>'Error general en el servicio'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns12:message</to>
+          </copy>
+        </assign>
+        <reply name="ErrorGeneralReply" variable="outputVariable" partnerLink="actualizarTerminoTCC_Service"
+               portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+        <exit name="Exit1"/>
+      </sequence>
+    </catch>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ActualizarTerminoTCC_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="actualizarTerminoTCC_Service" portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC" variable="inputVariable" createInstance="yes"/>
+    <forEach parallel="no" counterName="TerminoListCounter" name="TerminoList">
+      <bpelx:skipCondition>count($inputVariable.request/ns3:Termino)=0</bpelx:skipCondition>
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($inputVariable.request/ns3:Termino)</finalCounterValue>
+      <scope name="ValidarAccionScope">
+        <sequence name="ValidarAccionSequence">
+          <assign name="AssignTerminoCounter">
+            <copy>
+              <from>$TerminoListCounter</from>
+              <to>$outputVariable.response/ns3:Termino/ns4:idTermino</to>
+            </copy>
+          </assign>
+          <assign name="TerminoTransformation">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/TerminoTransformation.xqy', 'inputVariable.request', $inputVariable.request, 'outputVariable.response', $outputVariable.response)</from>
+              <to variable="inputVariable" part="request"/>
+            </copy>
+          </assign>
+          <scope name="ConsultarOperacionProcesoScope">
+            <variables>
+              <variable name="inConsultarOperacionProceso"
+                        messageType="ns16:consultarOperacionEnProcesoRequestMessage"/>
+            </variables>
+            <faultHandlers>
+              <catch faultName="bpelx:remoteFault" faultVariable="ErrorConsultarProceso"
+                     faultMessageType="bpelx:RuntimeFaultMessage">
+                <sequence>
+                  <rethrow name="RethrowRemoteFault"/>
+                </sequence>
+              </catch>
+              <catchAll>
+                <sequence name="ErrorConsultarSequence">
+                  <assign name="AssignErrorConsultarProceso">
+                    <copy>
+                      <from>'ERROR'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns12:result</to>
+                    </copy>
+                    <copy>
+                      <from>'La operación no se encuentra en un proceso activo'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns12:message</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplyWithError" variable="outputVariable" partnerLink="actualizarTerminoTCC_Service"
+                         portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+                  <exit name="ExitWithError"/>
+                </sequence>
+              </catchAll>
+            </faultHandlers>
+            <sequence name="ConsultarProcesoSequence">
+              <assign name="ConsultarId_ProcesoRequest">
+                <copy>
+                  <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:operacion</from>
+                  <to>$inConsultarOperacionProceso.request/ns17:OperacionEnProceso/ns18:idOperacion</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.request/ns3:idProceso</from>
+                  <to>$inConsultarOperacionProceso.request/ns17:OperacionEnProceso/ns18:idProceso</to>
+                </copy>
+              </assign>
+              <invoke name="ConsultarOperacionProcesoInvoke" bpelx:invokeAsDetail="no"
+                      partnerLink="ConsultarOperacionProcesoSB" portType="ns16:ConsultarOperacionEnProcesoPT"
+                      operation="consultarOperacionEnProceso" inputVariable="inConsultarOperacionProceso"
+                      outputVariable="outConsultarOperacionProceso"/>
+              <if name="IdTermino">
+                <documentation>
+                  <![CDATA[NoIdTermino]]>
+                </documentation>
+                <condition>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino = ''</condition>
+                <empty name="ValidarEstado"/>
+                <else>
+                  <documentation>
+                    <![CDATA[ConsultarTermino]]>
+                  </documentation>
+                  <if name="OK">
+                    <documentation>
+                      <![CDATA[OK]]>
+                    </documentation>
+                    <condition>$outConsultarOperacionProceso.response/ns17:Resultado/ns12:result != 'ERROR'</condition>
+                    <scope name="ConsultarTerminoScope">
+                      <sequence name="ConsultarTerminoSequence">
+                        <assign name="ConsultarTerminoAssign">
+                          <copy>
+                            <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                            <to>$inConsultarTermino.request/ns11:idTermino</to>
+                          </copy>
+                        </assign>
+                        <invoke name="ConsultarTerminoInvoke" bpelx:invokeAsDetail="no"
+                                partnerLink="ConsultarTermino_SB" portType="ns2:ConsultarTerminoPT"
+                                operation="consultarTermino" inputVariable="inConsultarTermino"
+                                outputVariable="outConsultarTermino"/>
+                        <if name="OK">
+                          <documentation>
+                            <![CDATA[OK]]>
+                          </documentation>
+                          <condition>$outConsultarTermino.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                          <empty name="ValidarEstados"/>
+                          <else>
+                            <documentation>
+                              <![CDATA[ERROR]]>
+                            </documentation>
+                            <throw name="ThrowErrorConsultarTermino" faultName="bpelx:remoteFault"/>
+                          </else>
+                        </if>
+                      </sequence>
+                    </scope>
+                    <else>
+                      <documentation>
+                        <![CDATA[ERROR]]>
+                      </documentation>
+                      <throw name="ThrowErrorConsultarProceso" faultName="bpelx:remoteFault"/>
+                    </else>
+                  </if>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+          <scope name="ValidarEstados">
+            <faultHandlers>
+              <catch faultName="bpelx:timeout">
+                <rethrow name="RethrowTimeException"/>
+              </catch>
+              <catch faultName="bpel:selectionFailure">
+                <sequence name="ProcesoIncorrectoErrorSequence">
+                  <assign name="ProcesoIncorrectoAssignError">
+                    <copy>
+                      <from>'ERROR'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns12:result</to>
+                    </copy>
+                    <copy>
+                      <from>'El proceso no es válido para la acción'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns12:message</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplyWithError" variable="outputVariable" partnerLink="actualizarTerminoTCC_Service"
+                         portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+                  <exit name="ExitWithError"/>
+                </sequence>
+              </catch>
+              <catch faultName="bpelx:remoteFault" faultVariable="ErrorValidarEstado"
+                     faultMessageType="bpelx:RuntimeFaultMessage">
+                <rethrow name="RethrowRemoteFault"/>
+              </catch>
+              <catchAll>
+                <sequence name="ErrorValidarEstadoSequence">
+                  <assign name="ResponseError">
+                    <copy>
+                      <from>'ERROR'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns12:result</to>
+                    </copy>
+                    <copy>
+                      <from>'La operación no se encuentra en un proceso activo o el Estado no es válido para la actualización'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns12:message</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplyWithError" variable="outputVariable" partnerLink="actualizarTerminoTCC_Service"
+                         portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+                </sequence>
+              </catchAll>
+            </faultHandlers>
+            <sequence>
+              <if name="Accion">
+                <documentation>
+                  <![CDATA[AGREGAR]]>
+                </documentation>
+                <condition>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion = 'AGREGAR' </condition>
+                <sequence name="Sequence5">
+                  <if name="Proceso">
+                    <documentation>
+                      <![CDATA[ProcesoCorrecto]]>
+                    </documentation>
+                    <condition>$inputVariable.request/ns3:idProceso = 3 or $inputVariable.request/ns3:idProceso = 5 or $inputVariable.request/ns3:idProceso = 10</condition>
+                    <scope name="CrearTerminoScope">
+                      <variables>
+                        <variable name="inCrearTermino" messageType="ns2:CrearTerminoRequestMessage"/>
+                        <variable name="outCrearTermino" messageType="ns2:CrearTerminoResponseMessage"/>
+                      </variables>
+                      <sequence name="CrearTerminoSequence">
+                        <scope name="ValidarEstadoTCCScope">
+                          <variables>
+                            <variable name="inValidarEstado" messageType="ns14:ValidarEstadoTCCRequestMessage"/>
+                            <variable name="outValidarEstado" messageType="ns14:ValidarEstadoTCCResponseMessage"/>
+                          </variables>
+                          <faultHandlers>
+                            <catch faultName="bpelx:remoteFault">
+                              <rethrow name="RethrowRemoteFault"/>
+                            </catch>
+                          </faultHandlers>
+                          <sequence name="ValidarEstadoTCCSequence">
+                            <assign name="ValidaEstadoAssign">
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$inputVariable.request/ns3:Tipo</from>
+                                <to>$inValidarEstado.request/ns3:tcc/ns15:tipo</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>7</from>
+                                <to>$inValidarEstado.request/ns3:tcc/ns15:estado</to>
+                              </copy>
+                            </assign>
+                            <invoke name="VaidarEstadoInvoke" bpelx:invokeAsDetail="no" partnerLink="ValidarEstadoTCC"
+                                    portType="ns14:MatrizTCCPT" operation="validarEstadoTCC"
+                                    inputVariable="inValidarEstado" outputVariable="outValidarEstado"/>
+                            <if name="True">
+                              <documentation>
+                                <![CDATA[True]]>
+                              </documentation>
+                              <condition>$outValidarEstado.response/ns3:validacionEstados != 'false'</condition>
+                              <sequence>
+                                <sequence name="CrearTerminoYValidarEstadoSequence">
+                                  <assign name="CrearTerminoRequest">
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]</from>
+                                      <to>$inCrearTermino.request/ns11:Termino</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>7</from>
+                                      <to>$inCrearTermino.request/ns11:Termino/ns4:estadoTCC/ns6:id</to>
+                                    </copy>
+                                  </assign>
+                                  <invoke name="CrearTerminoInvoke" bpelx:invokeAsDetail="no"
+                                          partnerLink="CrearTermino_SB" portType="ns2:TerminoPT"
+                                          operation="crearTermino" inputVariable="inCrearTermino"
+                                          outputVariable="outCrearTermino"/>
+                                  <if name="OK">
+                                    <documentation>
+                                      <![CDATA[OK]]>
+                                    </documentation>
+                                    <condition>$outCrearTermino.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                                    <scope name="ConsultarTerminoScope">
+                                      <variables>
+                                        <variable name="inConsultarTerminoAgregado"
+                                                  messageType="ns2:ConsultarTerminoRequestMessage"/>
+                                        <variable name="outConsultarTerminoAgregado"
+                                                  messageType="ns2:ConsultarTerminoResponseMessage"/>
+                                      </variables>
+                                      <faultHandlers>
+                                        <catch bpelx:name="ConsultarTermino" faultName="bpelx:remoteFault"
+                                               faultVariable="ErrorConsultar"
+                                               faultMessageType="bpelx:RuntimeFaultMessage">
+                                          <sequence name="ReplyError">
+                                            <assign name="ErrorConsultarAssignResponse">
+                                              <copy>
+                                                <from>'ERROR'</from>
+                                                <to>$outputVariable.response/ns3:Resultado/ns12:result</to>
+                                              </copy>
+                                              <copy>
+                                                <from>$ErrorConsultar.code</from>
+                                                <to>$outputVariable.response/ns3:Resultado/ns12:error/ns13:errorCode</to>
+                                              </copy>
+                                              <copy>
+                                                <from>$ErrorConsultar.detail</from>
+                                                <to>$outputVariable.response/ns3:Resultado/ns12:error/ns13:errorDescription</to>
+                                              </copy>
+                                              <copy>
+                                                <from>$ErrorConsultar.summary</from>
+                                                <to>$outputVariable.response/ns3:Resultado/ns12:error/ns13:errorType</to>
+                                              </copy>
+                                            </assign>
+                                            <reply name="ReplyError" variable="outputVariable"
+                                                   partnerLink="actualizarTerminoTCC_Service"
+                                                   portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+                                          </sequence>
+                                        </catch>
+                                      </faultHandlers>
+                                      <sequence name="ConsultarTerminoSequence">
+                                        <assign name="ConsultarTerminoAssign">
+                                          <copy>
+                                            <from>$outCrearTermino.response/ns11:codigoContrato</from>
+                                            <to>$inConsultarTerminoAgregado.request/ns11:idTermino</to>
+                                          </copy>
+                                        </assign>
+                                        <invoke name="ConsultarTerminoInvoke"
+                                                partnerLink="ConsultarTermino_SB" portType="ns2:ConsultarTerminoPT"
+                                                operation="consultarTermino"
+                                                inputVariable="inConsultarTerminoAgregado"
+                                                outputVariable="outConsultarTerminoAgregado"
+                                                bpelx:invokeAsDetail="no"/>
+                                        <if name="OK">
+                                          <documentation>
+                                            <![CDATA[OK]]>
+                                          </documentation>
+                                          <condition>$outConsultarTerminoAgregado.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                                          <assign name="ResponseConsultar">
+                                            <copy>
+                                              <from>$outConsultarTerminoAgregado.response/ns11:Termino</from>
+                                              <to>$outputVariable.response/ns3:Termino[$TerminoListCounter]</to>
+                                            </copy>
+                                            <copy bpelx:insertMissingToData="yes">
+                                              <from>$outConsultarTerminoAgregado.response/ns11:Resultado/ns12:result</from>
+                                              <to>$outputVariable.response/ns3:Resultado[$TerminoListCounter]/ns12:result</to>
+                                            </copy>
+                                            <copy bpelx:insertMissingToData="yes">
+                                              <from>concat('El término ', $outCrearTermino.response/ns11:Resultado/ns12:message, ' se ha creado correctamente')</from>
+                                              <to>$outputVariable.response/ns3:Resultado/ns12:message</to>
+                                            </copy>
+                                          </assign>
+                                          <else>
+                                            <documentation>
+                                              <![CDATA[ERROR]]>
+                                            </documentation>
+                                            <throw name="ErrorConsultar" faultName="bpelx:remoteFault"/>
+                                          </else>
+                                        </if>
+                                      </sequence>
+                                    </scope>
+                                    <else>
+                                      <documentation>
+                                        <![CDATA[ERROR]]>
+                                      </documentation>
+                                      <throw name="ThrowErrorCrearTermino" faultName="bpelx:remoteFault"/>
+                                    </else>
+                                  </if>
+                                </sequence>
+                              </sequence>
+                              <else>
+                                <documentation>
+                                  <![CDATA[False]]>
+                                </documentation>
+                                <throw name="ThrowErrorValidarEstado" faultName="bpelx:remoteFault"/>
+                              </else>
+                            </if>
+                          </sequence>
+                        </scope>
+                      </sequence>
+                    </scope>
+                    <else>
+                      <documentation>
+                        <![CDATA[ProcesoIncorrecto]]>
+                      </documentation>
+                      <throw name="ThrowProcesoIncorrecto" faultName="bpel:selectionFailure"/>
+                    </else>
+                  </if>
+                </sequence>
+                <elseif>
+                  <documentation>
+                    <![CDATA[EDITAR]]>
+                  </documentation>
+                  <condition>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion = 'EDITAR' </condition>
+                  <sequence name="Sequence6">
+                    <if name="Proceso">
+                      <documentation>
+                        <![CDATA[ProcesoCorrecto]]>
+                      </documentation>
+                      <condition>$outConsultarOperacionProceso.response/ns17:Proceso/ns18:idProceso = 3 or $outConsultarOperacionProceso.response/ns17:Proceso/ns18:idProceso = 5 or $outConsultarOperacionProceso.response/ns17:Proceso/ns18:idProceso = 10 or $outConsultarOperacionProceso.response/ns17:Proceso/ns18:idProceso = 36</condition>
+                      <scope name="ActualizarTerminoScope">
+                        <variables>
+                          <variable name="inActualizarTermino" messageType="ns2:ActualizarTerminoRequestMessage"/>
+                          <variable name="outActualizarTermino" messageType="ns2:ActualizarTerminoResponseMessage"/>
+                        </variables>
+                        <sequence name="ActualizarTerminoSequence">
+                          <scope name="ValidarCambioEstadoScope">
+                            <variables>
+                              <variable name="inValidarEstadoTCC" messageType="ns14:ValidarEstadoTCCRequestMessage"/>
+                              <variable name="outValidarEstadoTCC" messageType="ns14:ValidarEstadoTCCResponseMessage"/>
+                            </variables>
+                            <faultHandlers>
+                              <catch faultName="bpelx:remoteFault" faultVariable="ValidarEstadoError"
+                                     faultMessageType="bpelx:RuntimeFaultMessage">
+                                <sequence name="ErrorValidarEstadoTcc">
+                                  <assign name="ErrorValidarTcc">
+                                    <copy>
+                                      <from>'ERROR'</from>
+                                      <to>$outputVariable.response/ns3:Resultado/ns12:result</to>
+                                    </copy>
+                                    <copy>
+                                      <from>'No se acepto el cambio de estado'</from>
+                                      <to>$outputVariable.response/ns3:Resultado/ns12:message</to>
+                                    </copy>
+                                  </assign>
+                                  <reply name="ValidarTccErrorReply" variable="outputVariable"
+                                         partnerLink="actualizarTerminoTCC_Service" portType="ns1:ActualizarTCCPTSOR"
+                                         operation="actualizarTCC"/>
+                                </sequence>
+                              </catch>
+                            </faultHandlers>
+                            <sequence name="ValidarEstadoSequence">
+                              <assign name="ValidarEstadoAssign">
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                                  <to>$inValidarEstadoTCC.request/ns3:tcc/ns15:id</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$inputVariable.request/ns3:Tipo</from>
+                                  <to>$inValidarEstadoTCC.request/ns3:tcc/ns15:tipo</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id</from>
+                                  <to>$inValidarEstadoTCC.request/ns3:tcc/ns15:estado</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes", $outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id,  "IdSubEstadoDespues","No Encontrado","Accion", $inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion, "idProceso", $inputVariable.request/ns3:idProceso)</from>
+                                  <to>$inValidarEstadoTCC.request/ns3:tcc/ns15:subEstado</to>
+                                </copy>
+                              </assign>
+                              <invoke name="ValidarEstadoInvoke" partnerLink="ValidarEstadoTCC"
+                                      portType="ns14:MatrizTCCPT" operation="validarEstadoTCC"
+                                      inputVariable="inValidarEstadoTCC" outputVariable="outValidarEstadoTCC"
+                                      bpelx:invokeAsDetail="no"/>
+                              <if name="SeValida">
+                                <documentation>
+                                  <![CDATA[true]]>
+                                </documentation>
+                                <condition>$outValidarEstadoTCC.response/ns3:validacionEstados != 'false'</condition>
+                                <sequence>
+                                  <assign name="ActualizarTerminoScope">
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]</from>
+                                      <to>$inActualizarTermino.request/ns11:Termino</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes", $outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id,  "IdSubEstadoDespues","No Encontrado","Accion", $inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion, "idProceso", $inputVariable.request/ns3:idProceso)</from>
+                                      <to>$inActualizarTermino.request/ns11:Termino/ns4:subEstadoTCC/ns6:id</to>
+                                    </copy>
+                                  </assign>
+                                  <invoke name="ActualizarTerminoInvoke" bpelx:invokeAsDetail="no"
+                                          partnerLink="ActualizarTermino_SB" portType="ns2:ActualizarTerminoPT"
+                                          operation="actualizarTermino" inputVariable="inActualizarTermino"
+                                          outputVariable="outActualizarTermino"/>
+                                  <if name="OK">
+                                    <documentation>
+                                      <![CDATA[OK]]>
+                                    </documentation>
+                                    <condition>$outActualizarTermino.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                                    <sequence name="SequenceActualizarTermino">
+                                      <scope name="ConsultarTerminoEnActualizarScope">
+                                        <variables>
+                                          <variable name="inConsultarTerminoActualizado"
+                                                    messageType="ns2:ConsultarTerminoRequestMessage"/>
+                                        </variables>
+                                        <sequence name="ConsultarTerminoActualizadoSequence">
+                                          <assign name="ConsultarTerminoActualizarRequest">
+                                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                              <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                                              <to>$inConsultarTerminoActualizado.request/ns11:idTermino</to>
+                                            </copy>
+                                          </assign>
+                                          <invoke name="ConsultarTerminoInvoke" partnerLink="ConsultarTermino_SB"
+                                                  portType="ns2:ConsultarTerminoPT" operation="consultarTermino"
+                                                  inputVariable="inConsultarTerminoActualizado"
+                                                  outputVariable="outConsultarTerminoActualizado"
+                                                  bpelx:invokeAsDetail="no"/>
+                                          <if name="OK">
+                                            <documentation>
+                                              <![CDATA[OK]]>
+                                            </documentation>
+                                            <condition>$outConsultarTerminoActualizado.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                                            <sequence name="Sequence2">
+                                              <assign name="AssignResponse">
+                                                <copy bpelx:insertMissingToData="yes">
+                                                  <from>$outConsultarTerminoActualizado.response/ns11:Termino</from>
+                                                  <to>$outputVariable.response/ns3:Termino[$TerminoListCounter]</to>
+                                                </copy>
+                                                <copy bpelx:insertMissingToData="yes">
+                                                  <from>$outActualizarTermino.response/ns11:Resultado</from>
+                                                  <to>$outputVariable.response/ns3:Resultado[$TerminoListCounter]</to>
+                                                </copy>
+                                              </assign>
+                                            </sequence>
+                                            <else>
+                                              <documentation>
+                                                <![CDATA[ERROR]]>
+                                              </documentation>
+                                              <throw name="ErrorConsultar" faultName="bpelx:remoteFault"/>
+                                            </else>
+                                          </if>
+                                        </sequence>
+                                      </scope>
+                                    </sequence>
+                                    <else>
+                                      <documentation>
+                                        <![CDATA[ERROR]]>
+                                      </documentation>
+                                      <throw name="ErrorActualizar" faultName="bpelx:remoteFault"/>
+                                    </else>
+                                  </if>
+                                </sequence>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[false]]>
+                                  </documentation>
+                                  <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                                </else>
+                              </if>
+                            </sequence>
+                          </scope>
+                        </sequence>
+                      </scope>
+                      <elseif>
+                        <documentation>
+                          <![CDATA[Aprobacion]]>
+                        </documentation>
+                        <condition>$inputVariable.request/ns3:idProceso = 4</condition>
+                        <scope name="ValidarEstadoAprobacionScope">
+                          <variables>
+                            <variable name="inValidarEstado" messageType="ns14:ValidarEstadoTCCRequestMessage"/>
+                            <variable name="outValidarEstado" messageType="ns14:ValidarEstadoTCCResponseMessage"/>
+                          </variables>
+                          <faultHandlers>
+                            <catchAll>
+                              <sequence name="ValidarEstadoSequenceError">
+                                <assign name="ValidarEstadoError">
+                                  <copy>
+                                    <from>'ERROR'</from>
+                                    <to>$outputVariable.response/ns3:Resultado/ns12:result</to>
+                                  </copy>
+                                  <copy>
+                                    <from>'No se pudo validar el estado de aprobación'</from>
+                                    <to>$outputVariable.response/ns3:Resultado/ns12:message</to>
+                                  </copy>
+                                </assign>
+                                <reply name="ReplyWithError" variable="outputVariable"
+                                       partnerLink="actualizarTerminoTCC_Service" portType="ns1:ActualizarTCCPTSOR"
+                                       operation="actualizarTCC"/>
+                                <exit name="ExitWithError"/>
+                              </sequence>
+                            </catchAll>
+                          </faultHandlers>
+                          <sequence name="ValidarEstadoAprobacionSequence">
+                            <assign name="ValidarEstadoAssign">
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                                <to>$inValidarEstado.request/ns3:tcc/ns15:id</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$inputVariable.request/ns3:Tipo</from>
+                                <to>$inValidarEstado.request/ns3:tcc/ns15:tipo</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes", $outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id,  "IdSubEstadoDespues","No Encontrado","Accion", $inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion, "idProceso", $inputVariable.request/ns3:idProceso)</from>
+                                <to>$inValidarEstado.request/ns3:tcc/ns15:subEstado</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id</from>
+                                <to>$inValidarEstado.request/ns3:tcc/ns15:estado</to>
+                              </copy>
+                            </assign>
+                            <invoke name="ActualizarEstadoInvoke"
+                                    partnerLink="ValidarEstadoTCC" portType="ns14:MatrizTCCPT"
+                                    operation="validarEstadoTCC" inputVariable="inValidarEstado"
+                                    outputVariable="outValidarEstado" bpelx:invokeAsDetail="no"/>
+                            <if name="SeValida">
+                              <documentation>
+                                <![CDATA[true]]>
+                              </documentation>
+                              <condition>$outValidarEstado.response/ns3:validacionEstados  != 'false'</condition>
+                              <scope name="ActualizarEstadoAprobacionScope">
+                                <variables>
+                                  <variable name="inActualizarTermino"
+                                            messageType="ns2:ActualizarTerminoRequestMessage"/>
+                                  <variable name="outActualizarTermino"
+                                            messageType="ns2:ActualizarTerminoResponseMessage"/>
+                                </variables>
+                                <sequence name="ActualizarEstadoAprobacionSequence">
+                                  <assign name="ActualizarTerminoAprobacionAssign">
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]</from>
+                                      <to>$inActualizarTermino.request/ns11:Termino</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes", $outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id,  "IdSubEstadoDespues","No Encontrado","Accion", $inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion, "idProceso", $inputVariable.request/ns3:idProceso)</from>
+                                      <to>$inActualizarTermino.request/ns11:Termino/ns4:subEstadoTCC/ns6:id</to>
+                                    </copy>
+                                  </assign>
+                                  <invoke name="ActualizarTerminoInvoke" bpelx:invokeAsDetail="no" partnerLink="ActualizarTermino_SB"
+                                          portType="ns2:ActualizarTerminoPT" operation="actualizarTermino"
+                                          inputVariable="inActualizarTermino" outputVariable="outActualizarTermino"/>
+                                  <if name="OK">
+                                    <documentation>
+                                      <![CDATA[OK]]>
+                                    </documentation>
+                                    <condition>$outActualizarTermino.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                                    <scope name="ConsultarTerminoActualizadoScop">
+                                      <variables>
+                                        <variable name="inConsultarTerminoActualizado"
+                                                  messageType="ns2:ConsultarTerminoRequestMessage"/>
+                                      </variables>
+                                      <sequence name="ConsultarTerminoActualizadoSequence">
+                                        <assign name="ConsultarTerminoActualizadoAssign">
+                                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                            <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                                            <to>$inConsultarTerminoActualizado.request/ns11:idTermino</to>
+                                          </copy>
+                                        </assign>
+                                        <invoke name="CosnultarTerminoActualizadoInvoke" bpelx:invokeAsDetail="no"
+                                                partnerLink="ConsultarTermino_SB" portType="ns2:ConsultarTerminoPT"
+                                                operation="consultarTermino"
+                                                inputVariable="inConsultarTerminoActualizado"
+                                                outputVariable="outConsultarTerminoActualizado"/>
+                                        <if name="OK">
+                                          <documentation>
+                                            <![CDATA[OK]]>
+                                          </documentation>
+                                          <condition>$outConsultarTerminoActualizado.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                                          <assign name="AssignResponse">
+                                            <copy>
+                                              <from>$outConsultarTerminoActualizado.response/ns11:Termino</from>
+                                              <to>$outputVariable.response/ns3:Termino</to>
+                                            </copy>
+                                            <copy>
+                                              <from>$outActualizarTermino.response/ns11:Resultado</from>
+                                              <to>$outputVariable.response/ns3:Resultado</to>
+                                            </copy>
+                                          </assign>
+                                          <else>
+                                            <documentation>
+                                              <![CDATA[ERROR]]>
+                                            </documentation>
+                                            <throw name="ThrowErrorConsultar" faultName="bpelx:remoteFault"/>
+                                          </else>
+                                        </if>
+                                      </sequence>
+                                    </scope>
+                                    <else>
+                                      <documentation>
+                                        <![CDATA[ERROR]]>
+                                      </documentation>
+                                      <throw name="ThrowErrorActualizar" faultName="bpelx:remoteFault"/>
+                                    </else>
+                                  </if>
+                                </sequence>
+                              </scope>
+                              <else>
+                                <documentation>
+                                  <![CDATA[false]]>
+                                </documentation>
+                                <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                              </else>
+                            </if>
+                          </sequence>
+                        </scope>
+                      </elseif>
+                      <else>
+                        <documentation>
+                          <![CDATA[ProcesoIncorrecto]]>
+                        </documentation>
+                        <throw name="ThrowProcesoIncorrecto" faultName="bpel:selectionFailure"/>
+                      </else>
+                    </if>
+                  </sequence>
+                </elseif>
+                <elseif>
+                  <documentation>
+                    <![CDATA[ELIMINAR]]>
+                  </documentation>
+                  <condition>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion = 'ELIMINAR' </condition>
+                  <sequence name="Sequence7">
+                    <if name="Proceso">
+                      <documentation>
+                        <![CDATA[ProcesoCorrecto]]>
+                      </documentation>
+                      <condition>$outConsultarOperacionProceso.response/ns17:Proceso/ns18:idProceso = 3 or $outConsultarOperacionProceso.response/ns17:Proceso/ns18:idProceso = 5 or $outConsultarOperacionProceso.response/ns17:Proceso/ns18:idProceso = 10  or $outConsultarOperacionProceso.response/ns17:Proceso/ns18:idProceso = 4</condition>
+                      <scope name="EliminarTerminoScope">
+                        <variables>
+                          <variable name="inActualizarTermino" messageType="ns2:ActualizarTerminoRequestMessage"/>
+                          <variable name="outActualizarTermino" messageType="ns2:ActualizarTerminoResponseMessage"/>
+                        </variables>
+                        <faultHandlers>
+                          <catch bpelx:name="ErrorEliminar" faultName="bpelx:remoteFault" faultVariable="ErrorEliminar"
+                                 faultMessageType="bpelx:RuntimeFaultMessage">
+                            <sequence name="ErrorEliminarSequence">
+                              <assign name="AssignErrorEliminar">
+                                <copy>
+                                  <from>'ERROR'</from>
+                                  <to>$outputVariable.response/ns3:Resultado/ns12:result</to>
+                                </copy>
+                                <copy>
+                                  <from>$ErrorEliminar.code</from>
+                                  <to>$outputVariable.response/ns3:Resultado/ns12:error/ns13:errorCode</to>
+                                </copy>
+                                <copy>
+                                  <from>$ErrorEliminar.detail</from>
+                                  <to>$outputVariable.response/ns3:Resultado/ns12:error/ns13:errorDescription</to>
+                                </copy>
+                                <copy>
+                                  <from>$ErrorEliminar.summary</from>
+                                  <to>$outputVariable.response/ns3:Resultado/ns12:error/ns13:errorType</to>
+                                </copy>
+                              </assign>
+                              <reply name="ReplyErrorEliminar" variable="outputVariable"
+                                     partnerLink="actualizarTerminoTCC_Service" portType="ns1:ActualizarTCCPTSOR"
+                                     operation="actualizarTCC"/>
+                            </sequence>
+                          </catch>
+                        </faultHandlers>
+                        <sequence name="EliminarTerminoSequence">
+                          <scope name="ValidarTerminoScope">
+                            <variables>
+                              <variable name="inValidarEstadoTCC" messageType="ns14:ValidarEstadoTCCRequestMessage"/>
+                              <variable name="outValidarEstadoTCC" messageType="ns14:ValidarEstadoTCCResponseMessage"/>
+                            </variables>
+                            <sequence name="ValidarEstadoSequence">
+                              <assign name="ValidarEstadoAssign">
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                                  <to>$inValidarEstadoTCC.request/ns3:tcc/ns15:id</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$inputVariable.request/ns3:Tipo</from>
+                                  <to>$inValidarEstadoTCC.request/ns3:tcc/ns15:tipo</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id</from>
+                                  <to>$inValidarEstadoTCC.request/ns3:tcc/ns15:estado</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes", $outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id,  "IdSubEstadoDespues","No Encontrado","Accion", $inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion, "idProceso", $inputVariable.request/ns3:idProceso)</from>
+                                  <to>$inValidarEstadoTCC.request/ns3:tcc/ns15:subEstado</to>
+                                </copy>
+                              </assign>
+                              <invoke name="ValidarEstadoInvoke" bpelx:invokeAsDetail="no"
+                                      partnerLink="ValidarEstadoTCC" portType="ns14:MatrizTCCPT"
+                                      operation="validarEstadoTCC" inputVariable="inValidarEstadoTCC"
+                                      outputVariable="outValidarEstadoTCC"/>
+                              <if name="SeValida">
+                                <documentation>
+                                  <![CDATA[true]]>
+                                </documentation>
+                                <condition>$outValidarEstadoTCC.response/ns3:validacionEstados != 'false'</condition>
+                                <sequence>
+                                  <assign name="EliminarTerminoRequest">
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                                      <to>$inActualizarTermino.request/ns11:Termino/ns4:idTermino</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>0</from>
+                                      <to>$inActualizarTermino.request/ns11:Termino/ns4:estado</to>
+                                    </copy>
+                                    <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                      <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes", $outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id,  "IdSubEstadoDespues","No Encontrado","Accion", $inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion, "idProceso", $inputVariable.request/ns3:idProceso)</from>
+                                      <to>$inActualizarTermino.request/ns11:Termino/ns4:subEstadoTCC/ns6:id</to>
+                                    </copy>
+                                  </assign>
+                                  <invoke name="InvokeActualizarTermino" bpelx:invokeAsDetail="no"
+                                          partnerLink="ActualizarTermino_SB" portType="ns2:ActualizarTerminoPT"
+                                          operation="actualizarTermino" inputVariable="inActualizarTermino"
+                                          outputVariable="outActualizarTermino"/>
+                                  <if name="OK">
+                                    <documentation>
+                                      <![CDATA[OK]]>
+                                    </documentation>
+                                    <condition>$outActualizarTermino.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                                    <sequence name="Sequence4">
+                                      <scope name="ConsultarTerminoActualizado">
+                                        <variables>
+                                          <variable name="inConsultarTerminoActualizado"
+                                                    messageType="ns2:ConsultarTerminoRequestMessage"/>
+                                        </variables>
+                                        <sequence name="ConsultarTerminoSequence">
+                                          <assign name="ConsultarTerminoActualizadoAssign">
+                                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                              <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                                              <to>$inConsultarTerminoActualizado.request/ns11:idTermino</to>
+                                            </copy>
+                                          </assign>
+                                          <invoke name="ConsultarTerminoActualizadoInvoke"
+                                                  partnerLink="ConsultarTermino_SB" portType="ns2:ConsultarTerminoPT"
+                                                  operation="consultarTermino"
+                                                  inputVariable="inConsultarTerminoActualizado"
+                                                  outputVariable="outConsultarTerminoActualizado"
+                                                  bpelx:invokeAsDetail="no"/>
+                                          <if name="OK">
+                                            <documentation>
+                                              <![CDATA[OK]]>
+                                            </documentation>
+                                            <condition>$outConsultarTerminoActualizado.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                                            <assign name="ElimnarResponse">
+                                              <copy>
+                                                <from>'OK'</from>
+                                                <to>$outputVariable.response/ns3:Resultado[$TerminoListCounter]/ns12:result</to>
+                                              </copy>
+                                              <copy bpelx:insertMissingToData="yes">
+                                                <from>concat('El término, ', $inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino, ' se ha eliminado correctamente')</from>
+                                                <to>$outputVariable.response/ns3:Resultado[$TerminoListCounter]/ns12:message</to>
+                                              </copy>
+                                            </assign>
+                                            <else>
+                                              <documentation>
+                                                <![CDATA[ERROR]]>
+                                              </documentation>
+                                              <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                                            </else>
+                                          </if>
+                                        </sequence>
+                                      </scope>
+                                    </sequence>
+                                    <else>
+                                      <documentation>
+                                        <![CDATA[ERROR]]>
+                                      </documentation>
+                                      <throw name="ErrorEliminar" faultName="bpelx:remoteFault"/>
+                                    </else>
+                                  </if>
+                                </sequence>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[false]]>
+                                  </documentation>
+                                  <throw name="ThrowErrorValidar" faultName="bpelx:remoteFault"/>
+                                </else>
+                              </if>
+                            </sequence>
+                          </scope>
+                        </sequence>
+                      </scope>
+                      <else>
+                        <documentation>
+                          <![CDATA[ProcesoIncorrecto]]>
+                        </documentation>
+                        <throw name="ThrowProcesoIncorrecto" faultName="bpel:selectionFailure"/>
+                      </else>
+                    </if>
+                  </sequence>
+                </elseif>
+                <elseif>
+                  <documentation>
+                    <![CDATA[DISPENSAR]]>
+                  </documentation>
+                  <condition>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion = 'DISPENSAR'</condition>
+                  <sequence name="Sequence1">
+                    <if name="Proceso">
+                      <documentation>
+                        <![CDATA[ProcesoOperacion]]>
+                      </documentation>
+                      <condition>$outConsultarOperacionProceso.response/ns17:Proceso/ns18:idProceso = 10</condition>
+                      <scope name="DispensarTerminoScope">
+                        <sequence>
+                          <scope name="ValidarEstadoScope">
+                            <variables>
+                              <variable name="inValidarEstado" messageType="ns14:ValidarEstadoTCCRequestMessage"/>
+                              <variable name="outValidarEstado" messageType="ns14:ValidarEstadoTCCResponseMessage"/>
+                            </variables>
+                            <sequence name="ValidarEstadoSequence">
+                              <assign name="ValidarEstadoAssign">
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                                  <to>$inValidarEstado.request/ns3:tcc/ns15:id</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$inputVariable.request/ns3:Tipo</from>
+                                  <to>$inValidarEstado.request/ns3:tcc/ns15:tipo</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id</from>
+                                  <to>$inValidarEstado.request/ns3:tcc/ns15:estado</to>
+                                </copy>
+                                <copy>
+                                  <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes", $outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id,  "IdSubEstadoDespues","No Encontrado","Accion", $inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion, "idProceso", $inputVariable.request/ns3:idProceso)</from>
+                                  <to>$inValidarEstado.request/ns3:tcc/ns15:subEstado</to>
+                                </copy>
+                              </assign>
+                              <invoke name="ValidarEstadoInvoke" bpelx:invokeAsDetail="no"
+                                      partnerLink="ValidarEstadoTCC" portType="ns14:MatrizTCCPT"
+                                      operation="validarEstadoTCC" inputVariable="inValidarEstado"
+                                      outputVariable="outValidarEstado"/>
+                              <if name="SeValida">
+                                <documentation>
+                                  <![CDATA[True]]>
+                                </documentation>
+                                <condition>$outValidarEstado.response/ns3:validacionEstados != 'false'</condition>
+                                <scope name="ActualizarTerminoScope">
+                                  <variables>
+                                    <variable name="inActualizarTermino"
+                                              messageType="ns2:ActualizarTerminoRequestMessage"/>
+                                    <variable name="outActualizarTermino"
+                                              messageType="ns2:ActualizarTerminoResponseMessage"/>
+                                  </variables>
+                                  <sequence name="ActualizarTerminoSequence">
+                                    <assign name="ActualizarTerminoAssign">
+                                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                        <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]</from>
+                                        <to>$inActualizarTermino.request/ns11:Termino</to>
+                                      </copy>
+                                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                        <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes", $outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id,  "IdSubEstadoDespues","No Encontrado","Accion", $inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion, "idProceso", $inputVariable.request/ns3:idProceso)</from>
+                                        <to>$inActualizarTermino.request/ns11:Termino/ns4:subEstadoTCC/ns6:id</to>
+                                      </copy>
+                                    </assign>
+                                    <invoke name="ActualizarTerminoInvoke" bpelx:invokeAsDetail="no"
+                                            partnerLink="ActualizarTermino_SB" portType="ns2:ActualizarTerminoPT"
+                                            operation="actualizarTermino" inputVariable="inActualizarTermino"
+                                            outputVariable="outActualizarTermino"/>
+                                    <if name="OK">
+                                      <documentation>
+                                        <![CDATA[OK]]>
+                                      </documentation>
+                                      <condition>$outActualizarTermino.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                                      <scope name="ConsultarTerminoActualizadoScope"
+                                             xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                                        <variables>
+                                          <variable name="inConsultarTerminoActualizado"
+                                                    messageType="ns2:ConsultarTerminoRequestMessage"/>
+                                        </variables>
+                                        <sequence name="ConsultarTerminoActualizadoScope">
+                                          <assign name="ConsultarTerminoAssign">
+                                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                              <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                                              <to>$inConsultarTerminoActualizado.request/ns11:idTermino</to>
+                                            </copy>
+                                          </assign>
+                                          <invoke name="ConsultarTerminoInvoke" partnerLink="ConsultarTermino_SB"
+                                                  portType="ns2:ConsultarTerminoPT" operation="consultarTermino"
+                                                  inputVariable="inConsultarTerminoActualizado"
+                                                  outputVariable="outConsultarTerminoActualizado"
+                                                  xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                                  bpelx:invokeAsDetail="no"/>
+                                          <if name="OK">
+                                            <documentation>
+                                              <![CDATA[OK]]>
+                                            </documentation>
+                                            <condition>$outConsultarTerminoActualizado.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                                            <sequence name="Sequence3">
+                                              <assign name="AssignResultado">
+                                                <copy>
+                                                  <from>$outConsultarTerminoActualizado.response/ns11:Termino</from>
+                                                  <to>$outputVariable.response/ns3:Termino</to>
+                                                </copy>
+                                                <copy>
+                                                  <from>$outActualizarTermino.response/ns11:Resultado</from>
+                                                  <to>$outputVariable.response/ns3:Resultado</to>
+                                                </copy>
+                                              </assign>
+                                            </sequence>
+                                            <else>
+                                              <documentation>
+                                                <![CDATA[ERROR]]>
+                                              </documentation>
+                                              <throw name="ThrowErrorConsultar" faultName="bpelx:remoteFault"/>
+                                            </else>
+                                          </if>
+                                        </sequence>
+                                      </scope>
+                                      <else>
+                                        <documentation>
+                                          <![CDATA[ERROR]]>
+                                        </documentation>
+                                        <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                                      </else>
+                                    </if>
+                                  </sequence>
+                                </scope>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[False]]>
+                                  </documentation>
+                                  <throw name="ThrowErrorValidar" faultName="bpelx:remoteFault"/>
+                                </else>
+                              </if>
+                            </sequence>
+                          </scope>
+                        </sequence>
+                      </scope>
+                      <else>
+                        <documentation>
+                          <![CDATA[ProcesoIncorrecto]]>
+                        </documentation>
+                        <throw name="ThrowProcesoIncorrecto" faultName="bpel:selectionFailure"/>
+                      </else>
+                    </if>
+                  </sequence>
+                </elseif>
+                <elseif>
+                  <documentation>
+                    <![CDATA[EXCEPTUAR]]>
+                  </documentation>
+                  <condition>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion = 'EXCEPTUAR'</condition>
+                  <sequence name="Sequence8">
+                    <if name="Proceso">
+                      <documentation>
+                        <![CDATA[ProcesoOperacion]]>
+                      </documentation>
+                      <condition>$outConsultarOperacionProceso.response/ns17:Proceso/ns18:idProceso = 3 or $outConsultarOperacionProceso.response/ns17:Proceso/ns18:idProceso = 5</condition>
+                      <scope name="ExcpetuarScope">
+                        <scope name="ValidarEstadosScope">
+                          <variables>
+                            <variable name="inValidarEstado" messageType="ns14:ValidarEstadoTCCRequestMessage"/>
+                            <variable name="outValidarEstado" messageType="ns14:ValidarEstadoTCCResponseMessage"/>
+                          </variables>
+                          <sequence name="ValidarEstadoSequence">
+                            <assign name="ValidarEstadoAssign">
+                              <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                                <to>$inValidarEstado.request/ns3:tcc/ns15:id</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$inputVariable.request/ns3:Tipo</from>
+                                <to>$inValidarEstado.request/ns3:tcc/ns15:tipo</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                <from>$outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id</from>
+                                <to>$inValidarEstado.request/ns3:tcc/ns15:estado</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes", $outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id,  "IdSubEstadoDespues","No Encontrado","Accion", $inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion, "idProceso", $inputVariable.request/ns3:idProceso)</from>
+                                <to>$inValidarEstado.request/ns3:tcc/ns15:subEstado</to>
+                              </copy>
+                            </assign>
+                            <invoke name="ValidarEstadoInvoke" bpelx:invokeAsDetail="no" partnerLink="ValidarEstadoTCC"
+                                    portType="ns14:MatrizTCCPT" operation="validarEstadoTCC"
+                                    inputVariable="inValidarEstado" outputVariable="outValidarEstado"/>
+                            <if name="SeValida">
+                              <documentation>
+                                <![CDATA[True]]>
+                              </documentation>
+                              <condition>$outValidarEstado.response/ns3:validacionEstados != 'false'</condition>
+                              <scope name="ActualizarTerminoScope">
+                                <variables>
+                                  <variable name="inActualizarTermino"
+                                            messageType="ns2:ActualizarTerminoRequestMessage"/>
+                                  <variable name="outActualizarTermino"
+                                            messageType="ns2:ActualizarTerminoResponseMessage"/>
+                                </variables>
+                                <sequence name="ActualizarTerminoSequence">
+                                  <assign name="ActualizarTerminoAssign">
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$inputVariable.request/ns3:Termino</from>
+                                      <to>$inActualizarTermino.request/ns11:Termino</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes", $outConsultarTermino.response/ns11:Termino/ns4:estadoTCC/ns6:id,  "IdSubEstadoDespues","No Encontrado","Accion", $inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:Accion, "idProceso", $inputVariable.request/ns3:idProceso)</from>
+                                      <to>$inActualizarTermino.request/ns11:Termino/ns4:subEstadoTCC/ns6:id</to>
+                                    </copy>
+                                  </assign>
+                                  <invoke name="ActualizarTerminoInvoke" bpelx:invokeAsDetail="no"
+                                          partnerLink="ActualizarTermino_SB" portType="ns2:ActualizarTerminoPT"
+                                          operation="actualizarTermino" inputVariable="inActualizarTermino"
+                                          outputVariable="outActualizarTermino"/>
+                                  <if name="OK">
+                                    <documentation>
+                                      <![CDATA[OK]]>
+                                    </documentation>
+                                    <condition>$outActualizarTermino.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                                    <scope name="ConsultarTerminoActualizadoScope">
+                                      <variables>
+                                        <variable name="inConsultarTerminoActualizado"
+                                                  messageType="ns2:ConsultarTerminoRequestMessage"/>
+                                      </variables>
+                                      <sequence name="ConsultarTerminoActualizadoScope">
+                                        <assign name="ConsultarTerminoAssign">
+                                          <copy>
+                                            <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                                            <to>$inConsultarTerminoActualizado.request/ns11:idTermino</to>
+                                          </copy>
+                                        </assign>
+                                        <invoke name="ConsultarTerminoInvoke" partnerLink="ConsultarTermino_SB"
+                                                portType="ns2:ConsultarTerminoPT" operation="consultarTermino"
+                                                inputVariable="inConsultarTerminoActualizado"
+                                                outputVariable="outConsultarTerminoActualizado"
+                                                bpelx:invokeAsDetail="no"/>
+                                        <if name="OK">
+                                          <documentation>
+                                            <![CDATA[OK]]>
+                                          </documentation>
+                                          <condition>$outConsultarTerminoActualizado.response/ns11:Resultado/ns12:result != 'ERROR'</condition>
+                                          <sequence>
+                                            <assign name="AssignResultado">
+                                              <copy>
+                                                <from>$outConsultarTerminoActualizado.response/ns11:Termino</from>
+                                                <to>$outputVariable.response/ns3:Termino</to>
+                                              </copy>
+                                              <copy>
+                                                <from>$outActualizarTermino.response/ns11:Resultado</from>
+                                                <to>$outputVariable.response/ns3:Resultado</to>
+                                              </copy>
+                                            </assign>
+                                          </sequence>
+                                          <else>
+                                            <documentation>
+                                              <![CDATA[ERROR]]>
+                                            </documentation>
+                                            <throw name="ThrowErrorConsultar" faultName="bpelx:remoteFault"/>
+                                          </else>
+                                        </if>
+                                      </sequence>
+                                    </scope>
+                                    <else>
+                                      <documentation>
+                                        <![CDATA[ERROR]]>
+                                      </documentation>
+                                      <throw name="ThrowErrorActualizar" faultName="bpelx:remoteFault"/>
+                                    </else>
+                                  </if>
+                                </sequence>
+                              </scope>
+                              <else>
+                                <documentation>
+                                  <![CDATA[False]]>
+                                </documentation>
+                                <throw name="ThrowErrorValidar" faultName="bpelx:remoteFault"/>
+                              </else>
+                            </if>
+                          </sequence>
+                        </scope>
+                      </scope>
+                      <else>
+                        <documentation>
+                          <![CDATA[ProcesoIncorrecto]]>
+                        </documentation>
+                        <throw name="ThrowProcesoIncorrecto" faultName="bpel:selectionFailure"/>
+                      </else>
+                    </if>
+                  </sequence>
+                </elseif>
+                <else>
+                  <documentation>
+                    <![CDATA[ERROR]]>
+                  </documentation>
+                  <throw name="ThrowErrorGeneral" faultName="bpelx:remoteFault"/>
+                </else>
+              </if>
+              <if name="TerminoAgregado">
+                <documentation>
+                  <![CDATA[TieneIdTermino]]>
+                </documentation>
+                <condition>$inputVariable.request/ns3:Termino/ns4:idTermino != ''</condition>
+                <sequence name="IdTerminoAgregadoSequence">
+                  <scope name="EliminarContrapartesTerminoScope">
+                    <variables>
+                      <variable name="inEliminarContrapartes"
+                                messageType="ns22:EliminarContrapartesTerminoRequestMessage"/>
+                      <variable name="outEliminarContrapartes"
+                                messageType="ns22:EliminarContrapartesTerminoResponseMessage"/>
+                    </variables>
+                    <faultHandlers>
+                      <catch faultName="bpelx:timeout" faultVariable="readTimeout"
+                             faultMessageType="bpelx:RuntimeFaultMessage">
+                        <sequence name="ReadTimeoutError">
+                          <assign name="AssignReadTimeoutError">
+                            <copy>
+                              <from>'ERROR'</from>
+                              <to>$outputVariable.response/ns3:Resultado/ns12:result</to>
+                            </copy>
+                            <copy>
+                              <from>'No se pudo establecer comunicación con el servicio'</from>
+                              <to>$outputVariable.response/ns3:Resultado/ns12:message</to>
+                            </copy>
+                            <copy>
+                              <from>$readTimeout.detail</from>
+                              <to>$outputVariable.response/ns3:Resultado/ns12:error/ns13:errorDescription</to>
+                            </copy>
+                            <copy>
+                              <from>$readTimeout.summary</from>
+                              <to>$outputVariable.response/ns3:Resultado/ns12:error/ns13:errorType</to>
+                            </copy>
+                          </assign>
+                          <reply name="ReplyWithError" variable="outputVariable"
+                                 partnerLink="actualizarTerminoTCC_Service" portType="ns1:ActualizarTCCPTSOR"
+                                 operation="actualizarTCC"/>
+                          <exit name="ExitWithError"/>
+                        </sequence>
+                      </catch>
+                    </faultHandlers>
+                    <sequence name="EliminarContrapartesTerminoSequence">
+                      <assign name="EliminarContrapartesAssign">
+                        <copy>
+                          <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                          <to>$inEliminarContrapartes.request/ns11:idTermino</to>
+                        </copy>
+                      </assign>
+                      <invoke name="EliminarContrapartesInvoke" bpelx:invokeAsDetail="no"
+                              partnerLink="EliminarTreContrapartes_SB" portType="ns22:EliminarContrapartesPT"
+                              operation="eliminarContrapartesTermino" inputVariable="inEliminarContrapartes"
+                              outputVariable="outEliminarContrapartes"/>
+                      <if name="OK">
+                        <documentation>
+                          <![CDATA[OK]]>
+                        </documentation>
+                        <condition>$outEliminarContrapartes.response/ns11:Respuesta/ns12:result != 'ERROR'</condition>
+                        <forEach parallel="no" counterName="ContrapartesCounter" name="ContrapartesCounter">
+                          <startCounterValue>1</startCounterValue>
+                          <finalCounterValue>count($inputVariable.request/ns3:Termino/ns4:Contraparte)</finalCounterValue>
+                          <scope name="CrearContrapartesTerminoList">
+                            <variables>
+                              <variable name="inCrearContrapartes"
+                                        messageType="ns20:CrearTreContrapartesTerminoRequestMessage"/>
+                              <variable name="outCrearContrapartes"
+                                        messageType="ns20:CrearTreContrapartesTerminoResponseMessage"/>
+                            </variables>
+                            <sequence name="CrearContrapartesTerminoSequence">
+                              <assign name="CrearContrapartesTerminoAssign">
+                                <copy>
+                                  <from>$inputVariable.request/ns3:Termino[$TerminoListCounter]/ns4:idTermino</from>
+                                  <to>$inCrearContrapartes.CrearTreContrapartesTerminoRequest/ns11:idTermino</to>
+                                </copy>
+                                <copy>
+                                  <from>$inputVariable.request/ns3:Termino/ns4:Contraparte[$ContrapartesCounter]/ns6:id</from>
+                                  <to>$inCrearContrapartes.CrearTreContrapartesTerminoRequest/ns11:idCliente</to>
+                                </copy>
+                              </assign>
+                              <invoke name="CrearContrapartesTerminoInvoke" partnerLink="CrearTreContrapartesTermino_SB"
+                                      portType="ns20:crearTreContrapartesterminoPT"
+                                      operation="crearTreContrapartesTermino" inputVariable="inCrearContrapartes"
+                                      outputVariable="outCrearContrapartes" bpelx:invokeAsDetail="no"/>
+                            </sequence>
+                          </scope>
+                        </forEach>
+                        <else>
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <throw name="ThrowEliminarContrapartesError" faultName="bpelx:timeout"/>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                  <if name="Enmiendas">
+                    <documentation>
+                      <![CDATA[Formalizacion]]>
+                    </documentation>
+                    <condition>$inputVariable.request/ns3:idProceso = 10</condition>
+                    <scope name="ActualizarDetalleEnmienda">
+                      <variables>
+                        <variable name="inActualizarDetalleEnmienda"
+                                  messageType="ns21:ActualizarDetalleEnmiendaRequestMessage"/>
+                        <variable name="outActualizarDetalleEnmienda"
+                                  messageType="ns21:ActualizarDetalleEnmiendaResponseMessage"/>
+                      </variables>
+                      <sequence name="ActualizarDetalleEnmiendaSequence">
+                        <assign name="DetalleEnmiendaAssign">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/DetalleEnmienda.xqy', 'inputVariable.request', $inputVariable.request, 'outConsultarTerminoActualizado.response', $outConsultarTerminoActualizado.response)</from>
+                            <to variable="inActualizarDetalleEnmienda" part="ActualizarDetalleEnmiendaRequest"/>
+                          </copy>
+                        </assign>
+                        <invoke name="ActualizarDetalleEnmiendaInvoke" bpelx:invokeAsDetail="no"
+                                partnerLink="ActualizarDetalleEnmienda_SB"
+                                portType="ns21:ActualizarDetalleEnmiendaRequest_PT"
+                                operation="actualizarDetalleEnmiendaRequest" inputVariable="inActualizarDetalleEnmienda"
+                                outputVariable="outActualizarDetalleEnmienda"/>
+                      </sequence>
+                    </scope>
+                  </if>
+                  <scope name="PropagarTerminoScope">
+                    <variables>
+                      <variable name="inPropagarTermino" messageType="ns14:propagarTerminoRequestMessage"/>
+                      <variable name="outPropagarTermino" messageType="ns14:propagarTerminoResponseMessage"/>
+                    </variables>
+                    <faultHandlers>
+                      <catchAll>
+                        <empty name="ERROR_AL_PROPAGAR"/>
+                      </catchAll>
+                    </faultHandlers>
+                    <sequence name="PropagarTerminoSequence">
+                      <assign name="PropagarTerminoAssign">
+                        <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                          <from>$outConsultarTerminoActualizado.response/ns11:Termino[$TerminoListCounter]</from>
+                          <to>$inPropagarTermino.request/ns3:ListaTerminos/ns4:Termino</to>
+                        </copy>
+                        <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                          <from>$inputVariable.request/ns3:Instancia_proceso</from>
+                          <to>$inPropagarTermino.request/ns3:Instancia_proceso</to>
+                        </copy>
+                      </assign>
+                      <invoke name="PropagarTerminoInvoke" bpelx:invokeAsDetail="no" partnerLink="ValidarEstadoTCC"
+                              portType="ns14:MatrizTCCPT" operation="propagarTermino" inputVariable="inPropagarTermino"
+                              outputVariable="outPropagarTermino"/>
+                    </sequence>
+                  </scope>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[NoTieneIdTermino]]>
+                  </documentation>
+                  <empty name="SeguirValidando"/>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+        </sequence>
+      </scope>
+    </forEach>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="actualizarTerminoTCC_Service" portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC" variable="outputVariable"/>
+  </sequence>
+</process>

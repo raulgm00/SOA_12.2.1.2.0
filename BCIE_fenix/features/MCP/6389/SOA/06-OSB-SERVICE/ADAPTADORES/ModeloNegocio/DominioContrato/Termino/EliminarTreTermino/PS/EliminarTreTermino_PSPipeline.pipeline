@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioContrato/Termino/V1/Wsdl/ADAPTER/EliminarTreTerminoSAD"/>
+            <con:binding>
+                <con:name>EliminarTreTermino12Bnd</con:name>
+                <con:namespace>http://www.bcie.org/EliminarTreTerminoService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:transactions isRequired="true" sameTxForResponse="false"/>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-a050af2.b051ebe.0.1538aff5ea4.N7cfa">
+        <con:pipeline type="error" name="error-a050af2.b051ebe.0.1538aff5ea4.N7cfa">
+            <con:stage id="_StageId-a050af2.b051ebe.0.1538aff5ea4.N7c80" name="StageError" xmlns:con4="http://www.bea.com/wli/sb/typesystem/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con5="http://www.bea.com/wli/sb/stages/publish/config" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                <con:context/>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a050af2.b051ebe.0.1538aff5ea4.N7c7f</con6:id>
+                        <con1:case id="_BranchId-a050af2.b051ebe.0.1538aff5ea4.N7c7e">
+                            <con1:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError) = 0</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:assign varName="codigoError">
+                                    <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a050af2.b051ebe.0.1538aff5ea4.N7c7d</con6:id>
+                                    <con1:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:assign>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default/>
+                    </con1:ifThenElse>
+                    <con1:assign varName="inMapeoError">
+                        <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a050af2.b051ebe.0.1538aff5ea4.N7c7c</con6:id>
+                        <con1:expr>
+                            <con4:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con4:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con4:param name="codigoError">
+                                    <con4:path>xs:string(fn:data($codigoError))</con4:path>
+                                </con4:param>
+                            </con4:xqueryTransform>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:wsCallout>
+                        <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a050af2.b051ebe.0.1538aff5ea4.N7c7b</con6:id>
+                        <con1:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>MapearError</con1:operation>
+                        <con1:request>
+                            <con1:body wrapped="false">inMapeoError</con1:body>
+                        </con1:request>
+                        <con1:response>
+                            <con1:body wrapped="false">outMapeoError</con1:body>
+                        </con1:response>
+                        <con1:requestTransform/>
+                        <con1:responseTransform/>
+                    </con1:wsCallout>
+                    <con1:replace varName="body" contents-only="true">
+                        <con6:id xmlns:con6="http://www.bea.com/wli/sb/stages/config">_ActionId-a050af2.b051ebe.0.1538aff5ea4.N7c7a</con6:id>
+                        <con1:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con6:xqueryTransform xmlns:con6="http://www.bea.com/wli/sb/stages/config">
+                                <con6:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/Termino/EliminarTreTermino/XQUERY/Error_TO_EliminarTreTermino_PS_Response"/>
+                                <con6:param name="message">
+                                    <con6:path>xs:string(fn:data($fault/ctx:reason))</con6:path>
+                                </con6:param>
+                                <con6:param name="ErrorResponse">
+                                    <con6:path>$outMapeoError</con6:path>
+                                </con6:param>
+                            </con6:xqueryTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con4:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-a050af2.b051ebe.0.1538aff5ea4.N7c79</con4:id>
+                    </con4:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteNode1">
+                <con:context>
+                    <con1:userNsDecl prefix="ter" namespace="http://www.bcie.org/TerminoMO"/>
+                </con:context>
+                <con:actions>
+                    <con2:route>
+                        <con1:id>_ActionId-a050a44.1dba638c.0.1520ea2b1cb.N7e45</con1:id>
+                        <con2:service ref="ADAPTADORES/ModeloNegocio/DominioContrato/Termino/EliminarTreTermino/BS/EliminarTreTermino_DB" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:operation>EliminarTreTermino_DB</con2:operation>
+                        <con2:outboundTransform>
+                            <con4:log>
+                                <con1:id>_ActionId-N3f579bc0.N5af5b8db.0.15351d75984.N7f9e</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>EliminarTreTermino-Request</con4:message>
+                            </con4:log>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a050a44.1dba638c.0.1520ea2b1cb.N7e42</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/Termino/EliminarTreTermino/XQUERY/EliminarTreTermino_PS_TO_EliminarTreTermino_BS_Request"/>
+                                        <con1:param name="idTermino">
+                                            <con1:path>$body/ter:EliminarTreTerminoRequest</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con2:outboundTransform>
+                        <con2:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a050a44.1dba638c.0.1520ea2b1cb.N7e3f</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/Termino/EliminarTreTermino/XQUERY/EliminarTreTermino_PS_Response"/>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con4:log>
+                                <con1:id>_ActionId-N3f579bc0.N5af5b8db.0.15351d75984.N7f9b</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>EliminarTreTermino-Response</con4:message>
+                            </con4:log>
+                        </con2:responseTransform>
+                    </con2:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

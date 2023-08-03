@@ -1,0 +1,113 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Jul 19 18:29:53 CDT 2019
+  Author:  Marisol
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CreateSizeProcess"
+               targetNamespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSizeProcess/v1.0"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSizeProcess/v1.0"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://mx.agarcia.ea/Applications/JDA/Catalogs/Size/v1.0"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Items/JDACreateSizeProcess/v1.0"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Core/Items/PROCreateSizeProcess/v1.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns4="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSizeEntity">
+
+    <import ui:processWSDL="true" namespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSizeProcess/v1.0" location="../WSDLs/CreateSizeProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="createsizeprocess_client" partnerLinkType="client:CreateSizeProcess" myRole="CreateSizeProcessProvider"/>
+    <partnerLink name="JDACreateSizeProcessPXY" partnerLinkType="ns2:JDACreateSizeProcess"
+                 partnerRole="JDACreateSizeProcessProvider"/>
+    <partnerLink name="PROCreateSizeProcessPXY" partnerLinkType="ns3:PROCreateSizeProcess"
+                 partnerRole="PROCreateSizeProcessProvider"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:CreateSizeProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:CreateSizeProcessResponseMessage"/>
+    <variable name="Invoke_PROCreateSvc_in" messageType="ns3:PROCreateSizeProcessRequestMessage"/>
+    <variable name="Invoke_PROCreateSvc_out" messageType="ns3:PROCreateSizeProcessResponseMessage"/>
+    <variable name="Invoke_JDACreateSvc_in" messageType="ns2:JDACreateSizeProcessRequestMessage"/>
+    <variable name="Invoke_JDACreateSvc_out" messageType="ns2:JDACreateSizeProcessResponseMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CreateSizeProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="createsizeprocess_client" portType="client:CreateSizeProcess" operation="create" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignJDACreateSvc">
+      <!--copy>
+            <from>$inputVariable.payload</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateSvc_in.payload</to>
+          </copy-->
+      <copy>
+        <from>$inputVariable.payload/ns4:size</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_JDACreateSvc_in.payload/ns4:size</to>
+      </copy>
+    </assign>
+    <invoke name="Invoke_JDACreateSvc" bpelx:invokeAsDetail="no" partnerLink="JDACreateSizeProcessPXY"
+            portType="ns2:JDACreateSizeProcess" operation="create" inputVariable="Invoke_JDACreateSvc_in"
+            outputVariable="Invoke_JDACreateSvc_out"/>
+    <if name="If1">
+      <condition>false()</condition>
+      <sequence>
+        <assign name="AssignPROCreateSvc">
+          <!--copy>
+            <from>$inputVariable.payload</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_PROCreateSvc_in.payload</to>
+          </copy-->
+          <copy>
+            <from>$inputVariable.payload/ns4:size</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_PROCreateSvc_in.payload/ns4:size</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_PROCreateSvc" bpelx:invokeAsDetail="no" partnerLink="PROCreateSizeProcessPXY"
+                portType="ns3:PROCreateSizeProcess" operation="create" inputVariable="Invoke_PROCreateSvc_in"
+                outputVariable="Invoke_PROCreateSvc_out"/>
+      </sequence>
+      <else>
+        <empty name="Empty1"/>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="createsizeprocess_client" portType="client:CreateSizeProcess" operation="create" variable="outputVariable"/>
+  </sequence>
+</process>

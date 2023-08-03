@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioLineaCredito/LineaCredito/V1/Wsdl/ADAPTER/RegistrarUtilizacionARESAD"/>
+            <con:binding>
+                <con:name>registrarUtilizacionARE_PT12Bnd</con:name>
+                <con:namespace>http://www.bcie.org/RegistrarUtilizacionARE</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:template-overrides>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7e64">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>RegistraUtilizacionARE_REQUEST</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:placeholder-override id="PlaceholderID_N3f57f436.N5fad521c.0.154a59514cb.N7e63">
+                <con:stage id="_StageId-a050aeb.N428c0afa.0.15cfafca177.N7f91" name="ConvertirMontoUtilizacion">
+                    <con:context>
+                        <con1:userNsDecl prefix="lin" namespace="http://www.bcie.org/LineaCreditoMO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                        <con1:userNsDecl prefix="com" namespace="http://www.bcie.org/CommonBO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                        <con1:userNsDecl prefix="con1" namespace="http://www.bcie.org/ConversorMonedasBO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                        <con1:userNsDecl prefix="lin1" namespace="http://www.bcie.org/LineaCreditoBO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                        <con1:userNsDecl prefix="des" namespace="http://www.bcie.org/DesembolsoBO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                        <con1:userNsDecl prefix="con" namespace="http://www.bcie.org/ConversorMonedasMO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                        <con1:userNsDecl prefix="cat" namespace="http://www.bcie.org/CatalogoBO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    </con:context>
+                    <con:actions>
+                        <con1:foreach xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                            <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aeb.N428c0afa.0.15cfafca177.N7f8e</con2:id>
+                            <con1:variable>body</con1:variable>
+                            <con1:expression>
+                                <con2:xpathText xmlns:con2="http://www.bea.com/wli/sb/stages/config">./lin:RegistrarUtilizacionARERequest/lin:LineaCredito/lin1:ContratoDesembolso/des:Utilizacion[lin1:Monto/com:tipo/cat:DescripcionCorta='DESEMBOLSO']</con2:xpathText>
+                            </con1:expression>
+                            <con1:value-variable>monto</con1:value-variable>
+                            <con1:index-variable>index</con1:index-variable>
+                            <con1:total-variable>count</con1:total-variable>
+                            <con1:actions>
+                                <con1:wsCallout>
+                                    <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aeb.N428c0afa.0.15cfafca177.N7f82</con2:id>
+                                    <con1:service ref="ADAPTADORES/ModeloNegocio/Utilidades/ConvertirMonedasImportes/PS/ConvertirMonedasImportes_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con1:operation>conversorMonedas</con1:operation>
+                                    <con1:request>
+                                        <con1:body wrapped="false">inMonedas</con1:body>
+                                    </con1:request>
+                                    <con1:response>
+                                        <con1:body wrapped="false">outMonedas</con1:body>
+                                    </con1:response>
+                                    <con1:requestTransform>
+                                        <con1:assign varName="inMonedas">
+                                            <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aeb.N428c0afa.0.15cfafca177.N7f7d</con2:id>
+                                            <con1:expr>
+                                                <con2:xqueryText xmlns:con2="http://www.bea.com/wli/sb/stages/config"><![CDATA[<con:ConvertirMonedasImportesRequest>
+    <con:ConvierteMonedas>
+        <con1:monedaDe>
+            <cat:codigoExterno>{fn:data($body/lin:RegistrarUtilizacionARERequest/lin:LineaCredito/lin1:atributos[com:name='MONEDA_UTILIZACION']/com:value)}</cat:codigoExterno>
+        </con1:monedaDe>
+        <con1:monedaA>
+            <cat:codigoExterno>USD</cat:codigoExterno>
+        </con1:monedaA>
+        <con1:monto>{fn:data($monto/lin1:Monto[com:tipo/cat:DescripcionCorta='DESEMBOLSO']/com:importe)}</con1:monto>
+    </con:ConvierteMonedas>
+</con:ConvertirMonedasImportesRequest>]]></con2:xqueryText>
+                                            </con1:expr>
+                                        </con1:assign>
+                                        <con2:log xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config">
+                                            <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aeb.N428c0afa.0.15cfafca177.N7f7a</con3:id>
+                                            <con2:logLevel>info</con2:logLevel>
+                                            <con2:expr>
+                                                <con3:xqueryText xmlns:con3="http://www.bea.com/wli/sb/stages/config">$inMonedas</con3:xqueryText>
+                                            </con2:expr>
+                                            <con2:message>Request_conversorMonedasImporte</con2:message>
+                                        </con2:log>
+                                    </con1:requestTransform>
+                                    <con1:responseTransform>
+                                        <con2:log xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config">
+                                            <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aeb.N428c0afa.0.15cfafca177.N7f76</con3:id>
+                                            <con2:logLevel>info</con2:logLevel>
+                                            <con2:expr>
+                                                <con3:xqueryText xmlns:con3="http://www.bea.com/wli/sb/stages/config">$outMonedas</con3:xqueryText>
+                                            </con2:expr>
+                                            <con2:message>Response_conversorMonedasImporte</con2:message>
+                                        </con2:log>
+                                        <con1:assign varName="montoUSD">
+                                            <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aeb.N428c0afa.0.15cfafca177.N7f73</con2:id>
+                                            <con1:expr>
+                                                <con2:xqueryText xmlns:con2="http://www.bea.com/wli/sb/stages/config">$outMonedas/con:ConvierteMonedasImporte</con2:xqueryText>
+                                            </con1:expr>
+                                        </con1:assign>
+                                        <con1:assign varName="montoDolar">
+                                            <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aeb.N428c0afa.0.15cfafca177.N7f40</con2:id>
+                                            <con1:expr>
+                                                <con2:xqueryText xmlns:con2="http://www.bea.com/wli/sb/stages/config">fn:data($montoUSD/con1:montoConvertido)</con2:xqueryText>
+                                            </con1:expr>
+                                        </con1:assign>
+                                    </con1:responseTransform>
+                                </con1:wsCallout>
+                                <con1:replace varName="body">
+                                    <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aeb.N428c0afa.0.15cfafca177.N7f88</con2:id>
+                                    <con1:location>
+                                        <con2:xpathText xmlns:con2="http://www.bea.com/wli/sb/stages/config">$body/lin:RegistrarUtilizacionARERequest/lin:LineaCredito/lin1:ContratoDesembolso/des:Utilizacion[lin1:NumeroAsignacion=fn:data($monto/lin1:NumeroAsignacion)]/lin1:Monto[com:tipo/cat:DescripcionCorta='DESEMBOLSO']/com:importe</con2:xpathText>
+                                    </con1:location>
+                                    <con1:expr>
+                                        <con2:xqueryText xmlns:con2="http://www.bea.com/wli/sb/stages/config">fn-bea:inlinedXML(fn:concat('&lt;com:importe xmlns:com="http://www.bcie.org/CommonBO">',$montoDolar,'&lt;/com:importe>'))</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:replace>
+                            </con1:actions>
+                        </con1:foreach>
+                    </con:actions>
+                </con:stage>
+            </con:placeholder-override>
+            <con:placeholder-override id="PlaceholderID_N3f57f436.N5fad521c.0.154a59514cb.N7d4c"/>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7f5e">
+                <con1:route xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                    <con1:service ref="ADAPTADORES/Proveedores/ARE/BS/ARE" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                    <con1:operation>registrarUtilizacion</con1:operation>
+                </con1:route>
+            </con:action-override>
+            <con:action-override id="_ActionId-N5601c7f7.Ndc7ed96.0.15627e5815a.N7f15">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>RegistrarUtilizacionARE_ERROR_REQUEST</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7d41">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>RegistrarUtilizacionARE_RESPONSE</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7e60">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>RegistrarUtilizacionARE_BS_REQUEST</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7e5d">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>RegistrarUtilizacionARE_BS_RESPONSE</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:action-override id="_ActionId-N5601c7f7.N3c48f578.0.1562d88ea26.N7f31">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:message>RegistrarUtilizacionERROR_BS</con1:message>
+                </con1:log>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7e57">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryText xmlns:con2="http://www.bea.com/wli/sb/stages/config">$body/lin:RegistrarUtilizacionARERequest</con2:xqueryText>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:stage-override id="_StageId-N3f57f436.N5fad521c.0.154a59514cb.N7e67">
+                <con:context>
+                    <con1:userNsDecl prefix="lin" namespace="http://www.bcie.org/LineaCreditoMO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+            </con:stage-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7ff6">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/ARE/RegistrarUtilizacionARE/XQUERY/RegistrarUtilizacionARE_PS_TO_ARE_BS_Request"/>
+                            <con2:param name="RegistrarUtilizacionARERequest">
+                                <con2:path>$body/lin:RegistrarUtilizacionARERequest</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:stage-override id="N3f57f436.N5fad521c.1.154a5ed23b7.N8000">
+                <con:context>
+                    <con1:userNsDecl prefix="lin" namespace="http://www.bcie.org/LineaCreditoMO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+            </con:stage-override>
+            <con:action-override id="_ActionId-N5601c7f7.Ndc7ed96.0.15627e5815a.N7f14">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/ARE/RegistrarUtilizacionARE/XQUERY/ERROR_RegistrarUtilizacionARE"/>
+                            <con2:param name="message">
+                                <con2:path>data($body/soap12-env:Fault/soap12-env:Reason)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorType">
+                                <con2:path>data($fault/ctx:reason)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorCode">
+                                <con2:path>data($fault/ctx:errorCode)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorDescription">
+                                <con2:path>data($fault/ctx:details)</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:action-override id="_ActionId-N3f57f436.N5fad521c.0.154a59514cb.N7d48">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/ARE/RegistrarUtilizacionARE/XQUERY/ARE_BS_TO_RegistrarUtilizacionARE_PS_Response"/>
+                            <con2:param name="registrarUtilizacionResponse">
+                                <con2:path>$body/*</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:stage-override id="_StageId-N3f57f436.N5fad521c.0.154a59514cb.N7d4b">
+                <con:context>
+                    <con1:userNsDecl prefix="lin" namespace="http://www.bcie.org/LineaCreditoMO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+            </con:stage-override>
+            <con:action-override id="_ActionId-N5601c7f7.Ndc7ed96.0.15627e5815a.N7e6c">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/ARE/RegistrarUtilizacionARE/XQUERY/ERROR_RegistrarUtilizacionARE"/>
+                            <con2:param name="message">
+                                <con2:path>data($body/soap12-env:Fault/soap12-env:Reason)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorType">
+                                <con2:path>data($fault/ctx:reason)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorCode">
+                                <con2:path>data($fault/ctx:errorCode)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorDescription">
+                                <con2:path>data($fault/ctx:details)</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:action-override id="_ActionId-N5601c7f7.N3c48f578.0.1562d88ea26.N7f30">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/ARE/RegistrarUtilizacionARE/XQUERY/ERROR_RegistrarUtilizacionARE"/>
+                            <con2:param name="message">
+                                <con2:path>data($body/soap12-env:Fault/soap12-env:Reason)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorType">
+                                <con2:path>data($fault/ctx:reason)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorCode">
+                                <con2:path>data($fault/ctx:errorCode)</con2:path>
+                            </con2:param>
+                            <con2:param name="errorDescription">
+                                <con2:path>data($fault/ctx:details)</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:action-override id="_ActionId-N5601c7f7.Ndc7ed96.0.15627e5815a.N7e6d">
+                <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                    <con1:logLevel>error</con1:logLevel>
+                </con1:log>
+            </con:action-override>
+            <con:placeholder-override id="PlaceholderID_N3f579b6a.N22c216aa.0.160225c7865.N7d63">
+                <con:stage id="_StageId-N3f579b6a.N22c216aa.0.160225c7865.N7cdb" name="StageEnviarNotificacion">
+                    <con:context>
+                        <con1:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                        <con1:userNsDecl prefix="lin" namespace="http://www.bcie.org/LineaCreditoMO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                        <con1:userNsDecl prefix="err" namespace="http://www.bcie.org/ErrorBO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    </con:context>
+                    <con:actions>
+                        <con1:ifThenElse xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                            <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579b6a.N22c216aa.0.160225c7865.N7cd4</con2:id>
+                            <con1:case id="_BranchId-N3f579b6a.N22c216aa.0.160225c7865.N7cd3">
+                                <con1:condition>
+                                    <con2:xqueryConditionExpr xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                                        <con2:compExpr operator="!=">
+                                            <con2:leftPath>$body/lin:RegistrarUtilizacionAREResponse/lin:Resultado/res:result</con2:leftPath>
+                                            <con2:rightPath>'OK'</con2:rightPath>
+                                        </con2:compExpr>
+                                    </con2:xqueryConditionExpr>
+                                </con1:condition>
+                                <con1:actions>
+                                    <con1:assign varName="varEnviarCorreoElectronicoRq">
+                                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579b6a.N22c216aa.0.160225c7865.N7cd0</con2:id>
+                                        <con1:expr>
+                                            <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                                                <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                                                <con2:param name="Accion">
+                                                    <con2:path>'Registrar Utilización ARE'</con2:path>
+                                                </con2:param>
+                                                <con2:param name="MensajeDeError">
+                                                    <con2:path>concat($body/lin:RegistrarUtilizacionAREResponse/lin:Resultado/res:message,' ',$body/lin:RegistrarUtilizacionAREResponse/lin:Resultado/res:error/err:errorDescription)</con2:path>
+                                                </con2:param>
+                                            </con2:xqueryTransform>
+                                        </con1:expr>
+                                    </con1:assign>
+                                    <con1:wsCallout>
+                                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f579b6a.N22c216aa.0.160225c7865.N7ccd</con2:id>
+                                        <con1:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                        <con1:operation>enviarCorreoElectronico</con1:operation>
+                                        <con1:request>
+                                            <con1:body wrapped="false">varEnviarCorreoElectronicoRq</con1:body>
+                                        </con1:request>
+                                        <con1:response>
+                                            <con1:body wrapped="false">varEnviarCorreoElectronicoRs</con1:body>
+                                        </con1:response>
+                                        <con1:requestTransform/>
+                                        <con1:responseTransform/>
+                                    </con1:wsCallout>
+                                </con1:actions>
+                            </con1:case>
+                            <con1:default/>
+                        </con1:ifThenElse>
+                    </con:actions>
+                </con:stage>
+            </con:placeholder-override>
+            <con:action-override id="_ActionId-N3f579b6a.N22c216aa.0.160225c7865.N7d99">
+                <con1:assign xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                    <con1:expr>
+                        <con2:xqueryTransform xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                            <con2:param name="Accion">
+                                <con2:path>'Registrar Utilización ARE'</con2:path>
+                            </con2:param>
+                            <con2:param name="MensajeDeError">
+                                <con2:path>concat($body/lin:RegistrarUtilizacionAREResponse/lin:Resultado/res:message,' ',$body/lin:RegistrarUtilizacionAREResponse/lin:Resultado/res:error/err:errorDescription)</con2:path>
+                            </con2:param>
+                        </con2:xqueryTransform>
+                    </con1:expr>
+                </con1:assign>
+            </con:action-override>
+            <con:stage-override id="_StageId-N5601c7f7.N3c48f578.0.1562d88ea26.N7f32">
+                <con:context>
+                    <con1:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:userNsDecl prefix="lin" namespace="http://www.bcie.org/LineaCreditoMO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:userNsDecl prefix="err" namespace="http://www.bcie.org/ErrorBO" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+            </con:stage-override>
+        </con:template-overrides>
+    </con:router>
+    <con:template ref="ADAPTADORES/Proveedores/ARE/Templates/wsdl_Sync"/>
+</con:pipelineEntry>

@@ -1,0 +1,689 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.1" xmlns:f="http://java.sun.com/jsf/core" xmlns:af="http://xmlns.oracle.com/adf/faces/rich"
+          xmlns:c="http://java.sun.com/jsp/jstl/core" xmlns:trh="http://myfaces.apache.org/trinidad/html"
+          xmlns:wf="http://xmlns.oracle.com/bpel/workflow/workflow-taglib.tld"
+          xmlns:wlc="http://xmlns.oracle.com/bpel/workflow/worklist" xmlns:dvt="http://xmlns.oracle.com/dss/adf/faces">
+    <c:set var="pa07segcrediticioghtBundle" value="#{adfBundle['pa07segcrediticioght.PA07SegCrediticioGHTBundle']}"/>
+    <jsp:directive.page contentType="text/html;charset=UTF-8"/>
+    <f:view>
+        <af:document title="PA07RealizarRevisionCalificacionRiesgo" id="d1">
+            <af:messages id="m1"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:resource type="javascript" source="/jsLibs/taskDetailsWithTemplate.js"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:form id="f1" usesUpload="true">
+                <af:pageTemplate viewId="/templates/bcieTaskTemplate.jspx" id="pageTemplateID">
+                    <f:facet name="action">
+                        <af:toolbar visible="#{actionAvailable.toolbarAvailable}" id="actionTlb">
+                            <af:switcher id="customActionButtons" facetName="#{actionAvailable.isCustomActionButtons}">
+                                <f:facet name="true">
+                                    <af:panelGroupLayout layout="horizontal" id="pgl4">
+                                        <!-- Finalizar tarea -->
+                                        <af:button text="#{pa07segcrediticioghtBundle.BTN_TXT_FINALIZAR_TAREA}"
+                                                   disabled="#{!bindings.FINALIZARTAREA.enabled}"
+                                                   action="#{seguimientoCrediticioActionBean.invocarFinalizarTarea}"
+                                                   id="b4" styleClass="headerLink" partialSubmit="false"
+                                                   rendered="#{!pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                        </af:button>
+                                        <!-- Cancelar revisión (Más Informaciín) -->
+                                        <af:button text="#{pa07segcrediticioghtBundle.BTN_TXT_CANCELAR_REVISION}"
+                                                   disabled="#{!bindings.MASINFORMACION.enabled}"
+                                                   action="#{seguimientoCrediticioActionBean.invocarMasInformacion}"
+                                                   id="b3" styleClass="headerLink"
+                                                   immediate="true"
+                                                   visible="#{data.pa07segcrediticioght_PA07RealizarRevisionCalificacionRiesgoPageDef.tipoInicio.inputValue eq 'NORMAL' and pageFlowScope.seguimientoCrediticioBean.cancelar eq true}"
+                                                   rendered="#{!pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                        </af:button>
+                                    </af:panelGroupLayout>
+                                </f:facet>
+                            </af:switcher>
+                            <af:button actionListener="#{invokeActionBean.setOperation}" text="#{resources.CLAIM}"
+                                       id="Claim" action="#{invokeActionBean.invokeOperation}" partialSubmit="false"
+                                       visible="#{actionAvailable.claimAvailable}" styleClass="headerLink"
+                                       rendered="false">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Claim"/>
+                            </af:button>
+                            <af:button id="acknowledge" actionListener="#{invokeActionBean.setOperation}"
+                                       text="#{resources.ACKNOWLEDGE}" action="#{invokeActionBean.invokeOperation}"
+                                       partialSubmit="false" visible="#{actionAvailable.isFyiTask}"
+                                       styleClass="headerLink">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Acknowledge"/>
+                            </af:button>
+                            <af:button id="resume" actionListener="#{invokeActionBean.setOperation}"
+                                       text="#{resources.RESUME}" action="#{invokeActionBean.invokeOperation}"
+                                       partialSubmit="false" visible="#{actionAvailable.resumeAvailable}"
+                                       styleClass="headerLink">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Resume"/>
+                            </af:button>
+                            <af:panelGroupLayout layout="horizontal" id="pgl6" rendered="false">
+                                <af:group rendered="#{!((empty actionAvailable.customActions) and (empty actionAvailable.redirectActions) and (empty actionAvailable.otherActions)) || bindings.update.enabled}"
+                                          id="g4">
+                                    <af:menuBar id="mb1" styleClass="actionMenuBar" rendered="false">
+                                        <af:menu id="acts" text="#{resources.TASK_ACTIONS}"
+                                                 visible="#{actionAvailable.actionsAvailable || bindings.update.enabled}">
+                                            <af:group id="g2">
+                                                <af:forEach var="childNode1" items="#{actionAvailable.customActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{childNode1.displayName}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi2">
+                                                        <f:attribute name="ACTION_MENU_ITEM"
+                                                                     value="#{childNode1.action}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g5">
+                                                <af:forEach var="childNode2" items="#{actionAvailable.redirectActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode2]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="true" id="cmi1">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode2}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g1">
+                                                <af:forEach var="childNode3" items="#{actionAvailable.otherActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode3]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi4">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode3}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g3">
+                                                <af:commandMenuItem id="save" textAndAccessKey="#{resources.SAVE}"
+                                                                    actionListener="#{invokeActionBean.setAction}"
+                                                                    action="#{invokeActionBean.action}"
+                                                                    partialSubmit="false"
+                                                                    rendered="#{actionAvailable.updateAvailable}">
+                                                    <f:attribute name="ACTION_MENU_ITEM" value="bindings.update"/>
+                                                </af:commandMenuItem>
+                                            </af:group>
+                                        </af:menu>
+                                    </af:menuBar>
+                                </af:group>
+                            </af:panelGroupLayout>
+                            <af:spacer width="10" id="s3"/>
+                            <af:link shortDesc="#{resources.PREVIOUS_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/nexttraversalarrow_ena.png'  : '/hw_images/previoustraversalarrow_ena.png'}"
+                                     action="fetchPreviousTask"
+                                     visible="#{pageFlowScope.enableNavigationButton != null}" id="l3"/>
+                            <af:spacer width="10" id="s1"/>
+                            <af:link shortDesc="#{resources.NEXT_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/previoustraversalarrow_ena.png' : '/hw_images/nexttraversalarrow_ena.png'}"
+                                     action="fetchNextTask" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l2"/>
+                            <af:spacer width="10" id="s6"/>
+                            <af:link shortDesc="#{resources.SHORT_DESC_CLOSE}" icon="/hw_images/close_ena.png"
+                                     action="closeTaskFlow" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l1"/>
+                            <af:popup id="reassignPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog id="reAsDg" dialogListener="#{invokeActionBean.reassignAction}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           title="#{resources.REASSIGNPAGE}">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="reAsIdB" mode="REASSIGN" showActionButtons="false"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="requestInfoPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.INFOREQUESTEDPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.requestInfoAction}" id="reqIfD">
+                                    <wlc:requestInfoDialog workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                           id="rqIDgC"
+                                                           selectedTaskId="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds[0]}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="routePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.ROUTEPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.routeTaskAction}" id="rteDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="rteIdB" mode="ROUTE"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="decomposePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{pageFlowScope.ADFHumanTaskBean.decomposeDialogTitle}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.decomposeTaskAction}" id="dcmpDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.ADFHumanTaskBean.workflowContext}"
+                                                         id="dcmpIdB" mode="DECOMPOSE"
+                                                         selectedTaskObject="#{pageFlowScope.ADFHumanTaskBean.task}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="popupEnterPasswordDialog" contentDelivery="lazyUncached"
+                                      childCreation="deferred">
+                                <af:dialog title="#{resources.ENTER_PASSWORD}"
+                                           dialogListener="#{invokeActionBean.validatePassword}" type="okCancel"
+                                           modal="true" cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}" closeIconVisible="false"
+                                           id="pwdDlg">
+                                    <af:panelGroupLayout id="pgl7">
+                                        <af:panelFormLayout id="pfl1">
+                                            <af:inputText id="pwdBox" rows="1" columns="50"
+                                                          value="#{invokeActionBean.password}"
+                                                          label="#{resources.PASSWORD}" secret="true" required="true"/>
+                                        </af:panelFormLayout>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="helpPopup" childCreation="deferred">
+                                <af:switcher facetName="#{pageFlowScope.taskDocumentationBean.isTaskDoc}" id="s5">
+                                    <f:facet name="true">
+                                        <af:panelGroupLayout layout="vertical" id="pgl3">
+                                            <af:link text="#{resources.OPEN_IN_WINDOW}"
+                                                     destination="#{pageFlowScope.taskDocumentationBean.docURL}"
+                                                     targetFrame="help" id="help"
+                                                     rendered="#{!empty bindings.activityId.inputValue}"/>
+                                            <af:outputFormatted value="#{pageFlowScope.taskDocumentationBean.taskDoc}"
+                                                                id="of1"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <f:facet name="false">
+                                        <af:outputText value="#{resources.TASK_DOC_NOT_AVAILABLE}" id="ot9"/>
+                                    </f:facet>
+                                </af:switcher>
+                            </af:popup>
+                            <!-- FINALIZAR TAREA -->
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="p1"
+                                      binding="#{seguimientoCrediticioActionBean.popupFinalizarTarea}">
+                                <af:dialog id="d2" type="none">
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl10">
+                                            <af:button text="#{pa07segcrediticioghtBundle.BTN_TXT_ACEPTAR}" id="b7"
+                                                       action="#{seguimientoCrediticioActionBean.aceptarFinalizarTarea}"
+                                                       actionListener="#{invokeActionBean.setOperation}">
+                                                       <f:attribute name="DC_OPERATION_BINDING" value="bindings.FINALIZARTAREA"/>
+                                            </af:button>
+                                            <af:button text="#{pa07segcrediticioghtBundle.BTN_TXT_CANCELAR}" id="b8"
+                                                       action="#{seguimientoCrediticioActionBean.cancelarFinalizarTarea}"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <af:panelGroupLayout id="pgl11" layout="horizontal" halign="center">
+                                        <af:outputText value="#{pa07segcrediticioghtBundle.MSG_CONFIRMA_FINALIZAR}" id="ot16"/>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <!-- MAS INFORMACION -->
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="p2"
+                                      binding="#{seguimientoCrediticioActionBean.popupMasInformacion}">
+                                <af:dialog id="d3" type="none">
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl12">
+                                            <af:button text="#{pa07segcrediticioghtBundle.BTN_TXT_ACEPTAR}" id="b9"
+                                                       action="#{seguimientoCrediticioActionBean.aceptarMasInformacion}"
+                                                       actionListener="#{invokeActionBean.setOperation}">
+                                                       <f:attribute name="DC_OPERATION_BINDING" value="bindings.MASINFORMACION"/>
+                                            </af:button>
+                                            <af:button text="#{pa07segcrediticioghtBundle.BTN_TXT_CANCELAR}" id="b10"
+                                                       action="#{seguimientoCrediticioActionBean.cancelarMasInformacion}"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <af:panelGroupLayout id="pgl13" layout="horizontal" halign="center">
+                                        <af:outputText value="#{pa07segcrediticioghtBundle.CANCELAR_SEGUIMIENTO}" id="ot17"/>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                        </af:toolbar>
+                    </f:facet>
+                    <f:facet name="header">
+                        <af:region value="#{bindings.encabezadoClienteBTF1.regionModel}" id="r2"/>
+                    </f:facet>
+                    <f:facet name="body">
+                        <af:panelGroupLayout id="pgl14" layout="vertical">
+                            <af:panelAccordion discloseMany="true" id="pa1" discloseNone="true"
+                                               styleClass="secctionAccordion">
+                                <af:showDetailItem id="pane1"
+                                                   text="#{pa07segcrediticioghtBundle.PNL_TXT_DETALLE_DEL_CLIENTE}"
+                                                   inlineStyle="margin-left: 10px;" immediate="true">
+                                    <af:region value="#{bindings.detalleClienteBTF1.regionModel}" id="r1"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="pane2" text="#{pa07segcrediticioghtBundle.PNL_TXT_DOCUMENTOS}"
+                                                   disclosureListener="#{pageFlowScope.seguimientoCrediticioBean.panelDocumentosDisclosureListener}"
+                                                   inlineStyle="margin-left: 10px;" immediate="true">
+                                    <af:region value="#{bindings.gestorDocumentosClientesBTF1.regionModel}" id="r6"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="pane3"
+                                                   text="#{pa07segcrediticioghtBundle.PNL_TXT_OPERACIONES_RELACIONADAS}"
+                                                   inlineStyle="margin-left: 10px;" immediate="true">
+                                    <af:region value="#{bindings.operacionesRelacionadasBTF1.regionModel}" id="r4"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="pane4" text="#{pa07segcrediticioghtBundle.PNL_TXT_ACCIONES}"
+                                                   inlineStyle="margin-left: 10px;" immediate="true">
+                                    <af:region value="#{bindings.accionesBTF1.regionModel}" id="r7"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="pane5"
+                                                   text="#{pa07segcrediticioghtBundle.PNL_TXT_DATOS_DE_LA_TAREA}"
+                                                   disclosed="true" inlineStyle="margin-left: 10px;" immediate="true">
+                                    <af:spacer width="10" height="10" id="s2"/>
+                                    <af:panelHeader text="#{pa07segcrediticioghtBundle.REVISON_GENERAL_SCR_PNH_TXT}"
+                                                    id="ph1">
+                                        <f:facet name="context"/>
+                                        <f:facet name="menuBar"/>
+                                        <f:facet name="toolbar"/>
+                                        <f:facet name="legend"/>
+                                        <f:facet name="info"/>
+                                        <af:separator id="s8"/>
+                                        <af:panelGridLayout id="pgl8">
+                                            <af:gridRow marginTop="5px" height="auto" id="gr1">
+                                                <af:gridCell marginStart="5px" width="25%" id="gc1">
+                                                    <af:selectOneChoice value="#{bindings.IdTcaEstadoScr.inputValue}"
+                                                                        label="#{pa07segcrediticioghtBundle.REVISION_SCR_TXT}"
+                                                                        required="#{bindings.IdTcaEstadoScr.hints.mandatory}"
+                                                                        shortDesc="#{bindings.IdTcaEstadoScr.hints.tooltip}"
+                                                                        id="soc5" readOnly="true"
+                                                                        visible="#{bindings.IdTcaEstadoScr.inputValue eq 5 or bindings.IdTcaEstadoScr.inputValue eq 6}"
+                                                                        autoSubmit="true" immediate="true"
+                                                                        disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                        <f:selectItems value="#{bindings.IdTcaEstadoScr.items}"
+                                                                       id="si3"/>
+                                                        <f:validator binding="#{bindings.IdTcaEstadoScr.validator}"/>
+                                                    </af:selectOneChoice>
+                                                    <af:outputText value="#{pa07segcrediticioghtBundle.RETORNO_DE_TXT}" id="ot26"
+                                                                   visible="#{data.pa07segcrediticioght_PA07RealizarRevisionCalificacionRiesgoPageDef.tipoInicio.inputValue eq 'RETORNO'}"/>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="15%" id="gc2"/>
+                                                <af:gridCell marginStart="5px" width="30%" id="gc3"/>
+                                                <af:gridCell marginStart="5px" width="30%" marginEnd="5px" id="gc4"/>
+                                            </af:gridRow>
+                                            <af:gridRow marginTop="5px" height="auto" id="gr2">
+                                                <af:gridCell marginStart="5px" width="25%" id="gc5">
+                                                    <af:spacer width="10" height="10" id="s10"/>
+                                                    <af:selectOneChoice value="#{bindings.TipoRevision.inputValue}"
+                                                                        shortDesc="#{bindings.TipoRevision.hints.tooltip}"
+                                                                        id="soc6"
+                                                                        label="#{pa07segcrediticioghtBundle.TIPO_REVISION_TXT}"
+                                                                        autoSubmit="true"
+                                                                        disabled="#{pageFlowScope.seguimientoCrediticioBean.tipoInicio eq 'RETORNO'
+                                                                        or pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}"
+                                                                        showRequired="true" immediate="true">
+                                                        <f:selectItems value="#{bindings.TipoRevision.items}" id="si6"/>
+                                                    </af:selectOneChoice>
+                                                    <af:selectOneChoice value="#{pageFlowScope.seguimientoCrediticioBean.idTipoRevision}" id="socSeg6"
+                                                                        label="#{pa07segcrediticioghtBundle.TIPO_REVISION_TXT}"
+                                                                        autoSubmit="true" rendered="false"
+                                                                        disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                        <f:selectItems value="#{bindings.TipoRevision.items}" id="siSeg6"/>
+                                                    </af:selectOneChoice>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="15%" id="gc6"/>
+                                                <af:gridCell marginStart="5px" width="30%" id="gc7"/>
+                                                <af:gridCell marginStart="5px" width="30%" marginEnd="5px" id="gc8">
+                                                    <af:inputDate value="#{bindings.FechaUltimoRegistro.inputValue}"
+                                                                  label="#{pa07segcrediticioghtBundle.FECHA__ULTIMA_REVISION_TXT}"
+                                                                  required="#{bindings.FechaUltimoRegistro.hints.mandatory}"
+                                                                  columns="#{bindings.FechaUltimoRegistro.hints.displayWidth}"
+                                                                  shortDesc="#{bindings.FechaUltimoRegistro.hints.tooltip}"
+                                                                  id="id1" readOnly="true"
+                                                                  disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                        <f:validator binding="#{bindings.FechaUltimoRegistro.validator}"/>
+                                                        <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                    </af:inputDate>
+                                                </af:gridCell>
+                                            </af:gridRow>
+                                        </af:panelGridLayout>
+                                        <af:separator id="s4"/>
+                                        <af:panelFormLayout id="pfl2">
+                                            <af:inputDate value="#{bindings.FechaRegistro.inputValue}"
+                                                          required="#{bindings.FechaRegistro.hints.mandatory}"
+                                                          columns="#{bindings.FechaRegistro.hints.displayWidth}"
+                                                          shortDesc="#{bindings.FechaRegistro.hints.tooltip}" id="id2"
+                                                          visible="false"
+                                                          disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                <f:validator binding="#{bindings.FechaRegistro.validator}"/>
+                                                <af:convertDateTime pattern="#{bindings.FechaRegistro.format}"/>
+                                            </af:inputDate>
+                                            <af:inputText value="#{bindings.Id.inputValue}"
+                                                          label="#{bindings.Id.hints.label}"
+                                                          required="#{bindings.Id.hints.mandatory}"
+                                                          columns="#{bindings.Id.hints.displayWidth}"
+                                                          maximumLength="#{bindings.Id.hints.precision}"
+                                                          shortDesc="#{bindings.Id.hints.tooltip}" id="it1"
+                                                          rendered="false"
+                                                          disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                <f:validator binding="#{bindings.Id.validator}"/>
+                                                <af:convertNumber groupingUsed="false" pattern="#{bindings.Id.format}"/>
+                                            </af:inputText>
+                                            <af:inputText value="#{bindings.IdCliente1.inputValue}"
+                                                          label="#{bindings.IdCliente1.hints.label}"
+                                                          required="#{bindings.IdCliente1.hints.mandatory}"
+                                                          columns="#{bindings.IdCliente1.hints.displayWidth}"
+                                                          maximumLength="#{bindings.IdCliente1.hints.precision}"
+                                                          shortDesc="#{bindings.IdCliente1.hints.tooltip}" id="it2"
+                                                          rendered="false"
+                                                          disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                <f:validator binding="#{bindings.IdCliente1.validator}"/>
+                                                <af:convertNumber groupingUsed="false"
+                                                                  pattern="#{bindings.IdCliente1.format}"/>
+                                            </af:inputText>
+                                            <af:inputText value="#{bindings.BanEstatus.inputValue}"
+                                                          label="#{bindings.BanEstatus.hints.label}"
+                                                          required="#{bindings.BanEstatus.hints.mandatory}"
+                                                          columns="#{bindings.BanEstatus.hints.displayWidth}"
+                                                          maximumLength="#{bindings.BanEstatus.hints.precision}"
+                                                          shortDesc="#{bindings.BanEstatus.hints.tooltip}" id="it6"
+                                                          rendered="false"
+                                                          disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                <f:validator binding="#{bindings.BanEstatus.validator}"/>
+                                                <af:convertNumber groupingUsed="false"
+                                                                  pattern="#{bindings.BanEstatus.format}"/>
+                                            </af:inputText>
+                                            <af:inputText value="#{bindings.EstadoSeguimiento.inputValue}"
+                                                          label="#{bindings.EstadoSeguimiento.hints.label}"
+                                                          required="#{bindings.EstadoSeguimiento.hints.mandatory}"
+                                                          columns="#{bindings.EstadoSeguimiento.hints.displayWidth}"
+                                                          maximumLength="#{bindings.EstadoSeguimiento.hints.precision}"
+                                                          shortDesc="#{bindings.EstadoSeguimiento.hints.tooltip}"
+                                                          id="it7" rendered="false"
+                                                          disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                <f:validator binding="#{bindings.EstadoSeguimiento.validator}"/>
+                                            </af:inputText>
+                                        </af:panelFormLayout>
+                                        <af:panelGridLayout id="pgl9">
+                                            <af:gridRow marginTop="5px" height="auto" id="gr6">
+                                                <af:gridCell marginStart="5px" width="25%" id="gc21">
+                                                    <af:inputText id="it3"
+                                                                  label="#{pa07segcrediticioghtBundle.SCR_VIGENTE_TXT}"
+                                                                  value="#{pageFlowScope.seguimientoCrediticioBean.scrVigente}"
+                                                                  readOnly="true"
+                                                                  disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}"/>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="15%" id="gc22"/>
+                                                <af:gridCell marginStart="5px" width="30%" id="gc23">
+                                                    <af:inputText label="#{pa07segcrediticioghtBundle.PERSPECTIVA_VIGENTE_TXT}" id="it4"
+                                                                  value="#{pageFlowScope.seguimientoCrediticioBean.perspectiva}"
+                                                                  readOnly="true"
+                                                                  disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}"/>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="30%" marginEnd="5px" id="gc24">
+                                                    <af:panelGroupLayout id="pgl16" layout="horizontal">
+                                                        <af:inputText value="#{bindings.Meses.inputValue}"
+                                                                      label="#{pa07segcrediticioghtBundle.FECHA_ULTIMO_CAMBIO_TXT}"
+                                                                      required="#{bindings.Meses.hints.mandatory}"
+                                                                      columns="#{bindings.Meses.hints.displayWidth}"
+                                                                      maximumLength="#{bindings.Meses.hints.precision}"
+                                                                      shortDesc="#{bindings.Meses.hints.tooltip}"
+                                                                      id="it5" readOnly="true"
+                                                                      disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                            <f:validator binding="#{bindings.Meses.validator}"/>
+                                                            <af:convertNumber groupingUsed="false"
+                                                                              pattern="#{bindings.Meses.format}"/>
+                                                        </af:inputText>
+                                                        <af:spacer width="5" height="10" id="s9"/>
+                                                        <af:outputText value="#{pa07segcrediticioghtBundle.MESES_TXT}" id="ot10"
+                                                                       inlineStyle="color:Black;"
+                                                                       rendered="#{bindings.Meses.inputValue ne null}"/>
+                                                    </af:panelGroupLayout>
+                                                </af:gridCell>
+                                            </af:gridRow>
+                                            <af:gridRow marginTop="5px" height="auto" marginBottom="5px" id="gr7">
+                                                <af:gridCell marginStart="5px" width="25%" id="gc25">
+                                                    <af:selectBooleanCheckbox label="#{pa07segcrediticioghtBundle.CAMBIO_SCR_TXT}"
+                                                                              id="sbc2"
+                                                                              value="#{bindings.CambiarSCR.inputValue}"
+                                                                              autoSubmit="true"
+                                                                              valueChangeListener="#{requestScope.seguimientoCrediticioActionBean.cambioSCR}"
+                                                                              disabled="#{pageFlowScope.seguimientoCrediticioBean.tipoInicio eq 'RETORNO'
+                                                                              or pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}"/>
+                                                    <af:inputText value="#{bindings.CambiarSCR.inputValue}"
+                                                                  label="#{bindings.CambiarSCR.hints.label}"
+                                                                  required="#{bindings.CambiarSCR.hints.mandatory}"
+                                                                  columns="#{bindings.CambiarSCR.hints.displayWidth}"
+                                                                  maximumLength="#{bindings.CambiarSCR.hints.precision}"
+                                                                  shortDesc="#{bindings.CambiarSCR.hints.tooltip}"
+                                                                  id="it18" visible="false"
+                                                                  disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                        <f:validator binding="#{bindings.CambiarSCR.validator}"/>
+                                                    </af:inputText>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="15%" id="gc26">
+                                                    <af:selectOneChoice value="#{bindings.IdTcaScr.inputValue}"
+                                                                        label="#{pa07segcrediticioghtBundle.SCR_TXT}"
+                                                                        required="#{bindings.IdTcaScr.hints.mandatory}"
+                                                                        shortDesc="#{bindings.IdTcaScr.hints.tooltip}"
+                                                                        id="soc4"
+                                                                        partialTriggers="sbc2"
+                                                                        disabled="#{bindings.CambiarSCR.inputValue eq false or pageFlowScope.seguimientoCrediticioBean.tipoInicio eq 'RETORNO'
+                                                                        or pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}"
+                                                                        autoSubmit="true" immediate="true">
+                                                        <f:selectItems value="#{bindings.IdTcaScr.items}" id="si4"/>
+                                                        <f:validator binding="#{bindings.IdTcaScr.validator}"/>
+                                                    </af:selectOneChoice>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="30%" id="gc27">
+                                                    <af:inputText value="#{bindings.CambiarPerspectiva.inputValue}"
+                                                                  label="#{bindings.CambiarPerspectiva.hints.label}"
+                                                                  required="#{bindings.CambiarPerspectiva.hints.mandatory}"
+                                                                  columns="#{bindings.CambiarPerspectiva.hints.displayWidth}"
+                                                                  maximumLength="#{bindings.CambiarPerspectiva.hints.precision}"
+                                                                  shortDesc="#{bindings.CambiarPerspectiva.hints.tooltip}"
+                                                                  id="it19" rendered="false" visible="false"
+                                                                  disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                        <f:validator binding="#{bindings.CambiarPerspectiva.validator}"/>
+                                                    </af:inputText>
+                                                    <af:selectBooleanCheckbox label="#{pa07segcrediticioghtBundle.CAMBIO_PERSPECTIVA_TXT}" id="sbc3"
+                                                                              value="#{bindings.CambiarPerspectiva.inputValue}"
+                                                                              autoSubmit="true"
+                                                                              valueChangeListener="#{requestScope.seguimientoCrediticioActionBean.cambioPerspectiva}"
+                                                                              disabled="#{pageFlowScope.seguimientoCrediticioBean.tipoInicio eq 'RETORNO'
+                                                                              or pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}"/>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="30%" marginEnd="5px" id="gc28">
+                                                    <af:selectOneChoice value="#{bindings.IdTcaPerspectiva.inputValue}"
+                                                                        label="#{pa07segcrediticioghtBundle.PERSPECTIVA_TXT}"
+                                                                        required="#{bindings.IdTcaPerspectiva.hints.mandatory}"
+                                                                        shortDesc="#{bindings.IdTcaPerspectiva.hints.tooltip}"
+                                                                        id="soc3"
+                                                                        partialTriggers="sbc3"
+                                                                        disabled="#{bindings.CambiarPerspectiva.inputValue eq false or pageFlowScope.seguimientoCrediticioBean.tipoInicio eq 'RETORNO'
+                                                                        or pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}"
+                                                                        autoSubmit="true" immediate="true">
+                                                        <f:selectItems value="#{bindings.IdTcaPerspectiva.items}"
+                                                                       id="si5"/>
+                                                        <f:validator binding="#{bindings.IdTcaPerspectiva.validator}"/>
+                                                    </af:selectOneChoice>
+                                                </af:gridCell>
+                                            </af:gridRow>
+                                        </af:panelGridLayout>
+                                        <af:separator id="s7"/>
+                                        <af:panelGridLayout id="pgl15">
+                                            <af:gridRow marginTop="5px" height="auto" marginBottom="5px" id="gr8">
+                                                <af:gridCell marginStart="5px" width="25%" id="gc29">
+                                                    <af:selectBooleanCheckbox value="#{bindings.EsCalificacionDividida.inputValue}"
+                                                                              label="#{pa07segcrediticioghtBundle.CALIFICACION_DIVIDIDA_TXT}"
+                                                                              shortDesc="#{bindings.EsCalificacionDividida.hints.tooltip}"
+                                                                              id="sbc1" autoSubmit="true"
+                                                                              disabled="#{pageFlowScope.seguimientoCrediticioBean.tipoInicio eq 'RETORNO'
+                                                                              or pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}"/>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="15%" id="gc30">
+                                                    <af:inputText value="#{bindings.InstanciaProceso1.inputValue}"
+                                                                  simple="true"
+                                                                  required="#{bindings.InstanciaProceso1.hints.mandatory}"
+                                                                  columns="#{bindings.InstanciaProceso1.hints.displayWidth}"
+                                                                  maximumLength="#{bindings.InstanciaProceso1.hints.precision}"
+                                                                  shortDesc="#{bindings.InstanciaProceso1.hints.tooltip}"
+                                                                  id="it20" visible="false"
+                                                                  disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                        <f:validator binding="#{bindings.InstanciaProceso1.validator}"/>
+                                                    </af:inputText>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="30%" id="gc31">
+                                                    <af:selectBooleanCheckbox value="#{bindings.EsDeterioro.inputValue}"
+                                                                              label="#{pa07segcrediticioghtBundle.DETERIORO_TXT}"
+                                                                              shortDesc="#{bindings.EsDeterioro.hints.tooltip}"
+                                                                              id="sbc4" autoSubmit="true"
+                                                                              disabled="#{pageFlowScope.seguimientoCrediticioBean.tipoInicio eq 'RETORNO'
+                                                                              or pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}"/>
+                                                </af:gridCell>
+                                                <af:gridCell marginStart="5px" width="30%" marginEnd="5px" id="gc32"/>
+                                            </af:gridRow>
+                                        </af:panelGridLayout>
+                                        <af:panelGroupLayout id="pgl1" layout="vertical">
+                                            <af:panelHeader text="#{pa07segcrediticioghtBundle.HISTORICO_SCR_PNH_TXT}" id="ph3">
+                                                <f:facet name="context"/>
+                                                <f:facet name="menuBar"/>
+                                                <f:facet name="toolbar"/>
+                                                <f:facet name="legend"/>
+                                                <f:facet name="info"/>
+                                                <af:panelGroupLayout id="pgl5" halign="center" layout="horizontal">
+                                                    <af:table value="#{bindings.RevisionesSCRVO.collectionModel}"
+                                                              var="row" rows="#{bindings.RevisionesSCRVO.rangeSize}"
+                                                              emptyText="#{bindings.RevisionesSCRVO.viewable ? pa07segcrediticioghtBundle.TABLA_VACIA : pa07segcrediticioghtBundle.ACCES_DENIED}"
+                                                              rowBandingInterval="0"
+                                                              fetchSize="#{bindings.RevisionesSCRVO.rangeSize}" id="t2">
+                                                        <af:column headerText="#{bindings.RevisionesSCRVO.hints.IdCliente.label}"
+                                                                   id="c7" rendered="false">
+                                                            <af:outputText value="#{row.IdCliente}"
+                                                                           shortDesc="#{bindings.RevisionesSCRVO.hints.IdCliente.tooltip}"
+                                                                           id="ot7">
+                                                                <af:convertNumber groupingUsed="false"
+                                                                                  pattern="#{bindings.RevisionesSCRVO.hints.IdCliente.format}"/>
+                                                            </af:outputText>
+                                                        </af:column>
+                                                        <af:column headerText="#{pa07segcrediticioghtBundle.FECHA_CAMBIO_TXT}"
+                                                                   id="c8" inlineStyle="text-align:center;">
+                                                            <af:outputText value="#{row.FechaRegistro}"
+                                                                           shortDesc="#{bindings.RevisionesSCRVO.hints.FechaRegistro.tooltip}"
+                                                                           id="ot8">
+                                                                <af:convertDateTime pattern="dd/MMM/yyyy"/>
+                                                            </af:outputText>
+                                                        </af:column>
+                                                        <af:column headerText="#{pa07segcrediticioghtBundle.CALIFICACION_TXT}"
+                                                                   id="c9" inlineStyle="text-align:center;">
+                                                            <af:selectOneChoice value="#{row.bindings.IdTcaScr.inputValue}"
+                                                                                label="#{row.bindings.IdTcaScr.label}"
+                                                                                required="#{bindings.RevisionesSCRVO.hints.IdTcaScr.mandatory}"
+                                                                                shortDesc="#{bindings.RevisionesSCRVO.hints.IdTcaScr.tooltip}"
+                                                                                readOnly="true" id="soc1"
+                                                                                disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                                <f:selectItems value="#{row.bindings.IdTcaScr.items}"
+                                                                               id="si1"/>
+                                                                <f:validator binding="#{row.bindings.IdTcaScr.validator}"/>
+                                                            </af:selectOneChoice>
+                                                        </af:column>
+                                                        <af:column headerText="#{pa07segcrediticioghtBundle.PERSPECTIVA_TXT}"
+                                                                   id="c10" inlineStyle="text-align:center;">
+                                                            <af:selectOneChoice value="#{row.bindings.IdTcaPerspectiva.inputValue}"
+                                                                                label="#{row.bindings.IdTcaPerspectiva.label}"
+                                                                                required="#{bindings.RevisionesSCRVO.hints.IdTcaPerspectiva.mandatory}"
+                                                                                shortDesc="#{bindings.RevisionesSCRVO.hints.IdTcaPerspectiva.tooltip}"
+                                                                                readOnly="true" id="soc2"
+                                                                                disabled="#{pageFlowScope.seguimientoCrediticioBean.esEstadoCompletado}">
+                                                                <f:selectItems value="#{row.bindings.IdTcaPerspectiva.items}"
+                                                                               id="si2"/>
+                                                                <f:validator binding="#{row.bindings.IdTcaPerspectiva.validator}"/>
+                                                            </af:selectOneChoice>
+                                                        </af:column>
+                                                    </af:table>
+                                                </af:panelGroupLayout>
+                                            </af:panelHeader>
+                                            <af:panelHeader text="#{pa07segcrediticioghtBundle.HISTORICO_MORA_PNH_TXT}" id="ph2">
+                                                <f:facet name="context"/>
+                                                <f:facet name="menuBar"/>
+                                                <f:facet name="toolbar"/>
+                                                <f:facet name="legend"/>
+                                                <f:facet name="info"/>
+                                                <af:panelGroupLayout id="pgl2" layout="horizontal" halign="center">
+                                                    <af:table value="#{bindings.MoraVO.collectionModel}" var="row"
+                                                              rows="#{bindings.MoraVO.rangeSize}"
+                                                              emptyText="#{bindings.MoraVO.viewable ? pa07segcrediticioghtBundle.TABLA_VACIA : pa07segcrediticioghtBundle.ACCES_DENIED}"
+                                                              rowBandingInterval="0"
+                                                              fetchSize="#{bindings.MoraVO.rangeSize}" id="t1">
+                                                        <af:column headerText="#{bindings.MoraVO.hints.CodigoCliente.label}"
+                                                                   id="c1" rendered="false">
+                                                            <af:outputText value="#{row.CodigoCliente}"
+                                                                           shortDesc="#{bindings.MoraVO.hints.CodigoCliente.tooltip}"
+                                                                           id="ot1" inlineStyle="text-align:center;"/>
+                                                        </af:column>
+                                                        <af:column headerText="#{pa07segcrediticioghtBundle.TREINTADIAS_TXT}"
+                                                                   id="c2" inlineStyle="text-align:center;">
+                                                            <af:outputText value="#{row.Treintadias}"
+                                                                           shortDesc="#{bindings.MoraVO.hints.Treintadias.tooltip}"
+                                                                           id="ot2" inlineStyle="text-align:center;">
+                                                                <af:convertNumber groupingUsed="false"
+                                                                                  pattern="#{bindings.MoraVO.hints.Treintadias.format}"/>
+                                                            </af:outputText>
+                                                        </af:column>
+                                                        <af:column headerText="#{pa07segcrediticioghtBundle.SESENTA_TXT}"
+                                                                   id="c3" inlineStyle="text-align:center;">
+                                                            <af:outputText value="#{row.Sesentadias}"
+                                                                           shortDesc="#{bindings.MoraVO.hints.Sesentadias.tooltip}"
+                                                                           id="ot3" inlineStyle="text-align:center;">
+                                                                <af:convertNumber groupingUsed="false"
+                                                                                  pattern="#{bindings.MoraVO.hints.Sesentadias.format}"/>
+                                                            </af:outputText>
+                                                        </af:column>
+                                                        <af:column headerText="#{pa07segcrediticioghtBundle.NOVENTA_TXT}"
+                                                                   id="c4" inlineStyle="text-align:center;">
+                                                            <af:outputText value="#{row.Noventadias}"
+                                                                           shortDesc="#{bindings.MoraVO.hints.Noventadias.tooltip}"
+                                                                           id="ot4" inlineStyle="text-align:center;">
+                                                                <af:convertNumber groupingUsed="false"
+                                                                                  pattern="#{bindings.MoraVO.hints.Noventadias.format}"/>
+                                                            </af:outputText>
+                                                        </af:column>
+                                                        <af:column headerText="#{pa07segcrediticioghtBundle.CIENTO_OCHENTA_TXT}"
+                                                                   id="c5" inlineStyle="text-align:center;">
+                                                            <af:outputText value="#{row.Cientoochentadias}"
+                                                                           shortDesc="#{bindings.MoraVO.hints.Cientoochentadias.tooltip}"
+                                                                           id="ot5" inlineStyle="text-align:center;">
+                                                                <af:convertNumber groupingUsed="false"
+                                                                                  pattern="#{bindings.MoraVO.hints.Cientoochentadias.format}"/>
+                                                            </af:outputText>
+                                                        </af:column>
+                                                        <af:column headerText="#{pa07segcrediticioghtBundle.MAS_CIENTO_OCHENTA_TXT}"
+                                                                   id="c6" inlineStyle="text-align:center;">
+                                                            <af:outputText value="#{row.Masdecientoochenta}"
+                                                                           shortDesc="#{bindings.MoraVO.hints.Masdecientoochenta.tooltip}"
+                                                                           id="ot6" inlineStyle="text-align:center;">
+                                                                <af:convertNumber groupingUsed="false"
+                                                                                  pattern="#{bindings.MoraVO.hints.Masdecientoochenta.format}"/>
+                                                            </af:outputText>
+                                                        </af:column>
+                                                    </af:table>
+                                                </af:panelGroupLayout>
+                                            </af:panelHeader>
+                                            <af:panelHeader text="#{pa07segcrediticioghtBundle.OPERACIONES_CLIENTE_PNH_TXT}" id="ph4">
+                                                <f:facet name="context"/>
+                                                <f:facet name="menuBar"/>
+                                                <f:facet name="toolbar"/>
+                                                <f:facet name="legend"/>
+                                                <f:facet name="info"/>
+                                                <af:region value="#{bindings.operacionesRelacionadasBTF2.regionModel}"
+                                                           id="r5"/>
+                                            </af:panelHeader>
+                                        </af:panelGroupLayout>
+                                    </af:panelHeader>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="pane6" text="#{pa07segcrediticioghtBundle.PNL_TXT_COMENTARIOS}"
+                                                   disclosureListener="#{pageFlowScope.seguimientoCrediticioBean.panelComentariosDisclosureListener}"
+                                                   inlineStyle="margin-left: 10px;" immediate="true">
+                                    <af:region value="#{bindings.comentariosClienteBTF1.regionModel}" id="r3"/>
+                                </af:showDetailItem>
+                            </af:panelAccordion>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:facet name="comment"/>
+                    <f:facet name="attachment"/>
+                    <f:facet name="history"/>
+                    <f:attribute name="title"
+                                 value="#{bindings.NombreTarea == '' ? 'PA07 GHT' : bindings.NombreTarea}"/>
+                </af:pageTemplate>
+            </af:form>
+        </af:document>
+    </f:view>
+</jsp:root>

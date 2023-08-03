@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioOperacion/Operacion/V1/Wsdl/ADAPTER/ConsultarAccionByIdSAD"/>
+            <con:binding>
+                <con:name>ConsultarAccionesById12Bnd</con:name>
+                <con:namespace>http://xmlns.bcie.com/ConsultarAccionByIdSAD</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-N3f579b6a.673a0888.0.15f1130d01f.N7e3c">
+        <con:pipeline type="request" name="request-N3f579b6a.27b6bf1b.0.15f0d26f9cc.N7f93">
+            <con:stage id="_StageId-N3f579b6a.27b6bf1b.0.15f0d26f9cc.N7f91" name="StageRequest">
+                <con:context>
+                    <con1:userNsDecl prefix="oper" namespace="http://www.bcie.org/OperacionMO"/>
+                </con:context>
+                <con:actions>
+                    <con2:log>
+                        <con1:id>_ActionId-N3f579b6a.27b6bf1b.0.15f0d26f9cc.N7f8d</con1:id>
+                        <con2:logLevel>info</con2:logLevel>
+                        <con2:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con2:expr>
+                        <con2:message>ConsultarAcciones- Request</con2:message>
+                    </con2:log>
+                    <con3:assign varName="varListaAccionesTemp">
+                        <con1:id>_ActionId-N3f579b6a.27b6bf1b.0.15f0d26f9cc.N7f7b</con1:id>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/ConsultarAcciones/XQUERY/ConsultarCondiciones"/>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:foreach>
+                        <con1:id>_ActionId-N3f579b6a.27b6bf1b.0.15f0d26f9cc.N7f8a</con1:id>
+                        <con3:variable>body</con3:variable>
+                        <con3:expression>
+                            <con1:xpathText>./oper:ConsultarAccionesRequest/oper:IdAccion</con1:xpathText>
+                        </con3:expression>
+                        <con3:value-variable>idAccion</con3:value-variable>
+                        <con3:index-variable>index</con3:index-variable>
+                        <con3:total-variable>count</con3:total-variable>
+                        <con3:actions>
+                            <con3:assign varName="varIdAccion">
+                                <con1:id>_ActionId-N3f579b6a.27b6bf1b.0.15f0d26f9cc.N7f87</con1:id>
+                                <con3:expr>
+                                    <con1:xqueryText>&lt;con:ConsultarAccionesInput xmlns:con="http://xmlns.oracle.com/pcbpel/adapter/db/ConsultarAcciones">
+    &lt;con:pIdAccion>{$body/oper:ConsultarAccionesRequest/oper:IdAccion[$index]/text()}&lt;/con:pIdAccion>
+&lt;/con:ConsultarAccionesInput></con1:xqueryText>
+                                </con3:expr>
+                            </con3:assign>
+                            <con3:wsCallout>
+                                <con1:id>_ActionId-N3f579b6a.27b6bf1b.0.15f0d26f9cc.N7f84</con1:id>
+                                <con3:service ref="ADAPTADORES/ModeloNegocio/DominioOperacion/ConsultarAcciones/BS/ConsultarAcciones_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con3:operation>ConsultarAcciones</con3:operation>
+                                <con3:request>
+                                    <con3:body wrapped="false">varIdAccion</con3:body>
+                                </con3:request>
+                                <con3:response>
+                                    <con3:body wrapped="false">varAccionRs</con3:body>
+                                </con3:response>
+                                <con3:requestTransform/>
+                                <con3:responseTransform/>
+                            </con3:wsCallout>
+                            <con3:insert varName="varListaAccionesTemp">
+                                <con1:id>_ActionId-N3f579b6a.27b6bf1b.0.15f0d26f9cc.N7f7e</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:where>last-child</con3:where>
+                                <con3:expr>
+                                    <con1:xqueryText>$varAccionRs/*</con1:xqueryText>
+                                </con3:expr>
+                            </con3:insert>
+                        </con3:actions>
+                    </con3:foreach>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-N3f579b6a.27b6bf1b.0.15f0d26f9cc.N7f92">
+            <con:stage id="_StageId-N3f579b6a.27b6bf1b.0.15f0d26f9cc.N7f90" name="StageResponse">
+                <con:context/>
+                <con:actions>
+                    <con3:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-N3f579b6a.673a0888.0.15f1130d01f.N7ffb</con1:id>
+                        <con3:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/ConsultarAcciones/XQUERY/CunsultarAccionesBsRs_ToPipelineRs"/>
+                                <con1:param name="ConsultarAcciones">
+                                    <con1:path>$varListaAccionesTemp</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:log>
+                        <con1:id>_ActionId-N3f579b6a.673a0888.0.15f1130d01f.N7ff8</con1:id>
+                        <con2:logLevel>info</con2:logLevel>
+                        <con2:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con2:expr>
+                        <con2:message>ConsultarAcciones-Response</con2:message>
+                    </con2:log>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-N3f579b6a.673a0888.0.15f1130d01f.N7e3c">
+            <con:stage id="_StageId-N3f579b6a.673a0888.0.15f1130d01f.N7e3b" name="StageError">
+                <con:context/>
+                <con:actions>
+                    <con3:assign varName="inMapeoError">
+                        <con1:id>_ActionId-N3f579b6a.673a0888.0.15f1130d01f.N7e38</con1:id>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con1:param name="codigoError">
+                                    <con1:path>fn:string(fn:data($fault/ctx:errorCode))</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con1:id>_ActionId-N3f579b6a.673a0888.0.15f1130d01f.N7e35</con1:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS.proxyPipeline" xsi:type="con:PipelineRef"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapeoError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapeoError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-N3f579b6a.673a0888.0.15f1130d01f.N7e32</con1:id>
+                        <con3:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/ConsultarAcciones/XQUERY/Error_To_PipelineConsultarAccionesRs"/>
+                                <con1:param name="Mensaje">
+                                    <con1:path>xs:string(fn:data($fault/ctx:reason))</con1:path>
+                                </con1:param>
+                                <con1:param name="responseMapeoErrorMessage">
+                                    <con1:path>$outMapeoError</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con1:reply>
+                        <con1:id>_ActionId-N3f579b6a.673a0888.0.15f1130d01f.N7e2f</con1:id>
+                    </con1:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PipelinePairConsultarAcciones">
+                <con:request>request-N3f579b6a.27b6bf1b.0.15f0d26f9cc.N7f93</con:request>
+                <con:response>response-N3f579b6a.27b6bf1b.0.15f0d26f9cc.N7f92</con:response>
+            </con:pipeline-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

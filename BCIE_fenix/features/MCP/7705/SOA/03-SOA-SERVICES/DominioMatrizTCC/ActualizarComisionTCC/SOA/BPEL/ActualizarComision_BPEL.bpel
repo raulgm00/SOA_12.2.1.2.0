@@ -1,0 +1,1445 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Feb 11 01:40:40 CST 2016
+  Author:  luis-morales
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ActualizarComision_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioMatrizTCC/ActualizarComisionTCC/ActualizarComision_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioMatrizTCC/ActualizarComisionTCC/ActualizarComision_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ActualizarTCC"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns7="http://www.bcie.org/CondicionBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/" xmlns:ns3="http://www.bcie.org/TerminoBO"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns8="http://www.bcie.org/DocumentoBO" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ns6="http://www.bcie.org/ComisionBO"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ns4="http://www.bcie.org/CatalogoBO" xmlns:ns2="http://www.bcie.org/MatrizTCCMO"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns5="http://www.bcie.org/AtributoBO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns9="http://xmlns.bcie.com/ComisionService" xmlns:ns10="http://www.bcie.org/CrearComisionService"
+         xmlns:ns11="http://www.bcie.org/EliminarComisionService" xmlns:ns12="http://www.bcie.org/ComisionMO"
+         xmlns:ns13="http://www.bcie.org/ResultBO" xmlns:ns14="http://www.bcie.org/ErrorBO"
+         xmlns:ns15="http://www.bcie.org/OperacionBO" xmlns:ns17="http://www.bcie.org/ProductoBO"
+         xmlns:ns18="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns16="http://www.bcie.org/ClienteBO"
+         xmlns:ns19="http://www.bcie.org/MatrizTCCService" xmlns:ns20="http://www.bcie.org/MatrizTCCBO"
+         xmlns:ns21="http://www.bcie.org/ConsultarOperacionEnProcesoService"
+         xmlns:ns23="http://www.bcie.org/ConsultarOperacionEnProcesoBO"
+         xmlns:ns22="http://www.bcie.org/ConsultarOperacionEnProcesoMO" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns24="urn:ActualizarDetalleEnmiendaSAD" xmlns:ns27="http://www.bcie.org/ReglaBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns26="http://www.bcie.org/CommonBO"
+         xmlns:ns29="http://www.bcie.org/LineaCreditoBO" xmlns:ns28="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns25="http://www.bcie.org/DesembolsoBO" xmlns:ns30="http://www.bcie.org/ContratoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/ActualizarTCC" location="../WSDLs/ActualizarTCCSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="actualizarComision_Servicie" partnerLinkType="ns1:ActualizarTCCPTSOR_PLT"
+                 myRole="ActualizarTCCPTSOR_Role"/>
+    <partnerLink name="ActualizarComision_SB" partnerLinkType="ns9:ActualizarComision_SB"
+                 partnerRole="ActualizarComisionPT"/>
+    <partnerLink name="CrearComision_SB" partnerLinkType="ns10:CrearComision_SB" partnerRole="CrearComisionPT"/>
+    <partnerLink name="ConsultarComision_SB" partnerLinkType="ns9:ConsultarComision_SB"
+                 partnerRole="ConsultarComisionPT"/>
+    <partnerLink name="ValidarEstadoTCC" partnerLinkType="ns19:ValidarEstadoTCC" partnerRole="MatrizTCCPT"/>
+    <partnerLink name="ConsultarOperacionProceso_SB" partnerLinkType="ns21:ConsultarOperacionProceso_SB"
+                 partnerRole="ConsultarOperacionEnProcesoPT"/>
+    <partnerLink name="ActualizarDetalleEnmienda_SB" partnerLinkType="ns24:ActualizarDetalleEnmienda_SB"
+                 partnerRole="ActualizarDetalleEnmiendaRequest_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ActualizarTCCRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ActualizarTCCResponseMessage"/>
+    <variable name="outConsultarComision" messageType="ns9:responseConsultarComisionMessage"/>
+    <variable name="ComisionCounter" messageType="ns1:ActualizarTCCRequestMessage"/>
+    <variable name="outConsultarComisionActualizada" messageType="ns9:responseConsultarComisionMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ActualizarComision_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="actualizarComision_Servicie" portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC" variable="inputVariable" createInstance="yes"/>
+    <forEach parallel="no" counterName="ComisionCounter" name="ComisionList">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($inputVariable.request/ns2:Comision)</finalCounterValue>
+      <scope name="ComisionScope">
+        <faultHandlers>
+          <catch faultName="bpel:selectionFailure">
+            <sequence name="ProcesoInvalidoSequence">
+              <assign name="AssignError">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+                </copy>
+                <copy>
+                  <from>'No es un proceso válido para la acción'</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyWithError" variable="outputVariable" partnerLink="actualizarComision_Servicie"
+                     portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+              <exit name="ExitWithError"/>
+            </sequence>
+          </catch>
+        </faultHandlers>
+        <sequence name="Sequence2">
+          <assign name="AssignContadorGeneral">
+            <copy>
+              <from>$ComisionCounter</from>
+              <to>$outputVariable.response/ns2:Comision/ns6:idComision</to>
+            </copy>
+          </assign>
+          <assign name="TransformacionComision">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/ComisionTransformation.xqy', 'inputVariable.request', $inputVariable.request, 'outputVariable.response', $outputVariable.response)</from>
+              <to variable="inputVariable" part="request"/>
+            </copy>
+          </assign>
+          <scope name="ConsultarOperacionProcesoScope">
+            <variables>
+              <variable name="inConsultarOperacionProceso"
+                        messageType="ns21:consultarOperacionEnProcesoRequestMessage"/>
+              <variable name="outConsultarOperacionProceso"
+                        messageType="ns21:consultarOperacionEnProcesoResponseMessage"/>
+            </variables>
+            <faultHandlers>
+              <catchAll>
+                <sequence name="AssignErrorSequence">
+                  <assign name="ReplyWithError">
+                    <copy>
+                      <from>'ERROR'</from>
+                      <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+                    </copy>
+                    <copy>
+                      <from>'La operación no se encuentra en un proceso activo'</from>
+                      <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplyError" variable="outputVariable" partnerLink="actualizarComision_Servicie"
+                         portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+                  <exit name="ExitWithError"/>
+                </sequence>
+              </catchAll>
+            </faultHandlers>
+            <sequence name="ConsultarOperacionProcesoSequence">
+              <assign name="ConsultarOperacionProcessoAssign">
+                <copy>
+                  <from>$inputVariable.request/ns2:idProceso</from>
+                  <to>$inConsultarOperacionProceso.request/ns22:OperacionEnProceso/ns23:idProceso</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idOperacion</from>
+                  <to>$inConsultarOperacionProceso.request/ns22:OperacionEnProceso/ns23:idOperacion</to>
+                </copy>
+              </assign>
+              <invoke name="ConsultarOperacionProcesoInvoke"
+                      partnerLink="ConsultarOperacionProceso_SB" portType="ns21:ConsultarOperacionEnProcesoPT"
+                      operation="consultarOperacionEnProceso" inputVariable="inConsultarOperacionProceso"
+                      outputVariable="outConsultarOperacionProceso" bpelx:invokeAsDetail="no"/>
+              <if name="OK">
+                <documentation>
+                  <![CDATA[OK]]>
+                </documentation>
+                <condition>$outConsultarOperacionProceso.response/ns22:Resultado/ns13:result != 'ERROR'</condition>
+                <sequence>
+                  <if name="IdComision">
+                    <documentation>
+                      <![CDATA[NoIdCondicion]]>
+                    </documentation>
+                    <condition>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision = ''</condition>
+                    <empty name="ValidarEstado"/>
+                    <else>
+                      <documentation>
+                        <![CDATA[IdCondicion]]>
+                      </documentation>
+                      <scope name="ConsultarComisionScope">
+                        <variables>
+                          <variable name="inConsultarComision" messageType="ns9:requestConsultarComisionMessage"/>
+                        </variables>
+                        <faultHandlers>
+                          <catchAll>
+                            <sequence name="ConsultarComisionSequenceError">
+                              <assign name="ConsultarComisionAssignError">
+                                <copy>
+                                  <from>$outConsultarComision.response/ns12:Resultado</from>
+                                  <to>$outputVariable.response/ns2:Resultado</to>
+                                </copy>
+                              </assign>
+                              <reply name="ReplyConsultarComision" variable="outputVariable"
+                                     partnerLink="actualizarComision_Servicie" portType="ns1:ActualizarTCCPTSOR"
+                                     operation="actualizarTCC"/>
+                              <exit name="ExitWithError"/>
+                            </sequence>
+                          </catchAll>
+                        </faultHandlers>
+                        <sequence name="ConsultarComisionSequence">
+                          <assign name="ConsultarComisionAsssign">
+                            <copy>
+                              <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision</from>
+                              <to>$inConsultarComision.request/ns12:idComision</to>
+                            </copy>
+                          </assign>
+                          <invoke name="ConsultarComisionInvoke" bpelx:invokeAsDetail="no"
+                                  partnerLink="ConsultarComision_SB" portType="ns9:ConsultarComisionPT"
+                                  operation="ConsultarComision" inputVariable="inConsultarComision"
+                                  outputVariable="outConsultarComision"/>
+                          <if name="OK">
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <condition>$outConsultarComision.response/ns12:Resultado/ns13:result != 'ERROR'</condition>
+                            <empty name="ValidarEstadoTCC"/>
+                            <else>
+                              <documentation>
+                                <![CDATA[ERROR]]>
+                              </documentation>
+                              <throw name="ThrowConsultarComision" faultName="bpelx:remoteFault"/>
+                            </else>
+                          </if>
+                        </sequence>
+                      </scope>
+                    </else>
+                  </if>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[ERROR]]>
+                  </documentation>
+                  <throw name="ThrowRemoteFault" faultName="bpelx:remoteFault"/>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+          <if name="Accion">
+            <documentation>
+              <![CDATA[AGREGAR]]>
+            </documentation>
+            <condition>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion = 'AGREGAR'</condition>
+            <sequence name="Sequence3">
+              <if name="Proceso">
+                <documentation>
+                  <![CDATA[ProcesoCorrecto]]>
+                </documentation>
+                <condition>$inputVariable.request/ns2:idProceso = 3 or $inputVariable.request/ns2:idProceso = 5 or $inputVariable.request/ns2:idProceso = 10</condition>
+                <scope name="CrearComisionScope">
+                  <variables>
+                    <variable name="inCrearComision" messageType="ns10:CrearComisionRequestMessage"/>
+                    <variable name="outCrearComision" messageType="ns10:CrearComisionResponseMessage"/>
+                  </variables>
+                  <sequence name="CrearComisionSequence">
+                    <scope name="ValidarComisionScope">
+                      <variables>
+                        <variable name="inValidarEstado" messageType="ns19:ValidarEstadoTCCRequestMessage"/>
+                        <variable name="outValidarEstado" messageType="ns19:ValidarEstadoTCCResponseMessage"/>
+                      </variables>
+                      <faultHandlers>
+                        <catchAll><sequence name="ValidarEstadoSequenceError"
+                                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="ErrorValidarEstado">
+         <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+         </copy>
+         <copy>
+            <from>'Cambio de estado inválido'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+         </copy>
+      </assign>
+      <reply name="ReplyWithError" variable="outputVariable" partnerLink="actualizarComision_Servicie"
+             portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+      <exit name="ExitWithError"/>
+   </sequence></catchAll>
+                      </faultHandlers>
+                      <sequence name="ValidarComisionSequence">
+                        <assign name="ValidarComisionAssign">
+                          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                            <from>7</from>
+                            <to>$inValidarEstado.request/ns2:tcc/ns20:estado</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                            <from>$inputVariable.request/ns2:Tipo</from>
+                            <to>$inValidarEstado.request/ns2:tcc/ns20:tipo</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision</from>
+                            <to>$inValidarEstado.request/ns2:tcc/ns20:id</to>
+                          </copy>
+                        </assign>
+                        <invoke name="ValidarComisionInvoke" bpelx:invokeAsDetail="no" partnerLink="ValidarEstadoTCC"
+                                portType="ns19:MatrizTCCPT" operation="validarEstadoTCC" inputVariable="inValidarEstado"
+                                outputVariable="outValidarEstado"/>
+                        <if name="True">
+                          <documentation>
+                            <![CDATA[True]]>
+                          </documentation>
+                          <condition>$outValidarEstado.response/ns2:validacionEstados != 'false'</condition>
+                          <sequence>
+                            <assign name="CrearComisionRequest">
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$inputVariable.request/ns2:Comision[$ComisionCounter]</from>
+                                <to>$inCrearComision.request/ns12:Comision</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>7</from>
+                                <to>$inCrearComision.request/ns12:Comision/ns6:estadoTCC/ns5:id</to>
+                              </copy>
+                            </assign>
+                            <invoke name="CrearComisionInvoke" bpelx:invokeAsDetail="no" partnerLink="CrearComision_SB"
+                                    portType="ns10:CrearComisionPT" operation="crearComision"
+                                    inputVariable="inCrearComision" outputVariable="outCrearComision"/>
+                            <if name="OK">
+                              <documentation>
+                                <![CDATA[OK]]>
+                              </documentation>
+                              <condition>$outCrearComision.response/ns12:Resultado/ns13:result != 'ERROR'</condition>
+                              <sequence name="Sequence1">
+                                <scope name="ConsultarComisionScope">
+                                  <variables>
+                                    <variable name="inConsultarComisionActualizado"
+                                              messageType="ns9:requestConsultarComisionMessage"/>
+                                  </variables>
+                                  <faultHandlers>
+                                    <catch faultName="bpelx:remoteFault" faultVariable="ErrorConsultar"
+                                           faultMessageType="bpelx:RuntimeFaultMessage">
+                                      <sequence name="ErrorConsultarComision">
+                                        <assign name="ErrorConsultarComisionRequest">
+                                          <copy>
+                                            <from>'ERROR'</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+                                          </copy>
+                                          <copy>
+                                            <from>'Error al momento de consultar la nueva comsiión'</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+                                          </copy>
+                                          <copy>
+                                            <from>$ErrorConsultar.code</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorCode</to>
+                                          </copy>
+                                          <copy>
+                                            <from>$ErrorConsultar.detail</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorDescription</to>
+                                          </copy>
+                                          <copy>
+                                            <from>$ErrorConsultar.summary</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorType</to>
+                                          </copy>
+                                        </assign>
+                                        <reply name="ReplyError" variable="outputVariable"
+                                               partnerLink="actualizarComision_Servicie"
+                                               portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+                                      </sequence>
+                                    </catch>
+                                  </faultHandlers>
+                                  <sequence name="ConsultarComisionSequence">
+                                    <assign name="ConsultarComisionRequest">
+                                      <copy>
+                                        <from>$outCrearComision.response/ns12:Resultado/ns13:message</from>
+                                        <to>$inConsultarComisionActualizado.request/ns12:idComision</to>
+                                      </copy>
+                                    </assign>
+                                    <invoke name="ConsultarComisionInvoke"
+                                            partnerLink="ConsultarComision_SB" portType="ns9:ConsultarComisionPT"
+                                            operation="ConsultarComision" inputVariable="inConsultarComisionActualizado"
+                                            outputVariable="outConsultarComisionActualizada" bpelx:invokeAsDetail="no"/>
+                                    <if name="OK">
+                                      <documentation>
+                                        <![CDATA[OK]]>
+                                      </documentation>
+                                      <condition>$outConsultarComision.response/ns12:Resultado/ns13:result != 'ERROR'</condition>
+                                      <assign name="RespnseCrearConsultarComision">
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>$outConsultarComisionActualizada.response/ns12:Resultado</from>
+                                          <to>$outputVariable.response/ns2:Resultado[$ComisionCounter]</to>
+                                        </copy>
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>$outCrearComision.response/ns12:Resultado</from>
+                                          <to>$outputVariable.response/ns2:Comision[$ComisionCounter]</to>
+                                        </copy>
+                                      </assign>
+                                      <else>
+                                        <documentation>
+                                          <![CDATA[ERROR]]>
+                                        </documentation>
+                                        <throw name="ErrorConsultarComision" faultName="bpelx:remoteFault"/>
+                                      </else>
+                                    </if>
+                                  </sequence>
+                                </scope>
+                              </sequence>
+                              <else>
+                                <documentation>
+                                  <![CDATA[ERROR]]>
+                                </documentation>
+                                <throw name="ErrorCrearComision" faultName="bpelx:remoteFault"/>
+                              </else>
+                            </if>
+                          </sequence>
+                          <else>
+                            <documentation>
+                              <![CDATA[False]]>
+                            </documentation>
+                            <throw name="ThrowValidarEstadoError" faultName="bpelx:remoteFault"/>
+                          </else>
+                        </if>
+                      </sequence>
+                    </scope>
+                  </sequence>
+                </scope>
+                <else>
+                  <throw name="ProcesoIncorrectoError" faultName="bpel:selectionFailure"/>
+                </else>
+              </if>
+            </sequence>
+            <elseif>
+              <documentation>
+                <![CDATA[EDITAR]]>
+              </documentation>
+              <condition>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion = 'EDITAR'</condition>
+              <sequence name="Sequence4">
+                <if name="Proceso">
+                  <documentation>
+                    <![CDATA[ProcesoCorrecto]]>
+                  </documentation>
+                  <condition>$inputVariable.request/ns2:idProceso = 3 or $inputVariable.request/ns2:idProceso = 5 or $inputVariable.request/ns2:idProceso = 10 or $inputVariable.request/ns2:idProceso = 33 or $inputVariable.request/ns2:idProceso = 36</condition>
+                  <scope name="EditarComisionScope">
+                    <sequence name="ActualizarComisionSequence">
+                      <scope name="ValidarComisionScope">
+                        <variables>
+                          <variable name="estadoId" type="xsd:string"/>
+                          <variable name="accion" type="xsd:string"/>
+                          <variable name="proceso" type="xsd:string"/>
+                          <variable name="inValidarEstado" messageType="ns19:ValidarEstadoTCCRequestMessage"/>
+                          <variable name="outValidarEstado" messageType="ns19:ValidarEstadoTCCResponseMessage"/>
+                        </variables>
+                        <faultHandlers>
+                          <catchAll><sequence name="ValidarEstadoSequenceError"
+                                              xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="ErrorValidarEstado">
+         <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+         </copy>
+         <copy>
+            <from>'Cambio de estado inválido'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+         </copy>
+      </assign>
+      <reply name="ReplyWithError" variable="outputVariable" partnerLink="actualizarComision_Servicie"
+             portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+      <exit name="ExitWithError"/>
+   </sequence></catchAll>
+                        </faultHandlers>
+                        <sequence name="ValidarComisionSequence">
+                          <assign name="ValidarComisionAssign">
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:id</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$inputVariable.request/ns2:Tipo</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:tipo</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                              <from>$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:estado</to>
+                            </copy>
+                            <copy>
+                              <from>string($outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id)</from>
+                              <to>$estadoId</to>
+                            </copy>
+                            <copy>
+                              <from>string($inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion)</from>
+                              <to>$accion</to>
+                            </copy>
+                            <copy>
+                              <from>string($inputVariable.request/ns2:idProceso)</from>
+                              <to>$proceso</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                              <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$estadoId, "IdSubEstadoDespues", "No encontrado", "Accion",$accion, "idProceso", $proceso)</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:subEstado</to>
+                            </copy>
+                          </assign>
+                          <invoke name="ValidarComisionInvoke" bpelx:invokeAsDetail="no" partnerLink="ValidarEstadoTCC"
+                                  portType="ns19:MatrizTCCPT" operation="validarEstadoTCC"
+                                  inputVariable="inValidarEstado" outputVariable="outValidarEstado"/>
+                          <if name="True">
+                            <documentation>
+                              <![CDATA[True]]>
+                            </documentation>
+                            <condition>$outValidarEstado.response/ns2:validacionEstados != 'false'</condition>
+                            <sequence>
+                              <scope name="ActualizarComisionScope">
+                                <variables>
+                                  <variable name="inActualizarComision"
+                                            messageType="ns9:requestActualizarComisionMessage"/>
+                                  <variable name="outActualizarComision"
+                                            messageType="ns9:responseActualizarComisionMessage"/>
+                                </variables>
+                                <faultHandlers>
+                                  <catchAll><sequence name="ValidarEstadoSequenceError"
+                                                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="ErrorValidarEstado">
+         
+         
+      <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+         </copy><copy>
+            <from>'No se pudo actualizar la comisión'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+         </copy></assign>
+      <reply name="ReplyWithError" variable="outputVariable" partnerLink="actualizarComision_Servicie"
+             portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+      <exit name="ExitWithError"/>
+   </sequence></catchAll>
+                                </faultHandlers>
+                                <sequence name="ActualizarComisionSequence">
+                                  <assign name="ActualizarComisionAssign">
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$inputVariable.request/ns2:Comision[$ComisionCounter]</from>
+                                      <to>$inActualizarComision.request/ns12:Comision</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion, "idProceso", $inputVariable.request/ns2:idProceso)</from>
+                                      <to>$inActualizarComision.request/ns12:Comision/ns6:subEstadoTCC/ns5:id</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id</from>
+                                      <to>$inActualizarComision.request/ns12:Comision/ns6:estadoTCC/ns5:id</to>
+                                    </copy>
+                                  </assign>
+                                  <invoke name="ActualizarComisionInvoke"
+                                          partnerLink="ActualizarComision_SB" portType="ns9:ActualizarComisionPT"
+                                          operation="ActualizarComision" inputVariable="inActualizarComision"
+                                          outputVariable="outActualizarComision" bpelx:invokeAsDetail="no"/>
+                                  <if name="OK">
+                                    <documentation>
+                                      <![CDATA[OK]]>
+                                    </documentation>
+                                    <condition>$outActualizarComision.response/ns12:Resultado/ns13:result != 'ERROR'</condition>
+                                    <scope name="ConsultarComisionScope">
+                                      <variables>
+                                        <variable name="inConsultarComisionActualizada"
+                                                  messageType="ns9:requestConsultarComisionMessage"/>
+                                      </variables>
+                                      <faultHandlers>
+                                        <catch faultName="bpelx:remoteFault" faultVariable="ErrorConsultarComision"
+                                               faultMessageType="bpelx:RuntimeFaultMessage">
+                                          <sequence name="ErrorConsultarComisionRequest">
+                                            <assign name="ErrorConsultarComisionRequest">
+                                              <copy>
+                                                <from>$ErrorConsultarComision.code</from>
+                                                <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorCode</to>
+                                              </copy>
+                                              <copy>
+                                                <from>$ErrorConsultarComision.detail</from>
+                                                <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorDescription</to>
+                                              </copy>
+                                              <copy>
+                                                <from>$ErrorConsultarComision.summary</from>
+                                                <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorType</to>
+                                              </copy>
+                                              <copy>
+                                                <from>'ERROR'</from>
+                                                <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+                                              </copy>
+                                              <copy>
+                                                <from>'Error al momento de consultar la comisión actualizada'</from>
+                                                <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+                                              </copy>
+                                            </assign>
+                                            <reply name="ReplyError" variable="outputVariable"
+                                                   partnerLink="actualizarComision_Servicie"
+                                                   portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+                                          </sequence>
+                                        </catch>
+                                      </faultHandlers>
+                                      <sequence name="ConsultarComisionSequence">
+                                        <assign name="ConsultarComisionRequest">
+                                          <copy>
+                                            <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision</from>
+                                            <to>$inConsultarComisionActualizada.request/ns12:idComision</to>
+                                          </copy>
+                                        </assign>
+                                        <invoke name="ConsultarComisionInvoke"
+                                                partnerLink="ConsultarComision_SB" portType="ns9:ConsultarComisionPT"
+                                                operation="ConsultarComision"
+                                                inputVariable="inConsultarComisionActualizada"
+                                                outputVariable="outConsultarComisionActualizada" bpelx:invokeAsDetail="no"/>
+                                        <if name="OK">
+                                          <documentation>
+                                            <![CDATA[OK]]>
+                                          </documentation>
+                                          <condition>$outConsultarComision.response/ns12:Resultado/ns13:result != 'ERROR'</condition>
+                                          <assign name="ActualizarComisionResponse">
+                                            <copy bpelx:insertMissingToData="yes">
+                                              <from>$outConsultarComisionActualizada.response/ns12:Comision</from>
+                                              <to>$outputVariable.response/ns2:Comision[$ComisionCounter]</to>
+                                            </copy>
+                                            <copy bpelx:insertMissingToData="yes">
+                                              <from>$outActualizarComision.response/ns12:Resultado</from>
+                                              <to>$outputVariable.response/ns2:Resultado[$ComisionCounter]</to>
+                                            </copy>
+                                          </assign>
+                                          <else>
+                                            <documentation>
+                                              <![CDATA[ERROR]]>
+                                            </documentation>
+                                            <throw name="ThrowErrorConsultar" faultName="bpelx:remoteFault"/>
+                                          </else>
+                                        </if>
+                                      </sequence>
+                                    </scope>
+                                    <else>
+                                      <documentation>
+                                        <![CDATA[ERROR]]>
+                                      </documentation>
+                                      <throw name="ErrorActualizarComision" faultName="bpelx:remoteFault"/>
+                                    </else>
+                                  </if>
+                                </sequence>
+                              </scope>
+                            </sequence>
+                            <else>
+                              <documentation>
+                                <![CDATA[False]]>
+                              </documentation>
+                              <sequence>
+                                <throw name="ErrorValidarcomision" faultName="bpelx:remoteFault"/>
+                              </sequence>
+                            </else>
+                          </if>
+                        </sequence>
+                      </scope>
+                    </sequence>
+                  </scope>
+                  <elseif>
+                    <documentation>
+                      <![CDATA[Aprobacion]]>
+                    </documentation>
+                    <condition>$inputVariable.request/ns2:idProceso = 4</condition>
+                    <scope name="ValidarEstadoAprobacion">
+                      <variables>
+                        <variable name="inValidarEstadoTCC" messageType="ns19:ValidarEstadoTCCRequestMessage"/>
+                        <variable name="outValidarEstadoTCC" messageType="ns19:ValidarEstadoTCCResponseMessage"/>
+                      </variables>
+                      <faultHandlers>
+                        <catchAll>
+                          <sequence name="ValidarEstadoErrorSequence">
+                            <assign name="ValidarEstadoAssign">
+                              <copy>
+                                <from>'ERROR'</from>
+                                <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+                              </copy>
+                              <copy>
+                                <from>'No se pudo validar el cambio de estado'</from>
+                                <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+                              </copy>
+                            </assign>
+                            <reply name="ReplyWithError" variable="outputVariable"
+                                   partnerLink="actualizarComision_Servicie" portType="ns1:ActualizarTCCPTSOR"
+                                   operation="actualizarTCC"/>
+                            <exit name="ExitWithError"/>
+                          </sequence>
+                        </catchAll>
+                      </faultHandlers>
+                      <sequence name="ValidarEstadoSequence">
+                        <assign name="ValidarEstadoAssign">
+                          <copy>
+                            <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision</from>
+                            <to>$inValidarEstadoTCC.request/ns2:tcc/ns20:id</to>
+                          </copy>
+                          <copy>
+                            <from>$inputVariable.request/ns2:Tipo</from>
+                            <to>$inValidarEstadoTCC.request/ns2:tcc/ns20:tipo</to>
+                          </copy>
+                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                            <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion, "idProceso", $inputVariable.request/ns2:idProceso)</from>
+                            <to>$inValidarEstadoTCC.request/ns2:tcc/ns20:subEstado</to>
+                          </copy>
+                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                            <from>$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id</from>
+                            <to>$inValidarEstadoTCC.request/ns2:tcc/ns20:estado</to>
+                          </copy>
+                        </assign>
+                        <invoke name="ValidarEstadoInvoke" partnerLink="ValidarEstadoTCC"
+                                portType="ns19:MatrizTCCPT" operation="validarEstadoTCC"
+                                inputVariable="inValidarEstadoTCC" outputVariable="outValidarEstadoTCC"
+                                bpelx:invokeAsDetail="no"/>
+                        <if name="SeValida">
+                          <documentation>
+                            <![CDATA[true]]>
+                          </documentation>
+                          <condition>$outValidarEstadoTCC.response/ns2:validacionEstados != 'false'</condition>
+                          <scope name="ActualizarEstadoScope">
+                            <variables>
+                              <variable name="inActualizarComision" messageType="ns9:requestActualizarComisionMessage"/>
+                              <variable name="outActualizarComision"
+                                        messageType="ns9:responseActualizarComisionMessage"/>
+                            </variables>
+                            <sequence name="ActualizarEstadoComisionSequence">
+                              <assign name="ActualizarEstadoComisionAssign">
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$inputVariable.request/ns2:Comision[$ComisionCounter]</from>
+                                  <to>$inActualizarComision.request/ns12:Comision</to>
+                                </copy>
+                                <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                  <from>$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id</from>
+                                  <to>$inActualizarComision.request/ns12:Comision/ns6:estadoTCC/ns5:id</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion, "idProceso", $inputVariable.request/ns2:idProceso)</from>
+                                  <to>$inActualizarComision.request/ns12:Comision/ns6:subEstadoTCC/ns5:id</to>
+                                </copy>
+                              </assign>
+                              <invoke name="ActualizarEstadoComisionInvoke" bpelx:invokeAsDetail="no"
+                                      partnerLink="ActualizarComision_SB" portType="ns9:ActualizarComisionPT"
+                                      operation="ActualizarComision" inputVariable="inActualizarComision"
+                                      outputVariable="outActualizarComision"/>
+                              <if name="OK">
+                                <documentation>
+                                  <![CDATA[OK]]>
+                                </documentation>
+                                <condition>$outActualizarComision.response/ns12:Resultado/ns13:result != 'ERROR'</condition>
+                                <scope name="ConsultarComisionActualizada">
+                                  <variables>
+                                    <variable name="inConsutlarComisionActualizada"
+                                              messageType="ns9:requestConsultarComisionMessage"/>
+                                  </variables>
+                                  <sequence name="ConsultarComisionActualizadaSequence">
+                                    <assign name="ConsultarComisionAssign">
+                                      <copy>
+                                        <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision</from>
+                                        <to>$inConsutlarComisionActualizada.request/ns12:idComision</to>
+                                      </copy>
+                                    </assign>
+                                    <invoke name="ConsultarComisionActualizada" bpelx:invokeAsDetail="no"
+                                            partnerLink="ConsultarComision_SB" portType="ns9:ConsultarComisionPT"
+                                            operation="ConsultarComision"
+                                            inputVariable="inConsutlarComisionActualizada"
+                                            outputVariable="outConsultarComisionActualizada"/>
+                                    <if name="OK">
+                                      <documentation>
+                                        <![CDATA[OK]]>
+                                      </documentation>
+                                      <condition>$outConsultarComisionActualizada.response/ns12:Resultado/ns13:result != 'ERROR'</condition>
+                                      <assign name="AssignResponse">
+                                        <copy>
+                                          <from>$outConsultarComisionActualizada.response/ns12:Comision</from>
+                                          <to>$outputVariable.response/ns2:Comision</to>
+                                        </copy>
+                                        <copy>
+                                          <from>$outActualizarComision.response/ns12:Resultado</from>
+                                          <to>$outputVariable.response/ns2:Resultado</to>
+                                        </copy>
+                                      </assign>
+                                      <else>
+                                        <documentation>
+                                          <![CDATA[ERROR]]>
+                                        </documentation>
+                                        <throw name="ErrorConsultarComsionActualizada" faultName="bpelx:remoteFault"/>
+                                      </else>
+                                    </if>
+                                  </sequence>
+                                </scope>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[ERROR]]>
+                                  </documentation>
+                                  <throw name="ErrorActualizarComsiion" faultName="bpelx:remoteFault"/>
+                                </else>
+                              </if>
+                            </sequence>
+                          </scope>
+                          <else>
+                            <documentation>
+                              <![CDATA[false]]>
+                            </documentation>
+                            <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                          </else>
+                        </if>
+                      </sequence>
+                    </scope>
+                  </elseif>
+                  <else>
+                    <throw name="ThrowProcesoIncorrectoError" faultName="bpel:selectionFailure"/>
+                  </else>
+                </if>
+              </sequence>
+            </elseif>
+            <elseif>
+              <documentation>
+                <![CDATA[ELIMINAR]]>
+              </documentation>
+              <condition>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion = 'ELIMINAR'</condition>
+              <sequence name="Sequence5">
+                <if name="Proceso">
+                  <documentation>
+                    <![CDATA[ProcesoCorrecto]]>
+                  </documentation>
+                  <condition>$inputVariable.request/ns2:idProceso = 3 or $inputVariable.request/ns2:idProceso = 5 or $inputVariable.request/ns2:idProceso = 10 or $inputVariable.request/ns2:idProceso = 4</condition>
+                  <scope name="EliminarComisionScope">
+                    <faultHandlers>
+                      <catch faultName="bpelx:remoteFault" faultVariable="ErrorEliminarComision"
+                             faultMessageType="bpelx:RuntimeFaultMessage">
+                        <sequence name="ErrorEliminarComisionSequence">
+                          <assign name="EliminarComisionError">
+                            <copy>
+                              <from>'ERROR'</from>
+                              <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+                            </copy>
+                            <copy>
+                              <from>'Estado inválido para la comisión'</from>
+                              <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+                            </copy>
+                            <copy>
+                              <from>$ErrorEliminarComision.code</from>
+                              <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorCode</to>
+                            </copy>
+                            <copy>
+                              <from>$ErrorEliminarComision.detail</from>
+                              <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorDescription</to>
+                            </copy>
+                            <copy>
+                              <from>$ErrorEliminarComision.summary</from>
+                              <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorType</to>
+                            </copy>
+                          </assign>
+                        </sequence>
+                      </catch>
+                    </faultHandlers>
+                    <sequence name="EliminarComisionSequence">
+                      <scope name="ValidarEstadoScope">
+                        <variables>
+                          <variable name="inValidarEstado" messageType="ns19:ValidarEstadoTCCRequestMessage"/>
+                          <variable name="outValidarEstado" messageType="ns19:ValidarEstadoTCCResponseMessage"/>
+                          <variable name="inActualizarComision" messageType="ns9:requestActualizarComisionMessage"/>
+                          <variable name="outActualizarComision" messageType="ns9:responseActualizarComisionMessage"/>
+                        </variables>
+                        <faultHandlers>
+                          <catchAll>
+                            <sequence name="ValidarEstadoSequenceError">
+                              <assign name="ErrorValidarEstado">
+                                <copy>
+                                  <from>'ERROR'</from>
+                                  <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+                                </copy>
+                                <copy>
+                                  <from>'Cambio de estado inválido'</from>
+                                  <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+                                </copy>
+                              </assign>
+                              <reply name="ReplyWithError" variable="outputVariable"
+                                     partnerLink="actualizarComision_Servicie" portType="ns1:ActualizarTCCPTSOR"
+                                     operation="actualizarTCC"/>
+                              <exit name="ExitWithError"/>
+                            </sequence>
+                          </catchAll>
+                        </faultHandlers>
+                        <sequence name="ValidarEstadoSequence">
+                          <assign name="ValidarEstadoAssign">
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:id</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                              <from>$inputVariable.request/ns2:Tipo</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:tipo</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                              <from>$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:estado</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                              <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion, "idProceso", $inputVariable.request/ns2:idProceso)</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:subEstado</to>
+                            </copy>
+                          </assign>
+                          <invoke name="ValdarEstadoInvoke" partnerLink="ValidarEstadoTCC" portType="ns19:MatrizTCCPT"
+                                  operation="validarEstadoTCC" inputVariable="inValidarEstado"
+                                  outputVariable="outValidarEstado" bpelx:invokeAsDetail="no"/>
+                          <if name="True">
+                            <documentation>
+                              <![CDATA[True]]>
+                            </documentation>
+                            <condition>$outValidarEstado.response/ns2:validacionEstados != 'false'</condition>
+                            <sequence>
+                              <assign name="EliminarComisionRequest">
+                                <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                  <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision</from>
+                                  <to>$inActualizarComision.request/ns12:Comision/ns6:idComision</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>0</from>
+                                  <to>$inActualizarComision.request/ns12:Comision/ns6:estado</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion, "idProceso", $inputVariable.request/ns2:idProceso)</from>
+                                  <to>$inActualizarComision.request/ns12:Comision/ns6:subEstadoTCC/ns5:id</to>
+                                </copy>
+                              </assign>
+                              <invoke name="EliminarComisionInvoke" partnerLink="ActualizarComision_SB"
+                                      portType="ns9:ActualizarComisionPT" operation="ActualizarComision"
+                                      inputVariable="inActualizarComision" outputVariable="outActualizarComision"
+                                      bpelx:invokeAsDetail="no"/>
+                              <if name="OK">
+                                <documentation>
+                                  <![CDATA[OK]]>
+                                </documentation>
+                                <condition>$outActualizarComision.response/ns12:Resultado/ns13:result != 'ERROR'</condition>
+                                <assign name="EliminarComisionResponse">
+                                  <copy bpelx:insertMissingToData="yes">
+                                    <from>$outActualizarComision.response/ns12:Resultado/ns13:result</from>
+                                    <to>$outputVariable.response/ns2:Resultado[$ComisionCounter]/ns13:result</to>
+                                  </copy>
+                                  <copy bpelx:insertMissingToData="yes">
+                                    <from>concat('La comisión ', $inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision, ' se ha eliminado correctamente')</from>
+                                    <to>$outputVariable.response/ns2:Resultado[$ComisionCounter]/ns13:message</to>
+                                  </copy>
+                                </assign>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[ERROR]]>
+                                  </documentation>
+                                  <throw name="ErrorEliminarComisino" faultName="bpelx:remoteFault"/>
+                                </else>
+                              </if>
+                            </sequence>
+                            <else>
+                              <documentation>
+                                <![CDATA[False]]>
+                              </documentation>
+                              <throw name="ThrowValidarEstadoError" faultName="bpelx:remoteFault"/>
+                            </else>
+                          </if>
+                        </sequence>
+                      </scope>
+                    </sequence>
+                  </scope>
+                  <else>
+                    <throw name="ThrowProcesoIncorrectoError" faultName="bpel:selectionFailure"/>
+                  </else>
+                </if>
+              </sequence>
+            </elseif>
+            <elseif>
+              <documentation>
+                <![CDATA[EXCEPTUAR]]>
+              </documentation>
+              <condition>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion = 'EXCEPTUAR'</condition>
+              <sequence name="Sequence6">
+                <if name="Proceso">
+                  <documentation>
+                    <![CDATA[ProcesoCorrecto]]>
+                  </documentation>
+                  <condition>$inputVariable.request/ns2:idProceso = 3 or $inputVariable.request/ns2:idProceso = 5</condition>
+                  <scope name="ExceptuarComisionScope" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                    <variables>
+                      <variable name="inActualizarComision" messageType="ns9:requestActualizarComisionMessage"/>
+                      <variable name="outActualizarComision" messageType="ns9:responseActualizarComisionMessage"/>
+                    </variables>
+                    <sequence name="ExceptuarComisionSequence">
+                      <scope name="ValidarComisionScope">
+                        <variables>
+                          <variable name="inValidarEstado" messageType="ns19:ValidarEstadoTCCRequestMessage"/>
+                          <variable name="outValidarEstado" messageType="ns19:ValidarEstadoTCCResponseMessage"/>
+                        </variables>
+                        <faultHandlers>
+                          <catchAll><sequence name="ValidarEstadoSequenceError"
+                                              xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="ErrorValidarEstado">
+         <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+         </copy>
+         <copy>
+            <from>'Cambio de estado inválido'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+         </copy>
+      </assign>
+      <reply name="ReplyWithError" variable="outputVariable" partnerLink="actualizarComision_Servicie"
+             portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+      <exit name="ExitWithError"/>
+   </sequence></catchAll>
+                        </faultHandlers>
+                        <sequence name="ValidarComisionSequence">
+                          <assign name="ValidarComisionAssign">
+                            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                  ignoreMissingFromData="yes">
+                              <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:id</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                  ignoreMissingFromData="yes">
+                              <from>$inputVariable.request/ns2:Tipo</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:tipo</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                  ignoreMissingFromData="yes">
+                              <from>$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:estado</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                  ignoreMissingFromData="yes">
+                              <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion, "idProceso", $inputVariable.request/ns2:idProceso)</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:subEstado</to>
+                            </copy>
+                          </assign>
+                          <invoke name="ValidarComisionInvoke" bpelx:invokeAsDetail="no" partnerLink="ValidarEstadoTCC"
+                                  portType="ns19:MatrizTCCPT" operation="validarEstadoTCC"
+                                  inputVariable="inValidarEstado" outputVariable="outValidarEstado"
+                                  xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/>
+                          <if name="True">
+                            <documentation>
+                              <![CDATA[True]]>
+                            </documentation>
+                            <condition>$outValidarEstado.response/ns2:validacionEstados != 'false'</condition>
+                            <sequence>
+                              <assign name="ActualizarComisionAssign">
+                                <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                  <from>$inputVariable.request/ns2:Comision[$ComisionCounter]</from>
+                                  <to>$inActualizarComision.request/ns12:Comision</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion, "idProceso", $inputVariable.request/ns2:idProceso)</from>
+                                  <to>$inActualizarComision.request/ns12:Comision/ns6:subEstadoTCC/ns5:id</to>
+                                </copy>
+                              </assign>
+                              <invoke name="ActualizarComisionInvoke" bpelx:invokeAsDetail="no"
+                                      partnerLink="ActualizarComision_SB" portType="ns9:ActualizarComisionPT"
+                                      operation="ActualizarComision" inputVariable="inActualizarComision"
+                                      outputVariable="outActualizarComision"
+                                      xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/>
+                              <if name="OK">
+                                <documentation>
+                                  <![CDATA[OK]]>
+                                </documentation>
+                                <condition>$outActualizarComision.response/ns12:Resultado/ns13:result != 'ERROR'</condition>
+                                <scope name="ConsultarComisionScope">
+                                  <variables>
+                                    <variable name="inConsultarComisionActualizada"
+                                              messageType="ns9:requestConsultarComisionMessage"/>
+                                  </variables>
+                                  <faultHandlers>
+                                    <catch faultName="bpelx:remoteFault" faultVariable="ErrorConsultarComision"
+                                           faultMessageType="bpelx:RuntimeFaultMessage">
+                                      <sequence name="ErrorConsultarComisionRequest">
+                                        <assign name="ErrorConsultarComisionRequest">
+                                          <copy>
+                                            <from>$ErrorConsultarComision.code</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorCode</to>
+                                          </copy>
+                                          <copy>
+                                            <from>$ErrorConsultarComision.detail</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorDescription</to>
+                                          </copy>
+                                          <copy>
+                                            <from>$ErrorConsultarComision.summary</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorType</to>
+                                          </copy>
+                                          <copy>
+                                            <from>'ERROR'</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+                                          </copy>
+                                          <copy>
+                                            <from>'Error al momento de consultar la comisión actualizada'</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+                                          </copy>
+                                        </assign>
+                                        <reply name="ReplyError" variable="outputVariable"
+                                               partnerLink="actualizarComision_Servicie"
+                                               portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+                                      </sequence>
+                                    </catch>
+                                  </faultHandlers>
+                                  <sequence name="ActualizarComisionSequence">
+                                    <assign name="ConsultarComisionRequest">
+                                      <copy>
+                                        <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision</from>
+                                        <to>$inConsultarComisionActualizada.request/ns12:idComision</to>
+                                      </copy>
+                                    </assign>
+                                    <invoke name="ConsultarComisionInvoke"
+                                            partnerLink="ConsultarComision_SB" portType="ns9:ConsultarComisionPT"
+                                            operation="ConsultarComision" inputVariable="inConsultarComisionActualizada"
+                                            outputVariable="outConsultarComisionActualizada"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                            bpelx:invokeAsDetail="no"/>
+                                    <if name="OK">
+                                      <documentation>
+                                        <![CDATA[OK]]>
+                                      </documentation>
+                                      <condition>$outConsultarComision.response/ns12:Resultado/ns13:result != 'ERROR'</condition>
+                                      <assign name="ActualizarComisionResponse">
+                                        <copy bpelx:insertMissingToData="yes"
+                                              xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                          <from>$outConsultarComisionActualizada.response/ns12:Comision</from>
+                                          <to>$outputVariable.response/ns2:Comision[$ComisionCounter]</to>
+                                        </copy>
+                                        <copy bpelx:insertMissingToData="yes"
+                                              xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                          <from>$outActualizarComision.response/ns12:Resultado</from>
+                                          <to>$outputVariable.response/ns2:Resultado[$ComisionCounter]</to>
+                                        </copy>
+                                      </assign>
+                                      <else>
+                                        <documentation>
+                                          <![CDATA[ERROR]]>
+                                        </documentation>
+                                        <throw name="ThrowErrorConsultar" faultName="bpelx:remoteFault"/>
+                                      </else>
+                                    </if>
+                                  </sequence>
+                                </scope>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[ERROR]]>
+                                  </documentation>
+                                  <throw name="ErrorActualizarComision" faultName="bpelx:remoteFault"/>
+                                </else>
+                              </if>
+                            </sequence>
+                            <else>
+                              <documentation>
+                                <![CDATA[False]]>
+                              </documentation>
+                              <sequence>
+                                <throw name="Throw1" faultName="bpelx:remoteFault"/>
+                                <assign name="ErroValdiarEstadoAssign">
+                                  <copy>
+                                    <from>'ERROR'</from>
+                                    <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+                                  </copy>
+                                  <copy>
+                                    <from>'No se pudo validar el estado'</from>
+                                    <to>$outputVariable.response/ns2:Resultado/ns13:error</to>
+                                  </copy>
+                                </assign>
+                                <reply name="ReplyErrorValidar" variable="outputVariable"
+                                       partnerLink="actualizarComision_Servicie" portType="ns1:ActualizarTCCPTSOR"
+                                       operation="actualizarTCC"/>
+                                <exit name="Exit1"/>
+                              </sequence>
+                            </else>
+                          </if>
+                        </sequence>
+                      </scope>
+                    </sequence>
+                  </scope>
+                  <else>
+                    <documentation>
+                      <![CDATA[ProcesoIncorrecto]]>
+                    </documentation>
+                    <throw name="ThrowProcesoIncorrectoError" faultName="bpel:selectionFailure"/>
+                  </else>
+                </if>
+              </sequence>
+            </elseif>
+            <elseif>
+              <documentation>
+                <![CDATA[DISPENSAR]]>
+              </documentation>
+              <condition>$inputVariable.request/ns2:Comision/ns6:Accion = 'DISPENSAR'</condition>
+              <sequence name="Sequence7">
+                <if name="Proceso">
+                  <documentation>
+                    <![CDATA[ProcesoCorrecto]]>
+                  </documentation>
+                  <condition>$inputVariable.request/ns2:idProceso = 10</condition>
+                  <scope name="DispensarComisionScope" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                    <variables>
+                      <variable name="inActualizarComision" messageType="ns9:requestActualizarComisionMessage"/>
+                      <variable name="outActualizarComision" messageType="ns9:responseActualizarComisionMessage"/>
+                    </variables>
+                    <sequence name="DispensarComisionSequence">
+                      <scope name="ValidarComisionScope">
+                        <variables>
+                          <variable name="inValidarEstado" messageType="ns19:ValidarEstadoTCCRequestMessage"/>
+                          <variable name="outValidarEstado" messageType="ns19:ValidarEstadoTCCResponseMessage"/>
+                        </variables>
+                        <faultHandlers>
+                          <catchAll><sequence name="ValidarEstadoSequenceError"
+                                              xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="ErrorValidarEstado">
+         <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+         </copy>
+         <copy>
+            <from>'Cambio de estado inválido'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+         </copy>
+      </assign>
+      <reply name="ReplyWithError" variable="outputVariable" partnerLink="actualizarComision_Servicie"
+             portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+      <exit name="ExitWithError"/>
+   </sequence></catchAll>
+                        </faultHandlers>
+                        <sequence name="ValidarComisionSequence">
+                          <assign name="ValidarComisionAssign">
+                            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                  ignoreMissingFromData="yes">
+                              <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:id</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                  ignoreMissingFromData="yes">
+                              <from>$inputVariable.request/ns2:Tipo</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:tipo</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                  ignoreMissingFromData="yes">
+                              <from>$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:estado</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                  ignoreMissingFromData="yes">
+                              <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion, "idProceso", $inputVariable.request/ns2:idProceso)</from>
+                              <to>$inValidarEstado.request/ns2:tcc/ns20:subEstado</to>
+                            </copy>
+                          </assign>
+                          <invoke name="ValidarComisionInvoke" bpelx:invokeAsDetail="no" partnerLink="ValidarEstadoTCC"
+                                  portType="ns19:MatrizTCCPT" operation="validarEstadoTCC"
+                                  inputVariable="inValidarEstado" outputVariable="outValidarEstado"
+                                  xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/>
+                          <if name="True">
+                            <documentation>
+                              <![CDATA[True]]>
+                            </documentation>
+                            <condition>$outValidarEstado.response/ns2:validacionEstados != 'false'</condition>
+                            <sequence>
+                              <assign name="ActualizarComisionAssign">
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$inputVariable.request/ns2:Comision[$ComisionCounter]</from>
+                                  <to>$inActualizarComision.request/ns12:Comision</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioContrato/MatrizTCC/V1/DVM/EstadoTCC.dvm", "IdEstadoAntes",$outConsultarComision.response/ns12:Comision/ns6:estadoTCC/ns5:id, "IdSubEstadoDespues", "No encontrado", "Accion",$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:Accion, "idProceso", $inputVariable.request/ns2:idProceso)</from>
+                                  <to>$inActualizarComision.request/ns12:Comision/ns6:subEstadoTCC/ns5:id</to>
+                                </copy>
+                              </assign>
+                              <invoke name="ActualizarComisionInvoke" bpelx:invokeAsDetail="no"
+                                      partnerLink="ActualizarComision_SB" portType="ns9:ActualizarComisionPT"
+                                      operation="ActualizarComision" inputVariable="inActualizarComision"
+                                      outputVariable="outActualizarComision"
+                                      xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/>
+                              <if name="OK">
+                                <documentation>
+                                  <![CDATA[OK]]>
+                                </documentation>
+                                <condition>$outActualizarComision.response/ns12:Resultado/ns13:result != 'ERROR'</condition>
+                                <scope name="ConsultarComisionScope">
+                                  <variables>
+                                    <variable name="inConsultarComisionActualizada"
+                                              messageType="ns9:requestConsultarComisionMessage"/>
+                                  </variables>
+                                  <faultHandlers>
+                                    <catch faultName="bpelx:remoteFault" faultVariable="ErrorConsultarComision"
+                                           faultMessageType="bpelx:RuntimeFaultMessage">
+                                      <sequence name="ErrorConsultarComisionRequest">
+                                        <assign name="ErrorConsultarComisionRequest">
+                                          <copy>
+                                            <from>$ErrorConsultarComision.code</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorCode</to>
+                                          </copy>
+                                          <copy>
+                                            <from>$ErrorConsultarComision.detail</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorDescription</to>
+                                          </copy>
+                                          <copy>
+                                            <from>$ErrorConsultarComision.summary</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:error/ns14:errorType</to>
+                                          </copy>
+                                          <copy>
+                                            <from>'ERROR'</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:result</to>
+                                          </copy>
+                                          <copy>
+                                            <from>'Error al momento de consultar la comisión actualizada'</from>
+                                            <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+                                          </copy>
+                                        </assign>
+                                        <reply name="ReplyError" variable="outputVariable"
+                                               partnerLink="actualizarComision_Servicie"
+                                               portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC"/>
+                                      </sequence>
+                                    </catch>
+                                  </faultHandlers>
+                                  <sequence name="ActualizarComisionSequence">
+                                    <assign name="ConsultarComisionRequest">
+                                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                        <from>$inputVariable.request/ns2:Comision[$ComisionCounter]/ns6:idComision</from>
+                                        <to>$inConsultarComisionActualizada.request/ns12:idComision</to>
+                                      </copy>
+                                    </assign>
+                                    <invoke name="ConsultarComisionInvoke"
+                                            partnerLink="ConsultarComision_SB" portType="ns9:ConsultarComisionPT"
+                                            operation="ConsultarComision" inputVariable="inConsultarComisionActualizada"
+                                            outputVariable="outConsultarComisionActualizada"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                            bpelx:invokeAsDetail="no"/>
+                                    <if name="OK">
+                                      <documentation>
+                                        <![CDATA[OK]]>
+                                      </documentation>
+                                      <condition>$outConsultarComision.response/ns12:Resultado/ns13:result != 'ERROR'</condition>
+                                      <assign name="ActualizarComisionResponse">
+                                        <copy bpelx:insertMissingToData="yes"
+                                              xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                          <from>$outConsultarComisionActualizada.response/ns12:Comision</from>
+                                          <to>$outputVariable.response/ns2:Comision[$ComisionCounter]</to>
+                                        </copy>
+                                        <copy bpelx:insertMissingToData="yes"
+                                              xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                          <from>$outActualizarComision.response/ns12:Resultado</from>
+                                          <to>$outputVariable.response/ns2:Resultado[$ComisionCounter]</to>
+                                        </copy>
+                                      </assign>
+                                      <else>
+                                        <documentation>
+                                          <![CDATA[ERROR]]>
+                                        </documentation>
+                                        <throw name="ThrowErrorConsultar" faultName="bpelx:remoteFault"/>
+                                      </else>
+                                    </if>
+                                  </sequence>
+                                </scope>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[ERROR]]>
+                                  </documentation>
+                                  <throw name="ErrorActualizarComision" faultName="bpelx:remoteFault"/>
+                                </else>
+                              </if>
+                            </sequence>
+                            <else>
+                              <documentation>
+                                <![CDATA[False]]>
+                              </documentation>
+                              <sequence>
+                                <throw name="Throw1" faultName="bpelx:remoteFault"/>
+                                <assign name="ErroValdiarEstadoAssign">
+                                  <copy>
+                                    <from>'ERROR'</from>
+                                    <to>$outputVariable.response/ns2:Resultado/ns13:message</to>
+                                  </copy>
+                                  <copy>
+                                    <from>'No se pudo validar el estado'</from>
+                                    <to>$outputVariable.response/ns2:Resultado/ns13:error</to>
+                                  </copy>
+                                </assign>
+                                <reply name="ReplyErrorValidar" variable="outputVariable"
+                                       partnerLink="actualizarComision_Servicie" portType="ns1:ActualizarTCCPTSOR"
+                                       operation="actualizarTCC"/>
+                                <exit name="Exit1"/>
+                              </sequence>
+                            </else>
+                          </if>
+                        </sequence>
+                      </scope>
+                    </sequence>
+                  </scope>
+                  <else>
+                    <documentation>
+                      <![CDATA[ProcesoIncorrecto]]>
+                    </documentation>
+                    <throw name="ThrowErrorProcesoIncorrecto" faultName="bpel:selectionFailure"/>
+                  </else>
+                </if>
+              </sequence>
+            </elseif>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <throw name="ErrorGeneral" faultName="bpelx:remoteFault"/>
+            </else>
+          </if>
+          <if name="Enmiendas">
+            <documentation>
+              <![CDATA[ProcesoEnmiendas]]>
+            </documentation>
+            <condition>$inputVariable.request/ns2:idProceso = 10</condition>
+            <scope name="ActualizarDetalleEnmienda">
+              <variables>
+                <variable name="inActualizarDetalleEnmienda"
+                          messageType="ns24:ActualizarDetalleEnmiendaRequestMessage"/>
+                <variable name="outActualizarDetalleEnmienda"
+                          messageType="ns24:ActualizarDetalleEnmiendaResponseMessage"/>
+              </variables>
+              <sequence name="ActualizarDetalleEnmiendaSequence">
+                <assign name="DetalleEnmiendaAssign">
+                  <bpelx:annotation>
+                    <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                  </bpelx:annotation>
+                  <copy>
+                    <from>ora:processXQuery10('../Transformations/DetalleEnmiendaTransformation.xqy', 'inputVariable.request', $inputVariable.request, 'outConsultarComisionActualizada.response', $outConsultarComisionActualizada.response)</from>
+                    <to variable="inActualizarDetalleEnmienda" part="ActualizarDetalleEnmiendaRequest"/>
+                  </copy>
+                </assign>
+                <invoke name="ActualizarDetalleEnmiendaInvoke" bpelx:invokeAsDetail="no"
+                        partnerLink="ActualizarDetalleEnmienda_SB" portType="ns24:ActualizarDetalleEnmiendaRequest_PT"
+                        operation="actualizarDetalleEnmiendaRequest" inputVariable="inActualizarDetalleEnmienda"
+                        outputVariable="outActualizarDetalleEnmienda"/>
+              </sequence>
+            </scope>
+            <else>
+              <documentation>
+                <![CDATA[NoEsProcesoEnmienda]]>
+              </documentation>
+              <empty name="NoEsproceso"/>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+    </forEach>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="actualizarComision_Servicie" portType="ns1:ActualizarTCCPTSOR" operation="actualizarTCC" variable="outputVariable"/>
+  </sequence>
+</process>

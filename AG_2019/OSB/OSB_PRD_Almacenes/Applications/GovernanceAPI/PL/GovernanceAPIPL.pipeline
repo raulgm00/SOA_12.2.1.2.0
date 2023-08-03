@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <con:wsdl ref="Applications/GovernanceAPI/Resources/GovernanceAPIWSDL"/>
+            <con:binding>
+                <con:name>GovPortBinding</con:name>
+                <con:namespace>http://mx.agarcia.ea/Applications/GovernanceAPI</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline name="PipelinePairNode1_request" type="request">
+            <con:stage name="stage1">
+                <con:context>
+                    <con1:varNsDecl prefix="gov" namespace="http://mx.agarcia.ea/Applications/GovernanceAPI" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+                <con:actions>
+                    <con1:log xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config">
+                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N2eab4602.1.16b09c5707d.N7ffb</con2:id>
+                        <con2:disabled xmlns:con2="http://www.bea.com/wli/sb/stages/config">true</con2:disabled>
+                        <con1:logLevel>warning</con1:logLevel>
+                        <con1:expr>
+                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$body</con:xqueryText>
+                        </con1:expr>
+                        <con1:message>MENSAJE QUE SE ENVIARÁ A TÓPICO INTERNO</con1:message>
+                    </con1:log>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline name="PipelinePairNode1_response" type="response"/>
+        <con:flow>
+            <con:pipeline-node name="PipelinePairNode1">
+                <con:request>PipelinePairNode1_request</con:request>
+                <con:response>PipelinePairNode1_response</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteToInternalPublisher">
+                <con:comment/>
+                <con:context>
+                    <con1:varNsDecl prefix="gov" namespace="http://mx.agarcia.ea/Applications/GovernanceAPI" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+                <con:actions>
+                    <con1:route xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.8ff18e4.12.16b06e0773d.N7fff</con2:id>
+                        <con1:service ref="Applications/GovernanceAPI/PS/GovernanceAPIPublisherPXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+                        <con1:operation>ProduceMessage</con1:operation>
+                        <con1:outboundTransform>
+                            <con2:javaCallout varName="messageEncoded" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N2eab4602.9.16b0a084643.N7fff</con3:id>
+                                <con3:disabled xmlns:con3="http://www.bea.com/wli/sb/stages/config">true</con3:disabled>
+                                <con2:archive ref="Applications/Commons/Base64/AGEIABase64Util"/>
+                                <con2:className>mx.agarcia.ea.utils.base64.Base64Util</con2:className>
+                                <con2:method>public static java.lang.String encodeBase64(java.lang.String)</con2:method>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">fn-bea:serialize($body/gov:audit)</con:xqueryText>
+                                </con2:expr>
+                                <con2:return-param-as-ref>false</con2:return-param-as-ref>
+                            </con2:javaCallout>
+                            <con2:assign varName="body" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N2eab4602.5.16b09e11b79.N7ffa</con3:id>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">&lt;soapenv:Body xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:opaq="http://xmlns.oracle.com/pcbpel/adapter/opaque/">
+      &lt;opaq:opaqueElement>{$body/gov:audit/gov:request}&lt;/opaq:opaqueElement>
+   &lt;/soapenv:Body></con:xqueryText>
+                                </con2:expr>
+                            </con2:assign>
+                            <con2:log xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.8ff18e4.1b.16b09a31f83.N8000</con3:id>
+                                <con3:disabled xmlns:con3="http://www.bea.com/wli/sb/stages/config">true</con3:disabled>
+                                <con2:logLevel>warning</con2:logLevel>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$body</con:xqueryText>
+                                </con2:expr>
+                                <con2:message>ANTES DE ENVIAR A LA COLA YA CODIFICADO SIN BODY ----------</con2:message>
+                            </con2:log>
+                        </con1:outboundTransform>
+                        <con1:responseTransform/>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

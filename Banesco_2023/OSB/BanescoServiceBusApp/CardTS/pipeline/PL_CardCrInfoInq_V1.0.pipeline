@@ -1,0 +1,574 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="Commons/wsdl/TechLayer/CardCr/CardCrTechSvc_V1.0"/>
+            <con:binding>
+                <con:name>CardCrTechSvc_V1.0SOAPBinding</con:name>
+                <con:namespace>http://xmlns.banesco.com/TechLayer/CardCrTechSvc_V1.0</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-a011845.71fafe07.0.165d111d306.N7f93">
+        <con:pipeline type="response" name="response-a011845.71fafe07.0.165d111d306.N7cfb" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N7cfa" name="stg_AuditOut" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con1:ifThenElse xmlns:con3="http://www.bea.com/wli/sb/stages/publish/config">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7cf9</con2:id>
+                        <con1:case id="_BranchId-a011845.71fafe07.0.165d111d306.N7cf8">
+                            <con1:condition>
+                                <con2:xqueryText>data($var_DR/rule[@id=$varOperation]/auditRecord) = 'true'</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con3:route>
+                                    <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7cf7</con2:id>
+                                    <con3:service ref="Commons/proxy/PXL_AuditAdd_V1.0" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con3:outboundTransform/>
+                                </con3:route>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default/>
+                    </con1:ifThenElse>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N7cf6" name="stg_ValidateOut" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con1:validate xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7cf5</con2:id>
+                        <con1:resourceExpr>
+                            <con2:xqueryText><![CDATA[<ctx:validate>
+	<ctx:schema>{data($var_DR/rule[@id=$varOperation]/route_schema)}</ctx:schema>
+	<ctx:schemaElement>
+		<ctx:namespaceURI>{data($var_DR/rule[@id=$varOperation]/schema)}</ctx:namespaceURI>
+		<ctx:localname>{concat(data($var_DR/rule[@id=$varOperation]/operation),"Rs")}</ctx:localname>
+	</ctx:schemaElement>
+</ctx:validate>]]></con2:xqueryText>
+                        </con1:resourceExpr>
+                        <con1:varName>body</con1:varName>
+                        <con1:location>
+                            <con2:xpathText>./*</con2:xpathText>
+                        </con1:location>
+                        <con1:resultVarName/>
+                    </con1:validate>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-a011845.71fafe07.0.165d111d306.N7b79" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N7b78" name="stg_TrnOut" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context>
+                    <con2:varNsDecl prefix="car" namespace="http://xmlns.banesco.com/eopt/CardCrInq_V1.0"/>
+                </con:context>
+                <con:actions>
+                    <con1:replace varName="header" contents-only="true">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7b77</con2:id>
+                        <con1:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="Commons/xslt/AppOpt/xlst_out_MsgHdrRq_to_MsgHdrRs"/>
+                                <con2:input>$varHeader</con2:input>
+                                <con2:param name="ResponseId">
+                                    <con2:path>fn:concat($outbound/ctx:transport/ctx:response/tp:headers/http:Date,'-',$outbound/ctx:transport/ctx:response/http:http-response-code)</con2:path>
+                                </con2:param>
+                            </con2:xsltTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con1:assign varName="JsonOutput">
+                        <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7e67</con2:id>
+                        <con1:expr>
+                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$body/text()</con:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:nxsdTranslation>
+                        <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7f65</con2:id>
+                        <con1:type>Native-To-XML</con1:type>
+                        <con1:sourceExpr>
+                            <con2:xqueryText>$JsonOutput</con2:xqueryText>
+                        </con1:sourceExpr>
+                        <con1:nxsd ref="Commons/backends/EVERTEC/resources/xsd/ConsultarCuentasTarjeta"/>
+                        <con1:schemaElement xmlns:con4="http://www.evertec.com/SISCARD/CuentaTarjeta/consultarCuentasSiscard">con4:Cuentas</con1:schemaElement>
+                        <con1:assign-variable>XML_JsonOutput</con1:assign-variable>
+                        <con1:enforceSchemaOrder>false</con1:enforceSchemaOrder>
+                    </con1:nxsdTranslation>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7e64</con2:id>
+                        <con1:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="CardTS/resources/xslt/CardCrInq/xslt_out_ConsultarCuentasTarjetaRs_To_CardCrInqRs"/>
+                                <con2:input>$XML_JsonOutput</con2:input>
+                                <con2:param name="body_backup">
+                                    <con2:path>$body_backup</con2:path>
+                                </con2:param>
+                            </con2:xsltTransform>
+                        </con1:expr>
+                    </con1:replace>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-a011845.71fafe07.0.165d111d306.N7f93">
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N7e7f" name="stg_ErrorHandler" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con1:replace varName="body" contents-only="false" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7e7e</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText><![CDATA[<soap-env:Body>
+    <soap-env:Fault>
+        <faultcode>soap-env:Server</faultcode>
+        <faultstring>{data($fault/*:reason)}</faultstring>
+        <detail>
+          <eoStatus:SystemFault xmlns:eoStatus="http://xmlns.banesco.com/eo/Status_V1.0">
+              <eoStatus:StatusCode>M0003</eoStatus:StatusCode>
+              <eoStatus:StatusDesc>ERROR TECNICO</eoStatus:StatusDesc>
+                  <eoStatus:AdditionalStatus>
+                      <eoStatus:StatusCode>{data($fault/*:errorCode)}</eoStatus:StatusCode>
+        			  {if(not(fn:empty($fault/*:details/*:ValidationFailureDetail)))
+        				then
+        					<eoStatus:StatusDesc>{data($fault/*:details/*:ValidationFailureDetail/*:message)}</eoStatus:StatusDesc>
+        				else
+                            if(not(fn:empty($fault/*:details/*:PayloadDetail)))
+                            then
+        					   <eoStatus:StatusDesc>{data($fault/*:details/*:PayloadDetail/*:text)}</eoStatus:StatusDesc>
+                            else
+                            <eoStatus:StatusDesc>{data($fault/*:reason)}</eoStatus:StatusDesc>
+        			  }
+                  </eoStatus:AdditionalStatus>
+          </eoStatus:SystemFault> 
+        </detail>
+    </soap-env:Fault>
+</soap-env:Body>]]></con2:xqueryText>
+                        </con1:expr>
+                    </con1:replace>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N7f1c" name="stg_AuditFault" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con1:ifThenElse xmlns:con3="http://www.bea.com/wli/sb/stages/publish/config">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7f1b</con2:id>
+                        <con1:case id="_BranchId-a011845.71fafe07.0.165d111d306.N7f1a">
+                            <con1:condition>
+                                <con2:xqueryText>data($var_DR/rule[@id=$varOperation]/auditRecord) = 'true'</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con3:route>
+                                    <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7f19</con2:id>
+                                    <con3:service ref="Commons/proxy/PXL_AuditAdd_V1.0" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con3:outboundTransform/>
+                                </con3:route>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default/>
+                    </con1:ifThenElse>
+                    <con1:assign varName="header" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7f18</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>&lt;soap:Header xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+&lt;/soap:Header></con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con2:reply isError="true">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7f17</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="request" name="request-a011845.71fafe07.0.165d111d306.N79d4" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N79d3" name="stg_LoadHeader">
+                <con:context/>
+                <con:actions>
+                    <con1:assign varName="varHeader">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N79d2</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$header/*:MsgHdrRq</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N79d1" name="stg_TrnIn" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context>
+                    <con2:userNsDecl prefix="car" namespace="http://xmlns.banesco.com/eopt/CardCrInfoInq_V1.0"/>
+                    <con2:userNsDecl prefix="card" namespace="http://xmlns.banesco.com/eo/Card_V1.0"/>
+                </con:context>
+                <con:actions>
+                    <con1:assign varName="body_backup">
+                        <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7ecf</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:assign varName="body_json">
+                        <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7ecc</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>fn:concat(
+'{
+    "cif": "",
+    "emisor": "",
+    "cuenta": "",   
+    "tarjeta": "',$body/car:CardCrInfoInqRq/car:CardKey/card:CardNum/text(),'"
+}'
+)</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7ec9</con2:id>
+                        <con1:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xqueryText>$body_json</con2:xqueryText>
+                        </con1:expr>
+                    </con1:replace>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-N3f57c7ff.59c1bb2.0.165f3924243.N7f70">
+            <con:stage id="_StageId-N3f57c7ff.59c1bb2.0.165f3924243.N7f6f" name="stg_badRequest">
+                <con:context>
+                    <con2:varNsDecl prefix="car" namespace="http://xmlns.banesco.com/eopt/CardCrInq_V1.0"/>
+                </con:context>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-N3f57c7ff.59c1bb2.0.165f3924243.N7f6e</con2:id>
+                        <con1:case id="_BranchId-N3f57c7ff.59c1bb2.0.165f3924243.N7f6d">
+                            <con1:condition>
+                                <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$outbound/ctx:transport/ctx:response/http:http-response-code/text() = '400'</con:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con2:resume>
+                                    <con2:id>_ActionId-N3f57c7ff.59c1bb2.0.165f3924243.N7f68</con2:id>
+                                </con2:resume>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con2:reply isError="true">
+                                <con2:id>_ActionId-N3f57c7ff.59c1bb2.0.165f3924243.N7f67</con2:id>
+                            </con2:reply>
+                        </con1:default>
+                    </con1:ifThenElse>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="request" name="request-a011845.71fafe07.0.165d111d306.N7d07" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N7d06" name="stg_LoadDR">
+                <con:context>
+                    <con2:userNsDecl prefix="head" namespace="http://xmlns.banesco.com/appopt/AOptCommon_V1.0"/>
+                </con:context>
+                <con:actions>
+                    <con1:assign varName="var_DR">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7d05</con2:id>
+                        <con1:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="CardTS/resources/xslt/DynamicTable"/>
+                                <con2:input>$body/*</con2:input>
+                            </con2:xsltTransform>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:ifThenElse xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7d04</con2:id>
+                        <con1:case id="_BranchId-a011845.71fafe07.0.165d111d306.N7d03">
+                            <con1:condition>
+                                <con2:xqueryText>fn:empty($varOperation)</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:assign varName="varOperation">
+                                    <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7d02</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryText>if($operation != '')then
+  data($operation)
+else if(fn:normalize-space($varHeader/head:RqdOper)!='') then
+  $varHeader/head:RqdOper/text()
+else ()</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:assign>
+                            </con1:actions>
+                        </con1:case>
+                    </con1:ifThenElse>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N7d01" name="stg_AuditIn" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con1:ifThenElse xmlns:con3="http://www.bea.com/wli/sb/stages/publish/config">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7d00</con2:id>
+                        <con1:case id="_BranchId-a011845.71fafe07.0.165d111d306.N7cff">
+                            <con1:condition>
+                                <con2:xqueryText>data($var_DR/rule[@id=$varOperation]/auditRecord) = 'true'</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con3:route>
+                                    <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7cfe</con2:id>
+                                    <con3:service ref="Commons/proxy/PXL_AuditAdd_V1.0" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con3:outboundTransform/>
+                                </con3:route>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default/>
+                    </con1:ifThenElse>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N7cfd" name="stg_ValidateIn" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con1:validate xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7cfc</con2:id>
+                        <con1:resourceExpr>
+                            <con2:xqueryText><![CDATA[<ctx:validate>
+  <ctx:schema>{data($var_DR/rule[@id=$varOperation]/route_schema)}</ctx:schema>
+  <ctx:schemaElement>
+    <ctx:namespaceURI>{data($var_DR/rule[@id=$varOperation]/schema)}</ctx:namespaceURI>
+    <ctx:localname>{concat(data($var_DR/rule[@id=$varOperation]/operation),"Rq")}</ctx:localname>
+  </ctx:schemaElement>
+</ctx:validate>]]></con2:xqueryText>
+                        </con1:resourceExpr>
+                        <con1:varName>body</con1:varName>
+                        <con1:location>
+                            <con2:xpathText>./*</con2:xpathText>
+                        </con1:location>
+                        <con1:resultVarName/>
+                    </con1:validate>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="request" name="request-a011845.71fafe07.0.165d111d306.N7b7e" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N7b7d" name="stg_LoadHeader">
+                <con:context/>
+                <con:actions>
+                    <con1:assign varName="varHeader">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7b7c</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$header/*:MsgHdrRq</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N7b7b" name="stg_TrnIn" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context>
+                    <con2:userNsDecl prefix="par" namespace="http://xmlns.banesco.com/eo/Party_V1.0"/>
+                    <con2:userNsDecl prefix="eoptCardCrInq" namespace="http://xmlns.banesco.com/eopt/CardCrInq_V1.0"/>
+                </con:context>
+                <con:actions>
+                    <con1:assign varName="body_backup">
+                        <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7f74</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:assign varName="body_json">
+                        <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7f71</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>fn:concat(
+'{
+    "cif": "',$body/eoptCardCrInq:CardCrInqRq/eoptCardCrInq:PartyKey/par:PartyId/text(),'",
+    "emisor": "",
+    "cuenta": "",   
+    "tarjeta": ""
+}'
+)</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7f6e</con2:id>
+                        <con1:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xqueryText>$body_json</con2:xqueryText>
+                        </con1:expr>
+                    </con1:replace>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-a011845.71fafe07.0.165d111d306.N79cf" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+            <con:stage id="_StageId-a011845.71fafe07.0.165d111d306.N79ce" name="stg_TrnOut" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con1:replace varName="header" contents-only="true">
+                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N79cd</con2:id>
+                        <con1:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="Commons/xslt/AppOpt/xlst_out_MsgHdrRq_to_MsgHdrRs"/>
+                                <con2:input>$varHeader</con2:input>
+                                <con2:param name="ResponseId">
+                                    <con2:path>fn:concat($outbound/ctx:transport/ctx:response/tp:headers/http:Date,'-',$outbound/ctx:transport/ctx:response/http:http-response-code)</con2:path>
+                                </con2:param>
+                            </con2:xsltTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con1:assign varName="JsonOutput">
+                        <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7e61</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body/text()</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:nxsdTranslation>
+                        <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7e5e</con2:id>
+                        <con1:type>Native-To-XML</con1:type>
+                        <con1:sourceExpr>
+                            <con2:xqueryText>$JsonOutput</con2:xqueryText>
+                        </con1:sourceExpr>
+                        <con1:nxsd ref="Commons/backends/EVERTEC/resources/xsd/ConsultarCuentasTarjeta"/>
+                        <con1:schemaElement xmlns:con4="http://www.evertec.com/SISCARD/CuentaTarjeta/consultarCuentasSiscard">con4:Cuentas</con1:schemaElement>
+                        <con1:assign-variable>XML_JsonOutput</con1:assign-variable>
+                    </con1:nxsdTranslation>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7e5b</con2:id>
+                        <con1:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="CardTS/resources/xslt/CardCrInfoInq/xslt_out_ConsultarCuentasTarjetaRs_To_CardCrInfoInqRs"/>
+                                <con2:input>$XML_JsonOutput</con2:input>
+                                <con2:param name="body_backup">
+                                    <con2:path>$body_backup</con2:path>
+                                </con2:param>
+                            </con2:xsltTransform>
+                        </con1:expr>
+                    </con1:replace>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-N3f57c7ff.59c1bb2.0.165f3924243.N7c27">
+            <con:stage id="_StageId-N3f57c7ff.59c1bb2.0.165f3924243.N7c26" name="stg_badRequest">
+                <con:context>
+                    <con2:varNsDecl prefix="car" namespace="http://xmlns.banesco.com/eopt/CardCrInq_V1.0"/>
+                </con:context>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-N3f57c7ff.59c1bb2.0.165f3924243.N7c24</con2:id>
+                        <con1:case id="_BranchId-N3f57c7ff.59c1bb2.0.165f3924243.N7c23">
+                            <con1:condition>
+                                <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$outbound/ctx:transport/ctx:response/http:http-response-code/text() = '400'</con:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con2:resume>
+                                    <con2:id>_ActionId-N3f57c7ff.59c1bb2.0.165f3924243.N7c22</con2:id>
+                                </con2:resume>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con2:reply isError="true">
+                                <con2:id>_ActionId-N3f57c7ff.59c1bb2.0.165f3924243.N7c21</con2:id>
+                            </con2:reply>
+                        </con1:default>
+                    </con1:ifThenElse>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PPN_TechnicalService" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                <con:request>request-a011845.71fafe07.0.165d111d306.N7d07</con:request>
+                <con:response>response-a011845.71fafe07.0.165d111d306.N7cfb</con:response>
+            </con:pipeline-node>
+            <con:branch-node type="operation" id="_FlowId-a011845.71fafe07.0.165d111d306.N7c5a" name="Branch_TechnicalService">
+                <con:context/>
+                <con:branch-table>
+                    <con:branch name="CardCrInq">
+                        <con:operator>equals</con:operator>
+                        <con:value/>
+                        <con:flow>
+                            <con:pipeline-node name="CardCrInq_PPN_TechOp" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                                <con:request>request-a011845.71fafe07.0.165d111d306.N7b7e</con:request>
+                                <con:response>response-a011845.71fafe07.0.165d111d306.N7b79</con:response>
+                            </con:pipeline-node>
+                            <con:route-node name="CardCrInq_RouteBackEnd" error-handler="error-N3f57c7ff.59c1bb2.0.165f3924243.N7f70">
+                                <con:context/>
+                                <con:actions>
+                                    <con3:route xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7959</con2:id>
+                                        <con3:service ref="Commons/backends/EVERTEC/business/BS_EVERTEC_SISCARD_V1.0" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                        <con3:outboundTransform>
+                                            <con1:routing-options>
+                                                <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7f68</con2:id>
+                                                <con1:restOptions>
+                                                    <con1:verb>POST</con1:verb>
+                                                </con1:restOptions>
+                                            </con1:routing-options>
+                                            <con1:ifThenElse>
+                                                <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7957</con2:id>
+                                                <con1:case id="_BranchId-a011845.71fafe07.0.165d111d306.N7956">
+                                                    <con1:condition>
+                                                        <con2:xqueryText>data($var_DR/rule[@id=$varOperation]/requiresHeader) = 'true'</con2:xqueryText>
+                                                    </con1:condition>
+                                                    <con1:actions>
+                                                        <con1:transport-headers copy-all="true">
+                                                            <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7955</con2:id>
+                                                            <con1:header-set>outbound-request</con1:header-set>
+                                                            <con1:header value="expression" name="Content-Type">
+                                                                <con2:xqueryText>'application/json'</con2:xqueryText>
+                                                            </con1:header>
+                                                        </con1:transport-headers>
+                                                    </con1:actions>
+                                                </con1:case>
+                                            </con1:ifThenElse>
+                                        </con3:outboundTransform>
+                                        <con3:responseTransform/>
+                                    </con3:route>
+                                </con:actions>
+                            </con:route-node>
+                        </con:flow>
+                    </con:branch>
+                    <con:branch name="CardCrInfoInq">
+                        <con:operator>equals</con:operator>
+                        <con:value/>
+                        <con:flow>
+                            <con:pipeline-node name="CardCrInfoInq_PPN_TechOp" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                                <con:request>request-a011845.71fafe07.0.165d111d306.N79d4</con:request>
+                                <con:response>response-a011845.71fafe07.0.165d111d306.N79cf</con:response>
+                            </con:pipeline-node>
+                            <con:route-node name="CardCrInfoInq_RouteBackend" error-handler="error-N3f57c7ff.59c1bb2.0.165f3924243.N7c27">
+                                <con:context/>
+                                <con:actions>
+                                    <con3:route xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config">
+                                        <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7918</con2:id>
+                                        <con3:service ref="Commons/backends/EVERTEC/business/BS_EVERTEC_SISCARD_V1.0" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                        <con3:outboundTransform>
+                                            <con1:routing-options>
+                                                <con2:id>_ActionId-N3f57c7ff.N3d97837c.0.165d314b912.N7e92</con2:id>
+                                                <con1:restOptions>
+                                                    <con1:verb>POST</con1:verb>
+                                                </con1:restOptions>
+                                            </con1:routing-options>
+                                            <con1:ifThenElse>
+                                                <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7916</con2:id>
+                                                <con1:case id="_BranchId-a011845.71fafe07.0.165d111d306.N7915">
+                                                    <con1:condition>
+                                                        <con2:xqueryText>data($var_DR/rule[@id=$varOperation]/requiresHeader) = 'true'</con2:xqueryText>
+                                                    </con1:condition>
+                                                    <con1:actions>
+                                                        <con1:transport-headers copy-all="true">
+                                                            <con2:id>_ActionId-a011845.71fafe07.0.165d111d306.N7914</con2:id>
+                                                            <con1:header-set>outbound-request</con1:header-set>
+                                                            <con1:header value="expression" name="Content-Type">
+                                                                <con2:xqueryText>'application/json'</con2:xqueryText>
+                                                            </con1:header>
+                                                        </con1:transport-headers>
+                                                    </con1:actions>
+                                                </con1:case>
+                                            </con1:ifThenElse>
+                                        </con3:outboundTransform>
+                                        <con3:responseTransform/>
+                                    </con3:route>
+                                </con:actions>
+                            </con:route-node>
+                        </con:flow>
+                    </con:branch>
+                    <con:default-branch>
+                        <con:flow/>
+                    </con:default-branch>
+                </con:branch-table>
+            </con:branch-node>
+        </con:flow>
+        <con:shared-variables>
+            <con:variable>varHeader</con:variable>
+            <con:variable>varOperation</con:variable>
+        </con:shared-variables>
+    </con:router>
+</con:pipelineEntry>

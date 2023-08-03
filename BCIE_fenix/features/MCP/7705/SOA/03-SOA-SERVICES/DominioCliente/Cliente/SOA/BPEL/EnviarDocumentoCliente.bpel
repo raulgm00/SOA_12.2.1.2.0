@@ -1,0 +1,564 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Oct 03 09:46:27 CDT 2016
+  Author:  ismael-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="EnviarDocumentoCliente"
+               targetNamespace="http://xmlns.oracle.com/DominioCliente/Cliente/EnviarDocumentoCliente"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioCliente/Cliente/EnviarDocumentoCliente"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ClienteMO"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.org/ClienteService"
+         xmlns:ns3="http://www.bcie.org/DocumentoMO" xmlns:ns4="http://xmlns.bcie.com/CorreoElectronicoService"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns5="http://www.bcie.org/ResultBO"
+         xmlns:ns6="http://www.bcie.org/ErrorBO" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns7="http://www.bcie.org/DocumentoBO" xmlns:ns8="http://www.bcie.org/ClienteBO"
+         xmlns:ns9="http://www.bcie.org/CorreoMO" xmlns:ns10="http://www.bcie.org/CorreoBO"
+         xmlns:ns11="http://xmlns.bcie.com/DocumentoService" xmlns:ns12="http://xmlns.bcie.com/ClienteService"
+         xmlns:ns13="http://www.bcie.org/CatalogoBO" xmlns:ns14="http://xmlns.bcie.com/UsuarioService"
+         xmlns:ns15="http://www.bcie.org/UsuarioMO" xmlns:ns16="http://www.bcie.org/UsuarioBO"
+         xmlns:ns17="http://www.bcie.org/CommonBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/DocumentoMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Schema/DocumentoMO.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://xmlns.bcie.com/DocumentoService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Wsdl/ADAPTER/ConsultarDocumentosFenixSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/CorreoElectronicoService"
+          location="oramds:/apps/Resources/ComponentesComunes/Utilidades/EnviarCorreoElectronico/V1/WSDL/EnviarCorreoElectronico.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.org/ClienteService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/Cliente/V1/Wsdl/ADAPTER/ConsultarContactosSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/DocumentoMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Wsdl/ADAPTER/ComposicionesServiceSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/DocumentoService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Wsdl/Documento.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/ClienteMO" location="../WSDLs/EnviarDocumentoClienteSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="enviardocumentocliente_client" partnerLinkType="ns1:EnviarDocumentoCliente" myRole="EnviarDocumentoClientePT"/>
+    <partnerLink name="ConsultarContactos" partnerLinkType="ns2:ConsultarContactos" partnerRole="ConsultarContactosPT"/>
+    <partnerLink name="ComposicionesService" partnerLinkType="ns3:ComposicionesService"
+                 partnerRole="ComposicionesServicePT"/>
+    <partnerLink name="EnviarCorreoElectronico" partnerLinkType="ns4:EnviarCorreoElectronico"
+                 partnerRole="CorreoElectronicoPT"/>
+    <partnerLink name="ConsultarDocumentosFenix_PS" partnerLinkType="ns11:ConsultarDocumentosFenix_PS"
+                 partnerRole="ConsultarDocumentosFenixPT"/>
+    <partnerLink name="ConsultarClienteById_SB" partnerLinkType="ns12:ConsultarClienteById_SB" partnerRole="ClientePT"/>
+    <partnerLink name="ConsultarAtributosUsuario" partnerLinkType="ns14:ConsultarAtributosUsuario"
+                 partnerRole="UsuarioPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:EnviarDocumentoClienteRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:EnviarDocumentoClienteResponseMessage"/>
+    <variable name="setTittleVar" type="xsd:string"/>
+    <variable name="outInvokeConsultarDocumentosOnBase" messageType="ns3:ConsultarDocumentoOnBaseResponseMessage"/>
+    <variable name="outInvokeConsultarContactos" messageType="ns2:ConsultarContactosResponseMessage"/>
+    <variable name="outInvokeObtenerDocumentoOnBase" messageType="ns3:ObtenerDocumentoOnBaseResponseMessage"/>
+    <variable name="inInvokeEnviarCorreoElectronico" messageType="ns4:requestEnviarCorreoElectronicoMessage"/>
+    <variable name="outInvokeEnviarCorreoElectronico" messageType="ns4:responseEnviarCorreoElectronicoMessage"/>
+    <variable name="outInvokeConsultarDocumentosFenix" messageType="ns11:ConsultarDocumentosFenixResponseMessage"/>
+    <variable name="doctosPDF"
+              messageType="ns3:ConsultarDocumentoOnBaseResponseMessage"/>
+    <variable name="DoctosPDFFenix" messageType="ns11:ConsultarDocumentosFenixResponseMessage"/>
+    <variable name="ListaCorreos" messageType="ns2:ConsultarContactosResponseMessage"/>
+    <variable name="Asunto" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll bpelx:name="CatchAll">
+      <sequence name="SequenceCatchAll">
+        <assign name="assignError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns1:Resultado/ns5:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns1:Resultado/ns5:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyCatchAll" partnerLink="enviardocumentocliente_client"
+               portType="ns1:EnviarDocumentoClientePT" operation="EnviarDocumentoCliente" variable="outputVariable"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in EnviarDocumentoCliente.wsdl) -->
+    <receive name="receiveInput" partnerLink="enviardocumentocliente_client" portType="ns1:EnviarDocumentoClientePT" operation="EnviarDocumentoCliente" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTiitle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat('EnvioDoc-idCliente = ',$inputVariable.request/ns1:idCliente))</from>
+        <to>$setTittleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarDocumentosOnBase">
+      <variables>
+        <variable name="inInvokeConsultarDocumentosOnBase" messageType="ns3:ConsultarDocumentoOnBaseRequestMessage"/>
+        <variable name="inInvokeConsultarDocumentosFenix" messageType="ns11:ConsultarDocumentosFenixRequestMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarDocumentosOnBase">
+        <sequence name="SequenceConsultarDocumentosFenix">
+          <assign name="assignIdCliente">
+            <copy>
+              <from>$inputVariable.request/ns1:idCliente</from>
+              <to>$inInvokeConsultarDocumentosFenix.request/ns3:idCliente</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.request/ns1:idFlujo</from>
+              <to>$inInvokeConsultarDocumentosFenix.request/ns3:idFlujo</to>
+            </copy>
+            <copy>
+              <from>'true'</from>
+              <to>$inInvokeConsultarDocumentosFenix.request/ns3:Content</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeConsultarDocumentosFenix" bpelx:invokeAsDetail="no"
+                  partnerLink="ConsultarDocumentosFenix_PS" portType="ns11:ConsultarDocumentosFenixPT"
+                  operation="ConsultarDocumentosFenix" inputVariable="inInvokeConsultarDocumentosFenix"
+                  outputVariable="outInvokeConsultarDocumentosFenix"/>
+          <assign name="XQDoctosPDFFenix" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+            <bpelx:annotation xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/ConsultarDocumentosFenix_TO_DoctosPDFFenixManual.xqy', 'outInvokeConsultarDocumentosFenix.response', $outInvokeConsultarDocumentosFenix.response, 'inputVariable.request', $inputVariable.request)</from>
+              <to variable="DoctosPDFFenix" part="response"/>
+            </copy>
+          </assign>
+        </sequence>
+        <assign name="XQDoctosOnbase">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:processXQuery10('../Transformations/XQDoctosOnbase.xqy', 'DoctosPDFFenix.response', $DoctosPDFFenix.response)</from>
+            <to variable="doctosPDF" part="response"/>
+          </copy>
+        </assign>
+        <assign name="XQDoctosFenix">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:processXQuery10('../Transformations/XQDoctosFenix.xqy', 'DoctosPDFFenix.response', $DoctosPDFFenix.response)</from>
+            <to variable="DoctosPDFFenix" part="response"/>
+          </copy>
+        </assign>
+        <if name="IfOkConsultarDocumentos">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeConsultarDocumentosFenix.response/ns3:Resultado/ns5:result = 'OK' and count($outInvokeConsultarDocumentosFenix.response/ns3:Documento) &gt; 0</condition>
+          <sequence name="Sequence1">
+            <scope name="ScopeObtenerResponsableCliente">
+              <variables>
+                <variable name="inConsultarCliente" messageType="ns12:requestConsultarClienteMessageByIdCliente"/>
+                <variable name="outConsultarCliente" messageType="ns12:responseConsultarClienteMessageByIdCliente"/>
+              </variables>
+              <sequence name="SequenceConsultarCliente">
+                <assign name="AssignConsultarCliente">
+                  <copy>
+                    <from>$inputVariable.request/ns1:idCliente</from>
+                    <to>$inConsultarCliente.request/ns1:idCliente</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeConsultarCliente" bpelx:invokeAsDetail="no" partnerLink="ConsultarClienteById_SB"
+                        portType="ns12:ClientePT" operation="consultarByIdCliente" inputVariable="inConsultarCliente"
+                        outputVariable="outConsultarCliente"/>
+                <if name="IfResultadoConsultarCliente">
+                  <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                  <condition>$outConsultarCliente.response/ns1:Resultado/ns5:result = 'OK'</condition>
+                  <scope name="ScopeConsultarAtributosUsuario">
+                    <variables>
+                      <variable name="inConsultarAtributos" messageType="ns14:requestConsultarAtributosUsuarioMessage"/>
+                      <variable name="outConsultarAtributos"
+                                messageType="ns14:responseConsultarAtributosUsuarioMessage"/>
+                    </variables>
+                    <sequence name="SequenceOK">
+                      <assign name="AssignConsultarAtributos">
+                        <copy>
+                          <from>$outConsultarCliente.response/ns1:Cliente/ns8:responsableCliente</from>
+                          <to>$inConsultarAtributos.request/ns15:listaNombres/ns16:nombreUsuario</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeConsultarAtributos" bpelx:invokeAsDetail="no"
+                              partnerLink="ConsultarAtributosUsuario" portType="ns14:UsuarioPT"
+                              operation="consultarAtributosUsuario" inputVariable="inConsultarAtributos"
+                              outputVariable="outConsultarAtributos"/>
+                      <if name="IfResultadoConsultarAtributos">
+                        <documentation>
+                          <![CDATA[OK]]>
+                        </documentation>
+                        <condition>$outConsultarAtributos.response/ns15:Resultado/ns5:result = 'OK' and string($outConsultarAtributos.response/ns15:listaUsuarios/ns16:usuario[1]/ns16:mail) !=''</condition>
+                        <assign name="AssignCorreoResponsableCliente">
+                          <copy>
+                            <from>$outConsultarAtributos.response/ns15:listaUsuarios/ns16:usuario[1]/ns16:mail</from>
+                            <to>$ListaCorreos.response/ns1:Contactos/ns8:Contacto/ns8:correoElectronico</to>
+                          </copy>
+                        </assign>
+                        <else>
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation><empty name="EmptyError"
+                                                 xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/></else>
+                      </if>
+                    </sequence>
+                  </scope>
+                  <else>
+                    <documentation>
+                      <![CDATA[ERROR]]>
+                    </documentation>
+                    <empty name="EmptyError"/>
+                  </else>
+                </if>
+              </sequence>
+            </scope>
+            <scope name="ScopeConsultarContactos">
+              <variables>
+                <variable name="inInvokeConsultarContactos" messageType="ns2:ConsultarContactosRequestMessage"/>
+              </variables>
+              <sequence name="SequenceConsultarContacos">
+                <assign name="assignIdCliente">
+                  <copy>
+                    <from>$inputVariable.request/ns1:idCliente</from>
+                    <to>$inInvokeConsultarContactos.request/ns1:idCliente</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeConsultarContactos" bpelx:invokeAsDetail="no" partnerLink="ConsultarContactos"
+                        portType="ns2:ConsultarContactosPT" operation="ConsultarContactos"
+                        inputVariable="inInvokeConsultarContactos" outputVariable="outInvokeConsultarContactos"/>
+                <if name="IfOkConsultarContactos">
+                  <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                  <condition>$outInvokeConsultarContactos.response/ns1:Resultado/ns5:result = 'OK' </condition>
+                  <sequence name="SequenceIf">
+                    <if name="IfProceso">
+                      <documentation>
+                        <![CDATA[Gestion]]>
+                      </documentation>
+                      <condition>$inputVariable.request/ns1:idProceso = 18 </condition>
+                      <sequence name="SequenceGestionCobro">
+                        <assign name="AssignAsunto">
+                          <copy>
+                            <from>'Archivos de Aviso de Cobro'</from>
+                            <to>$Asunto</to>
+                          </copy>
+                        </assign>
+                      </sequence>
+                      <elseif>
+                        <documentation>
+                          <![CDATA[Seguimiento]]>
+                        </documentation>
+                        <condition>$inputVariable.request/ns1:idProceso =  32</condition>
+                        <assign name="AssignAsunto"
+                                                xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+   <copy>
+         <from>'Archivos de Recibo de Pago'</from>
+         <to>$Asunto</to>
+      </copy></assign></elseif>
+                      <else>
+                        <documentation>
+                          <![CDATA[Otro]]>
+                        </documentation>
+                        <empty name="EmptyOtro"/>
+                      </else>
+                    </if>
+                    <assign name="XQContactosGestion">
+                      <bpelx:annotation>
+                        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                      </bpelx:annotation>
+                      <copy>
+                        <from>ora:processXQuery10('../Transformations/Contactos_TO_EnviarCorreoElectronico.xqy', 'outInvokeConsultarContactos.response', $outInvokeConsultarContactos.response, 'ListaCorreos.response', $ListaCorreos.response, 'inputVariable.request', $inputVariable.request)</from>
+                        <to variable="ListaCorreos" part="response"/>
+                      </copy>
+                    </assign>
+                    <if name="IfONBase_DocumentoFenix">
+                      <documentation>
+                        <![CDATA[onBase]]>
+                      </documentation>
+                      <condition>count($doctosPDF.response/ns3:Documentos/ns7:etapa/ns7:tipoDocumento/ns7:documento)&gt;0</condition>
+                      <sequence name="SequenceOnBase">
+                        <forEach parallel="no" counterName="Counter" name="ForEachDocumento">
+                          <startCounterValue>1</startCounterValue>
+                          <finalCounterValue>count($doctosPDF.response/ns3:Documentos/ns7:etapa/ns7:tipoDocumento/ns7:documento)</finalCounterValue>
+                          <scope name="ScopeObtenerDocumentoOnBase">
+                            <variables>
+                              <variable name="inInvokeObtenerDcoumentoOnBase"
+                                        messageType="ns3:ObtenerDocumentoOnBaseRequestMessage"/>
+                              <variable name="Variable1" type="xsd:base64Binary"/>
+                            </variables>
+                            <sequence name="SequenceObtenerDocumentoOnBase">
+                              <assign name="assignIdExterno">
+                                <copy>
+                                  <from>$doctosPDF.response/ns3:Documentos/ns7:etapa/ns7:tipoDocumento/ns7:documento[$Counter]/ns7:idExterno</from>
+                                  <to>$inInvokeObtenerDcoumentoOnBase.request/ns3:idExterno</to>
+                                </copy>
+                                <copy>
+                                  <from>$doctosPDF.response/ns3:Documentos/ns7:etapa/ns7:tipoDocumento/ns7:documento[$Counter]/ns7:mime_type</from>
+                                  <to>$inInvokeObtenerDcoumentoOnBase.request/ns3:tipoArchivo</to>
+                                </copy>
+                              </assign>
+                              <invoke name="InvokeObtenerDocumentoOnBase" bpelx:invokeAsDetail="no"
+                                      partnerLink="ComposicionesService" portType="ns3:ComposicionesServicePT"
+                                      operation="ObtenerDocumentoOnBase" inputVariable="inInvokeObtenerDcoumentoOnBase"
+                                      outputVariable="outInvokeObtenerDocumentoOnBase"/>
+                              <assign name="AssignAttachment">
+                                <copy bpelx:insertMissingToData="yes">
+                                  <from>$doctosPDF.response/ns3:Documentos/ns7:etapa/ns7:tipoDocumento/ns7:documento[$Counter]/ns7:filename</from>
+                                  <to>$inInvokeEnviarCorreoElectronico.request/ns9:CorreoElectronico/ns10:attachment[$Counter]/ns10:name</to>
+                                </copy>
+                                <copy bpelx:insertMissingToData="yes">
+                                  <from>$doctosPDF.response/ns3:Documentos/ns7:etapa/ns7:tipoDocumento/ns7:documento[$Counter]/ns7:mime_type</from>
+                                  <to>$inInvokeEnviarCorreoElectronico.request/ns9:CorreoElectronico/ns10:attachment[$Counter]/ns10:type</to>
+                                </copy>
+                                <copy bpelx:insertMissingToData="yes">
+                                  <from>$outInvokeObtenerDocumentoOnBase.response/ns3:codigo</from>
+                                  <to>$inInvokeEnviarCorreoElectronico.request/ns9:CorreoElectronico/ns10:attachment[$Counter]/ns10:content</to>
+                                </copy>
+                              </assign>
+                            </sequence>
+                          </scope>
+                        </forEach>
+                        <forEach parallel="no" counterName="CounterContacto" name="ForEachContacto">
+                          <startCounterValue>1</startCounterValue>
+                          <finalCounterValue>count($ListaCorreos.response/ns1:Contactos/ns8:Contacto)</finalCounterValue>
+                          <scope name="ScopeForEachContacto">
+                            <sequence name="SequenceForEach">
+                              <scope name="ScopeEnviarCorreoElectronico">
+                                <sequence name="SequenceEnviarCorreoElectronico">
+                                  <assign name="assignCorreo">
+                                    <copy bpelx:insertMissingToData="yes">
+                                      <from>$ListaCorreos.response/ns1:Contactos/ns8:Contacto[$CounterContacto]/ns8:correoElectronico</from>
+                                      <to>$inInvokeEnviarCorreoElectronico.request/ns9:CorreoElectronico/ns10:to/ns10:usuario</to>
+                                    </copy>
+                                    <copy bpelx:insertMissingToData="yes">
+                                      <from>$inputVariable.request/ns1:idCliente</from>
+                                      <to>$inInvokeEnviarCorreoElectronico.request/ns9:CorreoElectronico/ns10:idClienteFenix</to>
+                                    </copy>
+                                    <copy bpelx:insertMissingToData="yes">
+                                      <from>$Asunto</from>
+                                      <to>$inInvokeEnviarCorreoElectronico.request/ns9:CorreoElectronico/ns10:subject</to>
+                                    </copy>
+                                  </assign>
+                                  <invoke name="InvokeEnviarCorreoElectronico" bpelx:invokeAsDetail="no"
+                                          partnerLink="EnviarCorreoElectronico" portType="ns4:CorreoElectronicoPT"
+                                          operation="enviarCorreoElectronico"
+                                          inputVariable="inInvokeEnviarCorreoElectronico"
+                                          outputVariable="outInvokeEnviarCorreoElectronico"/>
+                                  <if name="IfOKEnviarCorreoElectronico">
+                                    <documentation>
+                                      <![CDATA[OK]]>
+                                    </documentation>
+                                    <condition>$outInvokeEnviarCorreoElectronico.response/ns9:Resultado/ns5:result = 'OK'</condition>
+                                    <assign name="assignOK">
+                                      <copy>
+                                        <from>$outInvokeEnviarCorreoElectronico.response/ns9:Resultado/ns5:result</from>
+                                        <to>$outputVariable.response/ns1:Resultado/ns5:result</to>
+                                      </copy>
+                                      <copy>
+                                        <from>$outInvokeEnviarCorreoElectronico.response/ns9:Resultado/ns5:message</from>
+                                        <to>$outputVariable.response/ns1:Resultado/ns5:message</to>
+                                      </copy>
+                                    </assign>
+                                    <else>
+                                      <documentation>
+                                        <![CDATA[Error]]>
+                                      </documentation>
+                                      <assign name="assignError">
+                                        <copy>
+                                          <from>$outInvokeEnviarCorreoElectronico.response/ns9:Resultado/ns5:result</from>
+                                          <to>$outputVariable.response/ns1:Resultado/ns5:result</to>
+                                        </copy>
+                                        <copy>
+                                          <from>$outInvokeEnviarCorreoElectronico.response/ns9:Resultado/ns5:message</from>
+                                          <to>$outputVariable.response/ns1:Resultado/ns5:message</to>
+                                        </copy>
+                                      </assign>
+                                    </else>
+                                  </if>
+                                </sequence>
+                              </scope>
+                            </sequence>
+                          </scope>
+                        </forEach>
+                      </sequence>
+                      <else>
+                        <documentation>
+                          <![CDATA[Fenix]]>
+                        </documentation>
+                        <sequence name="SequenceFenix">
+                          <assign name="XQAttachment">
+                            <bpelx:annotation>
+                              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                            </bpelx:annotation>
+                            <copy>
+                              <from>ora:processXQuery10('../Transformations/ConsultarDocumentoFenix_TO_EnviarCorreoElectronico.xqy', 'DoctosPDFFenix.response', $DoctosPDFFenix.response)</from>
+                              <to variable="inInvokeEnviarCorreoElectronico" part="request"/>
+                            </copy>
+                          </assign>
+                          <forEach parallel="no" counterName="CounterContacto" name="ForEachContacto"
+                                   xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                            <startCounterValue>1</startCounterValue>
+                            <finalCounterValue>count($ListaCorreos.response/ns1:Contactos/ns8:Contacto)</finalCounterValue>
+                            <scope name="ScopeForEachContactoFenix">
+                              <sequence name="SequenceForEach">
+                                <scope name="ScopeEnviarCorreoElectronico">
+                                  <sequence name="SequenceEnviarCorreoElectronico">
+                                    <assign name="assignCorreo">
+                                      <copy bpelx:insertMissingToData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                        <from>$ListaCorreos.response/ns1:Contactos/ns8:Contacto[$CounterContacto]/ns8:correoElectronico</from>
+                                        <to>$inInvokeEnviarCorreoElectronico.request/ns9:CorreoElectronico/ns10:to/ns10:usuario</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                        <from>$inputVariable.request/ns1:idCliente</from>
+                                        <to>$inInvokeEnviarCorreoElectronico.request/ns9:CorreoElectronico/ns10:idClienteFenix</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                        <from>$Asunto</from>
+                                        <to>$inInvokeEnviarCorreoElectronico.request/ns9:CorreoElectronico/ns10:subject</to>
+                                      </copy>
+                                    </assign>
+                                    <invoke name="InvokeEnviarCorreoElectronico" bpelx:invokeAsDetail="no"
+                                            partnerLink="EnviarCorreoElectronico" portType="ns4:CorreoElectronicoPT"
+                                            operation="enviarCorreoElectronico"
+                                            inputVariable="inInvokeEnviarCorreoElectronico"
+                                            outputVariable="outInvokeEnviarCorreoElectronico"
+                                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/>
+                                    <if name="IfOKEnviarCorreoElectronico">
+                                      <documentation>
+                                        <![CDATA[OK]]>
+                                      </documentation>
+                                      <condition>$outInvokeEnviarCorreoElectronico.response/ns9:Resultado/ns5:result = 'OK'</condition>
+                                      <assign name="assignOK">
+                                        <copy>
+                                          <from>$outInvokeEnviarCorreoElectronico.response/ns9:Resultado/ns5:result</from>
+                                          <to>$outputVariable.response/ns1:Resultado/ns5:result</to>
+                                        </copy>
+                                        <copy>
+                                          <from>$outInvokeEnviarCorreoElectronico.response/ns9:Resultado/ns5:message</from>
+                                          <to>$outputVariable.response/ns1:Resultado/ns5:message</to>
+                                        </copy>
+                                      </assign>
+                                      <else>
+                                        <documentation>
+                                          <![CDATA[Error]]>
+                                        </documentation>
+                                        <assign name="assignError">
+                                          <copy>
+                                            <from>$outInvokeEnviarCorreoElectronico.response/ns9:Resultado/ns5:result</from>
+                                            <to>$outputVariable.response/ns1:Resultado/ns5:result</to>
+                                          </copy>
+                                          <copy>
+                                            <from>$outInvokeEnviarCorreoElectronico.response/ns9:Resultado/ns5:message</from>
+                                            <to>$outputVariable.response/ns1:Resultado/ns5:message</to>
+                                          </copy>
+                                        </assign>
+                                      </else>
+                                    </if>
+                                  </sequence>
+                                </scope>
+                              </sequence>
+                            </scope>
+                          </forEach>
+                        </sequence>
+                      </else>
+                    </if>
+                  </sequence>
+                  <else>
+                    <documentation>
+                      <![CDATA[Error]]>
+                    </documentation>
+                    <assign name="assignError">
+                      <copy>
+                        <from>'ERROR'</from>
+                        <to>$outputVariable.response/ns1:Resultado/ns5:result</to>
+                      </copy>
+                      <copy>
+                        <from>concat('Ocurrio un problema al consultar los contactos: ',$outInvokeConsultarContactos.response/ns1:Resultado/ns5:message)</from>
+                        <to>$outputVariable.response/ns1:Resultado/ns5:message</to>
+                      </copy>
+                    </assign>
+                  </else>
+                </if>
+              </sequence>
+            </scope>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[Error]]>
+            </documentation>
+            <assign name="assignError">
+              <copy>
+                <from>$outInvokeConsultarDocumentosFenix.response/ns3:Resultado/ns5:result</from>
+                <to>$outputVariable.response/ns1:Resultado/ns5:result</to>
+              </copy>
+              <copy>
+                <from>concat($outInvokeConsultarDocumentosFenix.response/ns3:Resultado/ns5:message,' No hay documentos a enviar')</from>
+                <to>$outputVariable.response/ns1:Resultado/ns5:message</to>
+              </copy>
+            </assign>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="enviardocumentocliente_client" portType="ns1:EnviarDocumentoClientePT" operation="EnviarDocumentoCliente" variable="outputVariable"/>
+  </sequence>
+</process>

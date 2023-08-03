@@ -1,0 +1,193 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Jul 30 11:43:54 CDT 2019
+  Author:  Marisol
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="JDACreateSizeProcess"
+               targetNamespace="http://mx.agarcia.ea/Capabilities/Core/Items/JDACreateSizeProcess/v1.0"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://mx.agarcia.ea/Capabilities/Core/Items/JDACreateSizeProcess/v1.0"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://mx.agarcia.ea/Applications/JDA/Catalogs/Size/v1.0"
+         xmlns:ns2="http://mx.agarcia.ea/RetailOperations/Make/ProductDevelopment/ItemCatalogTaskSvcWSD"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns5="http://mx.agarcia.ea/Applications/JDA/Catalogs/ColorSize"
+         xmlns:ns4="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSizeEntity"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns6="http://mx.agarcia.ea/RetailOperations/Make/ProductDevelopment/ItemCatalogTaskSvc"
+         xmlns:ns7="http://mx.agarcia.ea/Capabilities/Support/Commons/ItemsCatalogs"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns8="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage">
+
+    <import ui:processWSDL="true" namespace="http://mx.agarcia.ea/Capabilities/Core/Items/JDACreateSizeProcess/v1.0" location="../WSDLs/JDACreateSizeProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="jdacreatesizeprocess_client" partnerLinkType="client:JDACreateSizeProcess" myRole="JDACreateSizeProcessProvider"/>
+    <partnerLink name="JDASizesPXY" partnerLinkType="ns1:JDASizesPXY" partnerRole="JDASizeSvcPort"/>
+    <partnerLink name="ItemCatalogTaskPXY" partnerLinkType="ns2:ItemCatalogTaskPXY"
+                 partnerRole="ItemCatalogEntitySvcPType"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:JDACreateSizeProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:JDACreateSizeProcessResponseMessage"/>
+    <variable name="Invoke_JDACreate_in" messageType="ns1:createSizeRequestMessage"/>
+    <variable name="Invoke_JDACreate_out" messageType="ns1:createSizeResponseMessage"/>
+    <variable name="Invoke_MDMRegister_in" messageType="ns2:registerRequest"/>
+    <variable name="Invoke_MDMRegister_out" messageType="ns2:registerResponse"/>
+    <variable name="JDAId" type="xsd:string"/>
+    <variable name="Invoke_RegisterRMSMaestro_in" messageType="ns2:registerRequest"/>
+    <variable name="Invoke_RegisterRMSMaestro_out" messageType="ns2:registerResponse"/>
+    <variable name="tmpGroup" type="xsd:string">
+      <from>'SGTMP'</from>
+    </variable>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in JDACreateSizeProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="jdacreatesizeprocess_client" portType="client:JDACreateSizeProcess" operation="create" variable="inputVariable" createInstance="yes"/>
+    <assign name="TrJDACreateRequest">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/TrJDACreateRequest.xsl", $inputVariable.payload)</from>
+        <to variable="Invoke_JDACreate_in" part="payload"/>
+      </copy>
+    </assign>
+    <invoke name="Invoke_JDACreate" bpelx:invokeAsDetail="no" partnerLink="JDASizesPXY" portType="ns1:JDASizeSvcPort"
+            operation="create" inputVariable="Invoke_JDACreate_in" outputVariable="Invoke_JDACreate_out"/>
+    <assign name="AssignRegisterRMS">
+      <copy>
+        <from>$inputVariable.payload/ns3:size/ns4:id</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterRMSMaestro_in.registerRequest/ns6:id</to>
+      </copy>
+      <copy>
+        <from>'RMS'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterRMSMaestro_in.registerRequest/ns6:appCode</to>
+      </copy>
+      <copy>
+        <from>$inputVariable.payload/ns3:size/ns4:name</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterRMSMaestro_in.registerRequest/ns6:name</to>
+      </copy>
+      <copy>
+        <from>15</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterRMSMaestro_in.registerRequest/ns6:catalogId</to>
+      </copy>
+      <copy>
+        <from>13</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterRMSMaestro_in.registerRequest/ns6:parentCatid</to>
+      </copy>
+      <copy>
+        <from>'SGTMP'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterRMSMaestro_in.registerRequest/ns6:parentId</to>
+      </copy>
+    </assign>
+    <invoke name="Invoke_RegisterRMSMaestro" partnerLink="ItemCatalogTaskPXY"
+            portType="ns2:ItemCatalogEntitySvcPType" operation="register" inputVariable="Invoke_RegisterRMSMaestro_in"
+            outputVariable="Invoke_RegisterRMSMaestro_out" bpelx:invokeAsDetail="no"/>
+    <assign name="AssignMDMRegister">
+      <copy>
+        <from>$Invoke_JDACreate_in.payload/ns5:size/ns4:id</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMRegister_in.registerRequest/ns6:id</to>
+      </copy>
+      <copy>
+        <from>13</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMRegister_in.registerRequest/ns6:primaryParnCatId</to>
+      </copy>
+      <copy>
+        <from>'JDA'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMRegister_in.registerRequest/ns6:appCode</to>
+      </copy>
+      <copy>
+        <from>$inputVariable.payload/ns3:size/ns4:name</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMRegister_in.registerRequest/ns6:name</to>
+      </copy>
+      <copy>
+        <from>15</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMRegister_in.registerRequest/ns6:catalogId</to>
+      </copy>
+      <copy>
+        <from>$tmpGroup</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMRegister_in.registerRequest/ns6:parentId</to>
+      </copy>
+      <copy>
+        <from>$tmpGroup</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMRegister_in.registerRequest/ns6:primaryParnId</to>
+      </copy>
+      <copy>
+        <from>$inputVariable.payload/ns3:size/ns4:id</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMRegister_in.registerRequest/ns6:primaryId</to>
+      </copy>
+      <copy>
+        <from>'RMS'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMRegister_in.registerRequest/ns6:primaryAppcode</to>
+      </copy>
+      <copy>
+        <from>13</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMRegister_in.registerRequest/ns6:parentCatid</to>
+      </copy>
+      <copy>
+        <from>15</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_MDMRegister_in.registerRequest/ns6:primaryCatid</to>
+      </copy>
+    </assign>
+    <invoke name="Invoke_MDMRegister" bpelx:invokeAsDetail="no" partnerLink="ItemCatalogTaskPXY"
+            portType="ns2:ItemCatalogEntitySvcPType" operation="register" inputVariable="Invoke_MDMRegister_in"
+            outputVariable="Invoke_MDMRegister_out"/>
+    <assign name="Assign1">
+      <copy>
+        <from>$Invoke_RegisterRMSMaestro_out.registerResponse/ns7:status</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns8:description</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="jdacreatesizeprocess_client" portType="client:JDACreateSizeProcess" operation="create" variable="outputVariable"/>
+  </sequence>
+</process>

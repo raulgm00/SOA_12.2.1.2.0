@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <con:wsdl ref="Applications/JDA/JDAItem/Resources/JDAQueryItemWSDL"/>
+            <con:binding>
+                <con:name>queryItemBinding</con:name>
+                <con:namespace>http://mx.agarcia.ea/Applications/JDA/Items/QueryItem/v1.0</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:flow>
+            <con:route-node name="RouteJDAAPIMicroservice">
+                <con:comment/>
+                <con:context>
+                    <con1:userNsDecl prefix="v1" namespace="http://mx.agarcia.ea/Canonical/Commons/Items/v1" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:userNsDecl prefix="v11" namespace="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:userNsDecl prefix="v12" namespace="http://mx.agarcia.ea/Canonical/Commons/RetailStore/v1" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:userNsDecl prefix="v13" namespace="http://mx.agarcia.ea/Canonical/Commons/LocationsCommon/v1" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="cre" namespace="http://mx.agarcia.ea/Applications/JDA/Items/CreateItem" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="ags" namespace="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="cre1" namespace="http://mx.agarcia.ea/Applications/JDA/RetailStores/CreateRetailStore" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="quer" namespace="http://mx.agarcia.ea/Applications/JDA/RetailStores/QueryRetailStore" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                    <con1:varNsDecl prefix="quer1" namespace="http://mx.agarcia.ea/Applications/JDA/Items/QueryItem" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+                <con:actions>
+                    <con1:route xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.7.16b46f30413.N7ffd</con2:id>
+                        <con1:service ref="Applications/JDA/APIMicroservice/PS/JDAAPIMSWrapperPXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+                        <con1:operation>process</con1:operation>
+                        <con1:outboundTransform>
+                            <con2:assign varName="apiPayload" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.7.16b46f30413.N7ffc</con3:id>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<Request>
+    <Parameters id="items.findStageStyleByID">
+                <Parameter name="ZMSTYN">{data($body/*:findItemByIdRequest/*:itemFilter/*:id)}</Parameter>
+    </Parameters>
+  </Request>]]></con:xqueryText>
+                                </con2:expr>
+                            </con2:assign>
+                            <con2:javaCallout varName="apiPayloadEncoded" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.7.16b46f30413.N7ffb</con3:id>
+                                <con2:archive ref="Applications/Commons/Base64/AGEIABase64Util"/>
+                                <con2:className>mx.agarcia.ea.utils.base64.Base64Util</con2:className>
+                                <con2:method>public static java.lang.String encodeBase64(java.lang.String)</con2:method>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">fn-bea:serialize($apiPayload)</con:xqueryText>
+                                </con2:expr>
+                                <con2:return-param-as-ref>false</con2:return-param-as-ref>
+                            </con2:javaCallout>
+                            <con2:log xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.7.16b46f30413.N7ffa</con3:id>
+                                <con3:disabled xmlns:con3="http://www.bea.com/wli/sb/stages/config">true</con3:disabled>
+                                <con2:logLevel>warning</con2:logLevel>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$apiPayload</con:xqueryText>
+                                </con2:expr>
+                                <con2:message>[JDAFINDSKUBYID] APIMS PAYLOAD</con2:message>
+                            </con2:log>
+                            <con2:log xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.7.16b46f30413.N7ff9</con3:id>
+                                <con3:disabled xmlns:con3="http://www.bea.com/wli/sb/stages/config">true</con3:disabled>
+                                <con2:logLevel>warning</con2:logLevel>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$apiPayloadEncoded</con:xqueryText>
+                                </con2:expr>
+                                <con2:message>[JDAFINDSKUBYID] APIMS ENCODED PAYLOAD *******</con2:message>
+                            </con2:log>
+                            <con2:assign varName="body" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.7.16b46f30413.N7ff8</con3:id>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<soapenv:Body xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" >
+
+<med:process xmlns:med="http://mediation.core.jda.ea.agarcia.mx/">
+         <request>
+            <header>
+               <destiny>JDA</destiny>
+               <interfaceId>FindStageStyleByID</interfaceId>
+               <parameters>
+                  <entry>
+                     <key>queryId</key>
+                     <value>items.findStageStyleByID</value>
+                  </entry>
+               </parameters>
+               <source>/Applications/JDA/JDARetailStore/PS/JDAFindStageStyleByIdPXY/v1.0</source>
+            </header>
+            <payload>{$apiPayloadEncoded}</payload>
+         </request>
+      </med:process>
+
+</soapenv:Body>]]></con:xqueryText>
+                                </con2:expr>
+                            </con2:assign>
+                            <con2:log xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.7.16b46f30413.N7ff7</con3:id>
+                                <con3:disabled xmlns:con3="http://www.bea.com/wli/sb/stages/config">true</con3:disabled>
+                                <con2:logLevel>warning</con2:logLevel>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$body</con:xqueryText>
+                                </con2:expr>
+                                <con2:message>[JDAFINDSKUBYID] BODY REQUEST A MICROSERVICIO</con2:message>
+                            </con2:log>
+                        </con1:outboundTransform>
+                        <con1:responseTransform>
+                            <con2:assign varName="body" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N3ffecd4d.N3401cdf0.7.16b46f30413.N7ff6</con3:id>
+                                <con2:expr>
+                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<soapenv:Body xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+  xmlns:ags="http://mx.agarcia.ea/Commons/Schemas/AGStandardHeader" 
+  xmlns:quer="http://mx.agarcia.ea/Applications/JDA/Items/QueryItem" 
+  xmlns:v1="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+>
+<quer:filterItemResponse>
+
+
+{
+   let $dataSetResult :=  $body//*:dataSet/*:entry
+       return 
+           <quer:items>
+{
+          for $dataSetEntry in ( $dataSetResult ) return
+               <v1:item>
+               <v1:id Type="Style">{data($dataSetEntry//*:value/*:field[@name='ZMSTYN']/*:data)}</v1:id>
+
+               <v1:name>{data($dataSetEntry//*:value/*:field[@name='ZMDESC']/*:data)}</v1:name>
+               <v1:shortDescription>{data($dataSetEntry//*:value/*:field[@name='ZMSHOR']/*:data)}</v1:shortDescription>
+
+                     <v1:internalID>{data($dataSetEntry//*:value/*:field[@name='ZMSEQ']/*:data)}</v1:internalID>
+
+               <v1:status AppCode="JDA">
+                  <v1:id>{data($dataSetEntry//*:value/*:field[@name='ZMSTAT']/*:data)}</v1:id>
+               </v1:status>
+
+           
+            <v1:price>{data($dataSetEntry//*:value/*:field[@name='IPRCST']/*:data)}</v1:price>
+
+            
+            <v1:itemDetailInfo>
+               <v1:attributes>
+                  <v1:attribute Type="IATRB1" AppCode="JDA">
+                     <v1:id>{data($dataSetEntry//*:value/*:field[@name='IATRB1']/*:data)}</v1:id>
+                  </v1:attribute>
+
+                  <v1:attribute Type="ZMATR1" AppCode="JDA">
+                     <v1:id>{data($dataSetEntry//*:value/*:field[@name='ZMATR1']/*:data)}</v1:id>
+                  </v1:attribute>
+
+                  <v1:attribute Type="ZMATR2" AppCode="JDA">
+                     <v1:id>{data($dataSetEntry//*:value/*:field[@name='ZMATR2']/*:data)}</v1:id>
+                  </v1:attribute>
+
+                  <v1:attribute Type="ZMATR3" AppCode="JDA">
+                     <v1:id>{data($dataSetEntry//*:value/*:field[@name='ZMATR3']/*:data)}</v1:id>
+                  </v1:attribute>
+
+                  <v1:attribute Type="ZMATR4" AppCode="JDA">
+                     <v1:id>{data($dataSetEntry//*:value/*:field[@name='ZMATR4']/*:data)}</v1:id>
+                  </v1:attribute>
+
+                  <v1:attribute Type="ZMATR5" AppCode="JDA">
+                     <v1:id>{data($dataSetEntry//*:value/*:field[@name='ZMATR5']/*:data)}</v1:id>
+                  </v1:attribute>
+
+               </v1:attributes>
+
+                  <v1:colorGroup AppCode="JDA">
+                     <v1:code>{data($dataSetEntry//*:value/*:field[@name='ZMCOLA']/*:data)}</v1:code>
+                  </v1:colorGroup>
+
+                  <v1:sizeGroup AppCode="JDA">
+                     <v1:code>{data($dataSetEntry//*:value/*:field[@name='ZMSIZA']/*:data)}</v1:code>
+                  </v1:sizeGroup>
+
+
+               <v1:supplier>
+                  <v11:supplierID>{data($dataSetEntry//*:value/*:field[@name='ZMVEND']/*:data)}</v11:supplierID>
+               </v1:supplier>
+
+            </v1:itemDetailInfo>
+
+
+            <v1:catalogs>
+                  <v1:catalog Type="Department" AppCode="JDA">
+                     <v1:id>{data($dataSetEntry//*:value/*:field[@name='ZMDEPT']/*:data)}</v1:id>
+                  </v1:catalog>
+
+                  <v1:catalog Type="Type" AppCode="JDA">
+                     <v1:id>{data($dataSetEntry//*:value/*:field[@name='ZMSDPT']/*:data)}</v1:id>
+                  </v1:catalog>
+
+                  <v1:catalog Type="Class" AppCode="JDA">
+                     <v1:id>{data($dataSetEntry//*:value/*:field[@name='ZMCLAS']/*:data)}</v1:id>
+                  </v1:catalog>
+
+                  <v1:catalog Type="SubClass" AppCode="JDA">
+                     <v1:id>{data($dataSetEntry//*:value/*:field[@name='ZMSCLS']/*:data)}</v1:id>
+                  </v1:catalog>
+
+               </v1:catalogs>                   
+
+   </v1:item>
+
+
+}
+               </quer:items>
+
+}
+
+
+</quer:filterItemResponse>
+
+</soapenv:Body>]]></con:xqueryText>
+                                </con2:expr>
+                            </con2:assign>
+                        </con1:responseTransform>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+    <aler:alertRules xsi:nil="true" xmlns:aler="http://xmlns.oracle.com/servicebus/monitoring/alert" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+</con:pipelineEntry>

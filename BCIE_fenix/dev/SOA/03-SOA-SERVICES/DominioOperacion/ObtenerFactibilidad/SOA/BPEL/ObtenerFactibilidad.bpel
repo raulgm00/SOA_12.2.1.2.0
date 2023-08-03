@@ -1,0 +1,354 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Feb 13 13:35:02 GMT-06:00 2017
+  Author:  Cesar Varela
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ObtenerFactibilidad"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/ObtenerFactibilidad/ObtenerFactibilidad"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/ObtenerFactibilidad/ObtenerFactibilidad"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/OperacionService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns2="http://www.bcie.org/ConsultarSaldoOperacionSAD"
+         xmlns:ns3="http://www.bcie.org/AplicarFactibilidadSOR" xmlns:ns4="http://www.bcie.org/OperacionMO"
+         xmlns:ns17="http://www.bcie.org/TerminoBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns5="http://www.bcie.org/OperacionBO" xmlns:ns20="http://www.bcie.org/ResultBO"
+         xmlns:ns13="http://www.bcie.org/CommonBO" xmlns:ns12="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns14="http://www.bcie.org/CondicionBO" xmlns:ns8="http://www.bcie.org/ProductoBO"
+         xmlns:ns9="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns16="http://www.bcie.org/DocumentoBO"
+         xmlns:ns19="http://www.bcie.org/HerramientaCEBO" xmlns:ns18="http://www.bcie.org/ComisionBO"
+         xmlns:ns7="http://www.bcie.org/CatalogoBO" xmlns:ns10="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns11="http://www.bcie.org/ContratoBO" xmlns:ns6="http://www.bcie.org/ClienteBO"
+         xmlns:ns15="http://www.bcie.org/AtributoBO" xmlns:ns21="http://www.bcie.org/ErrorBO"
+         xmlns:ns22="http://www.bcie.org/DesembolsoMO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/OperacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Operacion/V1/Wsdl/ADAPTER/ConsultarOperacionByIdSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/DesembolsoMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/Schema/DesembolsoMO.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://xmlns.bcie.com/OperacionService" location="../WSDLs/ObtenerFactibilidadSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="obtenerfactibilidad_service" partnerLinkType="ns1:ObtenerFactibilidad" myRole="ObtenerFactibilidadPT"/>
+    <partnerLink name="ConsultarOperacionById" partnerLinkType="ns1:ConsultarOperacionById"
+                 partnerRole="ConsultarOperacionById12Port"/>
+    <partnerLink name="ConsultarSaldoOperacion_Direct" partnerLinkType="ns2:ConsultarSaldoOperacion_Direct"
+                 partnerRole="ConsultarSaldoOperacion_PT"/>
+    <partnerLink name="AplicaFactibilidadDirect" partnerLinkType="ns3:AplicaFactibilidadDirect"
+                 partnerRole="AplicarFactibilidad_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestObtenerFactibilidadMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseObtenerFactibilidadMessage"/>
+    <variable name="Titulo" type="xsd:string"/>
+    <variable name="ConsultarOperacionById_InputVariable" messageType="ns1:requestConsultarOperacionMessage"/>
+    <variable name="ConsultarOperacionById_OutputVariable" messageType="ns1:responseConsultarOperacionMessage"/>
+    <variable name="ConsultarSaldoOperacion_InputVariable" messageType="ns2:requestConsultarSaldoOperacionMessage"/>
+    <variable name="ConsultarSaldoOperacion_OutputVariable" messageType="ns2:responseConsultarSaldoOperacionMessage"/>
+    <variable name="AplicarFactibilidad" element="ns22:AplicarFactibilidadRequest"/>
+    <variable name="codigoVariable" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence1">
+        <assign name="SetError">
+          <copy bpelx:insertMissingToData="yes">
+            <from>ora:getFaultName()</from>
+            <to>$outputVariable.response/ns4:Resultado/ns20:error/ns21:errorCode</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns4:Resultado/ns20:error/ns21:errorDescription</to>
+          </copy>
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="obtenerfactibilidad_service"
+               portType="ns1:ObtenerFactibilidadPT" operation="obtenerFactibilidad"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ObtenerFactibilidad.wsdl) -->
+    <receive name="receiveInput" partnerLink="obtenerfactibilidad_service" portType="ns1:ObtenerFactibilidadPT" operation="obtenerFactibilidad" variable="inputVariable" createInstance="yes"/>
+    <assign name="SetInit">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion: ",string($inputVariable.request/ns4:idOperacion)))</from>
+        <to>$Titulo</to>
+      </copy>
+      <copy>
+        <from>'P'</from>
+        <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsulta">
+      <variables>
+        <variable name="producto" type="xsd:int"/>
+        <variable name="Variable1" messageType="ns1:responseConsultarOperacionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catchAll><sequence name="ErrorConsulta" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="SerErrorConsulta">
+         
+      <copy>
+            <from>'Error en la consulta de la Operacion'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+         </copy></assign>
+      <rethrow name="RethrowConsulta"/>
+   </sequence></catchAll>
+      </faultHandlers>
+      <sequence name="Consulta">
+        <assign name="SetConsultarOperacion">
+          <copy>
+            <from>$inputVariable.request/ns4:idOperacion</from>
+            <to>$ConsultarOperacionById_InputVariable.request/ns4:idOperacion</to>
+          </copy>
+          <copy>
+            <from>'OPERACION'</from>
+            <to>$ConsultarOperacionById_InputVariable.request/ns4:nivelDetalle</to>
+          </copy>
+          <copy>
+            <from>false()</from>
+            <to>$ConsultarOperacionById_InputVariable.request/ns4:infoDetalleCliente</to>
+          </copy>
+        </assign>
+        <invoke name="ConsultarOperacionById" partnerLink="ConsultarOperacionById"
+                portType="ns1:ConsultarOperacionById12Port" operation="ConsultarOperacionById"
+                inputVariable="ConsultarOperacionById_InputVariable"
+                outputVariable="ConsultarOperacionById_OutputVariable" bpelx:invokeAsDetail="no"/>
+        <assign name="SetProducto">
+          <copy ignoreMissingFromData="yes">
+            <from>$ConsultarOperacionById_OutputVariable.response/ns4:Operacion/ns5:producto/ns8:idProducto</from>
+            <to>$producto</to>
+          </copy>
+        </assign>
+        <if name="ValidaOperacion">
+          <documentation>
+            <![CDATA[Error o vacio]]>
+          </documentation>
+          <condition>$ConsultarOperacionById_OutputVariable.response/ns4:Resultado/ns20:result != 'OK' or $ConsultarOperacionById_OutputVariable.response/ns4:Operacion/ns5:idOperacion != $inputVariable.request/ns4:idOperacion or string-length(string($ConsultarOperacionById_OutputVariable.response/ns4:Operacion/ns5:producto/ns8:idProducto)) = 0</condition>
+          <assign name="SetError">
+            <copy>
+              <from>'ERROR'</from>
+              <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+            </copy>
+            <copy>
+              <from>'No se encontro informacion '</from>
+              <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+            </copy>
+          </assign>
+          <elseif>
+            <documentation>
+              <![CDATA[ProductoCorrecto]]>
+            </documentation>
+            <condition>$ConsultarOperacionById_OutputVariable.response/ns4:Resultado/ns20:result = 'OK' and $producto != 16</condition>
+            <assign name="SetNoFactible">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+              </copy>
+              <copy>
+                <from>concat('No es posible enviar al cobro una operacion con el producto ', $ConsultarOperacionById_OutputVariable.response/ns4:Operacion/ns5:producto/ns8:descripcion)</from>
+                <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+              </copy>
+            </assign>
+          </elseif>
+          <else>
+            <sequence name="ConsultaSaldo">
+              <assign name="setConsultaSaldo">
+                <copy>
+                  <from>$inputVariable.request/ns4:idOperacion</from>
+                  <to>$ConsultarSaldoOperacion_InputVariable.request/ns4:idOperacion</to>
+                </copy>
+              </assign>
+              <invoke name="ConsultarSaldo" partnerLink="ConsultarSaldoOperacion_Direct"
+                      portType="ns2:ConsultarSaldoOperacion_PT" operation="ConsultarSaldoOperacion"
+                      inputVariable="ConsultarSaldoOperacion_InputVariable"
+                      outputVariable="ConsultarSaldoOperacion_OutputVariable" bpelx:invokeAsDetail="no"/>
+              <if name="IfOK">
+                <condition>count($ConsultarSaldoOperacion_OutputVariable.response/ns4:Operacion/ns5:contrato/ns11:LineaCredito/ns12:ContratoDesembolso[ns10:condicionesFinancieras/ns10:tasa/ns10:tipo/ns7:codigoExterno != $ConsultarOperacionById_OutputVariable.response/ns4:Operacion/ns5:Factibilidad/ns10:tipo/ns7:codigoExterno]) &gt; 0</condition>
+                <empty name="Empty"/>
+                <elseif>
+                  <documentation>
+                    <![CDATA[ExistenDesembolsos]]>
+                  </documentation>
+                  <condition>$ConsultarSaldoOperacion_OutputVariable.response/ns4:Resultado/ns20:result ='OK'</condition>
+                  <assign name="SetOk">
+                    <copy>
+                      <from>'OK'</from>
+                      <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+                    </copy>
+                    <copy>
+                      <from>'No exiten desembolsos con saldo a los cuales aplicarles la factibilidad'</from>
+                      <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+                    </copy>
+                  </assign>
+                </elseif>
+              </if>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeAplica">
+    <sequence name="AplicaFactibilidad">
+        <if name="AplicaFactibilidad">
+          <condition>$outputVariable.response/ns4:Resultado/ns20:result='P'</condition>
+          <sequence name="IfAplicaFactibilidad">
+            <assign name="SetFactibilidad">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:doXSLTransformForDoc("../Transformations/SetFactibilidad.xsl", $ConsultarOperacionById_OutputVariable.response)</from>
+                <to variable="AplicarFactibilidad"/>
+              </copy>
+            </assign>
+            <if name="IfID">
+              <condition>string($AplicarFactibilidad/ns22:Factibilidad/ns10:variable/ns10:tasaReferencia/ns7:Id)!= ''</condition>
+              <assign name="setID">
+                <copy ignoreMissingFromData="yes">
+                  <from>substring( $AplicarFactibilidad/ns22:Factibilidad/ns10:variable/ns10:tasaReferencia/ns7:Id,1,4)</from>
+                  <to>$AplicarFactibilidad/ns22:Factibilidad/ns10:variable/ns10:tasaReferencia/ns7:Id</to>
+                </copy>
+              </assign>
+              <else>
+                <empty name="Empty"/>
+              </else>
+            </if>
+            <forEach parallel="no" counterName="countLinea" name="ForEachLineas">
+              <startCounterValue>1</startCounterValue>
+              <finalCounterValue>count($ConsultarSaldoOperacion_OutputVariable.response/ns4:Operacion/ns5:contrato/ns11:LineaCredito)</finalCounterValue>
+              <scope name="Scope1">
+                <forEach parallel="no" counterName="ForEach1Counter" name="ForEachDesembolsoSaldo">
+                  <startCounterValue>1</startCounterValue>
+                  <finalCounterValue>count($ConsultarSaldoOperacion_OutputVariable.response/ns4:Operacion/ns5:contrato/ns11:LineaCredito[$countLinea]/ns12:ContratoDesembolso)</finalCounterValue>
+                  <scope name="Factibilidad">
+                    <variables>
+                      <variable name="aplicarfactibilidad_InputVariable"
+                                messageType="ns3:requestAplicarFactibilidadMessage"/>
+                      <variable name="aplicarfactibilidad_OutputVariable"
+                                messageType="ns3:responseAplicarFactibilidadMessage"/>
+                    </variables>
+                    <faultHandlers>
+                      <catchAll>
+                        <sequence name="ErrorConsulta">
+                          <assign name="SerErrorFactibilidad">
+                            <copy>
+                              <from>'Erroe en la aplicaion de la factibilidad'</from>
+                              <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+                            </copy>
+                          </assign>
+                          <rethrow name="RethrowFactibilidad"/>
+                        </sequence>
+                      </catchAll>
+                    </faultHandlers>
+                    <sequence name="LoopFactibilidad">
+                      <assign name="setDesembolso">
+                        <copy>
+                          <from>string($ConsultarSaldoOperacion_OutputVariable.response/ns4:Operacion/ns5:contrato/ns11:LineaCredito[$countLinea]/ns12:ContratoDesembolso[$ForEach1Counter]/ns10:idDesembolso)</from>
+                          <to>$aplicarfactibilidad_InputVariable.request/ns22:idDesembolso</to>
+                        </copy>
+                        <copy>
+                          <from>$AplicarFactibilidad/ns22:Factibilidad</from>
+                          <to>$aplicarfactibilidad_InputVariable.request/ns22:Factibilidad</to>
+                        </copy>
+                      </assign>
+                      <invoke name="AplicaFactibilidad" partnerLink="AplicaFactibilidadDirect"
+                              portType="ns3:AplicarFactibilidad_PT" operation="aplicarfactibilidad"
+                              inputVariable="aplicarfactibilidad_InputVariable"
+                              outputVariable="aplicarfactibilidad_OutputVariable" bpelx:invokeAsDetail="no"/>
+                      <if name="AplicacionCorrecta">
+                        <condition>$outputVariable.response/ns4:Resultado/ns20:result = 'P' and $aplicarfactibilidad_OutputVariable.response/ns22:Resultado/ns20:result = 'ERROR' </condition>
+                        <assign name="SetErrorFactibilidad">
+                          <copy>
+                            <from>'ERROR'</from>
+                            <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+                          </copy>
+                          <copy>
+                            <from>concat('DesID: ', string($aplicarfactibilidad_InputVariable.request/ns22:idDesembolso), $aplicarfactibilidad_OutputVariable.response/ns22:Resultado/ns20:message)</from>
+                            <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+                          </copy>
+                          <copy ignoreMissingFromData="yes">
+                            <from>$aplicarfactibilidad_OutputVariable.response/ns22:Resultado/ns20:error</from>
+                            <to>$outputVariable.response/ns4:Resultado/ns20:error</to>
+                          </copy>
+                        </assign>
+                      </if>
+                    </sequence>
+                  </scope>
+                </forEach>
+              </scope>
+            </forEach>
+            <if name="IfExito">
+              <condition>$outputVariable.response/ns4:Resultado/ns20:result = 'P'</condition>
+              <assign name="SetResponseOK">
+                <copy>
+                  <from>'OK'</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+                </copy>
+                <copy>
+                  <from>'Factibilidad Aplicada con exito'</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+                </copy>
+              </assign>
+            </if>
+          </sequence>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="obtenerfactibilidad_service" portType="ns1:ObtenerFactibilidadPT" operation="obtenerFactibilidad" variable="outputVariable"/>
+  </sequence>
+</process>

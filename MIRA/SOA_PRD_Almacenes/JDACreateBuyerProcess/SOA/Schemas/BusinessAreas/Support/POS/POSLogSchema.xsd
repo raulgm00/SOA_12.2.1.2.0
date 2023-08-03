@@ -1,0 +1,757 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://mx.agarcia.ea/BusinessAreas/Support/POS/PLog/v1" xmlns:base="http://mx.agarcia.ea/BusinessAreas/Support/POS/PLog/v1" xmlns:enums="http://mx.agarcia.ea/Commons/Enums/v1" xmlns:poscom="http://mx.agarcia.ea/BusinessAreas/Support/POS/Common/v1" elementFormDefault="qualified" attributeFormDefault="unqualified">
+   <xs:import schemaLocation="../../../Commons/CommonEnums.xsd" namespace="http://mx.agarcia.ea/Commons/Enums/v1"/>
+   <xs:import schemaLocation="POSCommonSchema.xsd" namespace="http://mx.agarcia.ea/BusinessAreas/Support/POS/Common/v1"/>
+   <xs:simpleType name="POSLogTransactionTypeCode">
+      <xs:union memberTypes="base:POSLogTransactionTypeCodeEnumeration enums:TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogTransactionTypeCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Transaction"/>
+         <xs:enumeration value="Summary"/>
+         <xs:enumeration value="NonResettableAmounts"/>
+         <xs:enumeration value="DispatchDocket"/>
+         <xs:enumeration value="RevisedTransaction"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="POSLogTotals">
+      <xs:sequence>
+         <xs:element form="qualified" name="Amount" type="AmountCommonData"/>
+         <xs:element form="qualified" minOccurs="0" name="Count" type="xs:integer"/>
+         <xs:element form="qualified" minOccurs="0" name="Reason">
+            <xs:complexType>
+               <xs:simpleContent>
+                  <xs:extension base="ReasonCodeCommonData"/>
+               </xs:simpleContent>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="TrailerTextType">
+      <xs:annotation>
+         <xs:documentation>Information printed on the receipt</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element form="qualified" maxOccurs="unbounded" name="Text" type="xs:string"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:simpleType name="POSLogCouponType">
+      <xs:union memberTypes="base:POSLogCouponTypeEnumeration enums:TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogCouponTypeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="ManufacturersCoupon"/>
+         <xs:enumeration value="ElectronicCoupon"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="POSLogTender">
+      <xs:sequence>
+         <xs:element form="qualified" name="Denomination" type="xs:decimal"/>
+         <xs:element form="qualified" name="BeginningCount" type="AmountCommonData">
+            <xs:annotation>
+               <xs:documentation>The count of  the kind of tender at the beginning of the
+                        settlement period</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" name="EndingCount" type="AmountCommonData">
+            <xs:annotation>
+               <xs:documentation>The count of  the kind of tender at the ending of the
+                        settlement period</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" name="Total" type="POSLogTotals"/>
+      </xs:sequence>
+      <xs:attribute form="unqualified" name="TenderType" type="TenderTypeCode"/>
+      <xs:attribute form="unqualified" name="SubTenderType" type="SubTenderTypeCodes" use="optional"/>
+   </xs:complexType>
+   <xs:complexType name="POSLogCreditPaymentMethod">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="Ndivided" type="xs:integer"/>
+         <xs:element form="qualified" minOccurs="0" name="BonusCount" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>This data indicates the number of payment out of bonus per
+                        year(Japan)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="BonusPayAmount">
+            <xs:annotation>
+               <xs:documentation>This code indicates the amount to be paid out of each
+                        bonus.(Japan)</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:simpleContent>
+                  <xs:extension base="AmountCommonData"/>
+               </xs:simpleContent>
+            </xs:complexType>
+         </xs:element>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="BonusMonthDay" type="xs:gMonthDay">
+            <xs:annotation>
+               <xs:documentation>This data indicates the date of
+                    bonus.(Japan)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:attribute form="unqualified" name="PaymentMethodCode" type="POSLogCreditDebitPaymentMethodCodeType"/>
+   </xs:complexType>
+   <xs:simpleType name="POSLogCreditDebitPaymentMethodCodeType">
+      <xs:union memberTypes="base:POSLogCreditDebitPaymentMethodCodeEnumeration enums:TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogCreditDebitPaymentMethodCodeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Once"/>
+         <xs:enumeration value="Revolving"/>
+         <xs:enumeration value="Bonus"/>
+         <xs:enumeration value="Divided"/>
+         <xs:enumeration value="DividedWithBonus"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="POSLogITLineItem">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="ItemID">
+            <xs:complexType>
+               <xs:simpleContent>
+                  <xs:extension base="ItemIDCommonData"/>
+               </xs:simpleContent>
+            </xs:complexType>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="EPC" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="QuantityOrdered" type="QuantityCommonData">
+            <xs:annotation>
+               <xs:documentation>The original number of items ordered</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="QuantityReceived" type="QuantityCommonData">
+            <xs:annotation>
+               <xs:documentation>The number of the ordered items that have been
+                    received</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="UnitCost" type="UnitPriceCommonData">
+            <xs:annotation>
+               <xs:documentation>The price per unit of the item being effected by the inventory
+                        control Document line item</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="TotalCost" type="UnitPriceCommonData">
+            <xs:annotation>
+               <xs:documentation>The price for all units of the item being effected by the
+                        inventory control Document line item</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="CartonNumber" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>A unique identifier for the shipping container containing the
+                        item being effected by the inventory control Document line
+                    item</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="LineItemNumber" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>The sequence number of the line item within the context of the
+                        Inventory Control Document</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="UserID" type="OperatorCommonData">
+            <xs:annotation>
+               <xs:documentation>The operator ID of the Worker recording the inventory control
+                        transaction line item</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="Description" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="DiscrepancyReason" type="POSLogReason">
+            <xs:annotation>
+               <xs:documentation>A code denoting the reason for a discrepancy between ordered
+                        and received quantity</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="DiscrepancyDate" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>The date the discrepancy was recorded</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="DispositionBoxNumber" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>A unique identifier for the shipping container in which the
+                        item is being disposed</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="DispositionCode" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="DispositionAuthorizationNumber" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>A code authorizing the disposition being
+                    recorded</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="DispositionQuantity" type="QuantityCommonData">
+            <xs:annotation>
+               <xs:documentation>The number of items being disposed</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="POSLogITDocument">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="DocumentID" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="TransactionReference" type="SequenceNumberType"/>
+         <xs:element form="qualified" minOccurs="0" name="RetailStoreID" type="POSLogRetailStoreID"/>
+         <xs:element form="qualified" minOccurs="0" name="OriginatorID" type="POSLogRetailStoreID"/>
+         <xs:element form="qualified" minOccurs="0" name="Carrier" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="FreightBill" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="ReasonCode" type="POSLogReason"/>
+         <xs:element form="qualified" minOccurs="0" name="ToParty" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>The party receiving this inventory, could be a vendor or
+                        transfer to another store or distribution center or ...</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="FromParty" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>The party sending this inventory, could be a vendor or
+                        transfer to from store or distribution center or ...</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="CreateDate" type="xs:date"/>
+         <xs:element form="qualified" minOccurs="0" name="ExpectedDeliveryDate" type="xs:date"/>
+         <xs:element form="qualified" minOccurs="0" name="ActualDeliveryDate" type="xs:date"/>
+         <xs:element form="qualified" minOccurs="0" name="ExpectedShipDate" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>the date the inventory is expected to ship from or to a
+                    store</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="ActualShipDate" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>the date the inventory is actually shipped from or to a
+                    store</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="DocumentTypeDescription" type="xs:string"/>
+         <xs:element form="qualified" maxOccurs="unbounded" name="LineItem" type="POSLogITLineItem">
+            <xs:annotation>
+               <xs:documentation>Detailed information about a particular item on the inventory
+                        control document</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:attribute default="Receipt" form="unqualified" name="DocumentType" type="ITDocumentType" use="optional">
+         <xs:annotation>
+            <xs:documentation>Describes the type of document</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="Posted" form="unqualified" name="DocumentStatus" type="ITDocumentStatus" use="optional">
+         <xs:annotation>
+            <xs:documentation>Status of the current Inventory Document</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+   <xs:element name="POSLog" type="base:POSLogType">
+      <xs:annotation>
+         <xs:documentation>The record of all activity that is performed at POS
+				by an Operator.
+				May contain as little as a single Transaction, or a
+				large batch of
+				transactions,
+				complete with batch summary.
+			</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   <xs:complexType name="POSLogType">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="Batch" type="POSLogBatch"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="Transaction" type="POSLogTransaction"/>
+         <xs:element form="qualified" minOccurs="0" name="TenderSummary" type="POSLogActivitySummary">
+            <xs:annotation>
+               <xs:documentation> A summary of tender activity. It can include the
+						transaction
+						detail for all transactions covered by the summary
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="TillSummary" type="POSLogTillSummary">
+            <xs:annotation>
+               <xs:documentation>A summary of till activity. It can include the
+						transaction
+						detail for all transactions covered by the summary
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="WorkstationSummary" type="POSLogWorkstationSummary">
+            <xs:annotation>
+               <xs:documentation>A summary of workstation activity. It can include
+						the
+						transaction detail for all transactions covered by the
+						summary
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="POSLogTransaction">
+      <xs:sequence>
+         <xs:choice maxOccurs="unbounded" minOccurs="0">
+            <xs:element form="qualified" name="RetailStoreID" type="POSLogRetailStoreID"/>
+            <xs:element form="qualified" name="BusinessUnit" type="BusinessUnitComplexType"/>
+         </xs:choice>
+         <xs:choice maxOccurs="unbounded" minOccurs="0">
+            <xs:element form="qualified" name="RevenueCenterID" type="POSLogRevenueCenterID">
+               <xs:annotation>
+                  <xs:documentation>Any area of the store which particular revenues
+							can be
+							said to derive. That is, a center devoted to raising
+							revenue with no
+							responsibility for costs, for example, a sale
+							center. A cost
+							center is
+							the other side of the equation.
+						</xs:documentation>
+               </xs:annotation>
+            </xs:element>
+            <xs:element form="qualified" name="OrganizationHierarchy" type="OrganizationHierarchyCommonData">
+               <xs:annotation>
+                  <xs:documentation>Identifies the organization's hierarchy for this
+							transaction. repeatability allows for the reporting of the entire
+							hierarchy from the top to the bottom, for example, corporation,
+							division, district, region, etc.
+						</xs:documentation>
+               </xs:annotation>
+            </xs:element>
+         </xs:choice>
+         <xs:element form="qualified" minOccurs="0" name="WorkstationID" type="POSLogWorkstationID"/>
+         <xs:element form="qualified" minOccurs="0" name="TillID" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="SequenceNumber" type="SequenceNumberType"/>
+         <xs:choice maxOccurs="3" minOccurs="0">
+            <xs:element form="qualified" name="BusinessDayDate" type="xs:date"/>
+            <xs:element form="qualified" name="BeginDateTime" type="xs:dateTime"/>
+            <xs:element form="qualified" name="EndDateTime" type="xs:dateTime"/>
+            <xs:element form="qualified" name="POSLogDateTime">
+               <xs:complexType>
+                  <xs:simpleContent>
+                     <xs:extension base="DateTimeCommonData"/>
+                  </xs:simpleContent>
+               </xs:complexType>
+            </xs:element>
+         </xs:choice>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="OperatorID" type="OperatorCommonData"/>
+         <xs:element form="qualified" minOccurs="0" name="CurrencyCode" type="CurrencyTypeCode"/>
+         <xs:element form="qualified" minOccurs="0" name="TrailerText" type="TrailerTextType">
+            <xs:annotation>
+               <xs:documentation>Unique text printed on the bottom of the receipt
+						for this
+						Retail Transaction
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="VATRegistrationNumber" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="ReceiptDateTime" type="xs:dateTime"/>
+         <xs:element form="qualified" minOccurs="0" name="ReceiptNumber" type="CountCommonData"/>
+         <xs:element form="qualified" minOccurs="0" name="ReceiptImage" type="ReceiptImageType"/>
+         <xs:element form="qualified" minOccurs="0" name="CODVoucherNumber" type="xs:string"/>
+         <xs:choice maxOccurs="unbounded" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>This is a compromise to allow a new transaction
+						type and to
+						allow additional data at this level
+					</xs:documentation>
+            </xs:annotation>
+            <xs:choice>
+               <xs:element form="qualified" name="CustomerOrderTransaction" type="POSLogCustomerOrderTransaction">
+                  <xs:annotation>
+                     <xs:documentation>The steps in a retail transaction prior to
+								tendering
+								and fulfillment
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" name="RetailTransaction" type="POSLogRetailTransaction"/>
+               <xs:element form="qualified" name="ControlTransaction" type="POSLogControlTransaction"/>
+               <xs:element form="qualified" name="FoodServiceTransaction" type="POSLogFoodServiceTransaction"/>
+               <xs:element form="qualified" name="ForeCourtTransaction" type="POSLogForeCourtTransaction"/>
+               <xs:element form="qualified" name="InventoryControlTransaction" type="POSLogInventoryControlTransaction"/>
+               <xs:element form="qualified" name="InventoryTransaction" type="POSLogInventoryTransaction"/>
+               <xs:element form="qualified" name="TenderControlTransaction" type="POSLogTenderControlTransaction"/>
+            </xs:choice>
+            <xs:any namespace="##other" processContents="lax"/>
+         </xs:choice>
+      </xs:sequence>
+      <xs:attribute fixed="4" form="unqualified" name="MajorVersion" type="xs:integer" use="required"/>
+      <xs:attribute default="0" form="unqualified" name="MinorVersion" type="xs:integer" use="optional"/>
+      <xs:attribute default="0" form="unqualified" name="FixVersion" type="xs:integer" use="optional"/>
+      <xs:attribute default="SaleTransaction" form="unqualified" name="TypeCode" type="TransactionTypeCode">
+         <xs:annotation>
+            <xs:documentation>Defines sale or return transaction type
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="TrainingModeFlag" type="xs:boolean" use="optional"/>
+      <xs:attribute default="false" form="unqualified" name="OfflineFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>Indicates this transaction was rung up while the
+					link to the
+					payment system provider was offline. Used in conjunction
+					with the
+					TenderAuthorization ForceOnline attribute to describe what
+					to do
+					with this
+					transaction.
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="TransactionModifiedFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>Flag that identifies this Transaction has been
+					modified.
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="EMVDebugFlag" type="xs:boolean" use="optional"/>
+      <xs:attribute default="false" form="unqualified" name="VATReceiptFlag" type="xs:boolean" use="optional"/>
+      <xs:attribute default="false" form="unqualified" name="CODFlag" type="xs:boolean" use="optional"/>
+      <xs:attribute default="Normal" form="unqualified" name="EntryMode" type="POSEntryModeType">
+         <xs:annotation>
+            <xs:documentation>Describes the operating mode for the POS for this
+					transaction,
+					normal, manager, maintenance
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+   <xs:complexType name="POSLogCustomerOrderTransaction">
+      <xs:annotation>
+         <xs:documentation>Reports the individual components of an order prior
+				to tender and
+				delivery
+			</xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension base="POSLogRetailTransaction">
+            <xs:sequence>
+               <xs:element form="qualified" minOccurs="0" name="State" type="xs:string">
+                  <xs:annotation>
+                     <xs:documentation>The current state of this order. Things like:
+								Proofing, Rendering, Preparing, Cooking, painting,
+								etc.
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" minOccurs="0" name="Disposition" type="xs:string">
+                  <xs:annotation>
+                     <xs:documentation>Things like; call when done, hold on
+								shelf
+							</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element form="qualified" minOccurs="0" name="ShoppingBasketID" type="xs:string"/>
+            </xs:sequence>
+            <xs:attribute default="false" form="unqualified" name="ReworkFlag" type="xs:boolean" use="optional">
+               <xs:annotation>
+                  <xs:documentation>A flag denoting that rework is required
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute default="PhoneIn" form="unqualified" name="OrderChannel" type="OrderChannelTypes" use="optional">
+               <xs:annotation>
+                  <xs:documentation>An enumeration denoting how the order is placed,
+							i.e.
+							phone-in, web, etc.
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute default="Normal" form="unqualified" name="Priority" type="OrderPriorityTypes" use="optional">
+               <xs:annotation>
+                  <xs:documentation>An enumeration denoting the priority of the
+							order, normal,
+							rush, etc.
+						</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="POSLogRetailTransaction">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="SpecialOrderNumber" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>A special number that is created as a consequence
+						of one or
+						more items in the transaction not being available for the
+						customer at
+						the
+						time of purchase.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="ManagerApproval" type="xs:boolean"/>
+         <xs:element form="qualified" minOccurs="0" name="ReceiptDateTime" type="xs:dateTime"/>
+         <xs:element form="qualified" minOccurs="0" name="TransactionCount" type="CountCommonData">
+            <xs:annotation>
+               <xs:documentation>The number of transactions in this summary
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="ItemCount" type="CountCommonData">
+            <xs:annotation>
+               <xs:documentation>A count of the number of items in this
+						transaction
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="PriceDerivationResult" type="RetailPriceModifierType"/>
+         <xs:element form="qualified" minOccurs="0" name="OfficialBill" type="OfficialBillType">
+            <xs:annotation>
+               <xs:documentation>In Japan, regarding taxation authorities and
+						auditors,
+						businesses use official bills as proof of expenditure for
+						purchased goods
+						and services
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="LineItem" type="RetailTransactionLineItem"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="Total" type="RetailTransactionTotal"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="RestrictionValidation" type="RetailTransactionRestrictionValidation"/>
+         <xs:element form="qualified" minOccurs="0" name="Delivery" type="RetailTransactionDelivery"/>
+         <xs:element form="qualified" minOccurs="0" name="Pickup" type="RetailTransactionPickup"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="Customer" type="RetailTransactionCustomer"/>
+         <xs:element form="qualified" minOccurs="0" name="LoyaltyAccount" type="LoyaltyAccountCommonData"/>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="Associate" type="RetailTransactionAssociate">
+            <xs:annotation>
+               <xs:documentation>The structure which identifies the assignment a
+						worker to this
+						RetailTransaction for use in reporting things like
+						commissions
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="Hospitality" type="RetailTransactionFoodservice">
+            <xs:annotation>
+               <xs:documentation>Not used in Foodservice. Replaced by Foodservice
+						element.
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="Foodservice" type="RetailTransactionFoodservice">
+            <xs:annotation>
+               <xs:documentation>Replaces Hospitality to better reflect the
+						contents of the
+						complex type
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="TransactionLink" type="POSLogTransactionLink">
+            <xs:annotation>
+               <xs:documentation>link to a previous RetailTransaction
+					</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="Reason" type="xs:string"/>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:attribute default="Transaction" form="unqualified" name="TypeCode" type="POSLogTransactionTypeCode" use="optional">
+         <xs:annotation>
+            <xs:documentation>Identifies the type of data in this transaction;
+					transaction,
+					summary, non-resettable totals, etc.
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="Finished" form="unqualified" name="TransactionStatus" type="TransactionStatusTypeCode" use="optional">
+         <xs:annotation>
+            <xs:documentation>The current status of this transaction
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="OutsideSalesFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>Indicates this sales took place on the
+					forecourt
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="OverringFlag" type="xs:boolean">
+         <xs:annotation>
+            <xs:documentation>Indicates this is an overring transaction
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="false" form="unqualified" name="SplitCheckFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>A flag denoting that this FoodService transaction
+					is to be split
+					into separate checks for each diner
+				</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+   <xs:complexType name="RetailTransactionPOSIdentity">
+      <xs:sequence>
+         <xs:element form="qualified" name="POSItemID" type="poscom:POSItemID"/>
+         <xs:element form="qualified" minOccurs="0" name="Qualifier" type="POSQualifier"/>
+      </xs:sequence>
+      <xs:attribute form="unqualified" name="POSIDType" type="poscom:POSIDType"/>
+   </xs:complexType>
+   <xs:complexType name="POSLogITItemCount">
+      <xs:sequence>
+         <xs:element form="qualified" maxOccurs="unbounded" name="ItemID" type="ItemIDCommonData"/>
+         <xs:element form="qualified" minOccurs="0" name="EPC" type="xs:string"/>
+         <xs:element form="qualified" minOccurs="0" name="Quantity" type="QuantityCommonData"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="POSLogITInventoryCount">
+      <xs:sequence>
+         <xs:element form="qualified" minOccurs="0" name="CountID" type="SequenceNumberType">
+            <xs:annotation>
+               <xs:documentation>Unique identifier for this count</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="DueDate" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>The date when the count is to be done</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" minOccurs="0" name="ReasonCode" type="POSLogReason"/>
+         <xs:element form="qualified" minOccurs="0" name="ApprovedBy" type="OperatorCommonData">
+            <xs:annotation>
+               <xs:documentation>What operator approved this</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element form="qualified" maxOccurs="unbounded" minOccurs="0" name="ItemCount" type="POSLogITItemCount"/>
+         <xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/>
+      </xs:sequence>
+      <xs:attribute default="false" form="unqualified" name="MandatoryFlag" type="xs:boolean" use="optional">
+         <xs:annotation>
+            <xs:documentation>Was this Count required</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="Cycle" form="unqualified" name="CountType" type="ITCountType" use="optional">
+         <xs:annotation>
+            <xs:documentation>Type of inventory count, physical, adhoc, cycle</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute default="Scheduled" form="unqualified" name="CountStatus" type="ITCountStatus" use="optional">
+         <xs:annotation>
+            <xs:documentation>A code denoting what the current status of the Physical
+                Count</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+   <xs:simpleType name="POSLogNormalTax">
+      <xs:union memberTypes="POSLogNormalTaxEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogNormalTaxEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Normal"/>
+         <xs:enumeration value="Exceptional"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogTillMovementAction">
+      <xs:union memberTypes="POSLogTillMovementActionEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogTillMovementActionEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="In"/>
+         <xs:enumeration value="Out"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogFoodServiceTypes">
+      <xs:union memberTypes="POSLogFoodServiceTypesEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogFoodServiceTypesEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Local"/>
+         <xs:enumeration value="Global"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogSpecialTransactionType">
+      <xs:union memberTypes="POSLogSpecialTransactionTypeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogSpecialTransactionTypeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Waste"/>
+         <xs:enumeration value="EmployeeMeal"/>
+         <xs:enumeration value="ManagerMeal"/>
+         <xs:enumeration value="Refund"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogFoodServiceSaleType">
+      <xs:union memberTypes="POSLogFoodServiceSaleTypeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogFoodServiceSaleTypeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Normal"/>
+         <xs:enumeration value="Recall"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogFoodServiceSaleStartType">
+      <xs:union memberTypes="POSLogFoodServiceSaleStartTypeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogFoodServiceSaleStartTypeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="EatIn"/>
+         <xs:enumeration value="TakeOut"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogFoodserviceDestinationTypes">
+      <xs:union memberTypes="POSLogFoodserviceDestinationTypesEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogFoodserviceDestinationTypesEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Other"/>
+         <xs:enumeration value="DineIn"/>
+         <xs:enumeration value="ToGo"/>
+         <xs:enumeration value="DriveThru"/>
+         <xs:enumeration value="Pickup"/>
+         <xs:enumeration value="Delivery"/>
+         <xs:enumeration value="Patio"/>
+         <xs:enumeration value="Catering"/>
+         <xs:enumeration value="Garden"/>
+         <xs:enumeration value="TelephoneOrder"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogProcessMode">
+      <xs:union memberTypes="POSLogProcessModeEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogProcessModeEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Normal"/>
+         <xs:enumeration value="Expedite"/>
+         <xs:enumeration value="Delay"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogSalesMetrics">
+      <xs:union memberTypes="POSLogSalesMetricsEnumeration TypeCodeExtension"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogSalesMetricsEnumeration">
+      <xs:restriction base="xs:NMTOKEN">
+         <xs:enumeration value="Normal"/>
+         <xs:enumeration value="Suggested"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogDayPart">
+      <xs:restriction base="xs:string"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogRetailStoreID">
+      <xs:restriction base="xs:string"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogRevenueCenterID">
+      <xs:restriction base="xs:string"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogWorkstationID">
+      <xs:restriction base="xs:string"/>
+   </xs:simpleType>
+   <xs:simpleType name="SafeIDType">
+      <xs:restriction base="xs:string"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogShift">
+      <xs:restriction base="xs:string"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogTillID">
+      <xs:restriction base="xs:string"/>
+   </xs:simpleType>
+   <xs:simpleType name="POSLogReason">
+      <xs:restriction base="xs:string"/>
+   </xs:simpleType>
+</xs:schema>

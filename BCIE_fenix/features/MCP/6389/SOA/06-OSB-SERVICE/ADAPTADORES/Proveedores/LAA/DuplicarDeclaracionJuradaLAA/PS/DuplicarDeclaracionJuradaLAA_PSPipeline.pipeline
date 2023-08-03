@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioOperacion/DeclaracionJurada/V1/Wsdl/ADAPTER/DuplicarDeclaracionJuradaSAD"/>
+            <con:binding>
+                <con:name>DeclaracionJurada12Bnd</con:name>
+                <con:namespace>http://xmlns.bcie.com/DeclaracionJuradaService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7f9c">
+        <con:pipeline type="error" name="error-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7f9c">
+            <con:stage id="_StageId-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7f62" name="StageError" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                <con:context>
+                    <con2:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO"/>
+                    <con2:userNsDecl prefix="dec" namespace="http://www.bcie.org/DeclaracionJuradaMO"/>
+                    <con2:userNsDecl prefix="err" namespace="http://www.bcie.org/ErrorBO"/>
+                </con:context>
+                <con:actions>
+                    <con3:assign varName="inMapeoError" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7f61</con2:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(fn:data($fault/ctx:errorCode))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7f60</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS.proxyPipeline" xsi:type="con:PipelineRef"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapeoError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapeoError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7f5f</con2:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/LAA/CrearDeclaracionJuradaLAA/XQUERY/Error_TO_CrearDeclaracionJuradaLAA_PS_Response"/>
+                                <con2:param name="message">
+                                    <con2:path>xs:string(fn:data($fault/ctx:reason))</con2:path>
+                                </con2:param>
+                                <con2:param name="responseMapeoErrorMessage">
+                                    <con2:path>$outMapeoError</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con1:assign varName="varEnviarCorreoElectronicoRq" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a050aca.20fe00cc.0.1600dcf4b37.N7f07</con2:id>
+                        <con1:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                                <con2:param name="Accion">
+                                    <con2:path>'la DUPLICACIÓN de Declaración'</con2:path>
+                                </con2:param>
+                                <con2:param name="MensajeDeError">
+                                    <con2:path>concat($body/dec:CrearDeclaracionJuradaResponse/dec:Resultado/res:message,' ',$body/dec:CrearDeclaracionJuradaResponse/dec:Resultado/res:error/err:errorDescription,' ',fn:data($body/soap12-env:Fault/soap12-env:Reason),' ',fn:data($fault/ctx:details))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:wsCallout xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-a050aca.20fe00cc.0.1600dcf4b37.N7efe</con2:id>
+                        <con1:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>enviarCorreoElectronico</con1:operation>
+                        <con1:request>
+                            <con1:body wrapped="false">varEnviarCorreoElectronicoRq</con1:body>
+                        </con1:request>
+                        <con1:response>
+                            <con1:body wrapped="false">varEnviarCorreoElectronicoRs</con1:body>
+                        </con1:response>
+                        <con1:requestTransform/>
+                        <con1:responseTransform/>
+                    </con1:wsCallout>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7f5e</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="request" name="request-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7eab">
+            <con:stage id="_StageId-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7ea9" name="StageRequest">
+                <con:context>
+                    <con2:userNsDecl prefix="dec" namespace="http://www.bcie.org/DeclaracionJuradaMO"/>
+                </con:context>
+                <con:actions>
+                    <con4:log xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id>_ActionId-N3f57c7ff.2a29ed2b.0.15362b475f4.N7ccd</con2:id>
+                        <con4:logLevel>info</con4:logLevel>
+                        <con4:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con4:expr>
+                        <con4:message>DuplicarDeclaracion_Request</con4:message>
+                    </con4:log>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7e76</con2:id>
+                        <con1:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/LAA/DuplicarDeclaracionJuradaLAA/XQUERY/DuplicarDeclaracionJuradaLAA_PS_TO_LAA_BS_Request"/>
+                                <con2:param name="DuplicarDeclaracionJuradaRequest">
+                                    <con2:path>$body/dec:DuplicarDeclaracionJuradaRequest</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con1:expr>
+                    </con1:replace>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7eaa">
+            <con:stage id="_StageId-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7ea8" name="StageResponse">
+                <con:context>
+                    <con2:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO"/>
+                    <con2:userNsDecl prefix="dec" namespace="http://www.bcie.org/DeclaracionJuradaMO"/>
+                </con:context>
+                <con:actions>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7e72</con2:id>
+                        <con1:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/LAA/DuplicarDeclaracionJuradaLAA/XQUERY/LAA_BS_TO_DuplicarDeclaracionJuradaLAA_PS_Response"/>
+                                <con2:param name="DuplicarDeclaracionResponse">
+                                    <con2:path>$body/*[1]</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-a050aca.20fe00cc.0.1600dcf4b37.N7f0c</con2:id>
+                        <con1:case id="_BranchId-a050aca.20fe00cc.0.1600dcf4b37.N7f0b">
+                            <con1:condition>
+                                <con2:xqueryConditionExpr>
+                                    <con2:compExpr operator="!=">
+                                        <con2:leftPath>$body/dec:DuplicarDeclaracionJuradaResponse/dec:Resultado/res:result</con2:leftPath>
+                                        <con2:rightPath>'OK'</con2:rightPath>
+                                    </con2:compExpr>
+                                </con2:xqueryConditionExpr>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:assign varName="varEnviarCorreoElectronicoRq">
+                                    <con2:id>_ActionId-a050aca.20fe00cc.0.1600dcf4b37.N7f04</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryTransform>
+                                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                                            <con2:param name="Accion">
+                                                <con2:path>'la DUPLICACIÓN de Declaración'</con2:path>
+                                            </con2:param>
+                                            <con2:param name="MensajeDeError">
+                                                <con2:path>$body/dec:DuplicarDeclaracionJuradaResponse/dec:Resultado/res:message</con2:path>
+                                            </con2:param>
+                                        </con2:xqueryTransform>
+                                    </con1:expr>
+                                </con1:assign>
+                                <con1:wsCallout>
+                                    <con2:id>_ActionId-a050aca.20fe00cc.0.1600dcf4b37.N7f01</con2:id>
+                                    <con1:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con1:operation>enviarCorreoElectronico</con1:operation>
+                                    <con1:request>
+                                        <con1:body wrapped="false">varEnviarCorreoElectronicoRq</con1:body>
+                                    </con1:request>
+                                    <con1:response>
+                                        <con1:body wrapped="false">varEnviarCorreoElectronicoRs</con1:body>
+                                    </con1:response>
+                                    <con1:requestTransform/>
+                                    <con1:responseTransform/>
+                                </con1:wsCallout>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default/>
+                    </con1:ifThenElse>
+                    <con4:log xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id>_ActionId-N3f57c7ff.2a29ed2b.0.15362b475f4.N7ccb</con2:id>
+                        <con4:logLevel>info</con4:logLevel>
+                        <con4:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con4:expr>
+                        <con4:message>DuplicarrDeclaracion_Request</con4:message>
+                    </con4:log>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PipelinePairNode1">
+                <con:request>request-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7eab</con:request>
+                <con:response>response-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7eaa</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteNodeLAA">
+                <con:context/>
+                <con:actions>
+                    <con3:route>
+                        <con2:id>_ActionId-N3f57c7ff.N39c12d2d.0.15120f7ae21.N7eb2</con2:id>
+                        <con3:service ref="ADAPTADORES/Proveedores/LAA/BS/LAA" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>duplicarDeclaracion</con3:operation>
+                        <con3:outboundTransform>
+                            <con4:log>
+                                <con2:id>_ActionId-N3f579b88.N6f9c02eb.0.1532e3eb658.N7f83</con2:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con4:expr>
+                                <con4:message>DuplicarDeclaracionJuradaLAA - Request</con4:message>
+                            </con4:log>
+                        </con3:outboundTransform>
+                        <con3:responseTransform>
+                            <con4:log>
+                                <con2:id>_ActionId-N3f579b88.N6f9c02eb.0.1532e3eb658.N7f80</con2:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con4:expr>
+                                <con4:message>DuplicarDeclaracionJuradaLAA - Response</con4:message>
+                            </con4:log>
+                        </con3:responseTransform>
+                    </con3:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

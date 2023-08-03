@@ -1,0 +1,100 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Jun 06 10:21:59 CDT 2019
+  Author:  Sol4IT
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="JDAModifySupplierProcessBPEL"
+               targetNamespace="http://xmlns.oracle.com/SupplierJDA/JDAModifySupplierProcess/JDAModifySupplierProcessBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/SupplierJDA/JDAModifySupplierProcess/JDAModifySupplierProcessBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/Suppliers/JDAModifySupplierProcess"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://mx.agarcia.ea/Applications/JDA/Suppliers/ModifySupplier/v1.0">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Suppliers/JDAModifySupplierProcess"
+          location="../WSDLs/JDAModifySupplierProcessWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="jdamodifysupplierprocessbpel_client" partnerLinkType="ns1:JDAModifySupplierProcessBPEL" myRole="ModifySupplierPType"/>
+    <partnerLink name="JDAModifySupplierSrv" partnerLinkType="ns2:JDAModifySupplierSrv"
+                 partnerRole="modifySupplierPort"/>
+    <partnerLink name="JDAModifySupplierAddressSrv" partnerLinkType="ns2:JDAModifySupplierAddressSrv"
+                 partnerRole="modifySupplierPort"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:modifyRequest"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:modifyResponse"/>
+    <variable name="Inv_JDAModifySupplierAddress_InVar" messageType="ns2:modifySupplierRequestMessage"/>
+    <variable name="Inv_JDAModifySupplierAddress_OutVar" messageType="ns2:modifySupplierResponseMessage"/>
+    <variable name="Inv_JDAModifySupplier_InVar" messageType="ns2:modifySupplierRequestMessage"/>
+    <variable name="Inv_JDAModifySupplier_OutVar" messageType="ns2:modifySupplierResponseMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in JDAModifySupplierProcessBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="jdamodifysupplierprocessbpel_client" portType="ns1:ModifySupplierPType" operation="modifySupplierPType" variable="inputVariable" createInstance="yes"/>
+    <assign name="TransModifySupplierAddress">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/TransModifySupplierAddressReq.xsl", $inputVariable.part1)</from>
+        <to variable="Inv_JDAModifySupplierAddress_InVar" part="modifySupplierRequestMessage"/>
+      </copy>
+    </assign>
+    <invoke name="Inv_JDAModifySupplierAddress" bpelx:invokeAsDetail="no" partnerLink="JDAModifySupplierAddressSrv"
+            portType="ns2:modifySupplierPort" operation="modify" inputVariable="Inv_JDAModifySupplierAddress_InVar"
+            outputVariable="Inv_JDAModifySupplierAddress_OutVar"/>
+    <assign name="TransModifySupplier">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/TransModifySupplierReq.xsl", $inputVariable.part1)</from>
+        <to variable="Inv_JDAModifySupplier_InVar" part="modifySupplierRequestMessage"/>
+      </copy>
+    </assign>
+    <invoke name="Inv_JDAModifySupplier" bpelx:invokeAsDetail="no" partnerLink="JDAModifySupplierSrv"
+            portType="ns2:modifySupplierPort" operation="modify" inputVariable="Inv_JDAModifySupplier_InVar"
+            outputVariable="Inv_JDAModifySupplier_OutVar"/>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="jdamodifysupplierprocessbpel_client" portType="ns1:ModifySupplierPType" operation="modifySupplierPType" variable="outputVariable"/>
+  </sequence>
+</process>

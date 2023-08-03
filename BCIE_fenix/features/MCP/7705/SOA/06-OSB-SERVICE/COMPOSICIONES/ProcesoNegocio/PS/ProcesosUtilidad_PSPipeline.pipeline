@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/BPM/Wsdl/ProcesosUtilidad"/>
+            <con:binding>
+                <con:name>ProcesosUtilidadBinding</con:name>
+                <con:namespace>http://xmlns.oracle.com/bpmn/bpmnProcess/ProcesosUtilidad</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="error" name="error-N3f579bc1.29c8425a.0.15352647d9c.N7f5c" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/typesystem/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+            <con:stage id="_StageId-N3f579bc1.29c8425a.0.15352647d9c.N7f5b" name="ErrorInicioReasignar" xmlns:con5="http://www.bea.com/wli/sb/typesystem/config" xmlns:con4="http://www.bea.com/wli/sb/stages/publish/config">
+                <con:context>
+                    <con2:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO"/>
+                    <con2:userNsDecl prefix="map" namespace="http://www.bcie.org/MapeoErrorMO"/>
+                    <con2:userNsDecl prefix="err" namespace="http://www.bcie.org/ErrorBO"/>
+                    <con5:variable name="outMapeoError" path="$outMapeoError" xmlns:con6="http://www.bea.com/wli/sb/typesystem/config">
+                        <con5:service operation="MapearError">
+                            <con5:reference ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS.proxyPipeline" xsi:type="con:PipelineRef"/>
+                        </con5:service>
+                    </con5:variable>
+                    <con5:variable name="inMapeoError" path="$inMapeoError" xmlns:con6="http://www.bea.com/wli/sb/typesystem/config">
+                        <con5:service operation="MapearError">
+                            <con5:reference ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS.proxyPipeline" xsi:type="con:PipelineRef"/>
+                        </con5:service>
+                    </con5:variable>
+                </con:context>
+                <con:actions>
+                    <con3:assign varName="inMapeoError" xmlns:con6="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f579bc1.29c8425a.0.15352647d9c.N7f5a</con2:id>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="COMPOSICIONES/ProcesoNegocio/XQUERY/Fault_TO_MapeoError_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string($fault/ctx:errorCode)</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout xmlns:con6="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f579bc1.29c8425a.0.15352647d9c.N7f59</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapeoError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapeoError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true" xmlns:con6="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f579bc1.29c8425a.0.15352647d9c.N7f58</con2:id>
+                        <con3:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="COMPOSICIONES/ProcesoNegocio/XQUERY/Error_TO_ResultadoProcesoUtilidad_Response"/>
+                                <con2:param name="codigo">
+                                    <con2:path>xs:string($outMapeoError/map:ErrorOutput/err:errorCode)</con2:path>
+                                </con2:param>
+                                <con2:param name="descripcion">
+                                    <con2:path>xs:string($outMapeoError/map:ErrorOutput/err:errorDescription)</con2:path>
+                                </con2:param>
+                                <con2:param name="mensaje">
+                                    <con2:path>'Error al iniciar el proceso de Reasignar'</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply>
+                        <con2:id>_ActionId-N3f579bc1.29c8425a.0.15352647d9c.N7f57</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-N3f57c7ff.29205d57.0.1612fab7e06.N7ea7">
+            <con:stage id="_StageId-N3f57c7ff.29205d57.0.1612fab7e06.N7ea6" name="stageEH">
+                <con:context>
+                    <con2:userNsDecl prefix="map" namespace="http://www.bcie.org/MapeoErrorMO"/>
+                    <con2:userNsDecl prefix="err" namespace="http://www.bcie.org/ErrorBO"/>
+                </con:context>
+                <con:actions>
+                    <con1:assign varName="inMapeoError">
+                        <con2:id>_ActionId-N3f57c7ff.29205d57.0.1612fab7e06.N7ea3</con2:id>
+                        <con1:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="COMPOSICIONES/ProcesoNegocio/XQUERY/Fault_TO_MapeoError_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string($fault/ctx:errorCode)</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:wsCallout>
+                        <con2:id>_ActionId-N3f57c7ff.29205d57.0.1612fab7e06.N7e3b</con2:id>
+                        <con1:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>MapearError</con1:operation>
+                        <con1:request>
+                            <con1:body wrapped="false">inMapeoError</con1:body>
+                        </con1:request>
+                        <con1:response>
+                            <con1:body wrapped="false">outMapeoError</con1:body>
+                        </con1:response>
+                        <con1:requestTransform/>
+                        <con1:responseTransform/>
+                    </con1:wsCallout>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57c7ff.29205d57.0.1612fab7e06.N7e03</con2:id>
+                        <con1:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="COMPOSICIONES/ProcesoNegocio/XQUERY/Error_TO_ResultadoProcesoUtilidad_Response"/>
+                                <con2:param name="codigo">
+                                    <con2:path>xs:string($outMapeoError/map:ErrorOutput/err:errorCode)</con2:path>
+                                </con2:param>
+                                <con2:param name="descripcion">
+                                    <con2:path>xs:string($outMapeoError/map:ErrorOutput/err:errorDescription)</con2:path>
+                                </con2:param>
+                                <con2:param name="mensaje">
+                                    <con2:path>'Error al iniciar el proceso de Reasignar Cliente'</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con2:reply>
+                        <con2:id>_ActionId-N3f57c7ff.29205d57.0.1612fab7e06.N7e00</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-N3f57c7ff.29205d57.0.1612fab7e06.N7e42">
+            <con:stage id="_StageId-N3f57c7ff.29205d57.0.1612fab7e06.N7e41" name="StageEH">
+                <con:context>
+                    <con2:userNsDecl prefix="err" namespace="http://www.bcie.org/ErrorBO"/>
+                    <con2:userNsDecl prefix="map" namespace="http://www.bcie.org/MapeoErrorMO"/>
+                </con:context>
+                <con:actions>
+                    <con1:assign varName="inMapeoError">
+                        <con2:id>_ActionId-N3f57c7ff.29205d57.0.1612fab7e06.N7e3e</con2:id>
+                        <con1:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="COMPOSICIONES/ProcesoNegocio/XQUERY/Fault_TO_MapeoError_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string($fault/ctx:errorCode)</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:wsCallout>
+                        <con2:id>_ActionId-N3f57c7ff.29205d57.0.1612fab7e06.N7e37</con2:id>
+                        <con1:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>MapearError</con1:operation>
+                        <con1:request>
+                            <con1:body wrapped="false">inMapeoError</con1:body>
+                        </con1:request>
+                        <con1:response>
+                            <con1:body wrapped="false">outMapeoError</con1:body>
+                        </con1:response>
+                        <con1:requestTransform/>
+                        <con1:responseTransform/>
+                    </con1:wsCallout>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-N3f57c7ff.29205d57.0.1612fab7e06.N7dfd</con2:id>
+                        <con1:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="COMPOSICIONES/ProcesoNegocio/XQUERY/Error_TO_ResultadoProcesoUtilidad_Response"/>
+                                <con2:param name="codigo">
+                                    <con2:path>xs:string($outMapeoError/map:ErrorOutput/err:errorCode)</con2:path>
+                                </con2:param>
+                                <con2:param name="descripcion">
+                                    <con2:path>xs:string($outMapeoError/map:ErrorOutput/err:errorDescription)</con2:path>
+                                </con2:param>
+                                <con2:param name="mensaje">
+                                    <con2:path>'Error al finalizar el proceso de Reasignar cliente'</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con2:reply>
+                        <con2:id>_ActionId-N3f57c7ff.29205d57.0.1612fab7e06.N7dfa</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:branch-node type="operation" id="_FlowId-a05fe25.3ebb4f12.0.1533f52702d.N7f44" name="BranchNode1">
+                <con:context/>
+                <con:branch-table>
+                    <con:branch name="InicioReasignarRO">
+                        <con:operator>equals</con:operator>
+                        <con:value/>
+                        <con:flow>
+                            <con:route-node name="RouteNodeInicioReasignar" error-handler="error-N3f579bc1.29c8425a.0.15352647d9c.N7f5c">
+                                <con:context/>
+                                <con:actions>
+                                    <con3:route>
+                                        <con2:id>_ActionId-a050a97.5e75700c.0.15351e2fccf.N7f37</con2:id>
+                                        <con3:service ref="COMPOSICIONES/ProcesoNegocio/Reasignar/PS/InicioReasignar_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                        <con3:operation>InicioReasignarRO</con3:operation>
+                                        <con3:outboundTransform>
+                                            <con4:log>
+                                                <con2:id>_ActionId-a05fe2d.N10db1d9e.0.1537b877372.N7f8f</con2:id>
+                                                <con4:logLevel>info</con4:logLevel>
+                                                <con4:expr>
+                                                    <con2:xqueryText>$body</con2:xqueryText>
+                                                </con4:expr>
+                                                <con4:message>InicioReasignar-Request</con4:message>
+                                            </con4:log>
+                                        </con3:outboundTransform>
+                                        <con3:responseTransform>
+                                            <con5:replace varName="body" contents-only="true" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/typesystem/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                                                <con2:id>_ActionId-N3f579bc1.29c8425a.0.15352647d9c.N7fce</con2:id>
+                                                <con3:location>
+                                                    <con2:xpathText>.</con2:xpathText>
+                                                </con3:location>
+                                                <con3:expr>
+                                                    <con2:xqueryTransform>
+                                                        <con2:resource ref="COMPOSICIONES/ProcesoNegocio/XQUERY/InicioProcesoUtilidadResponse"/>
+                                                        <con2:param name="result">
+                                                            <con2:path>'OK'</con2:path>
+                                                        </con2:param>
+                                                        <con2:param name="mensaje">
+                                                            <con2:path>'Se inició el proceso de Reasignar correctamente'</con2:path>
+                                                        </con2:param>
+                                                    </con2:xqueryTransform>
+                                                </con3:expr>
+                                            </con5:replace>
+                                            <con4:log>
+                                                <con2:id>_ActionId-a05fe2d.N10db1d9e.0.1537b877372.N7f8c</con2:id>
+                                                <con4:logLevel>info</con4:logLevel>
+                                                <con4:expr>
+                                                    <con2:xqueryText>$body</con2:xqueryText>
+                                                </con4:expr>
+                                                <con4:message>InicioReasignar-Response</con4:message>
+                                            </con4:log>
+                                        </con3:responseTransform>
+                                    </con3:route>
+                                </con:actions>
+                            </con:route-node>
+                        </con:flow>
+                    </con:branch>
+                    <con:branch name="InicioReasignarCliente">
+                        <con:operator>equals</con:operator>
+                        <con:value/>
+                        <con:flow>
+                            <con:route-node name="RouteNodeInicioReasignarCliente" error-handler="error-N3f57c7ff.29205d57.0.1612fab7e06.N7ea7">
+                                <con:context/>
+                                <con:actions>
+                                    <con3:route>
+                                        <con2:id>_ActionId-N3f578efe.N12ec80a9.0.15d2dd71ee5.N7fc9</con2:id>
+                                        <con3:service ref="COMPOSICIONES/ProcesoNegocio/Reasignar/PS/InicioReasignarCliente_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                        <con3:operation>InicioReasignarCliente</con3:operation>
+                                        <con3:outboundTransform>
+                                            <con4:log>
+                                                <con2:id>_ActionId-N3f578efe.N12ec80a9.0.15d2dd71ee5.N7fc6</con2:id>
+                                                <con4:logLevel>info</con4:logLevel>
+                                                <con4:expr>
+                                                    <con2:xqueryText>$body</con2:xqueryText>
+                                                </con4:expr>
+                                                <con4:message>InicioReasignarCliente-Request</con4:message>
+                                            </con4:log>
+                                        </con3:outboundTransform>
+                                        <con3:responseTransform>
+                                            <con1:replace varName="body" contents-only="true">
+                                                <con2:id>_ActionId-N3f578efe.N12ec80a9.0.15d2dd71ee5.N7fc0</con2:id>
+                                                <con1:location>
+                                                    <con2:xpathText>.</con2:xpathText>
+                                                </con1:location>
+                                                <con1:expr>
+                                                    <con2:xqueryTransform>
+                                                        <con2:resource ref="COMPOSICIONES/ProcesoNegocio/XQUERY/InicioProcesoUtilidadResponse"/>
+                                                        <con2:param name="result">
+                                                            <con2:path>'OK'</con2:path>
+                                                        </con2:param>
+                                                        <con2:param name="mensaje">
+                                                            <con2:path>'Se ha reasignado el responsable del cliente exitosamente.'</con2:path>
+                                                        </con2:param>
+                                                    </con2:xqueryTransform>
+                                                </con1:expr>
+                                            </con1:replace>
+                                            <con4:log>
+                                                <con2:id>_ActionId-N3f578efe.N12ec80a9.0.15d2dd71ee5.N7fc3</con2:id>
+                                                <con4:logLevel>info</con4:logLevel>
+                                                <con4:expr>
+                                                    <con2:xqueryText>$body</con2:xqueryText>
+                                                </con4:expr>
+                                                <con4:message>InicioReasignarCliente-Response</con4:message>
+                                            </con4:log>
+                                        </con3:responseTransform>
+                                    </con3:route>
+                                </con:actions>
+                            </con:route-node>
+                        </con:flow>
+                    </con:branch>
+                    <con:branch name="FinReasignarCliente">
+                        <con:operator>equals</con:operator>
+                        <con:value/>
+                        <con:flow>
+                            <con:route-node name="RouteNodeFinReasignarCliente" error-handler="error-N3f57c7ff.29205d57.0.1612fab7e06.N7e42">
+                                <con:context/>
+                                <con:actions>
+                                    <con3:route>
+                                        <con2:id>_ActionId-N3f578efe.N12ec80a9.0.15d2dd71ee5.N7fbd</con2:id>
+                                        <con3:service ref="COMPOSICIONES/ProcesoNegocio/Reasignar/PS/FinReasignarCliente_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                        <con3:operation>FinReasignarCliente</con3:operation>
+                                        <con3:outboundTransform>
+                                            <con4:log>
+                                                <con2:id>_ActionId-N3f578efe.N12ec80a9.0.15d2dd71ee5.N7fba</con2:id>
+                                                <con4:logLevel>info</con4:logLevel>
+                                                <con4:expr>
+                                                    <con2:xqueryText>$body</con2:xqueryText>
+                                                </con4:expr>
+                                                <con4:message>FinReasignarCliente-Request</con4:message>
+                                            </con4:log>
+                                        </con3:outboundTransform>
+                                        <con3:responseTransform>
+                                            <con1:replace varName="body" contents-only="true">
+                                                <con2:id>_ActionId-N3f578efe.N12ec80a9.0.15d2dd71ee5.N7fb4</con2:id>
+                                                <con1:location>
+                                                    <con2:xpathText>.</con2:xpathText>
+                                                </con1:location>
+                                                <con1:expr>
+                                                    <con2:xqueryTransform>
+                                                        <con2:resource ref="COMPOSICIONES/ProcesoNegocio/XQUERY/InicioProcesoUtilidadResponse"/>
+                                                        <con2:param name="result">
+                                                            <con2:path>'OK'</con2:path>
+                                                        </con2:param>
+                                                        <con2:param name="mensaje">
+                                                            <con2:path>'Proceso Reasignar Cliente finalizado exitoasamente'</con2:path>
+                                                        </con2:param>
+                                                    </con2:xqueryTransform>
+                                                </con1:expr>
+                                            </con1:replace>
+                                            <con4:log>
+                                                <con2:id>_ActionId-N3f578efe.N12ec80a9.0.15d2dd71ee5.N7fb7</con2:id>
+                                                <con4:logLevel>info</con4:logLevel>
+                                                <con4:expr>
+                                                    <con2:xqueryText>$body</con2:xqueryText>
+                                                </con4:expr>
+                                                <con4:message>FinReasignarCliente-Response</con4:message>
+                                            </con4:log>
+                                        </con3:responseTransform>
+                                    </con3:route>
+                                </con:actions>
+                            </con:route-node>
+                        </con:flow>
+                    </con:branch>
+                    <con:default-branch>
+                        <con:flow/>
+                    </con:default-branch>
+                </con:branch-table>
+            </con:branch-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

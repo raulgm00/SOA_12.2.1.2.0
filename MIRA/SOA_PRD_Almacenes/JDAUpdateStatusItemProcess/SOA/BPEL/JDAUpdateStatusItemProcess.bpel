@@ -1,0 +1,240 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sun Aug 25 04:28:13 CDT 2019
+  Author:  Jose Alfredo
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="JDAUpdateStatusItemProcess"
+               targetNamespace="http://xmlns.oracle.com/UpdateStatusItem/JDAUpdateStatusItemProcess/JDAUpdateStatusItemProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/UpdateStatusItem/JDAUpdateStatusItemProcess/JDAUpdateStatusItemProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/Items/UpdateStatusItemProcessSvc/v1.0"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns5="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:ns3="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns4="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Items/CreateItemEntity"
+         xmlns:ns6="http://mx.agarcia.ea/Applications/JDA/Items/ModifyItem/v1.0"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns10="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:ns8="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ns13="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ns7="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns9="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ns12="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ns11="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:ns14="http://mx.agarcia.ea/Applications/JDA/Items/ModifyItem"
+         xmlns:ns15="http://mx.agarcia.ea/Applications/JDA/Items/QueryItem/v1.0"
+         xmlns:ns16="http://mx.agarcia.ea/Applications/JDA/Items/QueryItem">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/UpdateStatusItemProcessSvc/v1.0"
+          location="../WSDLs/UpdateStatusItemProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/UpdateStatusItemProcessSvc/v1.0"
+          location="../WSDLs/UpdateStatusItemProcessWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="jdaupdatestatusitemprocess_client" partnerLinkType="ns1:JDAUpdateStatusItemProcess" myRole="UpdateStatusItemPTye"/>
+    <partnerLink name="JDAModifyItemStatus" partnerLinkType="ns6:JDAModifyItemStatus" partnerRole="modifyItemPort"/>
+    <partnerLink name="JDAFindSKUByIdPXY" partnerLinkType="ns15:JDAFindSKUByIdPXY" partnerRole="queryItemPort"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:updateStatusItemRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:updateStatusItemResponseMessage"/>
+    <variable name="InvokeModyfyStatus_InputVariable" messageType="ns6:modifyItemRequestMessage"/>
+    <variable name="InvokeModyfyStatus_OutputVariable" messageType="ns6:modifyItemResponseMessage"/>
+    <variable name="updateStatusStyle" type="xsd:boolean">
+      <from>false()</from>
+    </variable>
+    <variable name="updateStatusSKU" type="xsd:boolean">
+      <from>false()</from>
+    </variable>
+    <variable name="IdStatus" type="xsd:string"/>
+    <variable name="IdItemSKU" type="xsd:string"/>
+    <variable name="IdItemStyle" type="xsd:string"/>
+    <variable name="updateStatusVar" element="ns2:createItemRequest"/>
+    <variable name="InvokeFindSKUStyleMaster_InputVariable" messageType="ns15:findItemByIdRequestMessage"/>
+    <variable name="InvokeFindSKUStyleMaster_OutputVariable" messageType="ns15:filterItemResponseMessage"/>
+    <variable name="newStatus" type="xsd:string"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in JDAUpdateStatusItemProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="jdaupdatestatusitemprocess_client" portType="ns1:UpdateStatusItemPTye" operation="updateStatus" variable="inputVariable" createInstance="yes"/>
+    <assign name="XsltRequest">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/XSLTInputUpdateStatus.xsl", $inputVariable.createItemJDARequest)</from>
+        <to variable="updateStatusVar"/>
+      </copy>
+    </assign>
+    <assign name="AssignIdSKU">
+      <copy>
+        <from>$updateStatusVar/ns2:items/ns3:item/ns3:id</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$IdItemSKU</to>
+      </copy>
+    </assign>
+    <assign name="AssignStatus">
+      <copy>
+        <from>dvm:lookupValue("DVM/StatusDVM.dvm","RMS",$updateStatusVar/ns2:items/ns3:item/ns3:status/ns3:code,"JDA","")</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$newStatus</to>
+      </copy>
+    </assign>
+    <scope name="Scope6">
+      <bpelx:skipCondition>1=1</bpelx:skipCondition>
+      <sequence name="Sequence6">
+        <assign name="AssignIdSKU">
+          <copy>
+            <from>$updateStatusVar/ns2:items/ns3:item/ns3:id</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeFindSKUStyleMaster_InputVariable.payload/ns16:itemFilter/ns3:id</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeFindSKUStyleMaster" bpelx:invokeAsDetail="no" partnerLink="JDAFindSKUByIdPXY"
+                portType="ns15:queryItemPort" operation="findById"
+                inputVariable="InvokeFindSKUStyleMaster_InputVariable"
+                outputVariable="InvokeFindSKUStyleMaster_OutputVariable"/>
+      </sequence>
+    </scope>
+    <scope name="Scope5">
+      <bpelx:skipCondition>1=1</bpelx:skipCondition>
+      <if name="IfStyle">
+        <condition>string-length($InvokeFindSKUStyleMaster_OutputVariable.payload/ns16:items/ns3:item/ns3:parent/ns3:id)=0</condition>
+        <empty name="Empty1"/>
+        <else>
+          <sequence>
+            <assign name="AssignIdStyle">
+              <copy>
+                <from>$InvokeFindSKUStyleMaster_OutputVariable.payload/ns16:items/ns3:item/ns3:parent/ns3:id</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$IdItemStyle</to>
+              </copy>
+            </assign>
+            <assign name="UpdateStyle">
+              <copy>
+                <from>true()</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$updateStatusStyle</to>
+              </copy>
+            </assign>
+          </sequence>
+        </else>
+      </if>
+    </scope>
+    <assign name="UpdateSKU">
+      <copy>
+        <from>true()</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$updateStatusSKU</to>
+      </copy>
+    </assign>
+    <scope name="ScopeUpdateStatusStyle">
+      <bpelx:skipCondition>$updateStatusSKU = true()</bpelx:skipCondition>
+      <sequence name="Sequence2">
+        <bpelx:skipCondition>1=1</bpelx:skipCondition>
+        <scope name="Scope3">
+          <sequence name="Sequence3">
+            <assign name="StyleSKUsLevel">
+              <copy>
+                <from>'StyleSKUsLevel'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeModyfyStatus_InputVariable.payload/ns14:item/ns3:status/@Type</to>
+              </copy>
+              <copy>
+                <from>$newStatus</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeModyfyStatus_InputVariable.payload/ns14:item/ns3:status/ns3:code</to>
+              </copy>
+              <copy>
+                <from>$IdItemStyle</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeModyfyStatus_InputVariable.payload/ns14:item/ns3:id</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeModifyStyleSKUsLevel" bpelx:invokeAsDetail="no" partnerLink="JDAModifyItemStatus"
+                    portType="ns6:modifyItemPort" operation="modify" inputVariable="InvokeModyfyStatus_InputVariable"
+                    outputVariable="InvokeModyfyStatus_OutputVariable"/>
+          </sequence>
+        </scope>
+        <scope name="Scope4">
+          <sequence name="Sequence4"><assign name="StyleLevel"
+                                             xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+              <copy>
+                <from>$newStatus</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeModyfyStatus_InputVariable.payload/ns14:item/ns3:status/ns3:code</to>
+              </copy>
+              <copy>
+                <from>$IdItemStyle</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeModyfyStatus_InputVariable.payload/ns14:item/ns3:id</to>
+              </copy>
+              <copy>
+                <from>'StyleLevel'</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeModyfyStatus_InputVariable.payload/ns14:item/ns3:status/@Type</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeModyfyStatus" bpelx:invokeAsDetail="no" partnerLink="JDAModifyItemStatus"
+                    portType="ns6:modifyItemPort" operation="modify" inputVariable="InvokeModyfyStatus_InputVariable"
+                    outputVariable="InvokeModyfyStatus_OutputVariable"/>
+          </sequence>
+        </scope>
+      </sequence>
+    </scope>
+    <scope name="ScopeUpdateStatusSKU">
+      <bpelx:skipCondition>$updateStatusStyle = true()</bpelx:skipCondition>
+      <sequence name="Sequence5">
+        <assign name="AssignInfoSKU">
+          <copy>
+            <from>$updateStatusVar/ns2:items/ns3:item/ns3:id</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeModyfyStatus_InputVariable.payload/ns14:item/ns3:id</to>
+          </copy>
+          <copy>
+            <from>$newStatus</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeModyfyStatus_InputVariable.payload/ns14:item/ns3:status/ns3:code</to>
+          </copy>
+          <copy>
+            <from>'SKULevel'</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeModyfyStatus_InputVariable.payload/ns14:item/ns3:status/@Type</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeModyfyStatusSKU" bpelx:invokeAsDetail="no" partnerLink="JDAModifyItemStatus"
+                portType="ns6:modifyItemPort" operation="modify" inputVariable="InvokeModyfyStatus_InputVariable"
+                outputVariable="InvokeModyfyStatus_OutputVariable"/>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="jdaupdatestatusitemprocess_client" portType="ns1:UpdateStatusItemPTye" operation="updateStatus" variable="outputVariable"/>
+  </sequence>
+</process>

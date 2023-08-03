@@ -1,0 +1,310 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Feb 09 15:30:48 CST 2017
+  Author:  david-fernandez
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="EnvioCobro"
+               targetNamespace="http://xmlns.oracle.com/DominioDesembolso/EnvioCobro/EnvioCobro"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioDesembolso/EnvioCobro/EnvioCobro"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/EnvioCobroSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/CrearActualizarDesembolsoSAD"
+         xmlns:ns3="http://www.bcie.org/ConsultarDetalleTransaccionByIdDesembolsoSAD"
+         xmlns:ns4="http://www.bcie.org/Desembolso"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ns9="http://www.bcie.org/CommonBO" xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:ns12="http://www.bcie.org/MatrizTCCBO" xmlns:ns11="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns5="http://www.bcie.org/DesembolsoMO" xmlns:ns7="http://www.bcie.org/ProductoBO"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath" xmlns:ns10="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns13="http://www.bcie.org/ComisionBO"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns8="http://www.bcie.org/CatalogoBO" xmlns:ns6="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns14="http://www.bcie.org/AtributoBO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns15="http://www.bcie.org/ResultBO"
+         xmlns:ns16="http://www.bcie.org/ErrorBO" xmlns:ns17="http://www.bcie.org/EnvioGastoSOR">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/EnvioCobroSOR" location="../WSDLs/EnvioCobroSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="enviocobro_client" partnerLinkType="ns1:EnvioCobro" myRole="EnvioCobro_PT"/>
+    <partnerLink name="CrearActualizarDesembolsos_SB" partnerLinkType="ns2:CrearActualizarDesembolsos_SB"
+                 partnerRole="CrearActualizarDesembolso_PT"/>
+    <partnerLink name="ConsultarDetalleTransaccionByIdDesembolso_SB"
+                 partnerLinkType="ns3:ConsultarDetalleTransaccionByIdDesembolso_SB"
+                 partnerRole="ConsultarDetalleTransaccionByIdDesembolso_PT"/>
+    <partnerLink name="Desembolso_SB" partnerLinkType="ns4:Desembolso_SB" partnerRole="Desembolso_PT"/>
+    <partnerLink name="EnvioGasto_BPEL" partnerLinkType="ns17:EnvioGasto_BPEL" partnerRole="EnvioGasto_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestEnvioCobroMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:replyEnvioCobroMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceAllFault">
+        <assign name="allFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns5:Resultado/ns15:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns5:Resultado/ns15:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyAllFault" variable="outputVariable" partnerLink="enviocobro_client"
+               portType="ns1:EnvioCobro_PT" operation="EnvioCobro"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in EnvioCobro.wsdl) -->
+    <receive name="receiveInput" partnerLink="enviocobro_client" portType="ns1:EnvioCobro_PT" operation="EnvioCobro" variable="inputVariable" createInstance="yes"/>
+    <forEach parallel="yes" counterName="ForEachDesembolsoCounter" name="ForEachDesembolso">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($inputVariable.request/ns5:Desembolsos)</finalCounterValue>
+      <scope name="ScopeForEachDesembolso">
+        <variables>
+          <variable name="inCrearActualizarDesembolsos" messageType="ns2:requestCrearActualizarDesembolsoMessage"/>
+          <variable name="outCrearActualizarDesembolsos" messageType="ns2:responseCrearActualizarDesembolsoMessage"/>
+          <variable name="inConsultarDetalleTransaccion" messageType="ns3:requestConsultarDetalleTransaccionMessage"/>
+          <variable name="outConsultarDetalleTransaccion" messageType="ns3:responseConsultarDetalleTransaccionMessage"/>
+          <variable name="inAplicarCompensacionDesembolso" messageType="ns4:requestAplicarCompensacionDesembolsoMessage"/>
+          <variable name="outAplicarCompensacionDesembolso" messageType="ns4:responseAplicarCompensacionDesembolsoMessage"/>
+          <variable name="inCompensarDesembolso" messageType="ns2:requestCrearActualizarDesembolsoMessage"/>
+          <variable name="outCompensarDesembolso" messageType="ns2:responseCrearActualizarDesembolsoMessage"/>
+          <variable name="inEnvioGasto" messageType="ns17:requestEnvioGastoMessage"/>
+          <variable name="outEnvioGasto" messageType="ns17:responseEnvioGastoMessage"/>
+        </variables>
+        <sequence name="SequenceForEachDesembolso">
+          <assign name="AssignCrearActualizarDesmebolsoRequest">
+            <copy>
+              <from>$inputVariable.request/ns5:Desembolsos[$ForEachDesembolsoCounter]/ns6:idDesembolso</from>
+              <to>$inCrearActualizarDesembolsos.request/ns5:ContratoDesembolso/ns6:idDesembolso</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.request/ns5:Desembolsos[$ForEachDesembolsoCounter]/ns6:fechaRegistro</from>
+              <to>$inCrearActualizarDesembolsos.request/ns5:ContratoDesembolso/ns6:fechaRegistro</to>
+            </copy>
+            <copy>
+              <from>22</from>
+              <to>$inCrearActualizarDesembolsos.request/ns5:ContratoDesembolso/ns6:estado/ns8:Id</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeCrearActualizarDesembolsos" partnerLink="CrearActualizarDesembolsos_SB"
+                  portType="ns2:CrearActualizarDesembolso_PT" operation="crearActualizarDesembolso"
+                  inputVariable="inCrearActualizarDesembolsos" bpelx:invokeAsDetail="no"
+                  outputVariable="outCrearActualizarDesembolsos"/>
+          <if name="IfValidaOK">
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>$outCrearActualizarDesembolsos.response/ns5:Resultado/ns15:result = 'OK'</condition>
+            <empty name="Empty"/>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <sequence name="SequenceCrearActualizarDesmebolsoError">
+                <assign name="AssignCrearActualizarDesembolsoError">
+                  <copy>
+                    <from>'ERROR'</from>
+                    <to>$outputVariable.response/ns5:Resultado/ns15:result</to>
+                  </copy>
+                  <copy>
+                    <from>concat('Error al llamar a CrearActualizarDesembolsos: ',$outCrearActualizarDesembolsos.response/ns5:Resultado/ns15:message)</from>
+                    <to>$outputVariable.response/ns5:Resultado/ns15:message</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyCrearActualizarDesembolsoError" variable="outputVariable"
+                       partnerLink="enviocobro_client" portType="ns1:EnvioCobro_PT" operation="EnvioCobro"/>
+              </sequence>
+            </else>
+          </if>
+          <assign name="AssignAplicarCompensacionRequest">
+            <copy>
+              <from>$inputVariable.request/ns5:Desembolsos[$ForEachDesembolsoCounter]/ns6:idDesembolso</from>
+              <to>$inAplicarCompensacionDesembolso.request/ns5:idDesembolso</to>
+            </copy>
+          </assign>
+          <!--
+          <assign name="AssignRequestConsultarDetalleTransaccion">
+            <copy>
+              <from>$inputVariable.request/ns5:Desembolsos[$ForEachDesembolsoCounter]/ns6:idDesembolso</from>
+              <to>$inConsultarDetalleTransaccion.request/ns5:idDesembolso</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeConsultarDetalleTransaccion" partnerLink="ConsultarDetalleTransaccionByIdDesembolso_SB"
+                  portType="ns3:ConsultarDetalleTransaccionByIdDesembolso_PT"
+                  operation="ConsultarDetalleTransaccionByIdDesembolso" inputVariable="inConsultarDetalleTransaccion"
+                  bpelx:invokeAsDetail="no" outputVariable="outConsultarDetalleTransaccion"/>
+          <if name="IfValidaOK">
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>$outConsultarDetalleTransaccion.response/ns5:Resultado/ns15:result = 'OK'</condition>
+            <empty name="Empty"/>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <sequence name="SequenceConsultarDetalleTransaccionError">
+                <assign name="AssignConsultarDetalleTransaccionError">
+                  <copy>
+                    <from>'ERROR'</from>
+                    <to>$outputVariable.response/ns5:Resultado/ns15:result</to>
+                  </copy>
+                  <copy>
+                    <from>concat('Error al llamar a ConsultarDetalleTransaccion: ',$outConsultarDetalleTransaccion.response/ns5:Resultado/ns15:message)</from>
+                    <to>$outputVariable.response/ns5:Resultado/ns15:message</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyConsultarDetalleTransaccionError" variable="outputVariable"
+                       partnerLink="enviocobro_client" portType="ns1:EnvioCobro_PT" operation="EnvioCobro"/>
+              </sequence>
+            </else>
+          </if>
+          <assign name="XQAplicarCompensacionDesembolsoRequest">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/XQAplicarCompensacionDesembolsoRequest.xqy', 'outConsultarDetalleTransaccion.response', $outConsultarDetalleTransaccion.response)</from>
+              <to variable="inAplicarCompensacionDesembolso" part="request"/>
+            </copy>
+          </assign>
+          -->
+          <invoke name="InvokeAplicarCompensacionDesembolso" partnerLink="Desembolso_SB" portType="ns4:Desembolso_PT"
+                  operation="AplicarCompensacionDesembolso" inputVariable="inAplicarCompensacionDesembolso"
+                  bpelx:invokeAsDetail="no" outputVariable="outAplicarCompensacionDesembolso"/>
+          <if name="IfValidaOK">
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>$outAplicarCompensacionDesembolso.response/ns5:Resultado/ns15:result = 'OK'</condition>
+            <empty name="Empty"/>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <sequence name="SequenceCompensarDesembolso">
+                <assign name="AssignCompensarDesembolso">
+                  <copy>
+                    <from>$inputVariable.request/ns5:Desembolsos[$ForEachDesembolsoCounter]/ns6:idDesembolso</from>
+                    <to>$inCompensarDesembolso.request/ns5:ContratoDesembolso/ns6:idDesembolso</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns5:Desembolsos[$ForEachDesembolsoCounter]/ns6:fechaRegistro</from>
+                    <to>$inCompensarDesembolso.request/ns5:ContratoDesembolso/ns6:fechaRegistro</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns5:Desembolsos[$ForEachDesembolsoCounter]/ns6:estado/ns8:Id</from>
+                    <to>$inCompensarDesembolso.request/ns5:ContratoDesembolso/ns6:estado/ns8:Id</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeCompensarDesembolso"
+                        partnerLink="CrearActualizarDesembolsos_SB" portType="ns2:CrearActualizarDesembolso_PT"
+                        operation="crearActualizarDesembolso" inputVariable="inCompensarDesembolso"
+                        bpelx:invokeAsDetail="no" outputVariable="outCompensarDesembolso"/>
+              </sequence>
+            </else>
+          </if>
+          <assign name="AssignEnvioGastoRequest">
+            <copy>
+              <from>$inputVariable.request/ns5:Desembolsos[$ForEachDesembolsoCounter]/ns6:idDesembolso</from>
+              <to>$inEnvioGasto.request/ns5:idDesembolso</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.request/ns5:Desembolsos[$ForEachDesembolsoCounter]/ns6:fechaEfectiva</from>
+              <to>$inEnvioGasto.request/ns5:fechaEfectiva</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeEnvioGasto" partnerLink="EnvioGasto_BPEL"
+                  portType="ns17:EnvioGasto_PT" operation="envioGasto" inputVariable="inEnvioGasto"
+                  bpelx:invokeAsDetail="no" outputVariable="outEnvioGasto"/>
+          <if name="IfValidaOK">
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>$outEnvioGasto.response/ns5:Resultado/ns15:result = 'OK'</condition>
+            <empty name="Empty"/>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <sequence name="SequenceEnvioGastoError">
+                <assign name="AssignEnvioGastoError">
+                  <copy>
+                    <from>'ERROR'</from>
+                    <to>$outputVariable.response/ns5:Resultado/ns15:result</to>
+                  </copy>
+                  <copy>
+                    <from>concat('Error al llamar a EnvioGasto: ',$outEnvioGasto.response/ns5:Resultado/ns15:message)</from>
+                    <to>$outputVariable.response/ns5:Resultado/ns15:message</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyEnvioGastoError" variable="outputVariable" partnerLink="enviocobro_client"
+                       portType="ns1:EnvioCobro_PT" operation="EnvioCobro"/>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+    </forEach>
+    <assign name="AssignResponse">
+      <copy>
+        <from>'OK'</from>
+        <to>$outputVariable.response/ns5:Resultado/ns15:result</to>
+      </copy>
+      <copy>
+        <from>'Transaccion Existosa'</from>
+        <to>$outputVariable.response/ns5:Resultado/ns15:message</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="enviocobro_client" portType="ns1:EnvioCobro_PT" operation="EnvioCobro" variable="outputVariable"/>
+  </sequence>
+</process>

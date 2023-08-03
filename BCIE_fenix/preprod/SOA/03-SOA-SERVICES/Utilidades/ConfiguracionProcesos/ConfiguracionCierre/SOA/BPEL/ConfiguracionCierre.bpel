@@ -1,0 +1,260 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Jun 23 13:01:24 CDT 2016
+  Author:  Sergio-Morales
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionCierre"
+               targetNamespace="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionCierre/ConfiguracionCierre"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionCierre/ConfiguracionCierre"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.org/ProductoService"
+         xmlns:ns3="http://www.bcie.org/ConfiguracionProcesosMO" xmlns:ns4="http://www.bcie.org/ProductoMO"
+         xmlns:ns5="http://www.bcie.org/ProductoBO" xmlns:ns12="http://www.bcie.org/ConfiguracionProcesosBO"
+         xmlns:ns9="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns6="http://www.bcie.org/OperacionBO"
+         xmlns:ns13="http://xmlns.bcie.org/ObjetoProceso/Comun/Header/V1" xmlns:ns10="http://www.bcie.org/ResultBO"
+         xmlns:ns18="http://xmlns.bcie.org/ObjetoProceso/Comun/Parameter/V1" xmlns:ns8="http://www.bcie.org/CatalogoBO"
+         xmlns:ns14="http://xmlns.bcie.org/ObjetoProceso/Comun/Operacion/V1" xmlns:ns7="http://www.bcie.org/ClienteBO"
+         xmlns:ns17="http://xmlns.bcie.org/ObjetoProceso/Comun/Proceso/V1"
+         xmlns:ns16="http://xmlns.bcie.org/ObjetoProceso/Comun/Tarea/V1"
+         xmlns:ns15="http://xmlns.bcie.org/ObjetoProceso/Comun/Cliente/V1" xmlns:ns11="http://www.bcie.org/ErrorBO"
+         xmlns:ns19="http://www.bcie.com/ConsultarRolesPorProceso"
+         xmlns:ns20="http://www.bcie.org/ConsultarRolesPorProcesoMO"
+         xmlns:ns21="http://www.bcie.org/ConsultarRolesPorProcesoBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns27="http://www.bcie.org/TerminoBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns23="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns24="http://www.bcie.org/CondicionBO" xmlns:ns26="http://www.bcie.org/DocumentoBO"
+         xmlns:ns28="http://www.bcie.org/ComisionBO" xmlns:ns22="http://www.bcie.org/ContratoBO"
+         xmlns:ns25="http://www.bcie.org/AtributoBO" xmlns:ns29="http://www.bcie.org/CommonBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionCierreSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="ConfiguracionCierre" partnerLinkType="ns1:ConfiguracionCierre" myRole="ConfiguracionCierrePT"/>
+    <partnerLink name="ConsultarProductoByIdOperacionService"
+                 partnerLinkType="ns2:ConsultarProductoByIdOperacionService"
+                 partnerRole="ConsultarProductoByIdOperacionPT"/>
+    <partnerLink name="ConsultaRolesByIdProceso" partnerLinkType="ns19:ConsultaRolesByIdProceso"
+                 partnerRole="ConsultarRolesPorProceso_ptt"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ConfiguracionCierreRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ConfiguracionCierreResponseMessage"/>
+    <variable name="ConsultarProductoIn" messageType="ns2:requestConsultarByIdOperacionMessage"/>
+    <variable name="ConsultarProductoOut" messageType="ns2:responseConsultarByIdOperacionMessage"/>
+    <variable name="InConsultaRolesByIdProceso" messageType="ns19:requestMessage"/>
+    <variable name="OutConsultaRolesByIdProceso" messageType="ns19:replyMessage"/>
+    <variable name="OutputVariableErrorConfiguracionCierre" messageType="ns1:ConfiguracionCierreResponseMessage"/>
+    <variable name="SetInstancia" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence1">
+        <assign name="AssignError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.ConfiguracionCierreResponse/ns3:Resultado/ns10:result</to>
+          </copy>
+          <copy>
+            <from>'Error en ConfiguracionCierre'</from>
+            <to>$outputVariable.ConfiguracionCierreResponse/ns3:Resultado/ns10:message</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.ConfiguracionCierreResponse/ns3:Resultado/ns10:error/ns11:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="OutputVariableErrorConfiguracionCierre" partnerLink="ConfiguracionCierre"
+               portType="ns1:ConfiguracionCierrePT" operation="ConfiguracionCierre"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionCierre.wsdl) -->
+    <receive name="receiveInput" partnerLink="ConfiguracionCierre" portType="ns1:ConfiguracionCierrePT" operation="ConfiguracionCierre" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignConsultarProducto">
+      <copy>
+        <from>$inputVariable.ConfiguracionCierreRequest/ns3:idOperacion</from>
+        <to>$ConsultarProductoIn.request/ns4:idOperacion</to>
+      </copy>
+      <copy>
+        <from>$inputVariable.ConfiguracionCierreRequest/ns3:InstanciaProceso</from>
+        <to>$SetInstancia</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultarProducto"
+            partnerLink="ConsultarProductoByIdOperacionService" portType="ns2:ConsultarProductoByIdOperacionPT"
+            operation="consultarByIdOperacion" inputVariable="ConsultarProductoIn"
+            outputVariable="ConsultarProductoOut" bpelx:invokeAsDetail="no"/>
+    <assign name="AssignConsultaRoles">
+      <copy>
+        <from>19</from>
+        <to>$InConsultaRolesByIdProceso.request/ns20:Proceso/ns21:idProceso</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultaRolesByIdProceso" partnerLink="ConsultaRolesByIdProceso"
+            portType="ns19:ConsultarRolesPorProceso_ptt" operation="ConsultarRolesPorProceso"
+            inputVariable="InConsultaRolesByIdProceso" outputVariable="OutConsultaRolesByIdProceso"
+            bpelx:invokeAsDetail="no"/>
+    <assign name="AssignOutConsultaCierre">
+      <copy ignoreMissingFromData="no" bpelx:insertMissingToData="yes">
+        <from>$ConsultarProductoOut.response/ns4:Resultado</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:Resultado</to>
+      </copy>
+      <copy>
+        <from>$ConsultarProductoOut.response/ns4:Operacion/ns6:cliente/ns7:razonSocial</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns13:Operacion/ns14:NombreCliente</to>
+      </copy>
+      <copy>
+        <from>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns13:Proceso/ns17:IdFlujo</from>
+        <to>$inputVariable.ConfiguracionCierreRequest/ns3:InstanciaProceso</to>
+      </copy>
+      <copy>
+        <from>$InConsultaRolesByIdProceso.request/ns20:Proceso/ns21:idProceso</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns13:Proceso/ns17:IdProceso</to>
+      </copy>
+      <copy>
+        <from>$SetInstancia</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns13:Proceso/ns17:IdFlujo</to>
+      </copy>
+      <copy>
+        <from>'Tipo_Cierre'</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns18:ParameterType/ns18:parameterName</to>
+      </copy>
+      <copy>
+        <from>string($ConsultarProductoOut.response/ns4:Producto/ns5:Requiere_Cierre/ns5:Requiere_Cierre)</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns18:ParameterType/ns18:parameterValue</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$ConsultarProductoOut.response/ns4:Operacion/ns6:nombre</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns13:Operacion/ns14:NombreOperacion</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$ConsultarProductoOut.response/ns4:Operacion/ns6:cliente/ns7:idCliente</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns13:Operacion/ns14:CodigoCliente</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$ConsultarProductoOut.response/ns4:Operacion/ns6:responsable</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns13:Operacion/ns14:ResponsableOperacion</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$ConsultarProductoOut.response/ns4:Operacion/ns6:cliente/ns7:pais/ns8:Descripcion</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns13:Operacion/ns14:Pais</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$ConsultarProductoOut.response/ns4:Producto/ns5:idProducto</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns13:Operacion/ns14:CodigoProducto</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$ConsultarProductoOut.response/ns4:Producto/ns5:descripcionCorta</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns13:Operacion/ns14:NombreProducto</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$ConsultarProductoOut.response/ns4:Operacion/ns6:idOperacion</from>
+        <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns13:Operacion/ns14:CodigoOperacion</to>
+      </copy>
+    </assign>
+    <if name="IfValidaTipoCierre">
+      <documentation>
+        <![CDATA[Ok]]>
+      </documentation>
+      <condition>$ConsultarProductoOut.response/ns4:Producto/ns5:Requiere_Cierre/ns5:Requiere_Cierre = 0</condition>
+      <assign name="AssignRequiereCierre">
+        <copy bpelx:insertMissingToData="yes">
+          <from>'REQUIERE_CIERRE'</from>
+          <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns18:ParameterType[1]/ns18:parameterName</to>
+        </copy>
+        <copy bpelx:insertMissingToData="yes">
+          <from>'FALSE'</from>
+          <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns18:ParameterType[1]/ns18:parameterValue</to>
+        </copy>
+        <copy bpelx:insertMissingToData="yes">
+          <from>'TIPO_CIERRE'</from>
+          <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns18:ParameterType[2]/ns18:parameterName</to>
+        </copy>
+        <copy bpelx:insertMissingToData="yes">
+          <from>$ConsultarProductoOut.response/ns4:Producto/ns5:Requiere_Cierre/ns5:Tipo_Cierre</from>
+          <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns18:ParameterType[2]/ns18:parameterValue</to>
+        </copy>
+      </assign>
+      <else><assign name="AssignRequiereCierreTrue" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+          <copy bpelx:insertMissingToData="yes">
+            <from>'REQUIERE_CIERRE'</from>
+            <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns18:ParameterType[1]/ns18:parameterName</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>'TRUE'</from>
+            <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns18:ParameterType[1]/ns18:parameterValue</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>'TIPO_CIERRE'</from>
+            <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns18:ParameterType[2]/ns18:parameterName</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>$ConsultarProductoOut.response/ns4:Producto/ns5:Requiere_Cierre/ns5:Tipo_Cierre</from>
+            <to>$outputVariable.ConfiguracionCierreResponse/ns3:ConfiguracionCierre/ns12:Header/ns18:ParameterType[2]/ns18:parameterValue</to>
+          </copy>
+        </assign></else>
+    </if>
+    <assign name="RolesByIdProceso">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/TransformacionRoles.xsl", $outputVariable.ConfiguracionCierreResponse, "OutConsultaRolesByIdProceso.response", $OutConsultaRolesByIdProceso.response)</from>
+        <to variable="outputVariable" part="ConfiguracionCierreResponse"/>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="ConfiguracionCierre" portType="ns1:ConfiguracionCierrePT" operation="ConfiguracionCierre" variable="outputVariable"/>
+  </sequence>
+</process>

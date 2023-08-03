@@ -1,0 +1,801 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Nov 09 08:13:47 CST 2020
+  Author:  urbinaj
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ValidarLoanComplejo"
+               targetNamespace="http://xmlns.oracle.com/BusinessRulesServices/ValidarLoan/ValidarLoanComplejo"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/BusinessRulesServices/ValidarLoan/ValidarLoanComplejo"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ValidarLoanComplejoSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/ConsultarInformacionReglaById"
+         xmlns:ns3="http://xmlns.bcie.com/LineaCreditoService"
+         xmlns:ns4="http://www.bcie.org/ConsultarDesembolsosByIdSAD" xmlns:ns5="http://www.bcie.org/CalcularCuotasSAD"
+         xmlns:ns6="http//www.bcie.org/ValidarLoanComplejo" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns7="http://www.bcie.org/DesembolsoMO"
+         xmlns:ns8="http://www.bcie.org/ValidarEstadoFlexcubeMO" xmlns:ns9="http://www.bcie.org/ResultBO"
+         xmlns:ns10="http://www.bcie.org/ErrorBO" xmlns:ns11="http://www.bcie.org/ReglaBO"
+         xmlns:ns12="http://www.bcie.org/CatalogoBO" xmlns:ns13="http://www.bcie.org/AtributoBO"
+         xmlns:ns24="http://www.bcie.org/TerminoBO" xmlns:ns19="http://www.bcie.org/OperacionBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns16="http://www.bcie.org/CommonBO"
+         xmlns:ns25="http://www.bcie.org/MatrizTCCBO" xmlns:ns15="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns21="http://www.bcie.org/ProductoBO" xmlns:ns17="http://www.bcie.org/CondicionBO"
+         xmlns:ns26="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns18="http://www.bcie.org/DocumentoBO"
+         xmlns:ns22="http://www.bcie.org/HerramientaCEBO" xmlns:ns23="http://www.bcie.org/ComisionBO"
+         xmlns:ns20="http://www.bcie.org/DesembolsoBO" xmlns:ns27="http://www.bcie.org/ContratoBO"
+         xmlns:ns14="http://www.bcie.org/ClienteBO" xmlns:ns28="http://www.bcie.org/LineaCreditoMO"
+         xmlns:ns29="http://www.bcie.org/ConsultarDesembolsosByIdV2SAD" xmlns:ns30="http://www.bcie.org/DesembolsoBOV2">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ConsultarDesembolsosByIdSAD"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/Wsdl/ADAPTER/ConsultarDesembolsosByIdSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/ValidarLoanComplejoSOR" location="../WSDLs/ValidarLoanComplejoSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="ValidarLoanComplejoDirect" partnerLinkType="ns1:ValidarLoanComplejo" myRole="ValidarLoanComplejo_PT"/>
+    <partnerLink name="ConsultarInformacionRegla_SB" partnerLinkType="ns2:ConsultarInformacionRegla_SB"
+                 partnerRole="ConsultarInformacionReglaById_PT"/>
+    <partnerLink name="LineaCreditoService_SB" partnerLinkType="ns3:LineaCreditoService_SB"
+                 partnerRole="LineaCreditoPT"/>
+    <partnerLink name="CalcularCuotas_SB" partnerLinkType="ns5:CalcularCuotas_SB" partnerRole="CalcularCuotas_PT"/>
+    <partnerLink name="ValidarLoanComplejo_SB" partnerLinkType="ns6:ValidarLoanComplejo_SB"
+                 partnerRole="ValidarLoanComplejo_PT"/>
+    <partnerLink name="ValidarEstadoFlexcube_SB" partnerLinkType="ns8:ValidarEstadoFlexcube_SB"
+                 partnerRole="ValidarEstadoFlexcubePT"/>
+    <partnerLink name="ConsultarDesembolsoByIdV2_BS" partnerLinkType="ns29:ConsultarDesembolsoByIdV2_BS"
+                 partnerRole="ConsultarDesembolsosByIdV2_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ValidarLoanComplejoBPELRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ValidarLoanComplejoBPELResponseMessage"/>
+    <variable name="setTitleVariable" type="xsd:string"/>
+    <variable name="inValidarEstadoFlexcube" messageType="ns8:ValidarEstadoFlexcubeRequestMessage"/>
+    <variable name="outValidarEstadoFlexcube" messageType="ns8:ValidarEstadoFlexcubeResponseMessage"/>
+    <variable name="inConsultarInformacionDesembolso" messageType="ns2:requestConsultarInformacionReglaByIdMessage"/>
+    <variable name="outConsultarInformacionDesembolso" messageType="ns2:responseConsultarInformacionReglaByIdMessage"/>
+    <variable name="inConsultarLineaCreditoById" messageType="ns3:ConsultarLineaCreditoByIdRequestMessage"/>
+    <variable name="outConsultarLineaCreditoById" messageType="ns3:ConsultarLineaCreditoByIdResponseMessage"/>
+    <variable name="contratoDesembolso" messageType="ns4:responseConsultarDesembolsosByIdMessage"/>
+    <variable name="inValidarLoanComplejo" messageType="ns6:ValidarLoanComplejoRequestMessage"/>
+    <variable name="outValidarLoanComplejo" messageType="ns6:ValidarLoanComplejoResponseMessage"/>
+    <variable name="fechaBulletCapital" type="xsd:date"/>
+    <variable name="fechaBulletInteres" type="xsd:date"/>
+    <variable name="contadorCapital" type="xsd:integer"/>
+    <variable name="contadorInteres" type="xsd:integer"/>
+    <variable name="inCalcularCuotas" messageType="ns5:requestCalcularCuotasMessage"/>
+    <variable name="outCalcularCuotas" messageType="ns5:responseCalcularCuotasMessage"/>
+    <variable name="inConsultarDesembolsoByIdV2" messageType="ns29:ConsultarDesembolsoByIdV2RequestMessage"/>
+    <variable name="outConsultarDesembolsoByIdV2" messageType="ns29:ConsultarDesembolsoByIdV2ResponseMessage"/>
+    <variable name="ContratoDesembolsoV2" messageType="ns29:ConsultarDesembolsoByIdV2ResponseMessage"/>
+    <variable name="inCalcularCuotasCalendario" messageType="ns5:requestCalcularCuotasMessage"/>
+    <variable name="outCalcularCuotasCalendario" messageType="ns5:responseCalcularCuotasMessage"/>
+    <variable name="contadorCapitalComponente" type="xsd:integer"/>
+    <variable name="contadorInteresComponente" type="xsd:integer"/>
+    <variable name="fechaBulletCapitalComponente" type="xsd:date"/>
+    <variable name="fechaBulletInteresComponente" type="xsd:date"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceCatchAll">
+        <assign name="AssignFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:result</to>
+          </copy>
+          <copy>
+            <from>concat('Error General al validar LOAN Complejo: ', $inputVariable.ValidarLoanComplejoBPELRequest/ns7:idContratoDesembolso)</from>
+            <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyFault" variable="outputVariable" partnerLink="ValidarLoanComplejoDirect"
+               portType="ns1:ValidarLoanComplejo_PT" operation="ValidarLoanComplejoBPEL"/>
+        <exit name="ExitFault"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ValidarLoanComplejo.wsdl) -->
+    <receive name="receiveInput" partnerLink="ValidarLoanComplejoDirect" portType="ns1:ValidarLoanComplejo_PT" operation="ValidarLoanComplejoBPEL" variable="inputVariable" createInstance="yes"/>
+    <assign name="SetTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("IdDesembolso: ",$inputVariable.ValidarLoanComplejoBPELRequest/ns7:idContratoDesembolso))</from>
+        <to>$setTitleVariable</to>
+      </copy>
+    </assign>
+    <sequence name="SequenceValidarEstadoFlexcube">
+      <invoke name="InvokeValidarEstadoFlexcube" bpelx:invokeAsDetail="no" partnerLink="ValidarEstadoFlexcube_SB"
+              portType="ns8:ValidarEstadoFlexcubePT" operation="ValidarEstadoFlexcube"
+              inputVariable="inValidarEstadoFlexcube" outputVariable="outValidarEstadoFlexcube"/>
+      <if name="IfBaseActiva">
+        <documentation>
+          <![CDATA[BaseActiva]]>
+        </documentation>
+        <condition>$outValidarEstadoFlexcube.ValidarEstadoFlexcubeResponse/ns8:Resultado/ns9:result = 'OK'</condition>
+        <empty name="Continua"/>
+        <else>
+          <sequence name="Sequence1">
+            <assign name="ErrorValidarEstadoFlexcube">
+              <copy>
+                <from>'NO_EVALUADA'</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Regla/ns11:Estado/ns12:DescripcionCorta</to>
+              </copy>
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:result</to>
+              </copy>
+              <copy>
+                <from>'Flexcube no se encuentra activo actualmente, no es posible validar  el desembolso en este momento'</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="ValidarLoanComplejoDirect"
+                   portType="ns1:ValidarLoanComplejo_PT" operation="ValidarLoanComplejoBPEL"/>
+            <exit name="ERROR"/>
+          </sequence>
+        </else>
+      </if>
+    </sequence>
+    <sequence name="ConsultarInformacionDesembolso">
+      <assign name="requestConsultarInformacionDesembolso">
+        <copy>
+          <from>$inputVariable.ValidarLoanComplejoBPELRequest/ns7:idContratoDesembolso</from>
+          <to>$inConsultarInformacionDesembolso.request/ns7:idDesembolso</to>
+        </copy>
+      </assign>
+      <invoke name="InvokeConsultarInformacionDesembolso_SB" bpelx:invokeAsDetail="no"
+              partnerLink="ConsultarInformacionRegla_SB" portType="ns2:ConsultarInformacionReglaById_PT"
+              operation="consultarInformacionReglaById" inputVariable="inConsultarInformacionDesembolso"
+              outputVariable="outConsultarInformacionDesembolso"/>
+      <if name="IfOK">
+        <documentation>
+          <![CDATA[OK]]>
+        </documentation>
+        <condition>$outConsultarInformacionDesembolso.response/ns7:Resultado/ns9:result = 'OK'</condition>
+        <empty name="Continua"/>
+        <else>
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <sequence name="Sequence2">
+            <assign name="ErrorConsultarInformacionDesembolso">
+              <copy>
+                <from>'NO_EVALUADA'</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Regla/ns11:Estado/ns12:DescripcionCorta</to>
+              </copy>
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:result</to>
+              </copy>
+              <copy>
+                <from>concat('Consultar Informacion Desembolso Error: ',$outConsultarInformacionDesembolso.response/ns7:Resultado/ns9:message)</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="ValidarLoanComplejoDirect"
+                   portType="ns1:ValidarLoanComplejo_PT" operation="ValidarLoanComplejoBPEL"/>
+            <exit name="ERROR"/>
+          </sequence>
+        </else>
+      </if>
+    </sequence>
+    <sequence name="ConsultarLineaCredito">
+      <assign name="requestConsultarLineaCredito">
+        <copy>
+          <from>$outConsultarInformacionDesembolso.response/ns7:LineaCredito/ns15:idLineaCredito</from>
+          <to>$inConsultarLineaCreditoById.ConsultarLineaCreditoByIdRequest/ns28:idLineaCredito</to>
+        </copy>
+      </assign>
+      <invoke name="InvokeConsultarLineaCreditoById_SB" partnerLink="LineaCreditoService_SB"
+              portType="ns3:LineaCreditoPT" operation="consultarLineaCreditoById"
+              inputVariable="inConsultarLineaCreditoById" outputVariable="outConsultarLineaCreditoById"
+              bpelx:invokeAsDetail="no"/>
+      <if name="IfOk">
+        <documentation>
+          <![CDATA[OK]]>
+        </documentation>
+        <condition>$outConsultarLineaCreditoById.ConsultarLineaCreditoByIdResponse/ns28:Resultado/ns9:result = 'OK'</condition>
+        <empty name="Continua"/>
+        <else>
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <sequence name="Sequence3">
+            <assign name="ErrorConsultarLineaCredito">
+              <copy>
+                <from>'NO_EVALUADA'</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Regla/ns11:Estado/ns12:DescripcionCorta</to>
+              </copy>
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:result</to>
+              </copy>
+              <copy>
+                <from>concat('Error al Consultar Linea de Credito: ', $outConsultarLineaCreditoById.ConsultarLineaCreditoByIdResponse/ns28:Resultado/ns9:message )</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="ValidarLoanComplejoDirect"
+                   portType="ns1:ValidarLoanComplejo_PT" operation="ValidarLoanComplejoBPEL"/>
+            <exit name="ERROR"/>
+          </sequence>
+        </else>
+      </if>
+    </sequence>
+    <sequence name="ConsultarDesembolso">
+      <assign name="requestConsultarDesembolsoByIdV2">
+        <copy>
+          <from>$inputVariable.ValidarLoanComplejoBPELRequest/ns7:idContratoDesembolso</from>
+          <to>$inConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Request/ns7:idContratoDesembolso</to>
+        </copy>
+      </assign>
+        <invoke name="InvokeConsultarDesembolsoByIdV2"
+                partnerLink="ConsultarDesembolsoByIdV2_BS" portType="ns29:ConsultarDesembolsosByIdV2_PT"
+                operation="ConsultarDesembolsosByIdV2" inputVariable="inConsultarDesembolsoByIdV2"
+                outputVariable="outConsultarDesembolsoByIdV2" bpelx:invokeAsDetail="no"/>
+        <if name="IfValidaOk">
+          <documentation>
+          <![CDATA[OK]]>
+        </documentation>
+          <condition>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:Resultado/ns9:result = 'OK'</condition>
+          <empty name="OK"/>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="Sequence27">
+              <assign name="errorConsultarDesembolsoByIdv2">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:result</to>
+              </copy>
+              <copy ignoreMissingFromData="yes">
+                <from>concat("Error en el servicio ConsultarDesembolsoByIdV2 ",$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:Resultado/ns9:message)</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="ValidarLoanComplejoDirect"
+                   portType="ns1:ValidarLoanComplejo_PT" operation="ValidarLoanComplejoBPEL"/>
+            <exit name="ERROR"/>
+            </sequence>
+          </else>
+        </if>
+    </sequence>
+    <sequence name="SequenceValidarLoanComplejo">
+      <assign name="asignaIdUsuario">
+        <copy>
+          <from>string(ids:getUserProperty($outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:usuario, 'employeenumber'))</from>
+          <to>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:usuario</to>
+        </copy>
+      </assign>
+      <forEach parallel="no" counterName="ComponentesCounter" name="ForEachComponentes">
+            <startCounterValue>1</startCounterValue>
+            <finalCounterValue>count($outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente)</finalCounterValue>
+            <scope name="Scope1">
+              <sequence name="Sequence42">
+                <if name="IfRealizarAjusteTasaComponente">
+                  <documentation>
+                <![CDATA[AjustarTasa]]>
+              </documentation>
+                  <condition>string($outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:LimiteTasaMaxima) != '' or string($outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:LimiteTasaMinima) != ''</condition>
+                  <sequence name="Sequence28">
+                    <assign name="XQ_AjustarTasaComponente">
+                  <copy>
+                    <from>ora:processXQuery10('../Transformations/XQ_AjustarTasaComponente.xqy', 'outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response', $outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response,'ComponentesCounter',$ComponentesCounter)</from>
+                    <to>$ContratoDesembolsoV2.ConsultarDesembolsoByIdV2Response</to>
+                  </copy>
+                </assign>
+                    <if name="IfValidarTipoAjusteComponente">
+                      <documentation>
+                    <![CDATA[Variable]]>
+                  </documentation>
+                      <condition>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:TipoTasa/ns12:codigoExterno = 'F'</condition>
+                      <assign name="AssignAjusteTasa">
+                    <copy ignoreMissingFromData="yes">
+                      <from>$ContratoDesembolsoV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente/ns30:SpreadTasa</from>
+                      <to>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:SpreadTasa</to>
+                    </copy>
+                    <copy>
+                      <from>'AJUSTE_TASA'</from>
+                      <to>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:Resultado/ns9:message</to>
+                    </copy>
+                  </assign>
+                      <elseif>
+                        <documentation>
+                      <![CDATA[Fija]]>
+                    </documentation>
+                        <condition>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:TipoTasa/ns12:codigoExterno = 'X'</condition>
+                        <assign name="AssignAjusteTasa">
+                      <copy ignoreMissingFromData="yes">
+                        <from>$ContratoDesembolsoV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente/ns30:Tasa</from>
+                        <to>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:Tasa</to>
+                      </copy>
+                      <copy>
+                        <from>'AJUSTE_TASA'</from>
+                        <to>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:Resultado/ns9:message</to>
+                      </copy>
+                    </assign>
+                      </elseif>
+                      <else>
+                        <empty name="SinAjuste"/>
+                      </else>
+                    </if>
+                  </sequence>
+                  <else>
+                    <documentation>
+                      <![CDATA[SinAjuste]]>
+                    </documentation>
+                    <empty name="Empty"/>
+                  </else>
+                </if>
+                <sequence name="SequenceCalcularCuotas">
+                  <forEach parallel="no" counterName="CalendarioCounter" name="ForEachCalendario">
+                    <startCounterValue>1</startCounterValue>
+                    <finalCounterValue>count($outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:calendario)</finalCounterValue>
+                    <scope name="Scope3">
+                      <if name="IfCalendarioTipoP">
+                        <documentation>
+                      <![CDATA[NoContieneFechaNoVencimiento]]>
+                    </documentation>
+                        <condition>string($outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:calendario[$CalendarioCounter]/ns30:Frecuencia/ns30:FechaInicio) != '' and string($outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:calendario[$CalendarioCounter]/ns30:Frecuencia/ns30:Frecuencia/ns16:Tipo/ns12:codigoExterno) != 'B'</condition>
+                        <sequence name="Sequence43">
+                          <assign name="AssignCalcularCuota">
+                        <copy>
+                          <from>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:calendario[$CalendarioCounter]/ns30:Frecuencia/ns30:FechaInicio</from>
+                          <to>$inCalcularCuotasCalendario.request/ns7:Plazo/ns20:FechaInicio</to>
+                        </copy>
+                        <copy>
+                          <from>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:calendario[$CalendarioCounter]/ns30:Frecuencia/ns30:Frecuencia</from>
+                          <to>$inCalcularCuotasCalendario.request/ns7:Plazo/ns20:Frecuencia</to>
+                        </copy>
+                        <copy>
+                          <from>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:fechaVencimiento</from>
+                          <to>$inCalcularCuotasCalendario.request/ns7:FechaVencimiento</to>
+                        </copy>
+                      </assign>
+                          <invoke name="InvokeCalcularCuotasCalendario"
+                                  partnerLink="CalcularCuotas_SB" portType="ns5:CalcularCuotas_PT"
+                                  operation="calcularCuotas" inputVariable="inCalcularCuotasCalendario"
+                                  outputVariable="outCalcularCuotasCalendario" bpelx:invokeAsDetail="no"/>
+                          <if name="IfCuotasOk">
+                            <documentation>
+                          <![CDATA[Ok]]>
+                        </documentation>
+                            <condition>$outCalcularCuotasCalendario.response/ns7:Resultado/ns9:result = 'OK'</condition>
+                            <sequence name="Sequence44">
+                              <if name="IfCuotaTipoP">
+                                <documentation>
+                              <![CDATA[TipoP]]>
+                            </documentation>
+                                <condition>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:calendario[$CalendarioCounter]/ns30:TipoPlan/ns12:codigoExterno = 'P'</condition>
+                                <assign name="AssignNumeroCuotasP">
+                              <copy>
+                                <from>$outCalcularCuotasCalendario.response/ns7:numeroCuotas</from>
+                                <to>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:calendario[$CalendarioCounter]/ns30:NumeroCuotas</to>
+                              </copy>
+                            </assign>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[TipoR]]>
+                                  </documentation>
+                                  <assign name="AssignNumeroCuotasR">
+                                <copy>
+                                  <from>$outCalcularCuotasCalendario.response/ns7:numeroCuotas - 1</from>
+                                  <to>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[$ComponentesCounter]/ns30:calendario[$CalendarioCounter]/ns30:NumeroCuotas</to>
+                                </copy>
+                              </assign>
+                                </else>
+                              </if>
+                            </sequence>
+                            <else>
+                              <documentation>
+                                <![CDATA[Continua]]>
+                              </documentation>
+                              <empty name="Continua"/>
+                            </else>
+                          </if>
+                        </sequence>
+                        <else>
+                          <documentation>
+                            <![CDATA[ContieneFechaNoVencimiento]]>
+                          </documentation>
+                          <empty name="Continua"/>
+                        </else>
+                      </if>
+                    </scope>
+                  </forEach>
+                </sequence>
+              </sequence>
+            </scope>
+          </forEach>
+          <scope name="ScopeCalcularCuotaCalendarioPrincipal">
+          <sequence name="SequenceCalcularCuotas">
+                  <forEach parallel="no" counterName="CalendarioCounter" name="ForEachCalendario">
+                    <startCounterValue>1</startCounterValue>
+                    <finalCounterValue>count($outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario)</finalCounterValue>
+                    <scope name="Scope3">
+                      <if name="IfCalendarioTipoP">
+                        <documentation>
+                  <![CDATA[Tipo P]]>
+                </documentation>
+                        <condition>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario[$CalendarioCounter]/ns30:TipoPlan/ns12:codigoExterno = 'P' and string ($outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario[$CalendarioCounter]/ns30:Frecuencia/ns30:FechaInicio) != '' and string ($outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario[$CalendarioCounter]/ns30:Frecuencia/ns30:Frecuencia/ns16:Tipo/ns12:codigoExterno) != 'B'</condition>
+                        <sequence name="Sequence43">
+                          <assign name="AssignCalcularCuota">
+                    <copy>
+                      <from>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario[$CalendarioCounter]/ns30:Frecuencia/ns30:FechaInicio</from>
+                      <to>$inCalcularCuotasCalendario.request/ns7:Plazo/ns20:FechaInicio</to>
+                    </copy>
+                    <copy>
+                      <from>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario[$CalendarioCounter]/ns30:Frecuencia/ns30:Frecuencia</from>
+                      <to>$inCalcularCuotasCalendario.request/ns7:Plazo/ns20:Frecuencia</to>
+                    </copy>
+                    <copy>
+                      <from>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:fechaVencimiento</from>
+                      <to>$inCalcularCuotasCalendario.request/ns7:FechaVencimiento</to>
+                    </copy>
+                  </assign>
+                          <invoke name="InvokeCalcularCuotasCalendario"
+                                  partnerLink="CalcularCuotas_SB" portType="ns5:CalcularCuotas_PT"
+                                  operation="calcularCuotas" inputVariable="inCalcularCuotasCalendario"
+                                  outputVariable="outCalcularCuotasCalendario" bpelx:invokeAsDetail="no"/>
+                          <if name="IfCuotasOk">
+                            <documentation>
+                      <![CDATA[Ok]]>
+                    </documentation>
+                            <condition>$outCalcularCuotasCalendario.response/ns7:Resultado/ns9:result = 'OK'</condition>
+                            <assign name="AssignNumeroCuotas">
+                      <copy>
+                        <from>$outCalcularCuotasCalendario.response/ns7:numeroCuotas</from>
+                        <to>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario[$CalendarioCounter]/ns30:NumeroCuotas</to>
+                      </copy>
+                    </assign>
+                            <else>
+                              <documentation>
+                                <![CDATA[Continua]]>
+                              </documentation>
+                              <empty name="Continua"/>
+                            </else>
+                          </if>
+                        </sequence>
+                        <else>
+                          <documentation>
+                            <![CDATA[Tipo R]]>
+                          </documentation>
+                          <empty name="Continua"/>
+                        </else>
+                      </if>
+                    </scope>
+                  </forEach>
+                </sequence>
+            </scope>
+          <if name="IfValidaTipoCalendario">
+        <documentation>
+          <![CDATA[Sencillo]]>
+        </documentation>
+        <condition>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:tipoCalendario/ns12:DescripcionCorta = 'Sencillo'</condition>
+        <sequence name="Sequence6">
+          <assign name="XQ_RequestValidarLoanComplejo">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/XQ_RequestValidarLoanComplejo.xqy', 'outConsultarInformacionDesembolso.response', $outConsultarInformacionDesembolso.response, 'outConsultarLineaCreditoById.ConsultarLineaCreditoByIdResponse', $outConsultarLineaCreditoById.ConsultarLineaCreditoByIdResponse, 'outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response', $outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response)</from>
+              <to variable="inValidarLoanComplejo" part="ValidarDesembolsoComplejoRequest"/>
+            </copy>
+          </assign>
+          <invoke name="InvokeValidarLoanComplejo" partnerLink="ValidarLoanComplejo_SB"
+                  portType="ns6:ValidarLoanComplejo_PT" operation="ValidarLoanComplejo"
+                  inputVariable="inValidarLoanComplejo" outputVariable="outValidarLoanComplejo"
+                  bpelx:invokeAsDetail="no"/>
+          <if name="IfOK">
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>$outValidarLoanComplejo.ValidarDesembolsoComplejoResponse/ns7:Resultado/ns9:result = 'OK'</condition>
+            <empty name="Continua"/>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <invoke name="InvokeValidarLoanComplejoRetry"
+                      partnerLink="ValidarLoanComplejo_SB" portType="ns6:ValidarLoanComplejo_PT"
+                      operation="ValidarLoanComplejo" inputVariable="inValidarLoanComplejo"
+                      outputVariable="outValidarLoanComplejo" bpelx:invokeAsDetail="no"/>
+            </else>
+          </if>
+          <if name="IfValidacionCorrecta">
+            <documentation>
+              <![CDATA[CUMPLIDA]]>
+            </documentation>
+            <condition>$outValidarLoanComplejo.ValidarDesembolsoComplejoResponse/ns7:Resultado/ns9:result = 'OK'</condition>
+            <assign name="CUMPLIDA">
+              <copy>
+                <from>'CUMPLIDA'</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Regla/ns11:Estado/ns12:DescripcionCorta</to>
+              </copy>
+              <copy>
+                <from>'Regla Cumplida'</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:message</to>
+              </copy>
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:result</to>
+              </copy>
+            </assign>
+            <else>
+              <documentation>
+                <![CDATA[NO_CUMPLIDA]]>
+              </documentation>
+              <sequence name="Sequence7">
+                <assign name="NO_CUMPLIDA">
+                  <copy>
+                    <from>'NO_CUMPLIDA'</from>
+                    <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Regla/ns11:Estado/ns12:DescripcionCorta</to>
+                  </copy>
+                  <copy>
+                    <from>concat('Regla no Cumplida: ', $outValidarLoanComplejo.ValidarDesembolsoComplejoResponse/ns7:Resultado/ns9:message)</from>
+                    <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:message</to>
+                  </copy>
+                  <copy>
+                    <from>'OK'</from>
+                    <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:result</to>
+                  </copy>
+                </assign>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+        <else>
+          <documentation>
+            <![CDATA[Complejo]]>
+          </documentation>
+          <sequence name="Sequence8">
+            <assign name="AssignFechas">
+              <copy>
+                <from>count($outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario[ns30:TipoPlan/ns12:codigoExterno='P'])</from>
+                <to>$contadorCapitalComponente</to>
+              </copy>
+              <copy>
+                <from>count($outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[ns30:TipoComponente/ns12:codigoExterno='INTERES']/ns30:calendario[ns30:TipoPlan/ns12:codigoExterno='P'])</from>
+                <to>$contadorInteresComponente</to>
+              </copy>
+              <copy>
+                <from>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario[ns30:TipoPlan/ns12:codigoExterno='P'][$contadorCapitalComponente]/ns30:Frecuencia/ns30:FechaInicio</from>
+                <to>$fechaBulletCapitalComponente</to>
+              </copy>
+              <copy bpelx:insertMissingToData="yes">
+                <from>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:Componente[ns30:TipoComponente/ns12:codigoExterno='INTERES']/ns30:calendario[ns30:TipoPlan/ns12:codigoExterno='P'][$contadorInteresComponente]/ns30:Frecuencia/ns30:FechaInicio</from>
+                <to>$fechaBulletInteresComponente</to>
+              </copy>
+            </assign>
+                <if name="IfValidarFechaBulletCapital">
+                  <documentation>
+                <![CDATA[Diferente]]>
+              </documentation>
+                  <condition>$fechaBulletCapitalComponente != $outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:fechaVencimiento</condition>
+                  <sequence name="Sequence39">
+                    <assign name="errorFechaBulletCapitalComponente">
+                  <copy>
+                    <from>'ERROR'</from>
+                    <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:result</to>
+                  </copy>
+                  <copy>
+                    <from>'La fecha de inicio capital bullet deber ser igual a la fecha de vencimiento'</from>
+                    <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:message</to>
+                  </copy>
+                </assign>
+                    <reply name="ReplyError" variable="outputVariable" partnerLink="ValidarLoanComplejoDirect"
+                           portType="ns1:ValidarLoanComplejo_PT" operation="ValidarLoanComplejoBPEL"/>
+                    <exit name="Error"/>
+                  </sequence>
+                  <else>
+                    <if name="IfValidarFechaBulletInteres">
+                      <documentation>
+                    <![CDATA[Diferente]]>
+                  </documentation>
+                      <condition>$fechaBulletInteresComponente != $outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:fechaVencimiento</condition>
+                      <sequence name="Sequence40">
+                        <assign name="errorFechaBulletInteresComponente">
+                      <copy>
+                        <from>'ERROR'</from>
+                        <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:result</to>
+                      </copy>
+                      <copy>
+                        <from>'La fecha inicio interes bullet debe ser igual a la fecha vencimiento'</from>
+                        <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:message</to>
+                      </copy>
+                    </assign>
+                        <reply name="ReplyError" variable="outputVariable"
+                               partnerLink="ValidarLoanComplejoDirect"
+                               portType="ns1:ValidarLoanComplejo_PT" operation="ValidarLoanComplejoBPEL"/>
+                        <exit name="Error"/>
+                      </sequence>
+                      <else>
+                        <empty name="OK"/>
+                      </else>
+                    </if>
+                  </else>
+                </if>
+                <if name="IfValidaRevision">
+                  <bpelx:skipCondition>1=1</bpelx:skipCondition>
+                  <documentation>
+                <![CDATA[TieneRevision]]>
+              </documentation>
+                  <condition>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario[ns30:TipoPlan/ns12:codigoExterno='R']/ns30:Frecuencia/ns30:FechaInicio != ''</condition>
+                  <sequence name="Sequence34">
+                    <assign name="requestCalcularCuotas">
+                  <copy>
+                    <from>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario[ns30:TipoPlan/ns12:codigoExterno='R']/ns30:Frecuencia/ns30:FechaInicio</from>
+                    <to>$inCalcularCuotas.request/ns7:Plazo/ns20:FechaInicio</to>
+                  </copy>
+                  <copy>
+                    <from>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario[ns30:TipoPlan/ns12:codigoExterno='R']/ns30:Frecuencia/ns30:Frecuencia</from>
+                    <to>$inCalcularCuotas.request/ns7:Plazo/ns20:Frecuencia</to>
+                  </copy>
+                  <copy>
+                    <from>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:fechaVencimiento</from>
+                    <to>$inCalcularCuotas.request/ns7:FechaVencimiento</to>
+                  </copy>
+                </assign>
+                    <invoke name="InvokeCalcularCuotas_SB" partnerLink="CalcularCuotas_SB"
+                            portType="ns5:CalcularCuotas_PT" operation="calcularCuotas"
+                            inputVariable="inCalcularCuotas"
+                            outputVariable="outCalcularCuotas" bpelx:invokeAsDetail="no"/>
+                    <if name="IfValidaOK">
+                      <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                      <condition>$outCalcularCuotas.response/ns7:Resultado/ns9:result = 'OK'</condition>
+                      <assign name="AssignCuotas">
+                    <copy>
+                      <from>$outCalcularCuotas.response/ns7:numeroCuotas</from>
+                      <to>$outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response/ns7:ContratoDesembolso/ns30:condicionesFinancieras/ns30:calendario[ns30:TipoPlan/ns12:codigoExterno='R']/ns30:NumeroCuotas</to>
+                    </copy>
+                  </assign>
+                      <else>
+                        <documentation>
+                          <![CDATA[ERROR]]>
+                        </documentation>
+                        <sequence name="Sequence38">
+                          <assign name="ERROR">
+                        <copy>
+                          <from>'ERROR'</from>
+                          <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:result</to>
+                        </copy>
+                        <copy>
+                          <from>$outCalcularCuotas.response/ns7:Resultado/ns9:message</from>
+                          <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:message</to>
+                        </copy>
+                      </assign>
+                          <reply name="ReplyError" variable="outputVariable"
+                                 partnerLink="ValidarLoanComplejoDirect"
+                                 portType="ns1:ValidarLoanComplejo_PT" operation="ValidarLoanComplejoBPEL"/>
+                          <exit name="ERROR"/>
+                        </sequence>
+                      </else>
+                    </if>
+                  </sequence>
+                  <else>
+                    <empty name="SinRevision"/>
+                  </else>
+                </if>
+            <assign name="XQ_RequestValidarLoanComplejo">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/XQ_RequestValidarLoanComplejo.xqy', 'outConsultarInformacionDesembolso.response', $outConsultarInformacionDesembolso.response, 'outConsultarLineaCreditoById.ConsultarLineaCreditoByIdResponse', $outConsultarLineaCreditoById.ConsultarLineaCreditoByIdResponse, 'outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response', $outConsultarDesembolsoByIdV2.ConsultarDesembolsoByIdV2Response)</from>
+                <to variable="inValidarLoanComplejo" part="ValidarDesembolsoComplejoRequest"/>
+              </copy>
+            </assign>
+            <invoke name="InvokeValidarLoanComplejo" bpelx:invokeAsDetail="no" partnerLink="ValidarLoanComplejo_SB"
+                    portType="ns6:ValidarLoanComplejo_PT" operation="ValidarLoanComplejo"
+                    inputVariable="inValidarLoanComplejo" outputVariable="outValidarLoanComplejo"/>
+            <if name="IfOK">
+            <documentation>
+                <![CDATA[OK]]>
+              </documentation>
+            <condition>$outValidarLoanComplejo.ValidarDesembolsoComplejoResponse/ns7:Resultado/ns9:result = 'OK'</condition>
+            <empty name="Continua"/>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <invoke name="InvokeValidarLoanComplejoRetry"
+                      partnerLink="ValidarLoanComplejo_SB" portType="ns6:ValidarLoanComplejo_PT"
+                      operation="ValidarLoanComplejo" inputVariable="inValidarLoanComplejo"
+                      outputVariable="outValidarLoanComplejo" bpelx:invokeAsDetail="no"/>
+            </else>
+          </if>
+            <if name="IfValidacionCorrecta" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>         
+      <![CDATA[CUMPLIDA]]></documentation>
+      <condition>$outValidarLoanComplejo.ValidarDesembolsoComplejoResponse/ns7:Resultado/ns9:result = 'OK'</condition>
+      <assign name="CUMPLIDA">
+         
+         
+         
+      <copy>
+            <from>'CUMPLIDA'</from>
+            <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Regla/ns11:Estado/ns12:DescripcionCorta</to>
+         </copy><copy>
+            <from>'Regla Cumplida'</from>
+            <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:message</to>
+         </copy><copy>
+            <from>'OK'</from>
+            <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:result</to>
+         </copy></assign>
+      <else>
+         <documentation>
+            <![CDATA[NO_CUMPLIDA]]>
+         </documentation>
+         <sequence name="Sequence7">
+            <assign name="NO_CUMPLIDA">
+               
+               
+               
+            <copy>
+                  <from>'NO_CUMPLIDA'</from>
+                  <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Regla/ns11:Estado/ns12:DescripcionCorta</to>
+               </copy><copy>
+                  <from>concat('Regla no Cumplida: ', $outValidarLoanComplejo.ValidarDesembolsoComplejoResponse/ns7:Resultado/ns9:message)</from>
+                  <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:message</to>
+               </copy><copy>
+                  <from>'OK'</from>
+                  <to>$outputVariable.ValidarLoanComplejoBPELResponse/ns7:Resultado/ns9:result</to>
+               </copy></assign>
+         </sequence>
+      </else>
+   </if></sequence>
+        </else>
+      </if>
+    </sequence>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="ValidarLoanComplejoDirect" portType="ns1:ValidarLoanComplejo_PT" operation="ValidarLoanComplejoBPEL" variable="outputVariable"/>
+  </sequence>
+</process>

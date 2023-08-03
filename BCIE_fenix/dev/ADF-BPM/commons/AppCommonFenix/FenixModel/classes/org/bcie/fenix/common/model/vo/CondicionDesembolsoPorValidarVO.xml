@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="windows-1252" ?>
+<!DOCTYPE ViewObject SYSTEM "jbo_03_01.dtd">
+<!---->
+<ViewObject
+  xmlns="http://xmlns.oracle.com/bc4j"
+  Name="CondicionDesembolsoPorValidarVO"
+  Version="12.1.3.10.8"
+  InheritPersonalization="merge"
+  BindingStyle="OracleName"
+  CustomQuery="true"
+  RowClass="org.bcie.fenix.common.model.vo.CondicionDesembolsoPorValidarVORowImpl"
+  ComponentClass="org.bcie.fenix.common.model.vo.CondicionDesembolsoPorValidarVOImpl"
+  PageIterMode="Full"
+  ComponentInterface="org.bcie.fenix.common.model.vo.common.CondicionDesembolsoPorValidarVO"
+  ClientProxyName="org.bcie.fenix.common.model.vo.client.CondicionDesembolsoPorValidarVOClient"
+  Passivate="All">
+  <DesignTime>
+    <Attr Name="_codeGenFlag2" Value="Coll|VarAccess"/>
+    <Attr Name="_isExpertMode" Value="true"/>
+    <Attr Name="_isCodegen" Value="true"/>
+  </DesignTime>
+  <Properties>
+    <SchemaBasedProperties>
+      <LABEL
+        ResId="org.bcie.fenix.common.model.vo.CondicionDesembolsoPorValidarVO_LABEL"/>
+    </SchemaBasedProperties>
+  </Properties>
+  <Variable
+    Name="pID_Contrato_Desembolso"
+    Kind="where"
+    Type="java.lang.Long"/>
+  <SQLQuery><![CDATA[Select fCnd.id_Operacion 
+           , fCnd.id id_Condicion 
+           , fCnd.Nombre 
+           , fCnd.Descripcion 
+           , Decode(fCnd.Ban_Estatus,1,'Activa','Inactiva') ban_Estatus 
+           , fT_Edo.Descripcion Estado_TCC 
+           , fT_Ctrl_Cnd.Descripcion Control_Condicion 
+           , ( 
+              Select Listagg(Deventos.Descripcion ,', ') Within Group (Order By Deventos.Descripcion) 
+                From ( 
+                          Select fT_Evt_Cnd.Descripcion 
+                               , fT_Evt_Cnd.Id 
+                            From tre_tca_Evento_Condicion fR_Evt_Cnd 
+                      Inner Join tca_Evento_Condicion fT_Evt_Cnd 
+                              On fR_Evt_Cnd.id_tca_Evento = fT_Evt_Cnd.Id 
+                           Where fR_Evt_Cnd.Id_Condicion = fCnd.Id 
+                        Group By fT_Evt_Cnd.Descripcion 
+                               , fT_Evt_Cnd.Id 
+                     ) Deventos 
+             ) Evento 
+           , fT_Dsm.Descripcion Tipo_Desembolso 
+           , fCnd.Fecha_Registro 
+           , (Case fCnd.id_tca_Control_Condicion 
+              When 2 
+              Then 'Cada ' || fCnd.Plazo || ' ' 
+                   || Replace(fT_Frq.Descripcion || ' [' || fCnd.Id_Tca_Frecuencia_Plazo || ']', ' []') 
+                   || ' iniciando en ' || Replace(fT_FchIn.Descripcion || ' [' || fCnd.Id_Tca_Tipo_Fecha_Inicio || ']', ' []') 
+                   || Nvl2(fCnd.Fecha_Inicio,' ('||To_Char(fCnd.Fecha_Inicio,'dd-Mon-yy')||')', '(no definida)') 
+                   || Nvl2(fCnd.Fecha_Final, ' terminando el ' || To_Char(fCnd.Fecha_Final,'dd-Mon-yy'), ' sin fecha de termino') 
+              Else Null 
+             End) Descripcion_Calendario 
+           , ( 
+              Select Listagg(Droles.Descripcion ,', ') Within Group (Order By Droles.Descripcion) 
+                From ( 
+                          Select fT_Cat_Cnd.Descripcion 
+                               , fT_Cat_Cnd.Id 
+                            From tre_Categoria_Condicion fR_Cat_Cnd 
+                      Inner Join tca_Categoria_Condicion fT_Cat_Cnd 
+                              On fR_Cat_Cnd.Id_Tca_Categoria = fT_Cat_Cnd.Id 
+                           Where fR_Cat_Cnd.Id_Condicion = fCnd.Id 
+                        Group By fT_Cat_Cnd.Descripcion 
+                               , fT_Cat_Cnd.Id      
+                     ) Droles 
+             ) Categorias 
+           , ( 
+              Select Listagg(DValidadores.Descripcion ,', ') Within Group (Order By DValidadores.Descripcion) 
+                From ( 
+                          Select Distinct 
+                                 fR_Cat_Rol.Id_Tca_Rol_Bpm Id 
+                               , fT_Rol.Descripcion Descripcion 
+                            From tre_Categoria_Condicion fR_Cat_Cnd 
+                            Join tre_Categoria_Rol_Bpm fR_Cat_Rol 
+                              On fR_Cat_Rol.Id_Tca_Categoria = fR_Cat_Cnd.Id_Tca_Categoria 
+                            Join tca_Rol_Bpm fT_Rol 
+                              On fR_Cat_Rol.Id_Tca_Rol_Bpm = fT_Rol.Id 
+                           Where fR_Cat_Rol.Id_Cat_Producto = fOp.Id_Producto 
+                             And fR_Cat_Rol.Ban_Estatus  = 1 
+                             And fR_Cat_Cnd.Id_Condicion = fCnd.Id 
+                     ) DValidadores 
+             ) Validadores 
+         , tR_Txn_Cnd.AGRUPADOR 
+         , tR_Txn_Cnd.ID_TCA_ESTADO_TCC estado_transaccion 
+         , tR_Txn_Cnd.en_proceso 
+      From Condicion fCnd 
+Inner Join Operacion fOp 
+        On fOp.id_Operacion = fCnd.id_Operacion 
+ Left Join tca_Tipo_Frecuencia fT_Frq 
+        On fT_Frq.id = fCnd.id_tca_Frecuencia_Plazo 
+ Left Join tca_Tipo_Fecha_Inicio fT_FchIn 
+        On fT_FchIn.id = fCnd.id_tca_Tipo_Fecha_Inicio 
+Inner Join Table(Cp_K_Rn.Pendientes_Condiciones_Desembolso(:pID_Contrato_Desembolso)) Pce 
+        On Pce.Column_Value = fCnd.id 
+Inner Join tca_Estado_TCC fT_Edo 
+        On fT_Edo.Id = fCnd.Id_Tca_Estado_Tcc 
+Inner Join tca_Control_Condicion fT_Ctrl_Cnd 
+        On fT_Ctrl_Cnd.Id = fCnd.Id_Tca_Control_Condicion 
+ Left Join tca_Tipo_Desembolso fT_Dsm 
+        On fT_Dsm.Id = fCnd.Id_Tca_Tipo_Desembolso 
+--/* 
+Inner Join fenix.tre_Solicitud_Linea_Credito fR_SlLC 
+        on fR_SlLC.id_Contrato_Desembolso = :pID_Contrato_Desembolso 
+ Left Join fenix.tre_Transaccion_Condicion tR_Txn_Cnd  
+        On tR_Txn_Cnd.id_Condicion = fCnd.ID 
+       And tR_Txn_Cnd.id_Solicitud = fR_SlLC.id_Solicitud 
+       and nvl(tR_Txn_Cnd.id_Contrato_Desembolso,-7) = Case fCnd.id_tca_Tipo_Desembolso When 2 Then TO_NUMBER(:pID_Contrato_Desembolso) else nvl(tR_Txn_Cnd.id_Contrato_Desembolso,-7) end 
+       and tR_Txn_Cnd.ban_Estatus = 1 
+--*/ 
+     Where fCnd.Ban_Estatus = 1]]></SQLQuery>
+  <ViewAttribute
+    Name="IdOperacion"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="12"
+    Scale="0"
+    Type="java.lang.Long"
+    ColumnType="NUMBER"
+    AliasName="ID_OPERACION"
+    Expression="ID_OPERACION"
+    SQLType="NUMERIC"/>
+  <ViewAttribute
+    Name="IdCondicion"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="12"
+    Scale="0"
+    Type="java.lang.Long"
+    ColumnType="NUMBER"
+    AliasName="ID_CONDICION"
+    Expression="ID_CONDICION"
+    SQLType="NUMERIC"
+    Passivate="true"/>
+  <ViewAttribute
+    Name="Nombre"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="256"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="NOMBRE"
+    Expression="NOMBRE"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="256"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="Descripcion"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="8192"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="DESCRIPCION"
+    Expression="DESCRIPCION"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="8192"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="BanEstatus"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="8"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="BAN_ESTATUS"
+    Expression="BAN_ESTATUS"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="8"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="EstadoTcc"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="256"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="ESTADO_TCC"
+    Expression="ESTADO_TCC"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="256"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="ControlCondicion"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="256"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="CONTROL_CONDICION"
+    Expression="CONTROL_CONDICION"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="256"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="Evento"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="256"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="EVENTO"
+    Expression="EVENTO"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="256"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="TipoDesembolso"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="256"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="TIPO_DESEMBOLSO"
+    Expression="TIPO_DESEMBOLSO"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="256"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="FechaRegistro"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Type="java.sql.Timestamp"
+    ColumnType="DATE"
+    AliasName="FECHA_REGISTRO"
+    Expression="FECHA_REGISTRO"
+    SQLType="DATE"/>
+  <ViewAttribute
+    Name="DescripcionCalendario"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="695"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="DESCRIPCION_CALENDARIO"
+    Expression="DESCRIPCION_CALENDARIO"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="695"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="Categorias"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="32767"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="CATEGORIAS"
+    Expression="CATEGORIAS"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="32767"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="Validadores"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="32767"
+    Type="java.lang.String"
+    ColumnType="VARCHAR2"
+    AliasName="VALIDADORES"
+    Expression="VALIDADORES"
+    SQLType="VARCHAR">
+    <DesignTime>
+      <Attr Name="_DisplaySize" Value="32767"/>
+    </DesignTime>
+  </ViewAttribute>
+  <ViewAttribute
+    Name="Agrupador"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="12"
+    Scale="0"
+    Type="java.lang.Long"
+    ColumnType="NUMBER"
+    AliasName="AGRUPADOR"
+    Expression="AGRUPADOR"
+    SQLType="NUMERIC"/>
+  <ViewAttribute
+    Name="EstadoTransaccion"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="5"
+    Scale="0"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="ESTADO_TRANSACCION"
+    Expression="ESTADO_TRANSACCION"
+    SQLType="INTEGER"/>
+  <ViewAttribute
+    Name="EnProceso"
+    IsUpdateable="false"
+    IsPersistent="false"
+    PrecisionRule="true"
+    Precision="1"
+    Scale="0"
+    Type="java.lang.Integer"
+    ColumnType="NUMBER"
+    AliasName="EN_PROCESO"
+    Expression="EN_PROCESO"
+    SQLType="INTEGER"/>
+  <AttrArray Name="KeyAttributes">
+    <Item Value="IdCondicion"/>
+  </AttrArray>
+  <ClientInterface
+    Name="__clientInterface">
+    <Method
+      Name="condicionDesembolsoPorValidar"
+      MethodName="condicionDesembolsoPorValidar">
+      <Return
+        Name="_return_type_"
+        Type="java.lang.Boolean"/>
+      <Parameter
+        Name="pnID_Contrato_Desembolso"
+        Type="java.lang.Long"/>
+    </Method>
+    <Method
+      Name="configuracionCondicion"
+      MethodName="configuracionCondicion">
+      <Return
+        Name="_return_type_"
+        Type="java.lang.Integer"/>
+      <Parameter
+        Name="idSolicitud"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="idOperacion"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="idContrato"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="idEvento"
+        Type="java.lang.Integer"/>
+      <Parameter
+        Name="listaCondiciones"
+        Type="java.util.List"/>
+    </Method>
+    <Method
+      Name="iniciarAdminstracionCondicion"
+      MethodName="iniciarAdminstracionCondicion">
+      <Return
+        Name="_return_type_"
+        Type="java.lang.Boolean"/>
+      <Parameter
+        Name="idSolicitud"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="idOperacion"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="agrupador"
+        Type="java.lang.Integer"/>
+      <Parameter
+        Name="idContrato"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="loginUsuario"
+        Type="java.lang.String"/>
+      <Parameter
+        Name="descEvento"
+        Type="java.lang.String"/>
+    </Method>
+    <Method
+      Name="iniciarCondicionDesembolso"
+      MethodName="iniciarCondicionDesembolso">
+      <Return
+        Name="_return_type_"
+        Type="java.lang.Boolean"/>
+      <Parameter
+        Name="idSolicitud"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="idOperacion"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="idContrato"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="listaCondiciones"
+        Type="java.util.List"/>
+    </Method>
+    <Method
+      Name="inicioValidacionAsignacionRecursos"
+      MethodName="inicioValidacionAsignacionRecursos">
+      <Return
+        Name="_return_type_"
+        Type="java.lang.Boolean"/>
+      <Parameter
+        Name="idOperacion"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="loginUsuario"
+        Type="java.lang.String"/>
+      <Parameter
+        Name="idSolicitud"
+        Type="java.lang.Long"/>
+      <Parameter
+        Name="idContrato"
+        Type="java.lang.Long"/>
+    </Method>
+  </ClientInterface>
+  <ResourceBundle>
+    <PropertiesBundle
+      PropertiesFile="org.bcie.fenix.common.model.FenixModelBundle"/>
+  </ResourceBundle>
+</ViewObject>

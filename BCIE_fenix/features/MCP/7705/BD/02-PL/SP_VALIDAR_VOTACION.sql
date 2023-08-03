@@ -1,0 +1,32 @@
+CREATE OR REPLACE PROCEDURE SP_VALIDAR_VOTACION (
+   P_USUARIO_REUNION   IN     NUMBER,
+   P_USUARIO           IN     VARCHAR2,
+   P_RESULTADO            OUT NUMBER,
+   P_MENSAJE              OUT VARCHAR2)
+IS
+   V_EMITE_VOTO     NUMBER;
+BEGIN
+   SELECT URA.EMITE_VOTO
+     INTO V_EMITE_VOTO
+     FROM USUARIO_REUNION_APROBACION URA
+          WHERE URA.LOGIN_USUARIO = P_USUARIO
+          AND URA.ID = P_USUARIO_REUNION;
+
+   IF V_EMITE_VOTO = 1 
+   THEN
+      P_RESULTADO := 1;
+      P_MENSAJE := 'Datos Validos';
+      
+   ELSIF V_EMITE_VOTO = 0 
+   THEN
+      P_RESULTADO := 0;
+      P_MENSAJE := 'No cuenta con permisos necesarios para realizar la votación';
+   
+   END IF;
+   
+  EXCEPTION WHEN OTHERS THEN
+  P_RESULTADO:= SQLCODE;
+  P_MENSAJE:= SQLERRM;
+
+END;
+/

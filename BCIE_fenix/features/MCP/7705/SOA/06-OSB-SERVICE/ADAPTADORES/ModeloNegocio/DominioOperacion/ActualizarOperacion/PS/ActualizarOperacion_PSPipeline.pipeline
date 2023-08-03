@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioOperacion/Operacion/V1/Wsdl/ADAPTER/ActualizarOperacionSAD"/>
+            <con:binding>
+                <con:name>Operacion12Bnd</con:name>
+                <con:namespace>http://xmlns.bcie.com/OperacionService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-N53efcbee.6a216e58.0.14e660ce9ae.N7c78">
+        <con:pipeline type="error" name="error-N53efcbee.6a216e58.0.14e660ce9ae.N7c78">
+            <con:stage id="_StageId-N53efcbee.6a216e58.0.14e660ce9ae.N7bd4" name="StageError" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                <con:context/>
+                <con:actions>
+                    <con3:ifThenElse>
+                        <con2:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efcbee.6a216e58.0.14e660ce9ae.N7bd3</con2:id>
+                        <con3:case id="_BranchId-N53efcbee.6a216e58.0.14e660ce9ae.N7bd2">
+                            <con3:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError) = 0</con2:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:assign varName="codigoError">
+                                    <con2:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efcbee.6a216e58.0.14e660ce9ae.N7bd1</con2:id>
+                                    <con3:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con3:expr>
+                                </con3:assign>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default/>
+                    </con3:ifThenElse>
+                    <con3:assign varName="inMapError">
+                        <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efcbee.36830fb4.0.14e697791c8.N7e93</con4:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(data($codigoError))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con2:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efcbee.6a216e58.0.14e660ce9ae.N7bcf</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true">
+                        <con2:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efcbee.6a216e58.0.14e660ce9ae.N7bce</con2:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con4:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con4:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/ActualizarOperacion/XQUERY/Error_TO_ActualizarOperacion_PS_Response"/>
+                                <con4:param name="message">
+                                    <con4:path>fn:substring-before(xs:string(fn:data($fault/ctx:reason)),'; nested exception is:')</con4:path>
+                                </con4:param>
+                                <con4:param name="responseMapeoErrorMessage">
+                                    <con4:path>$outMapError</con4:path>
+                                </con4:param>
+                            </con4:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con2:id>_ActionId-N53efcbee.6a216e58.0.14e660ce9ae.N7bcd</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="request" name="request-a050a8a.70bdbe86.0.16e4729096f.N7eba">
+            <con:stage id="_StageId-a050a8a.70bdbe86.0.16e4729096f.N7eb8" name="StageActualizarOperacionAmbientalCARequest">
+                <con:context>
+                    <con1:userNsDecl prefix="oper" namespace="http://www.bcie.org/OperacionMO"/>
+                </con:context>
+                <con:actions>
+                    <con3:wsCallout>
+                        <con1:id>_ActionId-a050a8a.70bdbe86.0.16e4729096f.N7eb4</con1:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/DominioOperacion/CrearClasificacionAmbiental/BS/EditarClasificacionAmbiental_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>merge</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">editarClasificacionAmbientalRequest</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">editarClasificacionAmbientalResponse</con3:body>
+                        </con3:response>
+                        <con3:requestTransform>
+                            <con3:assign varName="editarClasificacionAmbientalRequest">
+                                <con1:id>_ActionId-a050a8a.70bdbe86.0.16e4729096f.N7eb1</con1:id>
+                                <con3:expr>
+                                    <con1:xsltTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/ActualizarOperacion/XQUERY/EditarOperacionAmbiental_PS_TO_DB_EditarOperacionAmbiental_Request"/>
+                                        <con1:input>$body/oper:ActualizarOperacionRequest</con1:input>
+                                    </con1:xsltTransform>
+                                </con3:expr>
+                            </con3:assign>
+                            <con4:log>
+                                <con1:id>_ActionId-a050a8a.70bdbe86.0.16e4729096f.N7eab</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$editarClasificacionAmbientalRequest</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>editarClasificacionAmbientalRequest</con4:message>
+                            </con4:log>
+                        </con3:requestTransform>
+                        <con3:responseTransform>
+                            <con4:log>
+                                <con1:id>_ActionId-a050a8a.70bdbe86.0.16e4729096f.N7ea7</con1:id>
+                                <con4:logLevel>debug</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$insertOperacionCAResponse</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>insertOperacionCAResponse</con4:message>
+                            </con4:log>
+                        </con3:responseTransform>
+                    </con3:wsCallout>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-a050a8a.70bdbe86.0.16e4729096f.N7eb9">
+            <con:stage id="_StageId-a050a8a.70bdbe86.0.16e4729096f.N7eb7" name="StageActualizarOperacionAmbientalCAResponse">
+                <con:context/>
+                <con:actions>
+                    <con3:replace contents-only="true" varName="body">
+                        <con1:id>_ActionId-a050a96.Nd463329.0.16e49ed79b1.N7ffe</con1:id>
+                        <con3:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con1:xsltTransform>
+                                <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/ActualizarOperacion/XQUERY/EditarOperacionAmbiental_DB_TO_PS_EditarOperacionAmbiental_Response"/>
+                                <con1:input>$editarClasificacionAmbientalResponse</con1:input>
+                            </con1:xsltTransform>
+                        </con3:expr>
+                    </con3:replace>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:branch-node type="condition" id="_FlowId-a050a8a.70bdbe86.0.16e4729096f.N7f38" name="BranchNode1">
+                <con:context>
+                    <con1:userNsDecl prefix="oper" namespace="http://www.bcie.org/OperacionMO"/>
+                    <con1:userNsDecl prefix="oper1" namespace="http://www.bcie.org/OperacionBO"/>
+                </con:context>
+                <con:branch-table variable="body">
+                    <con:xpath>
+                        <con1:xpathText>./oper:ActualizarOperacionRequest/oper:Status</con1:xpathText>
+                    </con:xpath>
+                    <con:branch name="ActualizarCA">
+                        <con:operator>equals</con:operator>
+                        <con:value>'editarCA'</con:value>
+                        <con:flow>
+                            <con:pipeline-node name="PipelinePairNodeEditarOperacionAmbiental">
+                                <con:request>request-a050a8a.70bdbe86.0.16e4729096f.N7eba</con:request>
+                                <con:response>response-a050a8a.70bdbe86.0.16e4729096f.N7eb9</con:response>
+                            </con:pipeline-node>
+                        </con:flow>
+                    </con:branch>
+                    <con:default-branch>
+        <con:flow>
+                            <con:route-node name="RouteNode2">
+                <con:context>
+                    <con1:userNsDecl prefix="oper" namespace="http://www.bcie.org/OperacionMO"/>
+                </con:context>
+                <con:actions>
+                    <con2:route>
+                                        <con1:id>_ActionId-a050a8a.70bdbe86.0.16e4729096f.N7f29</con1:id>
+                        <con2:service ref="ADAPTADORES/ModeloNegocio/DominioOperacion/ActualizarOperacion/BS/ActualizarOperacion_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:operation>update</con2:operation>
+                        <con2:outboundTransform>
+                            <con4:log>
+                                                <con1:id>_ActionId-a050a8a.70bdbe86.0.16e4729096f.N7f28</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>ActualizarOperacion-Request</con4:message>
+                            </con4:log>
+                            <con3:replace varName="body" contents-only="true">
+                                                <con1:id>_ActionId-a050a8a.70bdbe86.0.16e4729096f.N7f27</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/ActualizarOperacion/XQUERY/ActualizarOperacion_PS_TO_ActualizarOperacion_BD_Request"/>
+                                        <con1:param name="ActualizarOperacion">
+                                            <con1:path>$body/oper:ActualizarOperacionRequest</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con2:outboundTransform>
+                        <con2:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                                <con1:id>_ActionId-a050a8a.70bdbe86.0.16e4729096f.N7f26</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioOperacion/ActualizarOperacion/XQUERY/ActualizarOperacion_DB_TO_ActualizarOperacion_PS_Response"/>
+                                        <con1:param name="actualizarOperacionResponse">
+                                            <con1:path>$body/*[1]</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con4:log>
+                                                <con1:id>_ActionId-a050a8a.70bdbe86.0.16e4729096f.N7f25</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>ActualizarOperacion-Response</con4:message>
+                            </con4:log>
+                        </con2:responseTransform>
+                    </con2:route>
+                </con:actions>
+            </con:route-node>
+                        </con:flow>
+                    </con:default-branch>
+                </con:branch-table>
+            </con:branch-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

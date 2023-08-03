@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioContrato/Termino/V1/Wsdl/ADAPTER/ConsultarTreTerminoSAD"/>
+            <con:binding>
+                <con:name>TreTermino12Bnd</con:name>
+                <con:namespace>http://www.bcie.org/ConsultarTreTerminoService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="error" name="error-a050aec.N4ad681c6.0.151ada56a75.N7caa" xmlns:con4="http://www.bea.com/wli/sb/typesystem/config" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+            <con:stage id="_StageId-a050aec.N4ad681c6.0.151ada56a75.N7ca9" name="StageError">
+                <con:context/>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-a050aec.N4ad681c6.0.151ada56a75.N7ca8</con2:id>
+                        <con1:case id="_BranchId-a050aec.N4ad681c6.0.151ada56a75.N7ca7">
+                            <con1:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError) = 0</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:assign varName="codigoError">
+                                    <con2:id>_ActionId-a050aec.N4ad681c6.0.151ada56a75.N7ca6</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:assign>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default/>
+                    </con1:ifThenElse>
+                    <con1:assign varName="inMapeoError">
+                        <con2:id>_ActionId-a050aec.N4ad681c6.0.151ada56a75.N7ca5</con2:id>
+                        <con1:expr>
+                            <con4:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con4:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con4:param name="codigoError">
+                                    <con4:path>xs:string(fn:data($codigoError))</con4:path>
+                                </con4:param>
+                            </con4:xqueryTransform>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:wsCallout>
+                        <con2:id>_ActionId-a050aec.N4ad681c6.0.151ada56a75.N7ca4</con2:id>
+                        <con1:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>MapearError</con1:operation>
+                        <con1:request>
+                            <con1:body wrapped="false">inMapeoError</con1:body>
+                        </con1:request>
+                        <con1:response>
+                            <con1:body wrapped="false">outMapeoError</con1:body>
+                        </con1:response>
+                        <con1:requestTransform/>
+                        <con1:responseTransform/>
+                    </con1:wsCallout>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-a050aec.N4ad681c6.0.151ada56a75.N7ca3</con2:id>
+                        <con1:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/Termino/ConsultarTreTermino/XQUERY/Error_TO_ConsultarTreTermino_Response"/>
+                                <con2:param name="message">
+                                    <con2:path>xs:string(fn:data($fault/ctx:reason))</con2:path>
+                                </con2:param>
+                                <con2:param name="responseMapeoErrorMessage">
+                                    <con2:path>$outMapeoError</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con4:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-a050aec.N4ad681c6.0.151ada56a75.N7ca2</con4:id>
+                    </con4:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteNode1" error-handler="error-a050aec.N4ad681c6.0.151ada56a75.N7caa">
+                <con:context>
+                    <con1:userNsDecl prefix="ter" namespace="http://www.bcie.org/TerminoMO"/>
+                </con:context>
+                <con:actions>
+                    <con2:route>
+                        <con1:id>_ActionId-a050aec.N4ad681c6.0.151ada56a75.N7d61</con1:id>
+                        <con2:service ref="ADAPTADORES/ModeloNegocio/DominioContrato/Termino/ConsultarTreTermino/BS/ConsultarTreTermino_DB" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:operation>ConsultarTreTermino_DB</con2:operation>
+                        <con2:outboundTransform>
+                            <con4:log>
+                                <con1:id>_ActionId-N3f579bc0.N5af5b8db.0.15351d75984.N7fe6</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>ConsultarTreTermino-Request</con4:message>
+                            </con4:log>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a050aec.N4ad681c6.0.151ada56a75.N7d5e</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/Termino/ConsultarTreTermino/XQUERY/ConsultarTreTermino_PS_TO_ConsultarTreTermino_BS_Request"/>
+                                        <con1:param name="ConsultarTreTerminoRequest">
+                                            <con1:path>$body/ter:ConsultarTreTerminoRequest</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con4:log>
+                                <con1:id>_ActionId-N3f57c7ff.N348dc67b.0.16a0d1bc941.N7ffe</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>ConsultarTreTermino-Request</con4:message>
+                            </con4:log>
+                        </con2:outboundTransform>
+                        <con2:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a050aec.N4ad681c6.0.151ada56a75.N7d5b</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioContrato/Termino/ConsultarTreTermino/XQUERY/ConsultarTreTermino_BS_TO_ConsultarTreTermino_PS_Response"/>
+                                        <con1:param name="ConsultarTreTerminoOutput">
+                                            <con1:path>$body/*[1]</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                            <con4:log>
+                                <con1:id>_ActionId-N3f579bc0.N5af5b8db.0.15351d75984.N7fe3</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>ConsultarTreTermino-Response</con4:message>
+                            </con4:log>
+                        </con2:responseTransform>
+                    </con2:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

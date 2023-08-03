@@ -1,0 +1,764 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Sep 27 13:05:04 CDT 2016
+  Author:  Sergio-Morales
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ValidarSCR_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioCliente/ValidarSCR/ValidarSCR_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioCliente/ValidarSCR/ValidarSCR_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ValidarSCR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/ClienteService"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns3="http://www.bcie.org/ClienteMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns4="http://xmlns.bcie.com/OperacionService"
+         xmlns:ns6="http://www.bcie.org/ResultBO" xmlns:ns5="http://www.bcie.org/CatalogoBO"
+         xmlns:ns7="http://www.bcie.org/ClienteBO" xmlns:ns8="http://www.bcie.org/ErrorBO"
+         xmlns:ns9="http://www.bcie.org/OperacionMO" xmlns:ns19="http://www.bcie.org/TerminoBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns10="http://www.bcie.org/OperacionBO"
+         xmlns:ns15="http://www.bcie.org/CommonBO" xmlns:ns14="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns16="http://www.bcie.org/CondicionBO" xmlns:ns11="http://www.bcie.org/ProductoBO"
+         xmlns:ns12="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns18="http://www.bcie.org/DocumentoBO"
+         xmlns:ns22="http://www.bcie.org/HerramientaCEBO" xmlns:ns20="http://www.bcie.org/ComisionBO"
+         xmlns:ns21="http://www.bcie.org/DesembolsoBO" xmlns:ns13="http://www.bcie.org/ContratoBO"
+         xmlns:ns17="http://www.bcie.org/AtributoBO" xmlns:ns23="http://www.bcie.com/ValidarOperacionProceso"
+         xmlns:ns24="http://www.bcie.org/ValidarClienteProcesoMO"
+         xmlns:ns25="http://www.bcie.org/ValidarClienteProcesoBO"
+         xmlns:ns26="http://www.bcie.org/ConsultarSeguimientoCrediticioByIdCliente">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ValidarSCR" location="../WSDLs/ValidarSCRSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="validarscr_bpel_client" partnerLinkType="ns1:ValidarSCR_BPEL" myRole="ValidarSCR_PT"/>
+    <partnerLink name="ConsultaClienteById" partnerLinkType="ns2:ConsultaClienteById" partnerRole="ClientePT"/>
+    <partnerLink name="ConsultaOperacionByIdOperacion" partnerLinkType="ns4:ConsultaOperacionByIdOperacion"
+                 partnerRole="ConsultarOperacionById12Port"/>
+    <partnerLink name="ValidarClienteProceso" partnerLinkType="ns24:ValidarClienteProceso"
+                 partnerRole="ValidarClienteProcesoPT"/>
+    <partnerLink name="ConsultarSeguimientoCrediticioByIdCliente"
+                 partnerLinkType="ns26:ConsultarSeguimientoCrediticioByIdCliente"
+                 partnerRole="ConsultarSeguimientoCrediticioByIdCliente_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestValidarSCRMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseValidarSCRMessage"/>
+    <variable name="setTitleInstance" type="xsd:string"/>
+    <variable name="InvokeConsultaClienteById_In" messageType="ns2:requestConsultarClienteMessageByIdCliente"/>
+    <variable name="InvokeConsultaClienteById_Out" messageType="ns2:responseConsultarClienteMessageByIdCliente"/>
+    <variable name="InvokeConsultaOperacionByIdOperacion_In" messageType="ns4:requestConsultarOperacionMessage"/>
+    <variable name="InvokeConsultaOperacionByIdOperacion_Out" messageType="ns4:responseConsultarOperacionMessage"/>
+    <variable name="InvokeValidarClienteProceso_In" messageType="ns24:ValidarClienteProcesoRequestMessage"/>
+    <variable name="InvokeValidarClienteProceso_Out" messageType="ns24:ValidarClienteProcesoResponseMessage"/>
+    <variable name="InvokeConsultarSeguimientoCrediticioById_In"
+              messageType="ns26:requestConsultarSeguimientoCrediticioByIdClienteMessage"/>
+    <variable name="InvokeConsultarSeguimientoCrediticioById_Out"
+              messageType="ns26:responseConsultarSeguimientoCrediticioByIdClienteMessage"/>
+    <variable name="SCRCliente" type="xsd:string"/>
+    <variable name="SCRSeguimiento" type="xsd:string"/>
+    <variable name="SCRFinal" type="xsd:string"/>
+    <variable name="SCRReferencia" type="xsd:string"/>
+    <variable name="SCR" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceCatchAll">
+        <assign name="AssignCatchAll">
+          <copy bpelx:insertMissingToData="yes">
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>'Error en ValidarSCR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns3:Resultado/ns6:error/ns8:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="validarscr_bpel_client"
+               portType="ns1:ValidarSCR_PT" operation="validarSCR"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ValidarSCR_BPEL.wsdl) --><receive name="receiveInput" partnerLink="validarscr_bpel_client" portType="ns1:ValidarSCR_PT" operation="validarSCR" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleInstance">
+      <copy bpelx:insertMissingToData="yes">
+        <from>oraext:setFlowInstanceTitle(concat("Operacion:",string($inputVariable.request/ns3:idOperacion)))</from>
+        <to>$setTitleInstance</to>
+      </copy>
+    </assign>
+    <validate name="ValidateInput" variables="inputVariable"/>
+    <if name="IfValidaIdOperacionNoValido" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         
+      <![CDATA[NoValido]]></documentation>
+      <condition>string-length($inputVariable.request/ns3:idOperacion)= 0</condition>
+      <sequence name="SequenceValidarInput">
+         
+         
+         
+      <assign name="AssignValidarInput">
+          <copy bpelx:insertMissingToData="yes">
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>'Error al consultar id operacion'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+          </copy>
+        </assign><reply name="ReplyError" variable="outputVariable" partnerLink="validarscr_bpel_client"
+                        portType="ns1:ValidarSCR_PT" operation="validarSCR"/><exit name="Exit"/></sequence>
+      <else>
+         
+      <documentation>
+          <![CDATA[Valido]]>
+        </documentation><empty name="Empty"/></else>
+   </if>
+    <scope name="ScopeConsultaOperacionById">
+      <sequence name="SequenceConsultarOperacionById">
+        <assign name="AssignInConsultaOperacionById">
+          <copy bpelx:insertMissingToData="yes">
+            <from>$inputVariable.request/ns3:idOperacion</from>
+            <to>$InvokeConsultaOperacionByIdOperacion_In.request/ns9:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultaOperacionByIdOperacion" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultaOperacionByIdOperacion" portType="ns4:ConsultarOperacionById12Port"
+                operation="ConsultarOperacionById" inputVariable="InvokeConsultaOperacionByIdOperacion_In"
+                outputVariable="InvokeConsultaOperacionByIdOperacion_Out"/>
+        <if name="IfValidaOperacion">
+          <documentation>
+            <![CDATA[NoValido]]>
+          </documentation>
+          <condition>$InvokeConsultaOperacionByIdOperacion_Out.response/ns9:Resultado/ns6:result = 'ERROR'</condition>
+          <sequence name="SequenceError">
+            <assign name="ErrorIdOperacion">
+              <copy bpelx:insertMissingToData="yes">
+                <from>$InvokeConsultaOperacionByIdOperacion_Out.response/ns9:Resultado/ns6:error/ns8:errorCode</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+              </copy>
+              <copy bpelx:insertMissingToData="yes">
+                <from>$InvokeConsultaOperacionByIdOperacion_Out.response/ns9:Resultado/ns6:error/ns8:errorDescription</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="validarscr_bpel_client"
+                   portType="ns1:ValidarSCR_PT" operation="validarSCR"/>
+            <exit name="Exit"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[Valido]]>
+            </documentation>
+            <sequence name="SequenceValidaCliente">
+              <if name="IfValidaSiLaOperacionTieneIdClienteYSiEsDeGarantiaSoberanaYSectorPublico">
+                <documentation>
+                  <![CDATA[NoCumple]]>
+                </documentation>
+                <condition>string-length($InvokeConsultaOperacionByIdOperacion_Out.response/ns9:Operacion/ns10:cliente/ns7:idCliente) = 0 or $InvokeConsultaOperacionByIdOperacion_Out.response/ns9:Operacion/ns10:cliente/ns7:sector/ns5:Id !=1 or $InvokeConsultaOperacionByIdOperacion_Out.response/ns9:Operacion/ns10:tipoGarantia/ns5:Id != 2</condition><sequence name="SequenceError"
+                                                                                                                                                               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="ErrorIdCliente">
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>'OK'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                    </copy>
+                    <copy>
+                      <from>concat('Consulta realizada correctamente   ','SECTOR: ',$InvokeConsultaOperacionByIdOperacion_Out.response/ns9:Operacion/ns10:cliente/ns7:sector/ns5:Descripcion,'  GARANTIA: ',$InvokeConsultaOperacionByIdOperacion_Out.response/ns9:Operacion/ns10:tipoGarantia/ns5:Descripcion)</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                    </copy>
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>'NO_APLICA'</from>
+                      <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:estatusComparacion</to>
+                    </copy>
+                  </assign>
+      <reply name="ReplyError" variable="outputVariable" partnerLink="validarscr_bpel_client"
+             portType="ns1:ValidarSCR_PT" operation="validarSCR"/>
+      <exit name="Exit"/>
+   </sequence><else>
+                  <documentation>
+                    <![CDATA[Cumple]]>
+                  </documentation>
+                  <scope name="ScopeConsultarClienteById">
+                    <variables>
+                      <variable name="bandera" type="xsd:int"/>
+                    </variables>
+                    <sequence name="SequenceConsultarClienteById">
+                      <assign name="AssignInConsultaCliente">
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>$InvokeConsultaOperacionByIdOperacion_Out.response/ns9:Operacion/ns10:cliente/ns7:idCliente</from>
+                          <to>$InvokeConsultaClienteById_In.request/ns3:idCliente</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeConsultaClienteById" bpelx:invokeAsDetail="no"
+                              partnerLink="ConsultaClienteById" portType="ns2:ClientePT"
+                              operation="consultarByIdCliente" inputVariable="InvokeConsultaClienteById_In"
+                              outputVariable="InvokeConsultaClienteById_Out"/>
+                      <if name="IfValidarSiClienteExiste">
+                        <documentation>
+                          <![CDATA[NoExiste]]>
+                        </documentation>
+                        <condition>$InvokeConsultaClienteById_Out.response/ns3:Resultado/ns6:result = 'ERROR'</condition>
+                        <sequence name="SequenceNoExisteIdCliente">
+                          <assign name="AssignErrorExisteCLiente">
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>'OK'</from>
+                              <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes">
+                              <from>'Id de cliente no existe'</from>
+                              <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                            </copy>
+                          </assign>
+                          <reply name="ReplyError" variable="outputVariable" partnerLink="validarscr_bpel_client"
+                                 portType="ns1:ValidarSCR_PT" operation="validarSCR"/>
+                          <exit name="Exit"/>
+                        </sequence>
+                        <else>
+                          <documentation>
+                            <![CDATA[Existe]]>
+                          </documentation>
+                          <sequence name="SequenceOperacionSCR">
+                            <sequence name="SequenceOperacionSCR">
+                              <assign name="AssignValidarClienteProceso">
+                                <copy bpelx:insertMissingToData="yes">
+                                  <from>$InvokeConsultaClienteById_In.request/ns3:idCliente</from>
+                                  <to>$InvokeValidarClienteProceso_In.request/ns24:ClienteProceso/ns25:idCliente</to>
+                                </copy>
+                                <copy>
+                                  <from>20</from>
+                                  <to>$InvokeValidarClienteProceso_In.request/ns24:ClienteProceso/ns25:idProceso</to>
+                                </copy>
+                                <copy bpelx:insertMissingToData="yes">
+                                  <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/Utilidades/ConfiguracionProcesos/V1/DVM/ConfiguracionProcesos.dvm","ParameterName","SCR","ParameterValue","NotFound")</from>
+                                  <to>$SCRReferencia</to>
+                                </copy>
+                              </assign>
+                              <invoke name="InvokeValidarClienteProceso" bpelx:invokeAsDetail="no"
+                                      partnerLink="ValidarClienteProceso" portType="ns24:ValidarClienteProcesoPT"
+                                      operation="ValidarClienteProceso" inputVariable="InvokeValidarClienteProceso_In"
+                                      outputVariable="InvokeValidarClienteProceso_Out"/>
+                              <if name="IfValidaSiUnClienteTieneUnProceso">
+                                <documentation>
+                                  <![CDATA[false]]>
+                                </documentation>
+                                <condition>$InvokeValidarClienteProceso_Out.response/ns24:enProceso = 'false'</condition>
+                                <sequence name="SequenceProcesoEnFalse">
+                                  <if name="IfValidaSiTieneSCR">
+                                    <documentation>
+                                      <![CDATA[NoExiste]]>
+                                    </documentation>
+                                    <condition>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:SCR/ns5:DescripcionCorta = 'false' or string-length($InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:SCR/ns5:DescripcionCorta) = 0</condition>
+                                    <sequence name="SequenceError">
+                                      <assign name="AssignError">
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>'ERROR'</from>
+                                          <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                                        </copy>
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>'NO_APLICA'</from>
+                                          <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:estatusComparacion</to>
+                                        </copy>
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>'El cliente no cuenta con SCR y tampoco con un proceso iniciado'</from>
+                                          <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                                        </copy>
+                                      </assign>
+                                      <reply name="ReplyError" variable="outputVariable"
+                                             partnerLink="validarscr_bpel_client" portType="ns1:ValidarSCR_PT"
+                                             operation="validarSCR"/>
+                                      <exit name="Exit"/>
+                                    </sequence>
+                                    <else>
+                                      <documentation>
+                                        <![CDATA[Existe]]>
+                                      </documentation>
+                                      <empty name="Empty"/>
+                                    </else>
+                                  </if>
+                                  <assign name="AssignSCRCliente">
+                                    <copy bpelx:insertMissingToData="yes">
+                                      <from>substring-after($InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:SCR/ns5:DescripcionCorta,'-')</from>
+                                      <to>$SCRCliente</to>
+                                    </copy>
+                                    <copy keepSrcElementName="no" bpelx:insertMissingToData="yes">
+                                      <from>substring-after($InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:SCR/ns5:DescripcionCorta,'-')</from>
+                                      <to>$SCRFinal</to>
+                                    </copy>
+                                    <copy bpelx:insertMissingToData="yes">
+                                      <from>1</from>
+                                      <to>$bandera</to>
+                                    </copy>
+                                  </assign>
+                                </sequence>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[true]]>
+                                  </documentation>
+                                  <sequence name="SequenceSeguimientoCrediticio">
+                                    <assign name="AssignConsultarSeguimientoCrediticioById">
+                                      <copy bpelx:insertMissingToData="yes">
+                                        <from>$InvokeConsultaClienteById_In.request/ns3:idCliente</from>
+                                        <to>$InvokeConsultarSeguimientoCrediticioById_In.request/ns3:idCliente</to>
+                                      </copy>
+                                    </assign>
+                                    <invoke name="InvokeConsultarSeguimientoCrediticioById" bpelx:invokeAsDetail="no"
+                                            partnerLink="ConsultarSeguimientoCrediticioByIdCliente"
+                                            portType="ns26:ConsultarSeguimientoCrediticioByIdCliente_PT"
+                                            operation="ConsultarSeguimientoCrediticioByIdCliente"
+                                            inputVariable="InvokeConsultarSeguimientoCrediticioById_In"
+                                            outputVariable="InvokeConsultarSeguimientoCrediticioById_Out"/>
+                                    <assign name="AssignSCR">
+                                      <copy bpelx:insertMissingToData="yes">
+                                        <from>substring-after($InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:SCR/ns5:DescripcionCorta,'-')</from>
+                                        <to>$SCRCliente</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes">
+                                        <from>substring-after($InvokeConsultarSeguimientoCrediticioById_Out.response/ns3:SeguimientoCrediticio/ns7:scr/ns5:DescripcionCorta,'-')</from>
+                                        <to>$SCRSeguimiento</to>
+                                      </copy>
+                                    </assign>
+                                    <if name="IfSCRMayorEntreClienteYSeguimientoCrediticio">
+                                      <documentation>
+                                        <![CDATA[MayorCliente]]>
+                                      </documentation>
+                                      <condition>$SCRCliente &gt;= $SCRSeguimiento</condition>
+                                      <assign name="AssignSCRCliente">
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>$SCRCliente</from>
+                                          <to>$SCRFinal</to>
+                                        </copy>
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>1</from>
+                                          <to>$bandera</to>
+                                        </copy>
+                                      </assign>
+                                      <else>
+                                        <documentation>
+                                          <![CDATA[MayorSeguimientoCrediticio]]>
+                                        </documentation>
+                                        <assign name="AssignSCRSeguimientoCrediticio">
+                                          <copy bpelx:insertMissingToData="yes">
+                                            <from>$SCRSeguimiento</from>
+                                            <to>$SCRFinal</to>
+                                          </copy>
+                                          <copy bpelx:insertMissingToData="yes">
+                                            <from>2</from>
+                                            <to>$bandera</to>
+                                          </copy>
+                                        </assign>
+                                      </else>
+                                    </if>
+                                  </sequence>
+                                </else>
+                              </if>
+                              <if name="IfComparacionDeSCRReferencia">
+                                <documentation>
+                                  <![CDATA[MayorQueReferencia]]>
+                                </documentation>
+                                <condition>$SCRFinal &gt; $SCRReferencia</condition>
+                                <sequence name="SequenceMayorSCR">
+                                  <if name="IfMayorValidaSiElSCRComparadoFueDeClienteOSeguimiento">
+                                    <documentation>
+                                      <![CDATA[Cliente]]>
+                                    </documentation>
+                                    <condition>$bandera = 1</condition>
+                                    <assign name="AssignSCRCliente">
+                                      <copy bpelx:insertMissingToData="yes">
+                                        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:SCR/ns5:DescripcionCorta</from>
+                                        <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrFuente/ns7:scr</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes">
+                                        <from>'OK'</from>
+                                        <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes">
+                                        <from>'Operación realizada correctamente'</from>
+                                        <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes">
+                                        <from>'SCR_CLIENTE'</from>
+                                        <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrFuente/ns7:observacion</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes">
+                                        <from>concat('SCR-',$SCRReferencia)</from>
+                                        <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrReferencia/ns7:scr</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes">
+                                        <from>'SCR_REFERENCIA'</from>
+                                        <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrReferencia/ns7:observacion</to>
+                                      </copy>
+                                      <copy bpelx:insertMissingToData="yes">
+                                        <from>'MAYOR_REFERENCIA'</from>
+                                        <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:estatusComparacion</to>
+                                      </copy>
+                                    </assign>
+                                    <else>
+                                      <documentation>
+                                        <![CDATA[SeguimientoCrediticio]]>
+                                      </documentation>
+                                      <assign name="AssignSCRSeguimiento">
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>$InvokeConsultarSeguimientoCrediticioById_Out.response/ns3:SeguimientoCrediticio/ns7:scr/ns5:DescripcionCorta</from>
+                                          <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrFuente/ns7:scr</to>
+                                        </copy>
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>'OK'</from>
+                                          <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                                        </copy>
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>'Operación realizada correctamente'</from>
+                                          <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                                        </copy>
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>'SCR_SEGUIMIENTO_CREDITICIO'</from>
+                                          <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrFuente/ns7:observacion</to>
+                                        </copy>
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>concat('SCR-',$SCRReferencia)</from>
+                                          <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrReferencia/ns7:scr</to>
+                                        </copy>
+                                        <copy bpelx:insertMissingToData="yes">
+                                          <from>'MAYOR_REFERENCIA'</from>
+                                          <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:estatusComparacion</to>
+                                        </copy>
+                                      </assign>
+                                    </else>
+                                  </if>
+                                </sequence>
+                                <elseif>
+                                  <documentation>
+                                    <![CDATA[IgualQueReferencia]]>
+                                  </documentation>
+                                  <condition>$SCRFinal = $SCRReferencia</condition><if name="IfIgualValidaSiElSCRComparadoFueDeClienteOSeguimiento"
+                                                                                       xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         
+      <![CDATA[Cliente]]></documentation>
+      <condition>$bandera = 1</condition>
+      <assign name="AssignSCRCliente">
+         
+         
+         
+         
+         
+         
+         
+      <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:SCR/ns5:DescripcionCorta</from>
+            <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrFuente/ns7:scr</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>'OK'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>'Operación realizada correctamente'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>'SCR_CLIENTE'</from>
+            <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrFuente/ns7:observacion</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>concat('SCR-',$SCRReferencia)</from>
+            <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrReferencia/ns7:scr</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>'SCR_REFERENCIA'</from>
+            <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrReferencia/ns7:observacion</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>'IGUAL_REFERENCIA'</from>
+            <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:estatusComparacion</to>
+         </copy></assign>
+      <else>
+         <documentation>
+            <![CDATA[SeguimientoCrediticio]]>
+         </documentation>
+         <assign name="AssignSCRSeguimiento">
+            
+            
+            
+            
+            
+            
+         <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>$InvokeConsultarSeguimientoCrediticioById_Out.response/ns3:SeguimientoCrediticio/ns7:scr/ns5:DescripcionCorta</from>
+               <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrFuente/ns7:scr</to>
+            </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>'OK'</from>
+               <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+            </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>'Operación realizada correctamente'</from>
+               <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+            </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>'SCR_SEGUIMIENTO_CREDITICIO'</from>
+               <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrFuente/ns7:observacion</to>
+            </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>concat('SCR-',$SCRReferencia)</from>
+               <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrReferencia/ns7:scr</to>
+            </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>'IGUAL_REFERENCIA'</from>
+               <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:estatusComparacion</to>
+            </copy></assign>
+      </else>
+   </if></elseif>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[MenorQueReferencia]]>
+                                  </documentation><if name="IfMenorValidaSiElSCRComparadoFueDeClienteOSeguimiento"
+                                                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         
+      <![CDATA[Cliente]]></documentation>
+      <condition>$bandera = 1</condition>
+      <assign name="AssignSCRCliente">
+         
+         
+         
+         
+         
+         
+         
+      <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:SCR/ns5:DescripcionCorta</from>
+            <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrFuente/ns7:scr</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>'OK'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>'Operación realizada correctamente'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>'SCR_CLIENTE'</from>
+            <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrFuente/ns7:observacion</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>concat('SCR-',$SCRReferencia)</from>
+            <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrReferencia/ns7:scr</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>'SCR_REFERENCIA'</from>
+            <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrReferencia/ns7:observacion</to>
+         </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+            <from>'MENOR_REFERENCIA'</from>
+            <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:estatusComparacion</to>
+         </copy></assign>
+      <else>
+         <documentation>
+            <![CDATA[SeguimientoCrediticio]]>
+         </documentation>
+         <assign name="AssignSCRSeguimiento">
+            
+            
+            
+            
+            
+            
+         <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>$InvokeConsultarSeguimientoCrediticioById_Out.response/ns3:SeguimientoCrediticio/ns7:scr/ns5:DescripcionCorta</from>
+               <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrFuente/ns7:scr</to>
+            </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>'OK'</from>
+               <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+            </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>'Operación realizada correctamente'</from>
+               <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+            </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>'SCR_SEGUIMIENTO_CREDITICIO'</from>
+               <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrFuente/ns7:observacion</to>
+            </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>concat('SCR-',$SCRReferencia)</from>
+               <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:scrReferencia/ns7:scr</to>
+            </copy><copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <from>'MENOR_REFERENCIA'</from>
+               <to>$outputVariable.response/ns3:Cliente/ns7:detalleSCR/ns7:estatusComparacion</to>
+            </copy></assign>
+      </else>
+   </if>
+                                </else>
+                              </if>
+                            </sequence>
+                          </sequence>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                </else>
+              </if>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <assign name="AssignFinal">
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:idCliente</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:idCliente</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:idFacturador</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:idFacturador</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:razonSocial</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:razonSocial</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:abreviatura</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:abreviatura</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:tipoPersona</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:tipoPersona</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:tipoCliente</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:tipoCliente</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:sector</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:sector</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:tipoInstitucion</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:tipoInstitucion</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:pais</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:pais</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:grupoEconomico</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:grupoEconomico</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:tipoIdentificacion</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:tipoIdentificacion</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:numeroIdentificacion</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:numeroIdentificacion</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:direccion</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:direccion</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:telefono</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:telefono</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:fax</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:fax</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:email</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:email</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:ciudad</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:ciudad</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:oficina</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:oficina</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:grupoEmpresarial</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:grupoEmpresarial</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:fechaRegistro</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:fechaRegistro</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:fechaAprobacion</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:fechaAprobacion</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:ejecutivo</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:ejecutivo</to>
+      </copy>
+      <copy>
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:responsableCliente</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:responsableCliente</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:InformacionCorrecta</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:InformacionCorrecta</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:ActualizacionPermitida</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:ActualizacionPermitida</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:comentarioAprobacion</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:comentarioAprobacion</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:revisadoAprobacion</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:revisadoAprobacion</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:status</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:status</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:fechaBaja</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:fechaBaja</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:diaPago</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:diaPago</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$InvokeConsultaClienteById_Out.response/ns3:Cliente/ns7:perspectiva</from>
+        <to>$outputVariable.response/ns3:Cliente/ns7:perspectiva</to>
+      </copy>
+     
+     
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="validarscr_bpel_client" portType="ns1:ValidarSCR_PT" operation="validarSCR" variable="outputVariable"/>
+  </sequence>
+</process>

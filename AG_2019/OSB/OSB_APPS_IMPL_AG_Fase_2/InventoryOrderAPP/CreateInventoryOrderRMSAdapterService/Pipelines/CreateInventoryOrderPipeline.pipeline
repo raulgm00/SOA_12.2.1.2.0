@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="InventoryOrderAPP/CreateInventoryOrderRMSAdapterService/Resources/WSDL/CreateInventoryOrderRMSAdapterService"/>
+            <con:binding>
+                <con:name>createInventoryOrder_bind</con:name>
+                <con:namespace>http://www.agarcia.mx/ServiceBus/CreateInventoryOrderRMSAdapterService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-afffa45.7bc59f8.0.1746a58d4d7.N7f59">
+        <con:pipeline type="request" name="request-afffaf4.N4c8c3016.0.174563d8ebc.N7ff9">
+            <con:stage id="_StageId-afffaf4.N4c8c3016.0.174563d8ebc.N7ff7" name="StageRequest">
+                <con:context>
+                    <con2:userNsDecl prefix="inv" namespace="http://www.agarcia.mx/EnterpriseObjects/Inventory"/>
+                    <con2:userNsDecl prefix="com" namespace="http://www.agarcia.mx/EnterpriseObjects/Common"/>
+                </con:context>
+                <con:actions>
+                    <con3:report>
+                        <con2:id>_ActionId-afffa3e.181b09c0.0.1746fc9b103.N7ffe</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>TrackingID</con3:key>
+                            <con3:varName>body</con3:varName>
+                            <con3:value>
+                                <con2:xpathText>./inv:CreateInventoryEBM/inv:Header/com:TrackingID</con2:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                    <con1:assign varName="TrackingID">
+                        <con2:id>_ActionId-afffa45.7bc59f8.0.1746a58d4d7.N7fc7</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body/inv:CreateInventoryEBM/inv:Header/com:TrackingID</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:assign varName="InstanceID">
+                        <con2:id>_ActionId-afffa45.7bc59f8.0.1746a58d4d7.N7fc4</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body/inv:CreateInventoryEBM/inv:Header/com:InstanceID</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-afffa78.60e15d9e.0.17465b3cd73.N7f6d</con2:id>
+                        <con1:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="InventoryOrderAPP/CreateInventoryOrderRMSAdapterService/Resources/Transformations/XformTransformationEBMToSOStatusDesc"/>
+                                <con2:input>$body/inv:CreateInventoryEBM</con2:input>
+                            </con2:xsltTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con3:report>
+                        <con2:id>_ActionId-afffa3e.181b09c0.0.1746fc9b103.N7feb</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>TrackingID</con3:key>
+                            <con3:varName>body</con3:varName>
+                            <con3:value>
+                                <con2:xpathText>$TrackingID</con2:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                    <con1:validate>
+                        <con2:id>_ActionId-afffa3e.N27bc2447.0.1746e3a8576.N7ffe</con2:id>
+                        <con1:schema ref="MetaData/Components/Custom/Schemas/RMS_XSD/SOStatusDesc"/>
+                        <con1:schemaElement xmlns:v1="http://www.oracle.com/retail/integration/base/bo/SOStatusDesc/v1">v1:SOStatusDesc</con1:schemaElement>
+                        <con1:varName>body</con1:varName>
+                        <con1:location>
+                            <con2:xpathText>./*</con2:xpathText>
+                        </con1:location>
+                    </con1:validate>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-afffa78.60e15d9e.0.17465b3cd73.N7f6a</con2:id>
+                        <con1:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="InventoryOrderAPP/CreateInventoryOrderRMSAdapterService/Resources/Transformations/XformInvokeRMSAQJMS"/>
+                                <con2:input>$body/*</con2:input>
+                            </con2:xsltTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con3:report xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id>_ActionId-afffa3e.181b09c0.0.1746fc9b103.N7fdf</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>$body/*</con2:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>TrackingID</con3:key>
+                            <con3:varName>body</con3:varName>
+                            <con3:value>
+                                <con2:xpathText>$TrackingID</con2:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-afffaf4.N4c8c3016.0.174563d8ebc.N7ff8">
+            <con:stage id="_StageId-afffaf4.N4c8c3016.0.174563d8ebc.N7ff6" name="StageResponse">
+                <con:context>
+                    <con2:userNsDecl prefix="inv" namespace="http://www.agarcia.mx/EnterpriseObjects/Inventory"/>
+                    <con2:userNsDecl prefix="com" namespace="http://www.agarcia.mx/EnterpriseObjects/Common"/>
+                </con:context>
+                <con:actions>
+                    <con1:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-afffa45.7bc59f8.0.1746a58d4d7.N7f23</con2:id>
+                        <con1:location>
+                            <con2:xpathText>$body</con2:xpathText>
+                        </con1:location>
+                        <con1:expr>
+                            <con2:xsltTransform>
+                                <con2:resource ref="InventoryOrderAPP/CreateInventoryOrderRMSAdapterService/Resources/Transformations/ResponseTransformation"/>
+                                <con2:input>$body/*</con2:input>
+                                <con2:param name="Code">
+                                    <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0000", "ERROR_CODE", "NOT FOUND")</con2:path>
+                                </con2:param>
+                                <con2:param name="Message">
+                                    <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0000", "USER_MESSAGE", "NOT FOUND")</con2:path>
+                                </con2:param>
+                                <con2:param name="Detail">
+                                    <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0000", "CATEGORY", "NOT FOUND")</con2:path>
+                                </con2:param>
+                                <con2:param name="InstanceID">
+                                    <con2:path>$InstanceID</con2:path>
+                                </con2:param>
+                                <con2:param name="TrackingID">
+                                    <con2:path>$TrackingID</con2:path>
+                                </con2:param>
+                            </con2:xsltTransform>
+                        </con1:expr>
+                    </con1:replace>
+                    <con3:report xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                        <con2:id>_ActionId-afffa3e.181b09c0.0.1746fc9b103.N7fe2</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>TrackingID</con3:key>
+                            <con3:varName>body</con3:varName>
+                            <con3:value>
+                                <con2:xpathText>$TrackingID</con2:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-afffa45.7bc59f8.0.1746a58d4d7.N7f59">
+            <con:stage id="_StageId-afffa45.7bc59f8.0.1746a58d4d7.N7f58" name="Stage1">
+                <con:context>
+                    <con2:userNsDecl prefix="inv" namespace="http://www.agarcia.mx/EnterpriseObjects/Inventory"/>
+                    <con2:userNsDecl prefix="com" namespace="http://www.agarcia.mx/EnterpriseObjects/Common"/>
+                </con:context>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-afffa45.7bc59f8.0.1746a58d4d7.N7eea</con2:id>
+                        <con1:case id="_BranchId-afffa45.7bc59f8.0.1746a58d4d7.N7ee9">
+                            <con1:condition>
+                                <con2:xqueryText>$fault/ctx:errorCode="OSB-382505"</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:replace varName="body" contents-only="true">
+                                    <con2:id>_ActionId-afffa1c.2870508e.0.17469ec2a9c.N7ff9</con2:id>
+                                    <con1:location>
+                                        <con2:xpathText>$body</con2:xpathText>
+                                    </con1:location>
+                                    <con1:expr>
+                                        <con2:xsltTransform>
+                                            <con2:resource ref="InventoryOrderAPP/CreateInventoryOrderRMSAdapterService/Resources/Transformations/ResponseTransformation"/>
+                                            <con2:input>$body/*</con2:input>
+                                            <con2:param name="Code">
+                                                <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0004", "ERROR_CODE", "NOT FOUND")</con2:path>
+                                            </con2:param>
+                                            <con2:param name="Message">
+                                                <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0004", "USER_MESSAGE", "NOT FOUND")</con2:path>
+                                            </con2:param>
+                                            <con2:param name="Detail">
+                                                <con2:path>$fault/ctx:details</con2:path>
+                                            </con2:param>
+                                            <con2:param name="InstanceID">
+                                                <con2:path>$InstanceID</con2:path>
+                                            </con2:param>
+                                            <con2:param name="TrackingID">
+                                                <con2:path>$TrackingID</con2:path>
+                                            </con2:param>
+                                        </con2:xsltTransform>
+                                    </con1:expr>
+                                </con1:replace>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con1:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-afffa45.7bc59f8.0.1746a58d4d7.N7f20</con2:id>
+                                <con1:location>
+                                    <con2:xpathText>$body</con2:xpathText>
+                                </con1:location>
+                                <con1:expr>
+                                    <con2:xsltTransform>
+                                        <con2:resource ref="InventoryOrderAPP/CreateInventoryOrderRMSAdapterService/Resources/Transformations/ResponseTransformation"/>
+                                        <con2:input>$body/*</con2:input>
+                                        <con2:param name="Code">
+                                            <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0006", "ERROR_CODE", "NOT FOUND")</con2:path>
+                                        </con2:param>
+                                        <con2:param name="Message">
+                                            <con2:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0006", "USER_MESSAGE", "NOT FOUND")</con2:path>
+                                        </con2:param>
+                                        <con2:param name="Detail">
+                                            <con2:path>$fault/ctx:details</con2:path>
+                                        </con2:param>
+                                        <con2:param name="InstanceID">
+                                            <con2:path>$InstanceID</con2:path>
+                                        </con2:param>
+                                        <con2:param name="TrackingID">
+                                            <con2:path>$TrackingID</con2:path>
+                                        </con2:param>
+                                    </con2:xsltTransform>
+                                </con1:expr>
+                            </con1:replace>
+                        </con1:default>
+                    </con1:ifThenElse>
+                    <con3:report>
+                        <con2:id>_ActionId-afffa3e.181b09c0.0.1746fc9b103.N7ff1</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>TrackingID</con3:key>
+                            <con3:varName>body</con3:varName>
+                            <con3:value>
+                                <con2:xpathText>$TrackingID</con2:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                    <con2:reply>
+                        <con2:id>_ActionId-afffa45.7bc59f8.0.1746a58d4d7.N7edd</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="Pipeline Pair Node1">
+                <con:request>request-afffaf4.N4c8c3016.0.174563d8ebc.N7ff9</con:request>
+                <con:response>response-afffaf4.N4c8c3016.0.174563d8ebc.N7ff8</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteNodeJMSRIB" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                <con:context/>
+                <con:actions>
+                    <con1:route>
+                        <con2:id>_ActionId-afffa45.7bc59f8.0.1746a58d4d7.N7f91</con2:id>
+                        <con1:service ref="InventoryOrderAPP/CreateInventoryOrderRMSAdapterService/BusinessService/RIBAQJMSModuleSOStatus" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:outboundTransform>
+                            <con4:routing-options xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con2:id>_ActionId-afffa45.7bc59f8.0.1746a58d4d7.N7f8e</con2:id>
+                                <con4:mode>request</con4:mode>
+                                <con4:qualityOfService>exactly-once</con4:qualityOfService>
+                            </con4:routing-options>
+                            <con4:transport-headers xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con2:id>_ActionId-afffa45.7bc59f8.0.1746a58d4d7.N7f8b</con2:id>
+                                <con4:header-set>outbound-request</con4:header-set>
+                                <con4:header value="expression" name="threadValue">
+                                    <con2:xqueryText>"1"</con2:xqueryText>
+                                </con4:header>
+                            </con4:transport-headers>
+                        </con1:outboundTransform>
+                        <con1:responseTransform/>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+        <con:shared-variables>
+            <con:variable>TrackingID</con:variable>
+            <con:variable>InstanceID</con:variable>
+        </con:shared-variables>
+    </con:router>
+</con:pipelineEntry>

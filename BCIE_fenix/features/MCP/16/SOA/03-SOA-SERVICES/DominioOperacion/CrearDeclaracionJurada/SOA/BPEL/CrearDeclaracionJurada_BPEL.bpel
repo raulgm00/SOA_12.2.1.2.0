@@ -1,0 +1,736 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Aug 17 13:34:36 CDT 2015
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CrearDeclaracionJurada_BPEL"
+         targetNamespace="http://xmlns.oracle.com/DominioOperacion/CrearDeclaracionJurada/CrearDeclaracionJurada_BPEL"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:client="http://xmlns.oracle.com/DominioOperacion/CrearDeclaracionJurada/CrearDeclaracionJurada_BPEL"
+         xmlns:ora="http://schemas.oracle.com/xpath/extension" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:ns1="http://xmlns.bcie.com/DeclaracionJuradaService"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns3="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns4="http://www.bcie.org/ResultBO" xmlns:ns5="http://www.bcie.org/ErrorBO"
+         xmlns:ns2="http://www.bcie.org/DeclaracionJuradaMO" xmlns:ns6="http://xmlns.bcie.com/OperacionService"
+         xmlns:ns7="http://www.bcie.org/OperacionMO" xmlns:ns11="http://www.bcie.org/CuestionarioBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns8="http://www.bcie.org/OperacionBO"
+         xmlns:ns12="http://www.bcie.org/PreguntaBO" xmlns:ns10="http://www.bcie.org/HerramientaBO"
+         xmlns:ns13="http://www.bcie.org/DocumentoBO" xmlns:ns9="http://www.bcie.org/ClienteBO"
+         xmlns:ns14="http://www.bcie.org/CatalogoBO" xmlns:ns15="http://www.bcie.org/ProductoBO">
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/DeclaracionJuradaService" location="../WSDLs/CrearDeclaracionJuradaWrapper1.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <partnerLink name="CrearDeclaracionJuradaLAA" partnerLinkType="ns1:CrearDeclaracionJuradaLAA"
+                 partnerRole="DeclaracionJuradaPT"/>
+    <partnerLink name="CrearDeclaracionJuradaDB" partnerLinkType="ns1:CrearDeclaracionJuradaDB"
+                 partnerRole="DeclaracionJuradaPT"/>
+    <partnerLink name="ConsultarOperacionByIdOperacionService"
+                 partnerLinkType="ns6:ConsultarOperacionByIdOperacionService"
+                 partnerRole="ConsultarOperacionById12Port"/>
+    <partnerLink name="CrearDeclaracionJurada" partnerLinkType="ns1:CrearDeclaracionJurada"
+                 myRole="DeclaracionJuradaPT"/>
+    <partnerLink name="CrearDeclaracionOperacionDB" partnerLinkType="ns1:CrearDeclaracionOperacionService"
+                 partnerRole="CrearDeclaracionOperacionPT"/>
+    <partnerLink name="DuplicarDeclaracionJuradaLAAService" partnerLinkType="ns1:DuplicarDeclaracionJuradaLAAService"
+                 partnerRole="DuplicarDeclaracionJuradaPT"/>
+  </partnerLinks>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <!-- Reference to the message that will be returned to the requester-->
+    
+    <variable name="inputVariable" messageType="ns1:requestCrearDeclaracionJuradaMessage"/>
+    <variable name="outputVariable" messageType="ns1:responseCrearDeclaracionJuradaMessage"/>
+     <variable name="runtimeFaultVariable" messageType="bpelx:RuntimeFaultMessage"/>
+        <variable name="consultarOperacionById_OutputVariable" messageType="ns6:responseConsultarOperacionMessage"/>
+    
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence5">
+        <assign name="AssignCatchAll">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:result</to>
+          </copy>
+          <copy>
+            <from>$runtimeFaultVariable.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:message</to>
+          </copy>
+          <copy>
+            <from>$runtimeFaultVariable.code</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorCode</to>
+          </copy>
+          <copy>
+            <from>$runtimeFaultVariable.detail</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyCatchAll" variable="outputVariable" partnerLink="CrearDeclaracionJurada"
+               portType="ns1:DeclaracionJuradaPT" operation="crearDeclaracionJurada"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CrearDeclaracionJurada_BPEL.wsdl) -->
+    <receive name="receiveInput" variable="inputVariable" createInstance="yes" partnerLink="CrearDeclaracionJurada"
+             portType="ns1:DeclaracionJuradaPT" operation="crearDeclaracionJurada"/>
+    <scope name="ScopeValidarFechaVigencia">
+      <faultHandlers>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-1'</from>
+                <to>$runtimeFaultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error al validar Fecha de Vigencia'</from>
+                <to>$runtimeFaultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$runtimeFaultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence13">
+        <if name="IfVigenciaVacia">
+          <documentation>
+            <![CDATA[NoFecha]]>
+          </documentation>
+          <condition>string($inputVariable.request/ns2:propagarEnLAA)='false' and ( count($inputVariable.request/ns2:DeclaracionJurada/ns3:fechaVencimiento)=0 or string($inputVariable.request/ns2:DeclaracionJurada/ns3:fechaVencimiento)='')</condition>
+          <assign name="AssignValidarFechaVigencia">
+            <copy bpelx:insertMissingToData="yes">
+              <from>xp20:add-dayTimeDuration-to-dateTime(xp20:current-date(), 'P1Y')</from>
+              <to>$inputVariable.request/ns2:DeclaracionJurada/ns3:fechaVencimiento</to>
+            </copy>
+          </assign>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ConsultarOperacionById">
+      <variables>
+        <variable name="consultarOperacionById_InputVariable" messageType="ns6:requestConsultarOperacionMessage"/>
+       </variables>
+       <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="remoteFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence7">
+            <assign name="AssignFault">
+              <copy>
+                <from variable="remoteFault"/>
+                <to variable="runtimeFaultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:bindingFault" faultVariable="bindingFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence6">
+            <assign name="AssignFault">
+              <copy>
+                <from variable="bindingFault"/>
+                <to variable="runtimeFaultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:bindingFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-1'</from>
+                <to>$runtimeFaultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error General al Consultar Operación'</from>
+                <to>$runtimeFaultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$runtimeFaultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence12">
+        <assign name="Assign_ConsultarOperacionInputVariable">
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$inputVariable.request/ns2:Operacion/ns8:idOperacion</from>
+            <to>$consultarOperacionById_InputVariable.request/ns7:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarOperacion" partnerLink="ConsultarOperacionByIdOperacionService"
+                portType="ns6:ConsultarOperacionById12Port" operation="ConsultarOperacionById"
+                inputVariable="consultarOperacionById_InputVariable"
+                outputVariable="consultarOperacionById_OutputVariable" bpelx:invokeAsDetail="no"/>
+        <if name="IfErrorConsultarOperacion">
+          <documentation>
+            <![CDATA[ErrorAlConsultar]]>
+          </documentation>
+          <condition>$consultarOperacionById_OutputVariable.response/ns7:Resultado/ns4:result='ERROR' </condition>
+       
+            <sequence name="Sequence10">
+              <assign name="AssignFaultConsultarOperacion">
+              <copy>
+                <from>'-1'</from>
+                <to>$runtimeFaultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error al Consultar Operacion'</from>
+                <to>$runtimeFaultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>$consultarOperacionById_OutputVariable.response/ns7:Resultado/ns4:message</from>
+                <to>$runtimeFaultVariable.detail</to>
+              </copy>
+            </assign>
+              <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+            </sequence>
+      
+          <else>
+            <documentation>
+              <![CDATA[ConsultaExitosa]]>
+            </documentation>
+            <assign name="Assign_ConsultarOperacionOutputVariable">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$consultarOperacionById_OutputVariable.response/ns7:Operacion</from>
+                <to>$inputVariable.request/ns2:Operacion</to>
+              </copy>
+            </assign>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ConsultaEmployeeNumberEjecutivo">
+      <faultHandlers>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-2'</from>
+                <to>$runtimeFaultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'No se encuentra el número de empleado del Ejecutivo de la Operación'</from>
+                <to>$runtimeFaultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$runtimeFaultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+    <assign name="Assign_ConsultarOperacionOutputVariable">
+        <copy>
+          <from>ids:getUserProperty($consultarOperacionById_OutputVariable.response/ns7:Operacion/ns8:responsable,'employeenumber')</from>
+          <to>$inputVariable.request/ns2:Operacion/ns8:cliente/ns9:ejecutivo</to>
+        </copy>
+      </assign>
+           </scope>
+    <if name="IfPropagarEnLAA">
+      <documentation>
+        <![CDATA[Propagar a LAA]]>
+      </documentation>
+      <condition>$inputVariable.request/ns2:propagarEnLAA='true'</condition>
+      <sequence name="Sequence14">
+        <if name="IfDuplicar">
+          <documentation>
+            <![CDATA[Duplicar Declaracion]]>
+          </documentation>
+          <condition>$inputVariable.request/ns2:duplicarDeclaracion='true'</condition>
+          <scope name="DuplicarDeclaracionLAA">
+            <variables>
+              <variable name="duplicarDeclaracionJurada_OutputVariable"
+                        messageType="ns1:responseDuplicarDeclaracionOperacionMessage"/>
+              <variable name="duplicarDeclaracionJurada_InputVariable"
+                        messageType="ns1:requestDuplicarDeclaracionOperacionMessage"/>
+            </variables>
+            <faultHandlers>
+                <catch faultName="bpelx:remoteFault" faultVariable="remoteFault"
+                       faultMessageType="bpelx:RuntimeFaultMessage">
+                  <sequence name="Sequence7">
+                    <assign name="AssignFault">
+                      <copy>
+                        <from variable="remoteFault"/>
+                        <to variable="runtimeFaultVariable"/>
+                      </copy>
+                    </assign>
+                    <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+                  </sequence>
+                </catch>
+                <catch faultName="bpelx:bindingFault" faultVariable="bindingFault"
+                       faultMessageType="bpelx:RuntimeFaultMessage">
+                  <sequence name="Sequence6">
+                    <assign name="AssignFault">
+                      <copy>
+                        <from variable="bindingFault"/>
+                        <to variable="runtimeFaultVariable"/>
+                      </copy>
+                    </assign>
+                    <throw name="ThrowFault" faultName="bpelx:bindingFault" faultVariable="runtimeFaultVariable"/>
+                  </sequence>
+                </catch>
+                <catchAll>
+                  <sequence name="Sequence8">
+                    <assign name="AssignFault">
+                    <copy>
+                      <from>'-3'</from>
+                      <to>$runtimeFaultVariable.code</to>
+                    </copy>
+                    <copy>
+                      <from>'Error al Duplicar Declaracion Jurada en LAA'</from>
+                      <to>$runtimeFaultVariable.summary</to>
+                    </copy>
+                    <copy>
+                      <from>ora:getFaultAsString()</from>
+                      <to>$runtimeFaultVariable.detail</to>
+                    </copy>
+                  </assign>
+                    <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+                  </sequence>
+                </catchAll>
+              </faultHandlers>
+              <sequence name="Sequence1">
+              <assign name="Assign_DuplicarDeclaracionInputVariable">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$inputVariable.request/ns2:DeclaracionJurada</from>
+                  <to>$duplicarDeclaracionJurada_InputVariable.request/ns2:DeclaracionJurada</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$inputVariable.request/ns2:Operacion</from>
+                  <to>$duplicarDeclaracionJurada_InputVariable.request/ns2:Operacion</to>
+                </copy>
+                <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                  <from>$inputVariable.request/ns2:duplicarDeclaracion</from>
+                  <to>$duplicarDeclaracionJurada_InputVariable.request/ns2:duplicarDeclaracion</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeDuplicarDeclaracionLAA"
+                      partnerLink="DuplicarDeclaracionJuradaLAAService" portType="ns1:DuplicarDeclaracionJuradaPT"
+                      operation="DuplicarDeclaracionJurada" inputVariable="duplicarDeclaracionJurada_InputVariable"
+                      outputVariable="duplicarDeclaracionJurada_OutputVariable" bpelx:invokeAsDetail="no"/>
+              <if name="IfErrorDuplicarDeclaracionLAA">
+                  <documentation>
+                  <![CDATA[DeclaracionDuplicadaEnLAA]]>
+                </documentation>
+                  <condition>$duplicarDeclaracionJurada_OutputVariable.response/ns2:Resultado/ns4:result = 'OK'</condition>
+                  <assign name="Assign_DuplicarDeclaracionLAA">
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$duplicarDeclaracionJurada_OutputVariable.response/ns2:codigoExternoDeclaracion</from>
+                    <to>$inputVariable.request/ns2:DeclaracionJurada/ns3:codigoExternoDeclaracion</to>
+                  </copy>
+                </assign>
+                  <else>
+                  <documentation>
+                    <![CDATA[ErrorLAA]]>
+                  </documentation>
+                  <sequence name="Sequence10">
+                      <assign name="AssignFaultLAA">
+                      <copy>
+                        <from>'-3'</from>
+                        <to>$runtimeFaultVariable.code</to>
+                      </copy>
+                      <copy>
+                        <from>$duplicarDeclaracionJurada_OutputVariable.response/ns2:Resultado/ns4:message</from>
+                        <to>$runtimeFaultVariable.detail</to>
+                      </copy>
+                      <copy>
+                        <from>'Error al Duplicar Declaracion Jurada en LAA'</from>
+                        <to>$runtimeFaultVariable.summary</to>
+                      </copy>
+                    </assign>
+                      <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+                    </sequence>
+                  </else>
+                </if>
+              </sequence>
+            </scope>
+            <else>
+            <documentation>
+              <![CDATA[Crear Declaracion]]>
+            </documentation>
+            <scope name="CrearDeclaracionLAA">
+              <variables>
+                <variable name="crearDeclaracionLAA_OutputVariable"
+                          messageType="ns1:responseCrearDeclaracionJuradaMessage"/>
+              </variables>
+              <faultHandlers>
+                <catch faultName="bpelx:remoteFault" faultVariable="remoteFault"
+                       faultMessageType="bpelx:RuntimeFaultMessage">
+                  <sequence name="Sequence7">
+                    <assign name="AssignFault">
+                      <copy>
+                        <from variable="remoteFault"/>
+                        <to variable="runtimeFaultVariable"/>
+                      </copy>
+                    </assign>
+                    <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+                  </sequence>
+                </catch>
+                <catch faultName="bpelx:bindingFault" faultVariable="bindingFault"
+                       faultMessageType="bpelx:RuntimeFaultMessage">
+                  <sequence name="Sequence6">
+                    <assign name="AssignFault">
+                      <copy>
+                        <from variable="bindingFault"/>
+                        <to variable="runtimeFaultVariable"/>
+                      </copy>
+                    </assign>
+                    <throw name="ThrowFault" faultName="bpelx:bindingFault" faultVariable="runtimeFaultVariable"/>
+                  </sequence>
+                </catch>
+                <catchAll>
+                  <sequence name="Sequence8">
+                    <assign name="AssignFault">
+                      <copy>
+                        <from>'-3'</from>
+                        <to>$runtimeFaultVariable.code</to>
+                      </copy>
+                      <copy>
+                        <from>'Error al Insertar Declaracion Jurada en LAA'</from>
+                        <to>$runtimeFaultVariable.summary</to>
+                      </copy>
+                      <copy>
+                        <from>ora:getFaultAsString()</from>
+                        <to>$runtimeFaultVariable.detail</to>
+                      </copy>
+                    </assign>
+                    <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+                  </sequence>
+                </catchAll>
+              </faultHandlers>
+              <sequence name="Sequence1">
+                <invoke name="Invoke_CrearDeclaracionLAA" partnerLink="CrearDeclaracionJuradaLAA"
+                        portType="ns1:DeclaracionJuradaPT" operation="crearDeclaracionJurada"
+                        inputVariable="inputVariable" outputVariable="crearDeclaracionLAA_OutputVariable"
+                        bpelx:invokeAsDetail="no"/>
+                <if name="IfErrorCrearDeclaracionJuradaLAA">
+                  <documentation>
+                    <![CDATA[DeclaracionCreadaEnLAA]]>
+                  </documentation>
+                  <condition>$crearDeclaracionLAA_OutputVariable.response/ns2:Resultado/ns4:result = 'OK'</condition>
+                  <assign name="Assign_CrearDeclaracionLAA">
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>$crearDeclaracionLAA_OutputVariable.response/ns2:DeclaracionJurada/ns3:codigoExternoDeclaracion</from>
+                      <to>$inputVariable.request/ns2:DeclaracionJurada/ns3:codigoExternoDeclaracion</to>
+                    </copy>
+                  </assign>
+                  <else>
+                    <documentation>
+                      <![CDATA[ErrorLAA]]>
+                    </documentation>
+                    <sequence name="Sequence10">
+                      <assign name="AssignFaultLAA">
+                        <copy>
+                          <from>'-3'</from>
+                          <to>$runtimeFaultVariable.code</to>
+                        </copy>
+                        <copy>
+                          <from>$crearDeclaracionLAA_OutputVariable.response/ns2:Resultado/ns4:message</from>
+                          <to>$runtimeFaultVariable.detail</to>
+                        </copy>
+                        <copy>
+                          <from>'Error al Insertar Declaracion Jurada en LAA'</from>
+                          <to>$runtimeFaultVariable.summary</to>
+                        </copy>
+                      </assign>
+                      <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+                    </sequence>
+                  </else>
+                </if>
+              </sequence>
+            </scope>
+          </else>
+        </if>
+      </sequence>
+      <else>
+        <empty name="No_Propagar"/>
+      </else>
+    </if>
+    <scope name="CrearDeclaracionDB">
+      <variables>
+        <variable name="crearDeclaracionDB_InputVariable" messageType="ns1:requestCrearDeclaracionJuradaMessage"/>
+            <variable name="crearDeclaracionDB_OutputVariable" messageType="ns1:responseCrearDeclaracionJuradaMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="remoteFault" faultMessageType="bpelx:RuntimeFaultMessage">
+         <sequence name="Sequence7">
+            <assign name="AssignFault">
+              <copy>
+                <from variable="remoteFault"/>
+                <to variable="runtimeFaultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:bindingFault" faultVariable="bindingFault" faultMessageType="bpelx:RuntimeFaultMessage">
+           <sequence name="Sequence6">
+            <assign name="AssignFault">
+              <copy>
+                <from variable="bindingFault"/>
+                <to variable="runtimeFaultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:bindingFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-4'</from>
+                <to>$runtimeFaultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error al Insertar Declaracion Jurada en DB'</from>
+                <to>$runtimeFaultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$runtimeFaultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence2">
+        <invoke name="Invoke_CrearDeclaracionDB" partnerLink="CrearDeclaracionJuradaDB"
+                portType="ns1:DeclaracionJuradaPT" operation="crearDeclaracionJurada"
+                inputVariable="inputVariable" outputVariable="crearDeclaracionDB_OutputVariable"
+                bpelx:invokeAsDetail="no"/>
+        <if name="IfCrearDeclaracionJuradaDB">
+          <documentation>
+            <![CDATA[DeclaracionCreada]]>
+          </documentation>
+          <condition>$crearDeclaracionDB_OutputVariable.response/ns2:Resultado/ns4:result ='OK'</condition>
+          <assign name="Assign_IdDeclaracion">
+            <copy bpelx:insertMissingToData="yes">
+              <from>$crearDeclaracionDB_OutputVariable.response/ns2:DeclaracionJurada/ns3:idDeclaracion</from>
+              <to>$inputVariable.request/ns2:DeclaracionJurada/ns3:idDeclaracion</to>
+            </copy>
+          </assign>
+          <else>
+            <documentation>
+              <![CDATA[ErrorDeclaracionDB]]>
+            </documentation>
+            <sequence name="Sequence11">
+              <assign name="AssignFaultDB">
+                <copy>
+                  <from>'-4'</from>
+                  <to>$runtimeFaultVariable.code</to>
+                </copy>
+                <copy>
+                  <from>'Error al Insertar Declaracion Jurada en DB'</from>
+                  <to>$runtimeFaultVariable.summary</to>
+                </copy>
+                <copy>
+                  <from>$crearDeclaracionDB_OutputVariable.response/ns2:Resultado/ns4:message</from>
+                  <to>$runtimeFaultVariable.detail</to>
+                </copy>
+              </assign>
+              <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+     <scope name="CrearDeclaracionOperacionDB">
+      <variables>
+        <variable name="crearDeclaracionOperacion_InputVariable"
+                  messageType="ns1:requestCrearDeclaracionOperacionMessage"/>
+        <variable name="crearDeclaracionOperacion_OutputVariable"
+                  messageType="ns1:responseCrearDeclaracionOperacionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="remoteFault" faultMessageType="bpelx:RuntimeFaultMessage">
+         <sequence name="Sequence7">
+            <assign name="AssignFault">
+              <copy>
+                <from variable="remoteFault"/>
+                <to variable="runtimeFaultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:bindingFault" faultVariable="bindingFault" faultMessageType="bpelx:RuntimeFaultMessage">
+           <sequence name="Sequence6">
+            <assign name="AssignFault">
+              <copy>
+                <from variable="bindingFault"/>
+                <to variable="runtimeFaultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:bindingFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-5'</from>
+                <to>$runtimeFaultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error General al Crear DeclaracionOperacion'</from>
+                <to>$runtimeFaultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$runtimeFaultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence2">
+        <assign name="Assign_InputCrearDeclaracionOperacion">
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$inputVariable.request/ns2:DeclaracionJurada/ns3:idDeclaracion</from>
+            <to>$crearDeclaracionOperacion_InputVariable.request/ns2:idDeclaracion</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+            <from>$inputVariable.request/ns2:Operacion/ns8:idOperacion</from>
+            <to>$crearDeclaracionOperacion_InputVariable.request/ns2:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_CrearDeclaracionOperacionDB" bpelx:invokeAsDetail="no"
+                partnerLink="CrearDeclaracionOperacionDB" portType="ns1:CrearDeclaracionOperacionPT"
+                operation="CrearDeclaracionOperacion" inputVariable="crearDeclaracionOperacion_InputVariable"
+                outputVariable="crearDeclaracionOperacion_OutputVariable"/>
+        <if name="IfCrearDeclaracionOperacionDB">
+          <documentation>
+            <![CDATA[DeclaracionOperacionCreada]]>
+          </documentation>
+          <condition>$crearDeclaracionOperacion_OutputVariable.response/ns2:Resultado/ns4:result ='OK'</condition>
+          <empty name="DeclaracionOperacionCreada"/>
+          <else>
+            <documentation>
+              <![CDATA[ErrorDeclaracionOperacionDB]]>
+            </documentation>
+            <sequence name="Sequence11">
+              <assign name="AssignFaultDB">
+                <copy>
+                  <from>'-5'</from>
+                  <to>$runtimeFaultVariable.code</to>
+                </copy>
+                <copy>
+                  <from>'Error al Insertar DeclaracionOperacion en DB'</from>
+                  <to>$runtimeFaultVariable.summary</to>
+                </copy>
+                <copy>
+                  <from>$crearDeclaracionOperacion_OutputVariable.response/ns2:Resultado/ns4:message</from>
+                  <to>$runtimeFaultVariable.detail</to>
+                </copy>
+              </assign>
+              <throw name="ThrowFault" faultName="bpelx:remoteFault" faultVariable="runtimeFaultVariable"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+   
+    <scope name="ScopeOutput">
+      <faultHandlers>
+        <catch faultName="bpel:selectionFailure" faultVariable="selectionFailure"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence9">
+            <assign name="AssignFault">
+              <copy>
+                <from>'-6'</from>
+                <to>$runtimeFaultVariable.code</to>
+              </copy>
+              <copy>
+                <from>$selectionFailure.summary</from>
+                <to>$runtimeFaultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>$selectionFailure.detail</from>
+                <to>$runtimeFaultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowFault" faultName="bpel:selectionFailure" faultVariable="runtimeFaultVariable"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence4">
+            <rethrow name="RethrowFault"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence3">
+        <assign name="AssignOutputVariable">
+          <copy>
+            <from>$inputVariable.request/ns2:DeclaracionJurada</from>
+            <to>$outputVariable.response/ns2:DeclaracionJurada</to>
+          </copy>
+          <extensionAssignOperation>
+            <bpelx:remove>
+              <bpelx:target>$outputVariable.response/ns2:Resultado/ns4:error</bpelx:target>
+            </bpelx:remove>
+          </extensionAssignOperation>
+          <copy>
+            <from>'OK'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:result</to>
+          </copy>
+          <copy>
+            <from>'Creación Exitosa'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:message</to>
+          </copy>
+        </assign>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" variable="outputVariable" partnerLink="CrearDeclaracionJurada"
+           portType="ns1:DeclaracionJuradaPT" operation="crearDeclaracionJurada"/>
+  </sequence>
+</process>

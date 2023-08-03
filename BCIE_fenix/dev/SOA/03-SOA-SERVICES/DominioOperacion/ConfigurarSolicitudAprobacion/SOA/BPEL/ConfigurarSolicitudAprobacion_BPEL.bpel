@@ -1,0 +1,834 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Nov 26 15:59:12 CST 2015
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfigurarSolicitudAprobacion_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/ConfigurarSolicitudAprobacion/ConfigurarSolicitudAprobacion_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/ConfigurarSolicitudAprobacion/ConfigurarSolicitudAprobacion_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/SolicitudAprobacionService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/SolicitudAprobacionMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns3="http://xmlns.bcie.com/UsuarioService"
+         xmlns:ns4="http://www.bcie.org/ResultBO" xmlns:ns5="http://www.bcie.org/ErrorBO"
+         xmlns:ns6="http://www.bcie.org/UsuarioMO" xmlns:ns8="http://www.bcie.org/SolicitudAprobacionBO"
+         xmlns:ns7="http://www.bcie.org/UsuarioBO" xmlns:ns9="http://www.bcie.org/CatalogoBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns10="http://www.bcie.org/CrearMiembroReunionService"
+         xmlns:ns11="http://www.bcie.org/EliminarMiembroReunionService"
+         xmlns:ns12="http://xmlns.oracle.com/pcbpel/adapter/db/DominioOperacion/ConfigurarSolicitudAprobacion/ConsultarTreComiteRol"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns13="http://xmlns.oracle.com/pcbpel/adapter/db/ConsultarTreComiteRol"
+         xmlns:ns14="http://www.bcie.org/ConsultarTreComiteRolService">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/SolicitudAprobacionService"
+          location="../WSDLs/ConfigurarSolicitudAprobacionSADWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configurarSolicitudAprobacion" partnerLinkType="ns1:ConfigurarSolicitudAprobacion_BPEL" myRole="ConfigurarSolicitudAprobacionPT"/>
+    <partnerLink name="ConsultarEquipoTrabajoService" partnerLinkType="ns1:ConsultarEquipoTrabajoService"
+                 partnerRole="ConsultarEquipoTrabajoReunionPT"/>
+    <partnerLink name="ConsultarAtributosUsuarioService" partnerLinkType="ns3:ConsultarAtributosUsuarioService"
+                 partnerRole="UsuarioPT"/>
+    <partnerLink name="ConsultarMiembroReunionService" partnerLinkType="ns1:ConsultarMiembroReunionService"
+                 partnerRole="ConsultarMiembroReunionPT"/>
+    <partnerLink name="CrearMiembroReunion_SB" partnerLinkType="ns10:CrearMiembroReunion_SB"
+                 partnerRole="MiembroReunionPT"/>
+    <partnerLink name="EliminarMiembroReunion_SB" partnerLinkType="ns11:EliminarMiembroReunion_SB"
+                 partnerRole="EliminarMiembroReunionPT"/>
+    <partnerLink name="ConsultarTreComiteRolService" partnerLinkType="ns14:ConsultarTreComiteRolService"
+                 partnerRole="ConsultarTreComiteRolPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConfigurarSolicitudAprobacionMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConfigurarSolicitudAprobacionMessage"/>
+    <variable name="faultVariable" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catch faultName="bpelx:remoteFault" faultVariable="remoteFault" faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="Sequence11">
+        <assign name="Assign_Output">
+          <extensionAssignOperation>
+            <bpelx:remove>
+              <bpelx:target>$outputVariable.response/ns2:solicitudAprobacion</bpelx:target>
+            </bpelx:remove>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:remove>
+              <bpelx:target>$outputVariable.response/ns2:listadoConNotificacion</bpelx:target>
+            </bpelx:remove>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:remove>
+              <bpelx:target>$outputVariable.response/ns2:listadoComiteCredito</bpelx:target>
+            </bpelx:remove>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:remove>
+              <bpelx:target>$outputVariable.response/ns2:listadoEquipoTrabajo</bpelx:target>
+            </bpelx:remove>
+          </extensionAssignOperation>
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:result</to>
+          </copy>
+          <copy>
+            <from>$remoteFault.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:message</to>
+          </copy>
+          <copy>
+            <from>$remoteFault.code</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorCode</to>
+          </copy>
+          <copy>
+            <from>$remoteFault.detail</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="configurarSolicitudAprobacion"
+               portType="ns1:ConfigurarSolicitudAprobacionPT" operation="ConfigurarSolicitudAprobacion"/>
+      </sequence>
+    </catch>
+    <catchAll>
+      <sequence name="Sequence6">
+        <assign name="Assign_Output">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:result</to>
+          </copy>
+          <extensionAssignOperation>
+            <bpelx:remove>
+              <bpelx:target>$outputVariable.response/ns2:solicitudAprobacion</bpelx:target>
+            </bpelx:remove>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:remove>
+              <bpelx:target>$outputVariable.response/ns2:listadoComiteCredito</bpelx:target>
+            </bpelx:remove>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:remove>
+              <bpelx:target>$outputVariable.response/ns2:listadoConNotificacion</bpelx:target>
+            </bpelx:remove>
+          </extensionAssignOperation>
+          <extensionAssignOperation>
+            <bpelx:remove>
+              <bpelx:target>$outputVariable.response/ns2:listadoEquipoTrabajo</bpelx:target>
+            </bpelx:remove>
+          </extensionAssignOperation>
+          <copy>
+            <from>$faultVariable.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:message</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.code</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorCode</to>
+          </copy>
+          <copy>
+            <from>$faultVariable.detail</from>
+            <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="configurarSolicitudAprobacion"
+               portType="ns1:ConfigurarSolicitudAprobacionPT" operation="ConfigurarSolicitudAprobacion"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfigurarSolicitudAprobacion_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="configurarSolicitudAprobacion" portType="ns1:ConfigurarSolicitudAprobacionPT" operation="ConfigurarSolicitudAprobacion" variable="inputVariable" createInstance="yes"/>
+     <assign name="AssignFlowName">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion= ",$inputVariable.request/ns2:idOperacion," nivelAprobacion= ",$inputVariable.request/ns2:nivelAprobacion))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarMiembroReunion">
+      <variables>
+        <variable name="consultarMiembroReunion_InputVariable" messageType="ns1:requestConsultarMiembroReunionMessage"/>
+        <variable name="consultarMiembroReunion_OutputVariable"
+                  messageType="ns1:responseConsultarMiembroReunionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpel:selectionFailure" faultVariable="selectionFault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence9">
+            <assign name="AssignError">
+              <copy>
+                <from variable="selectionFault"/>
+                <to variable="faultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <if name="IfErrorAsignado">
+            <documentation>
+              <![CDATA[ErrorAsignado]]>
+            </documentation>
+            <condition>contains($faultVariable.summary,'Error')</condition>
+            <rethrow name="RethrowError"/>
+            <else>
+              <documentation>
+                <![CDATA[NoAsignado]]>
+              </documentation>
+              <sequence name="Sequence8">
+                <assign name="Assign_Error">
+                  <copy>
+                    <from>'-2'</from>
+                    <to>$faultVariable.code</to>
+                  </copy>
+                  <copy>
+                    <from>ora:getFaultAsString()</from>
+                    <to>$faultVariable.detail</to>
+                  </copy>
+                  <copy>
+                    <from>'Error al ConsultarMiembroReunion'</from>
+                    <to>$faultVariable.summary</to>
+                  </copy>
+                </assign>
+                <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+              </sequence>
+            </else>
+          </if>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence4">
+        <assign name="Assign_ConsultarMiembroReunionInputVariable">
+          <copy>
+            <from>$inputVariable.request/ns2:nivelAprobacion</from>
+            <to>$consultarMiembroReunion_InputVariable.request/ns2:nivelAprobacion</to>
+          </copy>
+          <copy>
+            <from>'false'</from>
+            <to>$consultarMiembroReunion_InputVariable.request/ns2:soloNotificacion</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarMiembroReunion" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarMiembroReunionService" portType="ns1:ConsultarMiembroReunionPT"
+                operation="ConsultarMiembroReunion" inputVariable="consultarMiembroReunion_InputVariable"
+                outputVariable="consultarMiembroReunion_OutputVariable"/>
+        <scope name="ScopeEliminarMiembroReunion">
+          <variables>
+          
+            <variable name="consultarTreComiteRol_InputVariable"
+                      messageType="ns14:ConsultarTreComiteRolRequestMessage"/>
+            <variable name="consultarTreComiteRol_OutputVariable"
+                      messageType="ns14:ConsultarTreComiteRolResponseMessage"/>
+          </variables>
+          <faultHandlers>
+                  <catchAll>
+                    <sequence name="Sequence2">
+                      <assign name="Assign_ErrorConsultarEquipo">
+                  <copy>
+                    <from>'-2'</from>
+                    <to>$faultVariable.code</to>
+                  </copy>
+                  <copy>
+                    <from>'Error al Eliminar Miembro Reunion'</from>
+                    <to>$faultVariable.summary</to>
+                  </copy>
+                  <copy>
+                    <from>ora:getFaultAsString()</from>
+                    <to>$faultVariable.detail</to>
+                  </copy>
+                </assign>
+                      <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                    </sequence>
+                  </catchAll>
+                </faultHandlers>
+          <sequence>
+            <assign name="Assign_ConsultarTreComiteRolInput">
+              <copy>
+                <from>$inputVariable.request/ns2:nivelAprobacion</from>
+                <to>$consultarTreComiteRol_InputVariable.request/ns2:nivelAprobacion</to>
+              </copy>
+            </assign>
+            <invoke name="Invoke_ConsultarTreComiteRol" partnerLink="ConsultarTreComiteRolService"
+                    portType="ns14:ConsultarTreComiteRolPT" operation="consultarTreComiteRol"
+                    inputVariable="consultarTreComiteRol_InputVariable"
+                    outputVariable="consultarTreComiteRol_OutputVariable" bpelx:invokeAsDetail="no"/>
+            <forEach parallel="yes" counterName="rolCounter" name="ForEachRol">
+              <startCounterValue>1</startCounterValue>
+              <finalCounterValue>count($consultarTreComiteRol_OutputVariable.response/ns2:idRol)</finalCounterValue>
+              <scope name="ScopeRolForEach">
+                <variables>
+            <variable name="eliminarMiembroReunion_InputVariable"
+                      messageType="ns11:EliminarMiembroReunionRequestMessage"/>
+            <variable name="eliminarMiembroReunion_OutputVariable"
+                      messageType="ns11:EliminarMiembroReunionResponseMessage"/>
+           
+          </variables>
+                <sequence>
+                  <assign name="AssignEliminarMiembroReunion">
+                    <copy>
+                      <from>$consultarTreComiteRol_OutputVariable.response/ns2:idRol[$rolCounter]</from>
+                      <to>$eliminarMiembroReunion_InputVariable.request/ns2:listadoEmitirVoto/ns8:MiembroReunion/ns8:rol/ns9:Id</to>
+                    </copy>
+                  </assign>
+                  <invoke name="InvokeEliminarMiembroReunion" partnerLink="EliminarMiembroReunion_SB"
+                          portType="ns11:EliminarMiembroReunionPT" operation="eliminarMiembroReunion"
+                          inputVariable="eliminarMiembroReunion_InputVariable"
+                          outputVariable="eliminarMiembroReunion_OutputVariable" bpelx:invokeAsDetail="no"/>
+                </sequence>
+              </scope>
+            </forEach>
+          </sequence>
+        </scope>
+        <forEach parallel="no" counterName="miembroReunionCounter" name="ForEachMiembroReunion">
+          <bpelx:skipCondition>count($consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion)=0</bpelx:skipCondition>
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion)</finalCounterValue>
+          <scope name="ScopeForEachMiembroReunion">
+            <variables>
+              <variable name="inCrearMiembroReunion" messageType="ns10:CrearMiembroReunionRequestMessage"/>
+              <variable name="outCrearMiembroReunion" messageType="ns10:CrearMiembroReunionResponseMessage"/>
+            </variables>
+            <sequence name="Sequence5">
+              <scope name="ScopeConsultarAtributosUsuario">
+                <variables>
+                  <variable name="consultarAtributosUsuario_InputVariable"
+                            messageType="ns3:requestConsultarAtributosUsuarioMessage"/>
+                  <variable name="consultarAtributosUsuario_OutputVariable"
+                            messageType="ns3:responseConsultarAtributosUsuarioMessage"/>
+                </variables>
+                <faultHandlers>
+                  <catchAll>
+                    <sequence name="Sequence2">
+                      <assign name="Assign_ErrorConsultarEquipo">
+                        <copy>
+                          <from>'-2'</from>
+                          <to>$faultVariable.code</to>
+                        </copy>
+                        <copy>
+                          <from>'Error General en ConsultarAtributosUsuario'</from>
+                          <to>$faultVariable.summary</to>
+                        </copy>
+                        <copy>
+                          <from>ora:getFaultAsString()</from>
+                          <to>$faultVariable.detail</to>
+                        </copy>
+                      </assign>
+                      <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                    </sequence>
+                  </catchAll>
+                </faultHandlers>
+                <sequence name="Sequence3">
+                  <assign name="Assign_ConsultarAtributosUsuarioInputVariable">
+                    <copy>
+                      <from>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:rol/ns9:DescripcionCorta</from>
+                      <to>$consultarAtributosUsuario_InputVariable.request/ns6:listaNombres/ns7:nombreUsuario</to>
+                    </copy>
+                  </assign>
+                  <invoke name="Invoke_ConsultarAtributosUsuario" bpelx:invokeAsDetail="no"
+                          partnerLink="ConsultarAtributosUsuarioService" portType="ns3:UsuarioPT"
+                          operation="consultarAtributosUsuario" inputVariable="consultarAtributosUsuario_InputVariable"
+                          outputVariable="consultarAtributosUsuario_OutputVariable"/>
+                  <if name="IfErrorConsultarAtributos">
+                    <documentation>
+                      <![CDATA[ErrorAlConsultarAtributos]]>
+                    </documentation>
+                    <condition>$consultarAtributosUsuario_OutputVariable.response/ns6:Resultado/ns4:result='ERROR'</condition>
+                    <empty name="ErrorConsulta"/>
+                    <else>
+                      <documentation>
+                        <![CDATA[ConsultaExitosa]]>
+                      </documentation>
+                      <forEach parallel="no" counterName="usuarioCounter" name="ForEachUsuario">
+                        <startCounterValue>1</startCounterValue>
+                        <finalCounterValue>count($consultarAtributosUsuario_OutputVariable.response/ns6:listaUsuarios/ns7:usuario)</finalCounterValue>
+                        <scope name="scopeUsuarios">
+                          <sequence>
+                            <assign name="Assign_UsuarioAMiembroConsulta">
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$consultarAtributosUsuario_OutputVariable.response/ns6:listaUsuarios/ns7:usuario[$usuarioCounter]/ns7:nombreUsuario</from>
+                                <to>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:listadoUsuarios/ns8:usuario[$usuarioCounter]/ns8:usuario</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$consultarAtributosUsuario_OutputVariable.response/ns6:listaUsuarios/ns7:usuario[$usuarioCounter]/ns7:propietario</from>
+                                <to>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:listadoUsuarios/ns8:usuario[$usuarioCounter]/ns8:propietario</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$consultarAtributosUsuario_OutputVariable.response/ns6:listaUsuarios/ns7:usuario[$usuarioCounter]/ns7:nombreCompleto</from>
+                                <to>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:listadoUsuarios/ns8:usuario[$usuarioCounter]/ns8:nombreUsuario</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$consultarAtributosUsuario_OutputVariable.response/ns6:listaUsuarios/ns7:usuario[$usuarioCounter]/ns7:dependencia</from>
+                                <to>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:listadoUsuarios/ns8:usuario[$usuarioCounter]/ns8:dependecia</to>
+                              </copy>
+                            </assign>
+                            <scope name="ScopeCrearMiembroReunion">
+                               <faultHandlers>
+                  <catchAll>
+                    <sequence name="Sequence2">
+                      <assign name="Assign_ErrorConsultarEquipo">
+                        <copy>
+                          <from>'-2'</from>
+                          <to>$faultVariable.code</to>
+                        </copy>
+                        <copy>
+                          <from>'Error al crear Miembro Reunion'</from>
+                          <to>$faultVariable.summary</to>
+                        </copy>
+                        <copy>
+                          <from>ora:getFaultAsString()</from>
+                          <to>$faultVariable.detail</to>
+                        </copy>
+                      </assign>
+                      <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                    </sequence>
+                  </catchAll>
+                </faultHandlers>
+                              <sequence>
+                                <assign name="AssignCrearMiembroReunion">
+                                  <copy ignoreMissingFromData="yes">
+                                    <from>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:idUsuarioReunion</from>
+                                    <to>$inCrearMiembroReunion.request/ns2:listadoEmitirVoto/ns8:MiembroReunion/ns8:rol/ns9:Id</to>
+                                  </copy>
+                                  <copy ignoreMissingFromData="yes">
+                                    <from>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:listadoUsuarios/ns8:usuario[$usuarioCounter]/ns8:usuario</from>
+                                    <to>$inCrearMiembroReunion.request/ns2:listadoEmitirVoto/ns8:MiembroReunion/ns8:listadoUsuarios/ns8:usuario/ns8:usuario</to>
+                                  </copy>
+                                  <copy ignoreMissingFromData="yes">
+                                    <from>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:listadoUsuarios/ns8:usuario[$usuarioCounter]/ns8:nombreUsuario</from>
+                                    <to>$inCrearMiembroReunion.request/ns2:listadoEmitirVoto/ns8:MiembroReunion/ns8:listadoUsuarios/ns8:usuario/ns8:nombreUsuario</to>
+                                  </copy>
+                                  <copy ignoreMissingFromData="yes">
+                                    <from>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:listadoUsuarios/ns8:usuario[$usuarioCounter]/ns8:propietario</from>
+                                    <to>$inCrearMiembroReunion.request/ns2:listadoEmitirVoto/ns8:MiembroReunion/ns8:listadoUsuarios/ns8:usuario/ns8:propietario</to>
+                                  </copy>
+                                  <copy ignoreMissingFromData="yes">
+                                    <from>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:listadoUsuarios/ns8:usuario[$usuarioCounter]/ns8:dependecia</from>
+                                    <to>$inCrearMiembroReunion.request/ns2:listadoEmitirVoto/ns8:MiembroReunion/ns8:listadoUsuarios/ns8:usuario/ns8:dependecia</to>
+                                  </copy>
+                                </assign>
+                                <invoke name="InvokeCrearMiembroReunion" bpelx:invokeAsDetail="no"
+                                        partnerLink="CrearMiembroReunion_SB" portType="ns10:MiembroReunionPT"
+                                        operation="crearMiembroReunion" inputVariable="inCrearMiembroReunion"
+                                        outputVariable="outCrearMiembroReunion"/>
+                                <assign name="Assign_MiembroReunionAOutputVariable">
+                                  <copy bpelx:insertMissingToData="yes">
+                                    <from>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]</from>
+                                    <to>$outputVariable.response/ns2:listadoEmitirVoto/ns8:MiembroReunion[$miembroReunionCounter]</to>
+                                  </copy>
+                                  <copy bpelx:insertMissingToData="yes">
+                                    <from>'true'</from>
+                                    <to>$outputVariable.response/ns2:listadoEmitirVoto/ns8:MiembroReunion[$miembroReunionCounter]/ns8:notificar</to>
+                                  </copy>
+                                </assign>
+                              </sequence>
+                            </scope>
+                          </sequence>
+                        </scope>
+                      </forEach>
+                    </else>
+                  </if>
+                </sequence>
+              </scope>
+            </sequence>
+          </scope>
+        </forEach>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarMiembroReunionNotificacion">
+      <variables>
+        <variable name="consultarMiembroReunion_InputVariable" messageType="ns1:requestConsultarMiembroReunionMessage"/>
+        <variable name="consultarMiembroReunion_OutputVariable"
+                  messageType="ns1:responseConsultarMiembroReunionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpel:selectionFailure" faultVariable="selectionFault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence9">
+            <assign name="AssignError">
+              <copy>
+                <from variable="selectionFault"/>
+                <to variable="faultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <if name="IfErrorAsignado">
+            <documentation>
+              <![CDATA[ErrorAsignado]]>
+            </documentation>
+            <condition>contains($faultVariable.summary,'Error')</condition>
+            <rethrow name="RethrowError"/>
+            <else>
+              <documentation>
+                <![CDATA[NoAsignado]]>
+              </documentation>
+              <sequence name="Sequence8">
+                <assign name="Assign_Error">
+                  <copy>
+                    <from>'-2'</from>
+                    <to>$faultVariable.code</to>
+                  </copy>
+                  <copy>
+                    <from>ora:getFaultAsString()</from>
+                    <to>$faultVariable.detail</to>
+                  </copy>
+                  <copy>
+                    <from>'Error al ConsultarMiembroReunion'</from>
+                    <to>$faultVariable.summary</to>
+                  </copy>
+                </assign>
+                <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+              </sequence>
+            </else>
+          </if>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence4">
+        <assign name="Assign_ConsultarMiembroReunionNotifInputVariable">
+          <copy>
+            <from>$inputVariable.request/ns2:nivelAprobacion</from>
+            <to>$consultarMiembroReunion_InputVariable.request/ns2:nivelAprobacion</to>
+          </copy>
+          <copy>
+            <from>'true'</from>
+            <to>$consultarMiembroReunion_InputVariable.request/ns2:soloNotificacion</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarMiembroReunionNotificacion" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarMiembroReunionService" portType="ns1:ConsultarMiembroReunionPT"
+                operation="ConsultarMiembroReunion" inputVariable="consultarMiembroReunion_InputVariable"
+                outputVariable="consultarMiembroReunion_OutputVariable"/>
+        <if name="IfConsultaDatos">
+          <documentation>
+            <![CDATA[ConsultaDatos]]>
+          </documentation>
+          <condition>count($consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion)&gt;0</condition>
+          <sequence>
+            <forEach parallel="no" counterName="miembroReunionCounter" name="ForEachMiembroReunionNotificacion">
+              <bpelx:skipCondition>count($consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion)=0</bpelx:skipCondition>
+              <startCounterValue>1</startCounterValue>
+              <finalCounterValue>count($consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion)</finalCounterValue>
+              <scope name="ScopeForEachMiembroReunion">
+                <sequence name="Sequence5">
+                  <scope name="ScopeConsultarAtributosUsuario">
+                    <variables>
+                      <variable name="consultarAtributosUsuario_InputVariable"
+                                messageType="ns3:requestConsultarAtributosUsuarioMessage"/>
+                      <variable name="consultarAtributosUsuario_OutputVariable"
+                                messageType="ns3:responseConsultarAtributosUsuarioMessage"/>
+                    </variables>
+                    <faultHandlers>
+                      <catchAll>
+                        <sequence name="Sequence2">
+                          <assign name="Assign_ErrorConsultarEquipo">
+                            <copy>
+                              <from>'-2'</from>
+                              <to>$faultVariable.code</to>
+                            </copy>
+                            <copy>
+                              <from>'Error General en ConsultarAtributosUsuario'</from>
+                              <to>$faultVariable.summary</to>
+                            </copy>
+                            <copy>
+                              <from>ora:getFaultAsString()</from>
+                              <to>$faultVariable.detail</to>
+                            </copy>
+                          </assign>
+                          <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                        </sequence>
+                      </catchAll>
+                    </faultHandlers>
+                    <sequence name="Sequence3">
+                      <assign name="Assign_ConsultarAtributosUsuarioInputVariable">
+                        <copy>
+                          <from>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:rol/ns9:DescripcionCorta</from>
+                          <to>$consultarAtributosUsuario_InputVariable.request/ns6:listaNombres/ns7:nombreUsuario</to>
+                        </copy>
+                      </assign>
+                      <invoke name="Invoke_ConsultarAtributosUsuario" bpelx:invokeAsDetail="no"
+                              partnerLink="ConsultarAtributosUsuarioService" portType="ns3:UsuarioPT"
+                              operation="consultarAtributosUsuario"
+                              inputVariable="consultarAtributosUsuario_InputVariable"
+                              outputVariable="consultarAtributosUsuario_OutputVariable"/>
+                      <if name="IfErrorConsultarAtributos">
+                        <documentation>
+                          <![CDATA[ErrorAlConsultarAtributos]]>
+                        </documentation>
+                        <condition>$consultarAtributosUsuario_OutputVariable.response/ns6:Resultado/ns4:result='ERROR'</condition>
+                        <empty name="ErrorConsulta"/>
+                        <else>
+                          <documentation>
+                            <![CDATA[ConsultaExitosa]]>
+                          </documentation>
+                          <forEach parallel="no" counterName="usuarioCounter" name="ForEachUsuario">
+                            <startCounterValue>1</startCounterValue>
+                            <finalCounterValue>count($consultarAtributosUsuario_OutputVariable.response/ns6:listaUsuarios/ns7:usuario)</finalCounterValue>
+                            <scope name="scopeUsuarios">
+                              <assign name="Assign_UsuarioAMiembroConsulta">
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$consultarAtributosUsuario_OutputVariable.response/ns6:listaUsuarios/ns7:usuario[$usuarioCounter]/ns7:nombreUsuario</from>
+                                  <to>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:listadoUsuarios/ns8:usuario[$usuarioCounter]/ns8:usuario</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$consultarAtributosUsuario_OutputVariable.response/ns6:listaUsuarios/ns7:usuario[$usuarioCounter]/ns7:propietario</from>
+                                  <to>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:listadoUsuarios/ns8:usuario[$usuarioCounter]/ns8:propietario</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$consultarAtributosUsuario_OutputVariable.response/ns6:listaUsuarios/ns7:usuario[$usuarioCounter]/ns7:nombreCompleto</from>
+                                  <to>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:listadoUsuarios/ns8:usuario[$usuarioCounter]/ns8:nombreUsuario</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$consultarAtributosUsuario_OutputVariable.response/ns6:listaUsuarios/ns7:usuario[$usuarioCounter]/ns7:dependencia</from>
+                                  <to>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]/ns8:listadoUsuarios/ns8:usuario[$usuarioCounter]/ns8:dependecia</to>
+                                </copy>
+                              </assign>
+                            </scope>
+                          </forEach>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                  <assign name="Assign_MiembroReunionNotifAOutputVariable">
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>$consultarMiembroReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$miembroReunionCounter]</from>
+                      <to>$outputVariable.response/ns2:listadoConNotificacion/ns8:MiembroReunion[$miembroReunionCounter]</to>
+                    </copy>
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>'true'</from>
+                      <to>$outputVariable.response/ns2:listadoConNotificacion/ns8:MiembroReunion[$miembroReunionCounter]/ns8:notificar</to>
+                    </copy>
+                  </assign>
+                </sequence>
+              </scope>
+            </forEach>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[SinDatos]]>
+            </documentation>
+            <empty name="ConsultaVacia"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarEquipoTrabajo">
+      <variables>
+        <variable name="consultarEquipoTrabajoReunion_InputVariable"
+                  messageType="ns1:requestConsultarEquipoTrabajoReunionMessage"/>
+        <variable name="consultarEquipoTrabajoReunion_OutputVariable"
+                  messageType="ns1:responseConsultarEquipoTrabajoReunionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpel:selectionFailure" faultVariable="selectionFault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence10">
+            <assign name="Assign_Error">
+              <copy>
+                <from variable="selectionFault"/>
+                <to variable="faultVariable"/>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+          </sequence>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence2">
+            <assign name="Assign_ErrorConsultarEquipo">
+              <copy>
+                <from>'-1'</from>
+                <to>$faultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error General en ConsultarEquipoTrabajo'</from>
+                <to>$faultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$faultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence1">
+        <assign name="Assign_ConsultarEquipoTrabajoInputVariable">
+          <copy>
+            <from>$inputVariable.request/ns2:idOperacion</from>
+            <to>$consultarEquipoTrabajoReunion_InputVariable.request/ns2:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarEquipoTrabajo" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarEquipoTrabajoService" portType="ns1:ConsultarEquipoTrabajoReunionPT"
+                operation="ConsultarEquipoTrabajoReunion" inputVariable="consultarEquipoTrabajoReunion_InputVariable"
+                outputVariable="consultarEquipoTrabajoReunion_OutputVariable"/>
+        <forEach parallel="no" counterName="equipoTrabajoCounter" name="ForEachEquipoTrabajo">
+          <bpelx:skipCondition>count($consultarEquipoTrabajoReunion_OutputVariable.response/ns2:listadoUsuariosReunion)=0</bpelx:skipCondition>
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($consultarEquipoTrabajoReunion_OutputVariable.response/ns2:listadoUsuariosReunion)</finalCounterValue>
+          <scope name="ScopeForEquipoTrabajo">
+            <sequence name="Sequence12">
+              <assign name="Assign_EquipoTrabajoAOutput">
+                <copy bpelx:insertMissingToData="yes">
+                  <from>$consultarEquipoTrabajoReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$equipoTrabajoCounter]</from>
+                  <to>$outputVariable.response/ns2:listadoEquipoTrabajo/ns8:MiembroReunion[$equipoTrabajoCounter]</to>
+                </copy>
+                <copy bpelx:insertMissingToData="yes">
+                  <from>'true'</from>
+                  <to>$outputVariable.response/ns2:listadoEquipoTrabajo/ns8:MiembroReunion[$equipoTrabajoCounter]/ns8:notificar</to>
+                </copy>
+              </assign>
+                <scope name="ScopeConsultarAtributosUsuario">
+                <variables>
+                  <variable name="consultarAtributosUsuario_InputVariable"
+                            messageType="ns3:requestConsultarAtributosUsuarioMessage"/>
+                  <variable name="consultarAtributosUsuario_OutputVariable"
+                            messageType="ns3:responseConsultarAtributosUsuarioMessage"/>
+                </variables>
+                <faultHandlers>
+                  <catchAll>
+                    <sequence name="Sequence2">
+                      <assign name="Assign_ErrorConsultarEquipo">
+                        <copy>
+                          <from>'-2'</from>
+                          <to>$faultVariable.code</to>
+                        </copy>
+                        <copy>
+                          <from>'Error General en ConsultarAtributosUsuario'</from>
+                          <to>$faultVariable.summary</to>
+                        </copy>
+                        <copy>
+                          <from>ora:getFaultAsString()</from>
+                          <to>$faultVariable.detail</to>
+                        </copy>
+                      </assign>
+                      <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+                    </sequence>
+                  </catchAll>
+                </faultHandlers>
+                <sequence name="Sequence3">
+                  <assign name="Assign_ConsultarAtributosUsuarioInputVariable">
+                  <copy>
+                    <from>$consultarEquipoTrabajoReunion_OutputVariable.response/ns2:listadoUsuariosReunion[$equipoTrabajoCounter]/ns8:usuario</from>
+                    <to>$consultarAtributosUsuario_InputVariable.request/ns6:listaNombres/ns7:nombreUsuario</to>
+                  </copy>
+                </assign>
+                  <invoke name="Invoke_ConsultarAtributosUsuario" bpelx:invokeAsDetail="no"
+                          partnerLink="ConsultarAtributosUsuarioService" portType="ns3:UsuarioPT"
+                          operation="consultarAtributosUsuario" inputVariable="consultarAtributosUsuario_InputVariable"
+                          outputVariable="consultarAtributosUsuario_OutputVariable"/>
+                  <if name="IfErrorConsultarAtributos">
+                    <documentation>
+                      <![CDATA[ErrorAlConsultarAtributos]]>
+                    </documentation>
+                    <condition>$consultarAtributosUsuario_OutputVariable.response/ns6:Resultado/ns4:result='ERROR'</condition>
+                    <empty name="ErrorConsulta"/>
+                    <else>
+                      <documentation>
+                        <![CDATA[ConsultaExitosa]]>
+                      </documentation>
+                    <sequence>
+                      <assign name="Assign_UsuarioAEquipoTrabajo">
+                          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                            <from>$consultarAtributosUsuario_OutputVariable.response/ns6:listaUsuarios/ns7:usuario[1]/ns7:nombreCompleto</from>
+                            <to>$outputVariable.response/ns2:listadoEquipoTrabajo/ns8:MiembroReunion[$equipoTrabajoCounter]/ns8:listadoUsuarios/ns8:usuario[1]/ns8:nombreUsuario</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$outputVariable.response/ns2:listadoEquipoTrabajo/ns8:MiembroReunion[$equipoTrabajoCounter]/ns8:usuario</from>
+                            <to>$outputVariable.response/ns2:listadoEquipoTrabajo/ns8:MiembroReunion[$equipoTrabajoCounter]/ns8:listadoUsuarios/ns8:usuario[1]/ns8:usuario</to>
+                          </copy>
+                        </assign>
+                    </sequence>
+                  </else>
+                  </if>
+                </sequence>
+              </scope>
+            </sequence>
+          </scope>
+        </forEach>
+      </sequence>
+    </scope>
+    <scope name="ScopeOutput">
+      <faultHandlers>
+        <catchAll>
+          <sequence name="Sequence7">
+            <assign name="Assign_ErrorAssign">
+              <copy>
+                <from>'-4'</from>
+                <to>$faultVariable.code</to>
+              </copy>
+              <copy>
+                <from>'Error al asignar respuesta final'</from>
+                <to>$faultVariable.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$faultVariable.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVariable"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <assign name="Assign_OutputVariable">
+        <copy>
+          <from>'OK'</from>
+          <to>$outputVariable.response/ns2:Resultado/ns4:result</to>
+        </copy>
+        <copy>
+          <from>'Consulta Exitosa'</from>
+          <to>$outputVariable.response/ns2:Resultado/ns4:message</to>
+        </copy>
+      </assign>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configurarSolicitudAprobacion" portType="ns1:ConfigurarSolicitudAprobacionPT" operation="ConfigurarSolicitudAprobacion" variable="outputVariable"/>
+  </sequence>
+</process>

@@ -1,0 +1,486 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Sep 13 11:49:19 CDT 2016
+  Author:  Sergio-Morales
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ValidarProgramacion_BPEL"
+               targetNamespace="http://xmlns.oracle.com/BusinessRulesServices/ValidarProgramacion/ValidarProgramacion_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/BusinessRulesServices/ValidarProgramacion/ValidarProgramacion_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ValidarProgramacionSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/ConsultarDesembolsosByIdSAD"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns3="http://www.bcie.org/DesembolsoMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns8="http://www.bcie.org/ResultBO"
+         xmlns:ns5="http://www.bcie.org/CommonBO" xmlns:ns7="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns6="http://www.bcie.org/CatalogoBO" xmlns:ns4="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns9="http://www.bcie.org/ErrorBO" xmlns:ns10="http://www.bice.org/ActualizarLineaCreditoService"
+         xmlns:ns11="http://www.bcie.org/LineaCreditoMO" xmlns:ns12="http://www.bcie.org/ConsultarProgramacionPYD"
+         xmlns:ns16="http://www.bcie.org/TerminoBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns13="http://www.bcie.org/CondicionBO" xmlns:ns15="http://www.bcie.org/DocumentoBO"
+         xmlns:ns17="http://www.bcie.org/ComisionBO" xmlns:ns14="http://www.bcie.org/AtributoBO"
+         xmlns:ns18="http://www.bcie.org/OperacionBO" xmlns:ns23="http://www.bcie.org/AprobacionBO"
+         xmlns:ns20="http://www.bcie.org/ProductoBO" xmlns:ns21="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns22="http://www.bcie.org/ContratoBO" xmlns:ns19="http://www.bcie.org/ClienteBO"
+         xmlns:ns24="http://www.bcie.org/ConsultarImporteTransitoSAD" xmlns:ns25="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns26="http://www.bcie.org/MatrizTCCBO" xmlns:ns27="http://www.bcie.org/ReglaBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ValidarProgramacionSOR" location="../WSDLs/ValidarProgramacionSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="validarprogramacion_bpel" partnerLinkType="ns1:ValidarProgramacion_BPEL" myRole="ValidarProgramacion_PT"/>
+    <partnerLink name="ConsultaLineaByIdLinea" partnerLinkType="ns10:ConsultaLineaByIdLinea"
+                 partnerRole="ConsultarLineaCreditoByIdLineaCreditoPT"/>
+    <partnerLink name="ConsultaProgramacionPYD" partnerLinkType="ns12:ConsultaProgramacionPYD"
+                 partnerRole="ConsultarProgramacionPYD_PT"/>
+    <partnerLink name="ConsultaDesembolsoById" partnerLinkType="ns2:ConsultaDesembolsoById"
+                 partnerRole="ConsultarDesembolsosById_PT"/>
+    <partnerLink name="ConsultaImporteTransito" partnerLinkType="ns24:ConsultaImporteTransito"
+                 partnerRole="ConsultarImporteTransito_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestValidarProgramacionMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseValidarProgramacionMessage"/>
+    <variable name="setTitleInstance" type="xsd:string"/>
+    <variable name="InvokeConsultarDesembolsoById_In" messageType="ns2:requestConsultarDesembolsosByIdMessage"/>
+    <variable name="InvokeConsultarDesembolsoById_Out" messageType="ns2:responseConsultarDesembolsosByIdMessage"/>
+    <variable name="InvokeConsultaLineaByIdLinea_In"
+              messageType="ns10:ConsultarLineaCreditoByIdLineaCreditoRequestMessage"/>
+    <variable name="InvokeConsultaLineaByIdLinea_Out"
+              messageType="ns10:ConsultarLineaCreditoByIdLineaCreditoResponseMessage"/>
+    <variable name="InvokeConsultaProgramacionPYD_In" messageType="ns12:requestConsultarProgramacionPYDMessage"/>
+    <variable name="InvokeConsultaProgramacionPYD_Out" messageType="ns12:responseConsultarProgramacionPYDMessage"/>
+    <variable name="InvokeConsultarImporteTransito_In" messageType="ns24:requestConsultarImporteTransitoMessage"/>
+    <variable name="InvokeConsultarImporteTransito_Out" messageType="ns24:responseConsultarImporteTransitoMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence1">
+        <assign name="SetError">
+          <copy bpelx:insertMissingToData="yes">
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns8:result</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>'No fue posible validar la programacion'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns8:message</to>
+          </copy>
+          <copy keepSrcElementName="no" bpelx:insertMissingToData="yes">
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns3:Resultado/ns8:error/ns9:errorDescription</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>ora:getFaultName()</from>
+            <to>$outputVariable.response/ns3:Resultado/ns8:error/ns9:errorCode</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="validarprogramacion_bpel"
+               portType="ns1:ValidarProgramacion_PT" operation="ValidarProgramacion"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ValidarProgramacion_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="validarprogramacion_bpel" portType="ns1:ValidarProgramacion_PT" operation="ValidarProgramacion" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("IdDesembolso: ",string($inputVariable.request/ns3:idDesembolso)))</from>
+        <to>$setTitleInstance</to>
+      </copy>
+    </assign>
+    <if name="IfValidaDesembolso">
+      <documentation>
+        <![CDATA[NoValido]]>
+      </documentation>
+      <condition>$inputVariable.request/ns3:idDesembolso = 0</condition>
+      <sequence name="SequenceValidar">
+        <assign name="ErrorIdDesembolso">
+          <copy>
+            <from>'OK'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns8:result</to>
+          </copy>
+          <copy>
+            <from>'Id de desembolso no valido'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns8:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="validarprogramacion_bpel"
+               portType="ns1:ValidarProgramacion_PT" operation="ValidarProgramacion"/>
+        <exit name="Exit"/>
+      </sequence>
+      <else>
+        <empty name="Empty"/>
+      </else>
+    </if>
+    <scope name="ScopeConsultarDesembolsoById">
+      <sequence name="SequenceConsultadesemboldobyid">
+        <assign name="AssignConsultaDesembolsoById">
+          <copy>
+            <from>$inputVariable.request/ns3:idDesembolso</from>
+            <to>$InvokeConsultarDesembolsoById_In.request/ns3:idContratoDesembolso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarDesembolsoById" partnerLink="ConsultaDesembolsoById"
+                portType="ns2:ConsultarDesembolsosById_PT" operation="ConsultarDesembolsosById"
+                inputVariable="InvokeConsultarDesembolsoById_In" outputVariable="InvokeConsultarDesembolsoById_Out"
+                bpelx:invokeAsDetail="no"/>
+        <assign name="AssignOutConsultarDesembolsos">
+          <copy>
+            <from>$InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:idDesembolso</from>
+            <to>$outputVariable.response/ns3:ContratoDesembolso/ns4:idDesembolso</to>
+          </copy>
+          <copy>
+            <from>$InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:fechaEstimadaDesembolsar</from>
+            <to>$outputVariable.response/ns3:ContratoDesembolso/ns4:fechaEstimadaDesembolsar</to>
+          </copy>
+          <extensionAssignOperation>
+            <bpelx:copyList>
+              <bpelx:from>$InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:Utilizacion</bpelx:from>
+              <bpelx:to>$outputVariable.response/ns3:ContratoDesembolso/ns4:Utilizacion</bpelx:to>
+            </bpelx:copyList>
+          </extensionAssignOperation>
+          <copy>
+            <from>$InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:programado</from>
+            <to>$outputVariable.response/ns3:ContratoDesembolso/ns4:programado</to>
+          </copy>
+          <copy>
+            <from>$InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:fechaEfectiva</from>
+            <to>$outputVariable.response/ns3:ContratoDesembolso/ns4:fechaEfectiva</to>
+          </copy>
+          <copy>
+            <from>$InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:idLinea</from>
+            <to>$outputVariable.response/ns3:ContratoDesembolso/ns4:idLinea</to>
+          </copy>
+          <extensionAssignOperation>
+            <bpelx:copyList>
+              <bpelx:from>$InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:monto</bpelx:from>
+              <bpelx:to>$outputVariable.response/ns3:ContratoDesembolso/ns4:monto</bpelx:to>
+            </bpelx:copyList>
+          </extensionAssignOperation>
+        </assign>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultaLineaByIdLinea">
+      <sequence name="SequenceConsultaLineaByIdLinea">
+        <if name="IfValidaIdLinea">
+          <documentation>
+            <![CDATA[NoValido]]>
+          </documentation>
+          <condition>string-length($InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:idLinea) = 0</condition>
+          <sequence name="SequenceError">
+            <assign name="ErrorIdLinea">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns8:result</to>
+              </copy>
+              <copy>
+                <from>'Id Linea de es valido'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns8:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="validarprogramacion_bpel"
+                   portType="ns1:ValidarProgramacion_PT" operation="ValidarProgramacion"/>
+            <exit name="Exit"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[Valido]]>
+            </documentation>
+            <sequence name="SequenceValido">
+              <assign name="AssignConsultaLineaByIdLinea">
+                <copy bpelx:insertMissingToData="yes">
+                  <from>$InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:idLinea</from>
+                  <to>$InvokeConsultaLineaByIdLinea_In.request/ns11:idLineaCredito</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeConsultaLineaByIdLinea" bpelx:invokeAsDetail="no" partnerLink="ConsultaLineaByIdLinea"
+                      portType="ns10:ConsultarLineaCreditoByIdLineaCreditoPT"
+                      operation="consultarLineaCreditoByIdLineaCredito" inputVariable="InvokeConsultaLineaByIdLinea_In"
+                      outputVariable="InvokeConsultaLineaByIdLinea_Out"/>
+              <if name="IfValidaNumeroLinea">
+                <documentation>
+                  <![CDATA[NoValido]]>
+                </documentation>
+                <condition>string-length($InvokeConsultaLineaByIdLinea_Out.response/ns11:Operacion/ns18:contrato/ns22:LineaCredito/ns7:idLineaCredito) = 0</condition>
+                <sequence name="SequenceNoValido">
+                  <assign name="ErrorNumeroLinea">
+                    <copy>
+                      <from>'ERROR'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns8:result</to>
+                    </copy>
+                    <copy>
+                      <from>'Numero de linea no valido'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns8:message</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplyError" variable="outputVariable" partnerLink="validarprogramacion_bpel"
+                         portType="ns1:ValidarProgramacion_PT" operation="ValidarProgramacion"/>
+                  <exit name="Exit"/>
+                </sequence>
+                <else>
+                  <bpelx:annotation>
+                    <bpelx:documentation>
+                      <![CDATA[Valido]]>
+                    </bpelx:documentation>
+                  </bpelx:annotation>
+                  <empty name="Empty"/>
+                </else>
+              </if>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarProgramacionPYD">
+      <sequence name="SequenceConsultaProgramacion">
+        <assign name="FondoProgramado">
+          <copy bpelx:insertMissingToData="yes">
+            <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/DVM/FondoProgramado.dvm","Fondo",string($InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:condicionesFinancieras/ns4:fondo/ns6:Id),"Programado","false")</from>
+            <to>$InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:condicionesFinancieras/ns4:fondo/ns6:Descripcion</to>
+          </copy>
+        </assign>
+        <if name="IfValidaFondoProgramado">
+          <documentation>
+            <![CDATA[FondoProgramado]]>
+          </documentation>
+          <condition> $InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:condicionesFinancieras/ns4:fondo/ns6:Descripcion = 'true'</condition>
+          <sequence>
+            <assign name="AssignConsultaProgramacionPYD">
+              <copy bpelx:insertMissingToData="yes">
+                <from>$InvokeConsultaLineaByIdLinea_Out.response/ns11:Operacion/ns18:contrato/ns22:LineaCredito/ns7:NumeroLineaCredito</from>
+                <to>$InvokeConsultaProgramacionPYD_In.request/ns11:LineaCredito/ns7:NumeroLineaCredito</to>
+              </copy>
+              <copy bpelx:insertMissingToData="yes">
+                <from>$InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:monto[ns5:tipo/ns6:DescripcionCorta = 'DESEMBOLSO']/ns5:moneda/ns6:codigoExterno</from>
+                <to>$InvokeConsultaProgramacionPYD_In.request/ns11:LineaCredito/ns7:Monto/ns5:moneda/ns6:codigoExterno</to>
+              </copy>
+              <copy bpelx:insertMissingToData="yes">
+                <from>xp20:format-dateTime(string($InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:fechaEstimadaDesembolsar), '[Y0001]-[M01]-[D01]')</from>
+                <to>$InvokeConsultaProgramacionPYD_In.request/ns11:LineaCredito/ns7:FechaValor</to>
+              </copy>
+              <copy>
+                <from>string($InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:condicionesFinancieras/ns4:fondo/ns6:Id)</from>
+                <to>$InvokeConsultaProgramacionPYD_In.request/ns11:LineaCredito/ns7:Fondo</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultaProgramacionPYD" bpelx:invokeAsDetail="no" partnerLink="ConsultaProgramacionPYD"
+                    portType="ns12:ConsultarProgramacionPYD_PT" operation="ConsultarProgramacionPYD"
+                    inputVariable="InvokeConsultaProgramacionPYD_In"
+                    outputVariable="InvokeConsultaProgramacionPYD_Out"/>
+            <if name="IfValidaOK">
+              <documentation>
+                <![CDATA[OK]]>
+              </documentation>
+              <condition>$InvokeConsultaProgramacionPYD_Out.response/ns11:Resultado/ns8:result = 'OK'</condition>
+              <if name="IfValidaRegistros">
+                <documentation>
+                  <![CDATA[ConRegistros]]>
+                </documentation>
+                <condition>count($InvokeConsultaProgramacionPYD_Out.response/ns11:LineaCredito/ns7:Monto) &gt; 0</condition>
+                <empty name="Empty"/>
+                <else>
+                  <documentation>
+                    <![CDATA[SinRegistros]]>
+                  </documentation>
+                  <sequence name="SequenceConsultarProgramacionSinRegistros">
+                    <assign name="AssignConsultarProgramacionSinRegistros">
+                      <copy>
+                        <from>'OK'</from>
+                        <to>$outputVariable.response/ns3:Resultado/ns8:result</to>
+                      </copy>
+                      <copy>
+                        <from>concat('La consulta del adaptador ConsutlarProgramacionPYD no tiene registros para el desembolso:  ',$inputVariable.request/ns3:idDesembolso)</from>
+                        <to>$outputVariable.response/ns3:Resultado/ns8:message</to>
+                      </copy>
+                    </assign>
+                    <reply name="ReplyConsultarProgramacionSinRegistros" variable="outputVariable"
+                           partnerLink="validarprogramacion_bpel" portType="ns1:ValidarProgramacion_PT"
+                           operation="ValidarProgramacion"/>
+                    <exit name="Exit"/>
+                  </sequence>
+                </else>
+              </if>
+              <else>
+                <documentation>
+                  <![CDATA[ERROR]]>
+                </documentation>
+                <sequence name="SequenceConsultarProgramacionError">
+                  <assign name="AssignConsultarProgramacionError">
+                    <copy>
+                      <from>'ERROR'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns8:result</to>
+                    </copy>
+                    <copy>
+                      <from>concat('Error al consultar el adaptador ConsultarProgramacionPYD: ',$InvokeConsultaProgramacionPYD_Out.response/ns11:Resultado/ns8:message)</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns8:message</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplyConsultarProgramacionError" variable="outputVariable"
+                         partnerLink="validarprogramacion_bpel" portType="ns1:ValidarProgramacion_PT"
+                         operation="ValidarProgramacion"/>
+                  <exit name="Exit"/>
+                </sequence>
+              </else>
+            </if>
+            <scope name="ScopeConsultarImporteTransito">
+              <sequence name="SequenceConsultarImporteTransito">
+                <assign name="AssignConsultarImporteTransito">
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$InvokeConsultarDesembolsoById_Out.response/ns3:ContratoDesembolso/ns4:idLinea</from>
+                    <to>$InvokeConsultarImporteTransito_In.request/ns11:LineaCredito/ns7:idLineaCredito</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$InvokeConsultaProgramacionPYD_Out.response/ns11:LineaCredito/ns7:FechaValor</from>
+                    <to>$InvokeConsultarImporteTransito_In.request/ns11:LineaCredito/ns7:FechaValor</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeConsultarImporteTransito" bpelx:invokeAsDetail="no"
+                        partnerLink="ConsultaImporteTransito" portType="ns24:ConsultarImporteTransito_PT"
+                        operation="ConsultarImporteTransito" inputVariable="InvokeConsultarImporteTransito_In"
+                        outputVariable="InvokeConsultarImporteTransito_Out"/>
+                <assign name="AssignOutConsultaImporteTransito">
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>'TRANSITO'</from>
+                    <to>$outputVariable.response/ns3:ContratoDesembolso/ns4:monto[4]/ns5:tipo/ns6:DescripcionCorta</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$InvokeConsultarImporteTransito_Out.response/ns11:LineaCredito/ns7:Monto/ns5:importe</from>
+                    <to>$outputVariable.response/ns3:ContratoDesembolso/ns4:monto[4]/ns5:importe</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$InvokeConsultarImporteTransito_Out.response/ns11:LineaCredito/ns7:Monto/ns5:moneda/ns6:codigoExterno</from>
+                    <to>$outputVariable.response/ns3:ContratoDesembolso/ns4:monto[4]/ns5:moneda/ns6:codigoExterno</to>
+                  </copy>
+                </assign>
+              </sequence>
+            </scope>
+            <assign name="XQ_ValidaImportesNulos">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/XQ_ValidaImportesNulos.xqy', 'outputVariable.response', $outputVariable.response, 'InvokeConsultaProgramacionPYD_Out.response', $InvokeConsultaProgramacionPYD_Out.response)</from>
+                <to variable="outputVariable" part="response"/>
+              </copy>
+            </assign>
+            <scope name="ScopeValidaProgramado">
+              <sequence name="SequenceValidaProgramacion">
+                <assign name="XQ_AgregarMontoEvaluado">
+                  <bpelx:annotation>
+                    <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                  </bpelx:annotation>
+                  <copy>
+                    <from>ora:processXQuery10('../Transformations/XQ_AgregarMontoEvaluado.xqy', 'outputVariable.response', $outputVariable.response)</from>
+                    <to variable="outputVariable" part="response"/>
+                  </copy>
+                </assign>
+                <if name="IfValidaProgramacion">
+                  <documentation>
+                    <![CDATA[NoValido]]>
+                  </documentation>
+                  <condition>$outputVariable.response/ns3:ContratoDesembolso/ns4:monto[ns5:tipo/ns6:DescripcionCorta = 'EVALUADO_PROGRAMACION']/ns5:importe &lt; 0 </condition>
+                  <assign name="AssignNoProgramado">
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>false()</from>
+                      <to>$outputVariable.response/ns3:ContratoDesembolso/ns4:programado</to>
+                    </copy>
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>'OK'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns8:result</to>
+                    </copy>
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>'Consulta realizada correctamente'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns8:message</to>
+                    </copy>
+                  </assign>
+                  <else>
+                    <documentation>
+                      <![CDATA[Valido]]>
+                    </documentation>
+                    <assign name="AssignProgramado">
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>true()</from>
+                        <to>$outputVariable.response/ns3:ContratoDesembolso/ns4:programado</to>
+                      </copy>
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>'OK'</from>
+                        <to>$outputVariable.response/ns3:Resultado/ns8:result</to>
+                      </copy>
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>'Consulta realizada correctamente'</from>
+                        <to>$outputVariable.response/ns3:Resultado/ns8:message</to>
+                      </copy>
+                    </assign>
+                  </else>
+                </if>
+              </sequence>
+            </scope>
+          </sequence>
+          <else>
+            <assign name="NO_APLICA">
+              <copy>
+                <from>''</from>
+                <to>$outputVariable.response/ns3:ContratoDesembolso/ns4:programado</to>
+              </copy>
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns8:result</to>
+              </copy>
+              <copy>
+                <from>'NO_APLICA'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns8:message</to>
+              </copy>
+            </assign>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="validarprogramacion_bpel" portType="ns1:ValidarProgramacion_PT" operation="ValidarProgramacion" variable="outputVariable"/>
+  </sequence>
+</process>

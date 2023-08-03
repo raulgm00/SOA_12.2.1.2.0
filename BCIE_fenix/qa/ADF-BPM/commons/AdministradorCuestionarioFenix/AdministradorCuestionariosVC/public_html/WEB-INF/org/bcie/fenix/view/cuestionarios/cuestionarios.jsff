@@ -1,0 +1,288 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.1" xmlns:af="http://xmlns.oracle.com/adf/faces/rich"
+          xmlns:f="http://java.sun.com/jsf/core" xmlns:c="http://java.sun.com/jsp/jstl/core">
+    <c:set var="administradorcuestionariosvcBundle"
+           value="#{adfBundle['org.bcie.fenix.view.AdministradorCuestionariosVCBundle']}"/>
+    <af:panelGroupLayout id="pgl2">
+        <af:panelHeader text="#{pageFlowScope.CuestionariosManagedBean.nombrePanelHeader}" id="ph1">
+            <af:panelFormLayout id="pfl1" maxColumns="3" rows="1" labelAlignment="top"
+                                visible="#{pageFlowScope.pActivarCrearEvaluacion}"
+                                rendered="#{pageFlowScope.pActivarCrearEvaluacion}"
+                                inlineStyle="alignment-adjust:auto; text-align:center;">
+                <af:selectOneChoice value="#{pageFlowScope.CuestionariosManagedBean.sectorIbcie}" autoSubmit="true"
+                                    label="Sector I-BCIE:"
+                                    valueChangeListener="#{CuestionariosActionsManagedBean.sectoresValueChangeEvent}"
+                                    required="#{bindings.CatSectorEvaluacionVO.hints.mandatory}"
+                                    shortDesc="#{bindings.CatSectorEvaluacionVO.hints.tooltip}" id="soc1"
+                                    disabled="#{pageFlowScope.CuestionariosManagedBean.esEstadoCompletado}">
+                    <f:selectItems value="#{bindings.CatSectorEvaluacionVO.items}" id="si1"/>
+                    <f:validator binding="#{bindings.CatSectorEvaluacionVO.validator}"/>
+                </af:selectOneChoice>
+                <af:selectOneChoice value="#{pageFlowScope.CuestionariosManagedBean.subSectorIbcie}" autoSubmit="true"
+                                    label="Sub-sector I-BCIE:"
+                                    valueChangeListener="#{CuestionariosActionsManagedBean.subSectoresValueChangeValue}"
+                                    required="#{bindings.CatSubSectorEvaluacionVO.hints.mandatory}"
+                                    shortDesc="#{bindings.CatSubSectorEvaluacionVO.hints.tooltip}" id="soc2"
+                                    disabled="#{pageFlowScope.CuestionariosManagedBean.esEstadoCompletado}">
+                    <f:selectItems value="#{bindings.CatSubSectorEvaluacionVO.items}" id="si2"/>
+                    <f:validator binding="#{bindings.CatSubSectorEvaluacionVO.validator}"/>
+                </af:selectOneChoice>
+                <af:panelFormLayout id="pfl3" visible="#{pageFlowScope.CuestionariosManagedBean.muestraCuestionarios}"
+                                    partialTriggers="soc1 soc2 b1" maxColumns="1" rows="1" labelAlignment="top">
+                    <af:outputLabel value="Cuestionarios" id="ol1"/>
+                    <af:table value="#{bindings.CuestionarioVO.collectionModel}" var="row"
+                              rows="#{bindings.CuestionarioVO.rangeSize}"
+                              emptyText="#{bindings.CuestionarioVO.viewable ? 'No data to display.' : 'Access Denied.'}"
+                              rowBandingInterval="0"
+                              visible="#{pageFlowScope.CuestionariosManagedBean.muestraCuestionarios}"
+                              fetchSize="#{bindings.CuestionarioVO.rangeSize}" id="t1" partialTriggers="::soc1 ::soc2"
+                              contentDelivery="immediate">
+                        <af:column sortProperty="#{bindings.CuestionarioVO.hints.idCuestionario.name}" sortable="true"
+                                   visible="false" headerText="#{bindings.CuestionarioVO.hints.idCuestionario.label}"
+                                   id="c1">
+                            <af:outputText value="#{row.idCuestionario}"
+                                           shortDesc="#{bindings.CuestionarioVO.hints.idCuestionario.tooltip}" id="ot1">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.CuestionarioVO.hints.idCuestionario.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column align="center" id="c3" width="20">
+                            <?audit suppress oracle.adf.faces.tablecolneedsheaders?>
+                            <af:selectBooleanCheckbox value="#{row.bindings.seleccionado.inputValue}" id="sbc1">
+                                <?audit suppress oracle.adf.faces.compnotlabelled?>
+                            </af:selectBooleanCheckbox>
+                        </af:column>
+                        <af:column id="c2" width="450">
+                            <?audit suppress oracle.adf.faces.tablecolneedsheaders?>
+                            <af:outputText value="#{row.nombreCuestionario}" shortDesc="#{row.nombreCuestionario}"
+                                           id="ot2"/>
+                        </af:column>
+                    </af:table>
+                    <af:button text="Crear evaluaci&#243;n" id="b1" styleClass="orangeBtn"
+                               action="#{CuestionariosActionsManagedBean.consultaEvaluacionesAction}"/>
+                </af:panelFormLayout>
+            </af:panelFormLayout>
+            <af:panelGroupLayout id="pgl3"
+                                 visible="#{pageFlowScope.CuestionariosManagedBean.muestraEvaluaciones || bindings.EvaluacionVO.estimatedRowCount > 0}"
+                                 partialTriggers="b1 b2">
+                <af:button text="#{pageFlowScope.CuestionariosManagedBean.nombreEliminarBtn}" id="b2"
+                           styleClass="orangeBtn" visible="#{pageFlowScope.pActivarEliminarBoton}"
+                           action="#{CuestionariosActionsManagedBean.eliminaCuestionarioEvaluacion}"
+                           disabled="#{bindings.EvaluacionVO.currentRow == null or pageFlowScope.CuestionariosManagedBean.esEstadoCompletado}"/>
+                <af:spacer width="5" height="5" id="s3"/>
+                <af:button id="b3" styleClass="orangeBtn"
+                           disabled="#{bindings.EvaluacionVO.currentRow == null or pageFlowScope.CuestionariosManagedBean.esEstadoCompletado}"
+                           text="#{pageFlowScope.CuestionariosManagedBean.nombreConsultarCuestionarioBtn}"
+                           partialSubmit="true" targetFrame="_blank" useWindow="true"
+                           destination="#{CuestionariosActionsManagedBean.enlacePagina}"></af:button>
+                <af:spacer width="5" height="5" id="s4"/>
+                <af:button text="Actualizar" id="b4" styleClass="orangeBtn"
+                           action="#{CuestionariosActionsManagedBean.consultaEvaluaciones}"
+                           rendered="#{pageFlowScope.pActivarActualizarBoton}"
+                           disabled="#{pageFlowScope.CuestionariosManagedBean.esEstadoCompletado}"/>
+            </af:panelGroupLayout>
+            <af:spacer width="60" height="38" id="s2"/>
+            <!-- Se elimina la visibilidad  pgl5 -->
+            <!--visible="#{pageFlowScope.CuestionariosManagedBean.muestraEvaluaciones || bindings.EvaluacionVO.estimatedRowCount > 0 }"-->
+            <af:panelGroupLayout id="pgl5" partialTriggers="b1 b2 b4">
+                <af:panelFormLayout id="pfl2" maxColumns="1" rows="1">
+                    <af:spacer width="10" height="10" id="s1"/>
+                    <!-- Add Table Evaluaciones -->
+                    <af:table value="#{bindings.EvaluacionVO.collectionModel}" var="row"
+                              rows="#{bindings.EvaluacionVO.rangeSize}"
+                              emptyText="#{bindings.EvaluacionVO.viewable ? 'No data to display.' : 'Access Denied.'}"
+                              rowBandingInterval="0"
+                              selectedRowKeys="#{bindings.EvaluacionVO.collectionModel.selectedRow}"
+                              selectionListener="#{bindings.EvaluacionVO.collectionModel.makeCurrent}"
+                              rowSelection="single" fetchSize="#{bindings.EvaluacionVO.rangeSize}" id="t2" width="1245"
+                              partialTriggers="::b2 ::b3 ::pgl5 ::pfl2 ::b4 ::b1">
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.id.label}" id="c4" rendered="false">
+                            <af:outputText value="#{row.id}" shortDesc="#{bindings.EvaluacionVO.hints.id.tooltip}"
+                                           id="ot3">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.id.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column headerText="Id Evaluaci&#243;n" id="c5" width="100" align="center"
+                                   inlineStyle="text-align:center;">
+                            <af:outputText value="#{row.idEvaluacion}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.idEvaluacion.tooltip}" id="ot4">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.idEvaluacion.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column headerText="#{administradorcuestionariosvcBundle.TITULO_EVALUACION}" id="c13"
+                                   width="344"
+                                   rendered="#{pageFlowScope.pIdTarea eq 171 and (pageFlowScope.pEventoEvaluacion eq 2 or pageFlowScope.pEventoEvaluacion eq 3)}">
+                            <af:outputText value="#{row.tituloEvaluacion}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.tituloEvaluacion.tooltip}"
+                                           id="ot11"/>
+                        </af:column>
+                        <af:column headerText="Nombre de cuestionario" id="c6" width="395" align="center"
+                                   inlineStyle="text-align:center;">
+                            <af:outputText value="#{row.nombreCuestionario}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.nombreCuestionario.tooltip}"
+                                           id="ot5"/>
+                        </af:column>
+                        <af:column headerText="Sector IBCIE" id="c14" width="168" align="center"
+                                   inlineStyle="text-align:center;">
+                            <af:outputText value="#{row.descripcionSector}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.descripcionSector.tooltip}"
+                                           id="ot12"/>
+                        </af:column>
+                        <af:column headerText="Sub-sector IBCIE" id="c15" width="144" align="center"
+                                   inlineStyle="text-align:center;">
+                            <af:outputText value="#{row.descripcionSubSector}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.descripcionSubSector.tooltip}"
+                                           id="ot13"/>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.idSector.label}" id="c7" rendered="false">
+                            <af:outputText value="#{row.idSector}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.idSector.tooltip}" id="ot6">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.idSector.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.idSubSector.label}" id="c8"
+                                   rendered="false">
+                            <af:outputText value="#{row.idSubSector}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.idSubSector.tooltip}" id="ot7">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.idSubSector.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column headerText="Evaluacion" id="c26" width="150"
+                                   rendered="#{pageFlowScope.CuestionariosManagedBean.muestraColumnaEvaluacion}"
+                                   align="center" inlineStyle="text-align:center;">
+                            <af:outputText value="#{row.Evaluacion}" id="ot24"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.Evaluacion.tooltip}"/>
+                        </af:column>
+                        <af:column headerText="% Avance" id="c9" width="100" rendered="#{pageFlowScope.pActivarAvance}"
+                                   align="center" inlineStyle="text-align:center;">
+                            <af:outputText value="#{row.porcentajeAvance}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.porcentajeAvance.tooltip}" id="ot8">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.porcentajeAvance.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column headerText="Estatus" id="c10" width="100" align="center"
+                                   inlineStyle="text-align:center;" rendered="#{pageFlowScope.pActivarEstatus}">
+                            <af:outputText value="#{row.porcentajeStatus}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.porcentajeStatus.tooltip}" id="ot9"
+                                           escape="false"/>
+                        </af:column>
+                        <af:column headerText="Validado" id="c11" width="111" align="center"
+                                   inlineStyle="text-align:center;" rendered="#{pageFlowScope.pActivarValidado}">
+                            <af:selectBooleanCheckbox value="#{row.bindings.validado.inputValue}"
+                                                      label="#{row.bindings.validado.label}"
+                                                      shortDesc="#{bindings.EvaluacionVO.hints.validado.tooltip}"
+                                                      id="sbc2"/>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.idOperacion.label}" id="c12"
+                                   rendered="false">
+                            <af:outputText value="#{row.idOperacion}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.idOperacion.tooltip}" id="ot10">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.idOperacion.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.idCuestionario.label}" id="c16"
+                                   rendered="false">
+                            <af:outputText value="#{row.idCuestionario}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.idCuestionario.tooltip}" id="ot14"/>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.descripcionCuestionario.label}" id="c17"
+                                   rendered="false">
+                            <af:outputText value="#{row.descripcionCuestionario}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.descripcionCuestionario.tooltip}"
+                                           id="ot15"/>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.enAnalisis.label}" id="c18"
+                                   rendered="false">
+                            <af:outputText value="#{row.enAnalisis}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.enAnalisis.tooltip}" id="ot16">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.enAnalisis.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.fechaRegistro.label}" id="c19"
+                                   rendered="false">
+                            <af:outputText value="#{row.fechaRegistro}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.fechaRegistro.tooltip}" id="ot17">
+                                <af:convertDateTime pattern="#{bindings.EvaluacionVO.hints.fechaRegistro.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.banStatus.label}" id="c20"
+                                   rendered="false">
+                            <af:outputText value="#{row.banStatus}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.banStatus.tooltip}" id="ot18">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.banStatus.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.tipoEvaluacion.label}" id="c21"
+                                   rendered="false">
+                            <af:outputText value="#{row.tipoEvaluacion}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.tipoEvaluacion.tooltip}" id="ot19">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.tipoEvaluacion.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.version.label}" id="c22" rendered="false">
+                            <af:outputText value="#{row.version}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.version.tooltip}" id="ot20">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.version.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.codigoUsuario.label}" id="c23"
+                                   rendered="false">
+                            <af:outputText value="#{row.codigoUsuario}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.codigoUsuario.tooltip}" id="ot21">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.codigoUsuario.format}"/>
+                            </af:outputText>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.nombreUsuario.label}" id="c24"
+                                   rendered="false">
+                            <af:outputText value="#{row.nombreUsuario}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.nombreUsuario.tooltip}" id="ot22"/>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.codigoExterno.label}" id="c25"
+                                   rendered="false">
+                            <af:outputText value="#{row.codigoExterno}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.codigoExterno.tooltip}" id="ot23"/>
+                        </af:column>
+                        <af:column headerText="Calificacion IBCIE" id="c27"
+                                   rendered="#{( (bindings.EvaluacionVO.estimatedRowCount > 1) and pageFlowScope.CuestionariosManagedBean.muestraColumnaCalificacion == true ) ? true : false}"
+                                   align="center" inlineStyle="text-align:center;" width="100">
+                            <af:inputText value="#{row.bindings.Calificacion.inputValue}"
+                                          required="#{bindings.EvaluacionVO.hints.Calificacion.mandatory}"
+                                          columns="#{bindings.EvaluacionVO.hints.Calificacion.displayWidth}"
+                                          maximumLength="#{bindings.EvaluacionVO.hints.Calificacion.precision}"
+                                          shortDesc="#{bindings.EvaluacionVO.hints.Calificacion.tooltip}" id="it1"
+                                          visible="#{(pageFlowScope.CuestionariosManagedBean.idTarea eq 171 and row.idEvaluacionOrigen ne null) ? true : (pageFlowScope.CuestionariosManagedBean.idTarea eq 172 and row.idEvaluacionOrigen ne null) ? true : false}">
+                                <f:validator binding="#{row.bindings.Calificacion.validator}"/>
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.Calificacion.format}"/>
+                            </af:inputText>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.Estado.label}" id="c28" visible="false">
+                            <af:outputText value="#{row.Estado}" id="ot50"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.Estado.tooltip}"/>
+                        </af:column>
+                        <af:column headerText="#{bindings.EvaluacionVO.hints.idEvaluacionOrigen.label}" id="c29"
+                                   rendered="false">
+                            <af:outputText value="#{row.idEvaluacionOrigen}"
+                                           shortDesc="#{bindings.EvaluacionVO.hints.idEvaluacionOrigen.tooltip}"
+                                           id="ot25">
+                                <af:convertNumber groupingUsed="false"
+                                                  pattern="#{bindings.EvaluacionVO.hints.idEvaluacionOrigen.format}"/>
+                            </af:outputText>
+                        </af:column>
+                    </af:table>
+                </af:panelFormLayout>
+            </af:panelGroupLayout>
+        </af:panelHeader>
+    </af:panelGroupLayout>
+</jsp:root>

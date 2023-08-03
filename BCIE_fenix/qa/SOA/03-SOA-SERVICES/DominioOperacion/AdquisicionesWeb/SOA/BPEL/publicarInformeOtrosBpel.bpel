@@ -1,0 +1,140 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue May 23 11:35:02 CST 2017
+  Author:  varelaa
+  Purpose: BPEL Process for event subscription
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="publicarInformeOtrosBpel"
+         targetNamespace="http://xmlns.oracle.com/AdquisicionesWSFenix/AdquisicionWeb/publicarInformeOtrosBpel"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:client="http://xmlns.oracle.com/AdquisicionesWSFenix/AdquisicionWeb/publicarInformeOtrosBpel"
+         xmlns:ora="http://schemas.oracle.com/xpath/extension"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:ns1="http://xmlns.oracle.com/DominioOperacion/Adquisicion/PublicarInformeResultadosOtros"
+         xmlns:ns2="http://www.bcie.org/AdquisicionMO"
+         xmlns:bpws="http://docs.oasis-open.org/wsbpel/2.0/process/executable" xmlns:ns3="urn:bcieBinding"
+         xmlns:ns4="http://www.bcie.org/AdquisicionBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ns0="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns5="http://xmlns.oracle.com/pcbpel/adapter/db/AdquisicionesWSFenix/AdquisicionWeb/dbFNXLI"
+         xmlns:ns6="http://xmlns.oracle.com/pcbpel/adapter/db/top/dbFNXLI"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns7="http://xmlns.oracle.com/pcbpel/adapter/db/AdquisicionesWSFenix/AdquisicionWeb/dbFenixInformeOtros"
+         xmlns:ns8="http://xmlns.oracle.com/pcbpel/adapter/db/dbFenixInformeOtros" xml:id="id_1">
+
+    <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/AdquisicionesWSFenix/AdquisicionWeb/publicarInformeOtrosBpel" location="../WSDLs/publicarInformeOtrosBpel.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+            xml:id="id_2"/>
+    <partnerLinks xml:id="id_3">
+        <partnerLink name="wsAdquisiciones" partnerLinkType="ns3:wsAdquisiciones" partnerRole="bciePortType"
+                     xml:id="id_4"/>
+        <partnerLink name="dbFenixInformeOtros" partnerLinkType="ns7:dbFenixInformeOtros_plt"
+                     partnerRole="dbFenixInformeOtros_role" xml:id="id_5"/>
+    </partnerLinks>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        VARIABLES                                                        
+        List of messages and XML documents used within this BPEL process 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    <variables xml:id="id_6">
+        <!-- Reference to the message passed as input during initiation -->
+        <variable name="inputVariable0" element="ns2:PublicarInformeResultadosOtros" xml:id="id_7"/>
+        <variable name="InvokeWsPublicarInformeOtros_add_agreement_InputVariable"
+                  messageType="ns3:add_agreementRequest" xml:id="id_8"/>
+        <variable name="InvokeWsPublicarInformeOtros_add_agreement_OutputVariable"
+                  messageType="ns3:add_agreementResponse" xml:id="id_9"/>
+        <variable name="SelectNoObjecion_dbFenixInformeOtros_InputVariable"
+                  messageType="ns7:dbFenixInformeOtrosInput_msg" xml:id="id_10"/>
+        <variable name="SelectNoObjecion_dbFenixInformeOtros_OutputVariable"
+                  messageType="ns7:dbFenixInformeOtrosOutputCollection_msg" xml:id="id_11"/>
+    </variables>
+
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+       ORCHESTRATION LOGIC                                               
+       Set of activities coordinating the flow of messages across the    
+       services integrated within this business process                  
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    <sequence name="main" xml:id="id_12">
+        <!-- Receive input from requestor. (Note: This maps to operation defined in publicarInformeOtrosBpel.wsdl) -->
+        <receive name="receiveInput0" bpelx:eventName="ns1:InformeResultadosOtros" variable="inputVariable0" createInstance="yes"
+                 xml:id="id_13"/>
+        <assign name="setNoObjecion" xml:id="id_14">
+            <copy xml:id="id_15">
+                <from xml:id="id_16">string($inputVariable0/ns4:idNoObjecion)</from>
+                <to xml:id="id_17">$SelectNoObjecion_dbFenixInformeOtros_InputVariable.dbFenixInformeOtrosInput_msg/ns8:IdNoObjecionVar</to>
+            </copy>
+        </assign>
+        <invoke name="SelectNoObjecion" bpelx:invokeAsDetail="no" partnerLink="dbFenixInformeOtros"
+                portType="ns7:dbFenixInformeOtros_ptt" operation="dbFenixInformeOtros"
+                inputVariable="SelectNoObjecion_dbFenixInformeOtros_InputVariable"
+                outputVariable="SelectNoObjecion_dbFenixInformeOtros_OutputVariable" xml:id="id_18"/>
+        <assign name="setPublicarAgreement" xml:id="id_19">
+            <copy xml:id="id_20">
+                <from xml:id="id_21">number($inputVariable0/ns4:idNoObjecion)</from>
+                <to xml:id="id_22">$InvokeWsPublicarInformeOtros_add_agreement_InputVariable.id</to>
+            </copy>
+            <copy xml:id="id_23">
+                <from xml:id="id_24">dvm:lookupValue("ListaResultadosProcesos.dvm","ProcesoNombre",$inputVariable0/ns2:resultadoProceso,"ProcesoCodigo","")</from>
+                <to xml:id="id_25">$InvokeWsPublicarInformeOtros_add_agreement_InputVariable.ProcessResult</to>
+            </copy>
+            <copy xml:id="id_26">
+                <from xml:id="id_27">dvm:lookupValue("ListaPaises.dvm","PaisISO",$inputVariable0/ns4:nombrePais,"PaisCodigo","")</from>
+                <to xml:id="id_28">$InvokeWsPublicarInformeOtros_add_agreement_InputVariable.Country</to>
+            </copy>
+            <copy xml:id="id_29">
+                <from xml:id="id_30">$inputVariable0/ns4:tituloProceso</from>
+                <to xml:id="id_31">$InvokeWsPublicarInformeOtros_add_agreement_InputVariable.ProcessTitle</to>
+            </copy>
+            <copy xml:id="id_32">
+                <from xml:id="id_33">$inputVariable0/ns4:numeroProceso</from>
+                <to xml:id="id_34">$InvokeWsPublicarInformeOtros_add_agreement_InputVariable.ProcessNumber</to>
+            </copy>
+            <copy xml:id="id_35">
+                <from xml:id="id_36">$SelectNoObjecion_dbFenixInformeOtros_OutputVariable.dbFenixInformeOtrosOutputCollection/ns8:dbFenixInformeOtrosOutput/ns8:EXECUTOR</from>
+                <to xml:id="id_37">$InvokeWsPublicarInformeOtros_add_agreement_InputVariable.Executor</to>
+            </copy>
+            <copy xml:id="id_38">
+                <from xml:id="id_39">$SelectNoObjecion_dbFenixInformeOtros_OutputVariable.dbFenixInformeOtrosOutputCollection/ns8:dbFenixInformeOtrosOutput/ns8:FECHA_PUBLICACION</from>
+                <to xml:id="id_40">$InvokeWsPublicarInformeOtros_add_agreement_InputVariable.DateAdjudication</to>
+            </copy>
+            <copy xml:id="id_41">
+                <from xml:id="id_42">string($SelectNoObjecion_dbFenixInformeOtros_OutputVariable.dbFenixInformeOtrosOutputCollection/ns8:dbFenixInformeOtrosOutput/ns8:LINEA_CREDITO)</from>
+                <to xml:id="id_43">$InvokeWsPublicarInformeOtros_add_agreement_InputVariable.CurrentCreditLine</to>
+            </copy>
+            <copy xml:id="id_44">
+                <from xml:id="id_45">string($SelectNoObjecion_dbFenixInformeOtros_OutputVariable.dbFenixInformeOtrosOutputCollection/ns8:dbFenixInformeOtrosOutput/ns8:LINEA_CREDITO)</from>
+                <to xml:id="id_46">$InvokeWsPublicarInformeOtros_add_agreement_InputVariable.ParentCreditLine</to>
+            </copy>
+            <copy xml:id="id_47">
+                <from xml:id="id_48">'N'</from>
+                <to xml:id="id_49">$InvokeWsPublicarInformeOtros_add_agreement_InputVariable.FADM</to>
+            </copy>
+            <copy xml:id="id_50">
+                <from xml:id="id_51">'4OsbYCpP'</from>
+                <to xml:id="id_52">$InvokeWsPublicarInformeOtros_add_agreement_InputVariable.Token</to>
+            </copy>
+            <copy xml:id="id_53">
+                <from xml:id="id_54">string($SelectNoObjecion_dbFenixInformeOtros_OutputVariable.dbFenixInformeOtrosOutputCollection/ns8:dbFenixInformeOtrosOutput/ns8:DESCRIPCION_LINEA_CREDITO)</from>
+                <to xml:id="id_55">$InvokeWsPublicarInformeOtros_add_agreement_InputVariable.LineName</to>
+            </copy>
+        </assign>
+        <invoke name="InvokeWsPublicarInformeOtros"
+                inputVariable="InvokeWsPublicarInformeOtros_add_agreement_InputVariable"
+                outputVariable="InvokeWsPublicarInformeOtros_add_agreement_OutputVariable" bpelx:invokeAsDetail="no"
+                partnerLink="wsAdquisiciones" portType="ns3:bciePortType" operation="add_agreement" xml:id="id_56"/>
+    </sequence></process>

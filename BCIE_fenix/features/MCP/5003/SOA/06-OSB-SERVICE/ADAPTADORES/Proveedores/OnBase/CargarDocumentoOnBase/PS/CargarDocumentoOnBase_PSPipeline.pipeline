@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Wsdl/ADAPTER/CargarDocumentoOnBaseSAD"/>
+            <con:binding>
+                <con:name>Documento12Bnd</con:name>
+                <con:namespace>http://xmlns.bcie.com/DocumentoService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-N3f57c7ff.20ff3d99.0.14ef638d729.N7f9c">
+        <con:pipeline type="error" name="error-N3f57c7ff.20ff3d99.0.14ef638d729.N7f9c">
+            <con:stage id="_StageId-N3f57c7ff.20ff3d99.0.14ef638d729.N7f62" name="StageError" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                <con:context/>
+                <con:actions>
+                    <con3:assign varName="inMapeoError">
+                        <con2:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f57c7ff.20ff3d99.0.14ef638d729.N7f61</con2:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(fn:data($fault/ctx:errorCode))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con2:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f57c7ff.20ff3d99.0.14ef638d729.N7f60</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS.proxyPipeline" xsi:type="con:PipelineRef"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapeoError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapeoError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true">
+                        <con2:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-N3f57c7ff.20ff3d99.0.14ef638d729.N7f5f</con2:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con4:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con4:resource ref="ADAPTADORES/Proveedores/OnBase/CargarDocumentoOnBase/XQUERY/Error_TO_CargarDocumentoOnBase_PS"/>
+                                <con4:param name="message">
+                                    <con4:path>xs:string(fn:data($fault/ctx:reason))</con4:path>
+                                </con4:param>
+                                <con4:param name="responseMapeoErrorMessage">
+                                    <con4:path>$outMapeoError</con4:path>
+                                </con4:param>
+                            </con4:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-N3f57c7ff.20ff3d99.0.14ef638d729.N7f5e</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="request" name="request-N3f57c7ff.N66230147.0.14f1f1bb649.N7f97">
+            <con:stage id="_StageId-N3f57c7ff.N66230147.0.14f1f1bb649.N7f95" name="StageRequest">
+                <con:context>
+                    <con1:userNsDecl prefix="doc" namespace="http://www.bcie.org/DocumentoMO"/>
+                    <con1:userNsDecl prefix="doc1" namespace="http://www.bcie.org/DocumentoBO"/>
+                </con:context>
+                <con:actions>
+                    <con4:log>
+                        <con1:id>_ActionId-N3f579b88.N6f9c02eb.0.1532e3eb658.N7f7d</con1:id>
+                        <con4:logLevel>info</con4:logLevel>
+                        <con4:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con4:expr>
+                        <con4:message>CargarDocumentoOnBase - Request</con4:message>
+                    </con4:log>
+                    <con3:assign varName="idAdjunto">
+                        <con1:id>_ActionId-N3f57c7ff.7d9cd331.0.150d3c7f123.N7e60</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>$body/doc:CargarDocumentoOnBaseRequest/doc:Documentos/doc1:Documento/doc1:idAdjunto</con1:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:assign varName="idOperacion">
+                        <con1:id>_ActionId-N3f57c7ff.N1f10252d.0.150df32ebab.N7ffd</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>$body/doc:CargarDocumentoOnBaseRequest/doc:Documentos/doc1:Documento/doc1:idOperacion</con1:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-N3f57c7ff.20ff3d99.0.14ef638d729.N7e99</con1:id>
+                        <con3:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/Proveedores/OnBase/CargarDocumentoOnBase/XQUERY/CargarDocumentoOnBase_PS_TO_OnBase_BS_Request"/>
+                                <con1:param name="CargarDocumentoRequest">
+                                    <con1:path>$body/doc:CargarDocumentoOnBaseRequest</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-N3f57c7ff.N66230147.0.14f1f1bb649.N7f96">
+            <con:stage id="_StageId-N3f57c7ff.N66230147.0.14f1f1bb649.N7f91" name="StageResponse">
+                <con:context/>
+                <con:actions>
+                    <con3:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-N3f57c7ff.20ff3d99.0.14ef638d729.N7e67</con1:id>
+                        <con3:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/Proveedores/OnBase/CargarDocumentoOnBase/XQUERY/OnBase_BS_TO_CargarDocumentoOnBase_PS_Response"/>
+                                <con1:param name="InsertResponse">
+                                    <con1:path>$body/*[1]</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con4:log>
+                        <con1:id>_ActionId-N3f579b88.N6f9c02eb.0.1532e3eb658.N7f7a</con1:id>
+                        <con4:logLevel>info</con4:logLevel>
+                        <con4:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con4:expr>
+                        <con4:message>CargarDocumentoOnBase - Response</con4:message>
+                    </con4:log>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PipelinePairNode1">
+                <con:request>request-N3f57c7ff.N66230147.0.14f1f1bb649.N7f97</con:request>
+                <con:response>response-N3f57c7ff.N66230147.0.14f1f1bb649.N7f96</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteNodeCargarDocumentoOnbase">
+                <con:context>
+                    <con1:userNsDecl prefix="doc" namespace="http://www.bcie.org/DocumentoMO"/>
+                </con:context>
+                <con:actions>
+                    <con2:route>
+                        <con1:id>_ActionId-N3f57c7ff.20ff3d99.0.14ef638d729.N7ecb</con1:id>
+                        <con2:service ref="ADAPTADORES/Proveedores/OnBase/BS/OnBase_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:operation>Insert</con2:operation>
+                        <con2:outboundTransform>
+                            <con4:log>
+                                <con1:id>_ActionId-N3f57c7ff.2a29ed2b.0.15362b475f4.N7fcf</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>CargarDocumeto_ONBASE_BS_Request</con4:message>
+                            </con4:log>
+                        </con2:outboundTransform>
+                        <con2:responseTransform>
+                            <con4:log>
+                                <con1:id>_ActionId-N3f57c7ff.2a29ed2b.0.15362b475f4.N7f9d</con1:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con4:expr>
+                                <con4:message>CargarDocumeto_ONBASE_BS_Response</con4:message>
+                            </con4:log>
+                        </con2:responseTransform>
+                    </con2:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

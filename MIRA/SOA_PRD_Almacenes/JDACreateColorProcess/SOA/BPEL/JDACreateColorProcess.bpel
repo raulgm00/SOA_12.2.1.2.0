@@ -1,0 +1,193 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Jul 24 14:28:54 CDT 2019
+  Author:  Marisol
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="JDACreateColorProcess"
+               targetNamespace="http://xmlns.oracle.com/RetailOperMK/JDACreateColorProcess/JDACreateColorProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/RetailOperMK/JDACreateColorProcess/JDACreateColorProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://mx.agarcia.ea/Applications/JDA/Catalogs/ColorSize/v1.0"
+         xmlns:ns2="http://mx.agarcia.ea/RetailOperations/Make/ProductDevelopment/ItemCatalogTaskSvcWSD"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Core/Items/CreateColorEntity"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns5="http://mx.agarcia.ea/Applications/JDA/Catalogs/ColorSize"
+         xmlns:ns4="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns6="http://mx.agarcia.ea/RetailOperations/Make/ProductDevelopment/ItemCatalogTaskSvc"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns7="http://mx.agarcia.ea/Capabilities/Support/Commons/ItemsCatalogs"
+         xmlns:ns8="http://xmlns.oracle.com/RetailOperMK/JDACreateColorProcess/ItemCatalogTaskRest">
+
+    <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/RetailOperMK/JDACreateColorProcess/JDACreateColorProcess" location="../WSDLs/JDACreateColorProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="jdacreatecolorprocess_client" partnerLinkType="client:JDACreateColorProcess" myRole="JDACreateColorProcessProvider"/>
+    <partnerLink name="JDAColorsPXY" partnerLinkType="ns1:JDAColorsPXY" partnerRole="JDAColorSvcPort"/>
+    <partnerLink name="ItemCatalogTaskPXY" partnerLinkType="ns2:ItemCatalogTaskPXY"
+                 partnerRole="ItemCatalogEntitySvcPType"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:JDACreateColorProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:JDACreateColorProcessResponseMessage"/>
+    <variable name="Invoke_findNextID_In" messageType="ns1:findColorNextIDRequestMessage"/>
+    <variable name="Invoke_findNextID_Out" messageType="ns1:findColorNextIDResponseMessage"/>
+    <variable name="Invoke_createColor_In" messageType="ns1:createColorRequestMessage"/>
+    <variable name="Invoke_createColor_Out" messageType="ns1:createColorResponseMessage"/>
+    <variable name="Invoke_registerMDM_In" messageType="ns2:registerRequest"/>
+    <variable name="Invoke_registerMDM_Out" messageType="ns2:registerResponse"/>
+    <variable name="Invoke_RegisterMaestroRMS_in" messageType="ns2:registerRequest"/>
+    <variable name="Invoke_RegisterMaestroRMS_out" messageType="ns2:registerResponse"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in JDACreateColorProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="jdacreatecolorprocess_client" portType="client:JDACreateColorProcess" operation="process" variable="inputVariable" createInstance="yes"/>
+    <invoke name="Invoke_findNextID" bpelx:invokeAsDetail="no" partnerLink="JDAColorsPXY"
+            portType="ns1:JDAColorSvcPort" operation="findNextID" inputVariable="Invoke_findNextID_In"
+            outputVariable="Invoke_findNextID_Out"/>
+    <assign name="AssignCreateColor">
+      <copy>
+        <from>$inputVariable.payload/ns3:color/ns4:name</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_createColor_In.payload/ns5:color/ns4:name</to>
+      </copy>
+      <copy>
+        <from>$Invoke_findNextID_Out.payload</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_createColor_In.payload/ns5:color/ns4:id</to>
+      </copy>
+      <copy>
+        <from>$inputVariable.payload/ns3:color/ns4:parent/ns4:id</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_createColor_In.payload/ns5:color/ns4:parent/ns4:id</to>
+      </copy>
+    </assign>
+    <invoke name="Invoke_createColor" bpelx:invokeAsDetail="no" partnerLink="JDAColorsPXY"
+            portType="ns1:JDAColorSvcPort" operation="create" inputVariable="Invoke_createColor_In"
+            outputVariable="Invoke_createColor_Out"/>
+    <assign name="Assign1">
+      <copy>
+        <from>$inputVariable.payload/ns3:color/ns4:id</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterMaestroRMS_in.registerRequest/ns6:id</to>
+      </copy>
+      <copy>
+        <from>$inputVariable.payload/ns3:color/ns4:name</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterMaestroRMS_in.registerRequest/ns6:name</to>
+      </copy>
+      <copy>
+        <from>'RMS'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterMaestroRMS_in.registerRequest/ns6:appCode</to>
+      </copy>
+      <copy>
+        <from>14</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterMaestroRMS_in.registerRequest/ns6:catalogId</to>
+      </copy>
+      <copy>
+        <from>'10001'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterMaestroRMS_in.registerRequest/ns6:parentId</to>
+      </copy>
+      <copy>
+        <from>12</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_RegisterMaestroRMS_in.registerRequest/ns6:parentCatid</to>
+      </copy>
+    </assign>
+    <invoke name="Invoke_RegisterMaestroRMS" partnerLink="ItemCatalogTaskPXY"
+            portType="ns2:ItemCatalogEntitySvcPType" operation="register" inputVariable="Invoke_RegisterMaestroRMS_in"
+            outputVariable="Invoke_RegisterMaestroRMS_out" bpelx:invokeAsDetail="no"/>
+    <assign name="AssignRegisterMDM">
+      <copy>
+        <from>$Invoke_findNextID_Out.payload</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_registerMDM_In.registerRequest/ns6:id</to>
+      </copy>
+      <copy>
+        <from>'10001'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_registerMDM_In.registerRequest/ns6:primaryParnId</to>
+      </copy>
+      <copy>
+        <from>'12'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_registerMDM_In.registerRequest/ns6:primaryParnCatId</to>
+      </copy>
+      <copy>
+        <from>'JDA'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_registerMDM_In.registerRequest/ns6:appCode</to>
+      </copy>
+      <copy>
+        <from>$inputVariable.payload/ns3:color/ns4:name</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_registerMDM_In.registerRequest/ns6:name</to>
+      </copy>
+      <copy>
+        <from>14</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_registerMDM_In.registerRequest/ns6:catalogId</to>
+      </copy>
+      <copy>
+        <from>10001</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_registerMDM_In.registerRequest/ns6:parentId</to>
+      </copy>
+      <copy>
+        <from>$inputVariable.payload/ns3:color/ns4:id</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_registerMDM_In.registerRequest/ns6:primaryId</to>
+      </copy>
+      <copy>
+        <from>'RMS'</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_registerMDM_In.registerRequest/ns6:primaryAppcode</to>
+      </copy>
+      <copy>
+        <from>14</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_registerMDM_In.registerRequest/ns6:primaryCatid</to>
+      </copy>
+      <copy>
+        <from>12</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_registerMDM_In.registerRequest/ns6:parentCatid</to>
+      </copy>
+    </assign>
+    <invoke name="Invoke_registerMDM" partnerLink="ItemCatalogTaskPXY"
+            portType="ns2:ItemCatalogEntitySvcPType" operation="register" inputVariable="Invoke_registerMDM_In"
+            outputVariable="Invoke_registerMDM_Out" bpelx:invokeAsDetail="no"/>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="jdacreatecolorprocess_client" portType="client:JDACreateColorProcess" operation="process" variable="outputVariable"/>
+  </sequence>
+</process>

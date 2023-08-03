@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="Any SOAP" isSoap12="false" xsi:type="con:AnySoapBindingType"/>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-a016234.628bba9c.0.164b951fa07.N7fdb">
+        <con:pipeline type="request" name="request-a016234.628bba9c.0.164b951fa07.N7fe4">
+            <con:stage id="_StageId-a016234.628bba9c.0.164b951fa07.N7fe2" name="stg_LoadData">
+                <con:context/>
+                <con:actions>
+                    <con1:assign varName="varRequest">
+                        <con2:id>_ActionId-a016234.628bba9c.0.164b951fa07.N7fd7</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                    <con1:assign varName="varOperationBck">
+                        <con2:id>_ActionId-a016234.N4b12be8b.0.164f796e893.N7fe2</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$varOperation</con2:xqueryText>
+                        </con1:expr>
+                    </con1:assign>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a016234.628bba9c.0.164b951fa07.N7fde" name="stg_AcctLoanAdd">
+                <con:context>
+                    <con2:userNsDecl prefix="eoptAcctLoanAdd" namespace="http://xmlns.banesco.com/eopt/AcctLoanAdd_V1.0"/>
+                    <con2:userNsDecl prefix="eoStatus" namespace="http://xmlns.banesco.com/eo/Status_V1.0"/>
+                    <con2:userNsDecl prefix="eoAcct" namespace="http://xmlns.banesco.com/eo/Acct_V1.0"/>
+                </con:context>
+                <con:actions>
+                    <con1:wsCallout>
+                        <con2:id>_ActionId-a016234.628bba9c.0.164b951fa07.N7fdd</con2:id>
+                        <con1:service ref="AcctTS/proxy/PX_AcctLoan_V1.0" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>AcctLoanAdd</con1:operation>
+                        <con1:request>
+                            <con1:body wrapped="true">body</con1:body>
+                            <con1:header>header</con1:header>
+                        </con1:request>
+                        <con1:response>
+                            <con1:body wrapped="true">body</con1:body>
+                            <con1:header>headerAccLoanAddRs</con1:header>
+                        </con1:response>
+                        <con1:requestTransform/>
+                        <con1:responseTransform/>
+                    </con1:wsCallout>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-a016234.628bba9c.0.164b951fa07.N7fc6" name="stg_AcctLoanInfoAdd" errorHandler="error-a016234.4fac490f.0.164c80d6b3a.N7ffc">
+                <con:context>
+                    <con2:userNsDecl prefix="eoptAcctLoanAdd" namespace="http://xmlns.banesco.com/eopt/AcctLoanAdd_V1.0"/>
+                    <con2:userNsDecl prefix="eoStatus" namespace="http://xmlns.banesco.com/eo/Status_V1.0"/>
+                    <con2:userNsDecl prefix="eoAcct" namespace="http://xmlns.banesco.com/eo/Acct_V1.0"/>
+                </con:context>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-a016234.628bba9c.0.164b951fa07.N7fbe</con2:id>
+                        <con1:case id="_BranchId-a016234.628bba9c.0.164b951fa07.N7fbd">
+                            <con1:condition>
+                                <con2:xqueryText>$body/eoptAcctLoanAdd:AcctLoanAddRs/eoptAcctLoanAdd:Status/eoStatus:StatusCode = 'M0000'</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:replace varName="varRequest">
+                                    <con2:id>_ActionId-a016234.628bba9c.0.164b951fa07.N7fc9</con2:id>
+                                    <con1:location>
+                                        <con2:xpathText>./eoptAcctLoanAdd:AcctLoanAddRq/eoptAcctLoanAdd:AccLoan/eoAcct:AcctKey/eoAcct:AcctId</con2:xpathText>
+                                    </con1:location>
+                                    <con1:expr>
+                                        <con2:xqueryText>$body/eoptAcctLoanAdd:AcctLoanAddRs/eoptAcctLoanAdd:AcctKey/eoAcct:AcctId</con2:xqueryText>
+                                    </con1:expr>
+                                </con1:replace>
+                                <con1:wsCallout>
+                                    <con2:id>_ActionId-a016234.628bba9c.0.164b951fa07.N7fc5</con2:id>
+                                    <con1:service ref="AcctTS/proxy/PX_AcctLoan_V1.0" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con1:operation>AcctLoanInfoAdd</con1:operation>
+                                    <con1:request>
+                                        <con1:body wrapped="false">AcctLoanInfoRq</con1:body>
+                                        <con1:header>header</con1:header>
+                                    </con1:request>
+                                    <con1:response>
+                                        <con1:body wrapped="false">AcctLoanInfoRs</con1:body>
+                                        <con1:header>header</con1:header>
+                                    </con1:response>
+                                    <con1:requestTransform>
+                                        <con1:assign varName="AcctLoanInfoRq">
+                                            <con2:id>_ActionId-a016234.628bba9c.0.164b951fa07.N7f22</con2:id>
+                                            <con1:expr>
+                                                <con2:xsltTransform>
+                                                    <con2:resource ref="AcctSvc/resources/xslt/AcctLoanAdd/xslt_in_AcctLonAddRq_to_AcctLoanInfoAddRq"/>
+                                                    <con2:input>$varRequest/*</con2:input>
+                                                </con2:xsltTransform>
+                                            </con1:expr>
+                                        </con1:assign>
+                                        <con1:replace varName="header" contents-only="true">
+                                            <con2:id>_ActionId-a016234.aee2772.0.164c8e231be.N7ef8</con2:id>
+                                            <con1:location>
+                                                <con2:xpathText>./*:MsgHdrRq/*:RqdOper</con2:xpathText>
+                                            </con1:location>
+                                            <con1:expr>
+                                                <con2:xqueryText>'AcctLoanInfoAdd'</con2:xqueryText>
+                                            </con1:expr>
+                                        </con1:replace>
+                                        <con1:assign varName="varOperation">
+                                            <con2:id>_ActionId-a016234.N4b12be8b.0.164f796e893.N7fdc</con2:id>
+                                            <con1:expr>
+                                                <con2:xqueryText>'AcctLoanInfoAdd'</con2:xqueryText>
+                                            </con1:expr>
+                                        </con1:assign>
+                                    </con1:requestTransform>
+                                    <con1:responseTransform>
+                                        <con1:replace varName="body" contents-only="true">
+                                            <con2:id>_ActionId-a016234.aee2772.0.164c8e231be.N7ffe</con2:id>
+                                            <con1:expr>
+                                                <con2:xsltTransform>
+                                                    <con2:resource ref="AcctSvc/resources/xslt/AcctLoanAdd/xslt_out_AcctLoanInfoAddRs_to_AcctLoanAddRs"/>
+                                                    <con2:input>$AcctLoanInfoRs</con2:input>
+                                                    <con2:param name="AcctId">
+                                                        <con2:path>$body/eoptAcctLoanAdd:AcctLoanAddRs/eoptAcctLoanAdd:AcctKey/eoAcct:AcctId</con2:path>
+                                                    </con2:param>
+                                                </con2:xsltTransform>
+                                            </con1:expr>
+                                        </con1:replace>
+                                        <con1:replace varName="header" contents-only="true">
+                                            <con2:id>_ActionId-a016234.aee2772.0.164c8e231be.N7efb</con2:id>
+                                            <con1:location>
+                                                <con2:xpathText>./*:MsgHdrRs/*:RqdOper</con2:xpathText>
+                                            </con1:location>
+                                            <con1:expr>
+                                                <con2:xqueryText>$varOperationBck</con2:xqueryText>
+                                            </con1:expr>
+                                        </con1:replace>
+                                        <con1:assign varName="varOperation">
+                                            <con2:id>_ActionId-a016234.N4b12be8b.0.164f796e893.N7fd9</con2:id>
+                                            <con1:expr>
+                                                <con2:xqueryText>$varOperationBck</con2:xqueryText>
+                                            </con1:expr>
+                                        </con1:assign>
+                                    </con1:responseTransform>
+                                </con1:wsCallout>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con1:replace varName="header" contents-only="true">
+                                <con2:id>_ActionId-a016234.N527ef3b6.0.164dc034508.N7fdd</con2:id>
+                                <con1:expr>
+                                    <con2:xqueryText>$headerAccLoanAddRs/*</con2:xqueryText>
+                                </con1:expr>
+                            </con1:replace>
+                        </con1:default>
+                    </con1:ifThenElse>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-a016234.628bba9c.0.164b951fa07.N7fe3"/>
+        <con:pipeline type="error" name="error-a016234.628bba9c.0.164b951fa07.N7fdb">
+            <con:stage id="_StageId-a016234.628bba9c.0.164b951fa07.N7fda" name="stg_ErrorHandler">
+                <con:context/>
+                <con:actions>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-a016234.N6dbf848a.0.164cd1113ea.N7ff7</con2:id>
+                        <con1:case id="_BranchId-a016234.N6dbf848a.0.164cd1113ea.N7ff6">
+                            <con1:condition>
+                                <con2:xqueryText>exists($body/soap-env:Fault//*:SystemFault)</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions/>
+                        </con1:case>
+                        <con1:default>
+                            <con1:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-a016234.N6dbf848a.0.164cd1113ea.N7fee</con2:id>
+                                <con1:expr>
+                                    <con2:xqueryText><![CDATA[<soap-env:Fault>
+      <faultcode>{data($fault/ctx:errorCode)}</faultcode>
+      <faultstring>{data($fault/ctx:reason)}</faultstring>
+<detail>
+  <eoStatus:SystemFault xmlns:eoStatus="http://xmlns.banesco.com/eo/Status_V1.0">
+      <eoStatus:StatusCode>M0003</eoStatus:StatusCode>
+      <eoStatus:StatusDesc>ERROR TECNICO</eoStatus:StatusDesc>
+      {
+        if(not(fn:empty($fault/ctx:details/*:ReceivedFaultDetail))) then
+          <eoStatus:AdditionalStatus>
+            <eoStatus:StatusCode>{data($fault/ctx:details/*:ReceivedFaultDetail/*:faultcode)}</eoStatus:StatusCode>
+            <eoStatus:StatusDesc>{data($fault/ctx:details/*:ReceivedFaultDetail/*:faultstring)}</eoStatus:StatusDesc>
+          </eoStatus:AdditionalStatus>
+        else
+          <eoStatus:AdditionalStatus>
+            <eoStatus:StatusCode>{data($fault/ctx:errorCode)}</eoStatus:StatusCode>
+            <eoStatus:StatusDesc>{data($fault/ctx:reason)}</eoStatus:StatusDesc>c>
+          </eoStatus:AdditionalStatus>
+      }
+  </eoStatus:SystemFault>
+  <location>
+    <node>{data($fault/ctx:location/ctx:node)}</node>
+    <pipeline>{data($fault/ctx:location/ctx:pipeline)}</pipeline>
+    <stage>{data($fault/ctx:location/ctx:stage)}</stage>
+    <path>{data($fault/ctx:location/ctx:path)}</path>
+  </location>
+</detail>
+</soap-env:Fault>]]></con2:xqueryText>
+                                </con1:expr>
+                            </con1:replace>
+                            <con1:assign varName="header">
+                                <con2:id>_ActionId-a016234.N6dbf848a.0.164cd1113ea.N7f78</con2:id>
+                                <con1:expr>
+                                    <con2:xqueryText>&lt;soap-env:Header>      
+&lt;/soap-env:Header></con2:xqueryText>
+                                </con1:expr>
+                            </con1:assign>
+                        </con1:default>
+                    </con1:ifThenElse>
+                    <con2:reply isError="true">
+                        <con2:id>_ActionId-a016234.N6dbf848a.0.164cd1113ea.N7feb</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-a016234.4fac490f.0.164c80d6b3a.N7ffc">
+            <con:stage id="_StageId-a016234.4fac490f.0.164c80d6b3a.N7ffb" name="stg_ErrorAcctLoanInfoAdd">
+                <con:context>
+                    <con2:userNsDecl prefix="con1" namespace="http://www.bea.com/wli/sb/stages/transform/config"/>
+                    <con2:userNsDecl prefix="eoStatus" namespace="http://xmlns.banesco.com/eo/Status_V1.0"/>
+                </con:context>
+                <con:actions>
+                    <con1:replace varName="header">
+                        <con2:id>_ActionId-a016234.aee2772.0.164c8e231be.N7efe</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$headerAccLoanAddRs</con2:xqueryText>
+                        </con1:expr>
+                    </con1:replace>
+                    <con1:ifThenElse>
+                        <con2:id>_ActionId-a016234.aee2772.0.164c8e231be.N7f61</con2:id>
+                        <con1:case id="_BranchId-a016234.aee2772.0.164c8e231be.N7f60">
+                            <con1:condition>
+                                <con2:xqueryText>exists($body/soap-env:Fault//eoStatus:SystemFault) or exists($fault/ctx:details/con1:ReceivedFaultDetail//eoStatus:SystemFault)</con2:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con1:replace varName="body">
+                                    <con2:id>_ActionId-a016234.aee2772.0.164c8e231be.N7f2c</con2:id>
+                                    <con1:expr>
+                                        <con2:xqueryText><![CDATA[<soapenv:Body xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+    <tns:AcctLoanAddRs xmlns:eoAcct="http://xmlns.banesco.com/eo/Acct_V1.0"
+        xmlns:eoStatus="http://xmlns.banesco.com/eo/Status_V1.0"
+        xmlns:tns="http://xmlns.banesco.com/eopt/AcctLoanAdd_V1.0">
+        <tns:AcctKey>
+          <eoAcct:AcctId>{ data($body/tns:AcctLoanAddRs/tns:AcctKey/eoAcct:AcctId) }</eoAcct:AcctId>
+        </tns:AcctKey>
+        <tns:Status>
+            <eoStatus:StatusCode>M0006</eoStatus:StatusCode>
+            <eoStatus:StatusDesc>DATOS ADICIONALES NO ACTUALIZADOS</eoStatus:StatusDesc>
+            <eoStatus:AdditionalStatus>
+                <eoStatus:StatusCode>{$fault/ctx:errorCode/text()}</eoStatus:StatusCode>
+                <eoStatus:StatusDesc>{$fault/ctx:details/con1:ReceivedFaultDetail/con1:detail/eoStatus:SystemFault/eoStatus:AdditionalStatus/eoStatus:StatusDesc/text()}</eoStatus:StatusDesc>
+            </eoStatus:AdditionalStatus>
+        </tns:Status>
+    </tns:AcctLoanAddRs>
+</soapenv:Body>]]></con2:xqueryText>
+                                    </con1:expr>
+                                </con1:replace>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con1:replace varName="body">
+                                <con2:id>_ActionId-a016234.aee2772.0.164c8e231be.N7f29</con2:id>
+                                <con1:expr>
+                                    <con2:xqueryText><![CDATA[<soapenv:Body xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+    <tns:AcctLoanAddRs xmlns:eoAcct="http://xmlns.banesco.com/eo/Acct_V1.0"
+        xmlns:eoStatus="http://xmlns.banesco.com/eo/Status_V1.0"
+        xmlns:tns="http://xmlns.banesco.com/eopt/AcctLoanAdd_V1.0">
+        <tns:AcctKey>
+          <eoAcct:AcctId>{ data($body/tns:AcctLoanAddRs/tns:AcctKey/eoAcct:AcctId) }</eoAcct:AcctId>
+        </tns:AcctKey>
+        <tns:Status>
+            <eoStatus:StatusCode>M0006</eoStatus:StatusCode>
+            <eoStatus:StatusDesc>DATOS ADICIONALES NO ACTUALIZADOS</eoStatus:StatusDesc>
+            <eoStatus:AdditionalStatus>
+                <eoStatus:StatusCode>{ data($fault/ctx:errorCode) }</eoStatus:StatusCode>
+                <eoStatus:StatusDesc>{ data($fault/ctx:reason) }</eoStatus:StatusDesc>
+            </eoStatus:AdditionalStatus>
+        </tns:Status>
+    </tns:AcctLoanAddRs>
+</soapenv:Body>]]></con2:xqueryText>
+                                </con1:expr>
+                            </con1:replace>
+                        </con1:default>
+                    </con1:ifThenElse>
+                    <con2:reply>
+                        <con2:id>_ActionId-a016234.aee2772.0.164c8e231be.N7f26</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="PPN_AcctLoanAdd">
+                <con:request>request-a016234.628bba9c.0.164b951fa07.N7fe4</con:request>
+                <con:response>response-a016234.628bba9c.0.164b951fa07.N7fe3</con:response>
+            </con:pipeline-node>
+        </con:flow>
+        <con:shared-variables>
+            <con:variable>varOperation</con:variable>
+            <con:variable>varHeader</con:variable>
+        </con:shared-variables>
+    </con:router>
+</con:pipelineEntry>

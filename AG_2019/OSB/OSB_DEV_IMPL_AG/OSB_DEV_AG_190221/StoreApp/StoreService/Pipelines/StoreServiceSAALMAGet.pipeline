@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="StoreApp/StoreService/Resources/WSDL/StoreService"/>
+            <con:binding>
+                <con:name>ProcessStore_bind</con:name>
+                <con:namespace>http://www.agarcia.mx/ServiceBus/Store</con:namespace>
+            </con:binding>
+        </con:binding>
+        <oper:operations xmlns:oper="http://xmlns.oracle.com/servicebus/pipeline/operations" xmlns:cus="http://www.bea.com/wli/config/customizations" xmlns:xt="http://www.bea.com/wli/config/xmltypes">
+            <oper:logging enabled="false" level="debug"/>
+            <oper:reporting>false</oper:reporting>
+            <oper:pipeline-alerting enabled="false" level="normal"/>
+            <oper:sla-alerting enabled="false" level="normal"/>
+        </oper:operations>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-afffa6a.N2bf656e0.0.17500c8751e.N7ffb">
+        <con:pipeline type="request" name="request-afffa6a.N2bf656e0.0.17500c8751e.N7fff">
+            <con:stage id="_StageId-afffa6a.N2bf656e0.0.17500c8751e.N7ffd" name="StageRequest">
+                <con:context>
+                    <con1:userNsDecl prefix="com" namespace="http://www.agarcia.mx/EnterpriseObjects/Common"/>
+                    <con1:userNsDecl prefix="stor" namespace="http://www.agarcia.mx/EnterpriseObjects/Store"/>
+                </con:context>
+                <con:actions>
+                    <con2:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-afffa6a.N2bf656e0.0.17500c8751e.N7ff7</con1:id>
+                        <con2:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con2:location>
+                        <con2:expr>
+                            <con1:xsltTransform>
+                                <con1:resource ref="StoreApp/StoreService/Resources/Transforms/GetSAALMAStoreTransform"/>
+                                <con1:input>$body/*</con1:input>
+                                <con1:param name="Operation">
+                                    <con1:path>dvm:lookup("MetaData/dvm/STORE_CONFIGURATION_PROPERTIES.dvm", "ATTRIBUTE_NAME", "SAALMA-QUERY", "ATTRIBUTE_VALUE", "NOT FOUND")</con1:path>
+                                </con1:param>
+                                <con1:param name="Status">
+                                    <con1:path>dvm:lookup("MetaData/dvm/STORE_CONFIGURATION_PROPERTIES.dvm", "ATTRIBUTE_NAME", "estatusT", "ATTRIBUTE_VALUE", "NOT FOUND")</con1:path>
+                                </con1:param>
+                                <con1:param name="TrackingID">
+                                    <con1:path>dvm:lookup("MetaData/dvm/STORE_CONFIGURATION_PROPERTIES.dvm", "ATTRIBUTE_NAME", "TRACK-GET", "ATTRIBUTE_VALUE", "NOT FOUND")</con1:path>
+                                </con1:param>
+                                <con1:param name="InstanceID">
+                                    <con1:path>fn-bea:uuid()</con1:path>
+                                </con1:param>
+                                <con1:param name="SourceID">
+                                    <con1:path>dvm:lookup("MetaData/dvm/STORE_CONFIGURATION_PROPERTIES.dvm", "ATTRIBUTE_NAME", "SAALMA-SOURCE", "ATTRIBUTE_VALUE", "NOT FOUND")</con1:path>
+                                </con1:param>
+                                <con1:param name="User">
+                                    <con1:path>dvm:lookup("MetaData/dvm/STORE_CONFIGURATION_PROPERTIES.dvm", "ATTRIBUTE_NAME", "SAALMA", "ATTRIBUTE_VALUE", "NOT FOUND")</con1:path>
+                                </con1:param>
+                                <con1:param name="Interface">
+                                    <con1:path>dvm:lookup("MetaData/dvm/STORE_CONFIGURATION_PROPERTIES.dvm", "ATTRIBUTE_NAME", "TIENDAS", "ATTRIBUTE_VALUE", "NOT FOUND")</con1:path>
+                                </con1:param>
+                            </con1:xsltTransform>
+                        </con2:expr>
+                    </con2:replace>
+                    <con2:assign varName="TrackingID">
+                        <con1:id>_ActionId-afffa3c.6e328949.0.1759426fc81.N7ff9</con1:id>
+                        <con2:expr>
+                            <con1:xqueryText>$body/stor:ProcessStoreEBM/stor:Header/com:TrackingID</con1:xqueryText>
+                        </con2:expr>
+                    </con2:assign>
+                    <con2:assign varName="InstanceID">
+                        <con1:id>_ActionId-afffa3c.6e328949.0.1759426fc81.N7ff6</con1:id>
+                        <con2:expr>
+                            <con1:xqueryText>$body/stor:ProcessStoreEBM/stor:Header/com:InstanceID</con1:xqueryText>
+                        </con2:expr>
+                    </con2:assign>
+                    <con3:report>
+                        <con1:id>_ActionId-afffa3c.6e328949.0.1759426fc81.N7ff3</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>In.Response</con3:key>
+                            <con3:varName>TrackingID</con3:varName>
+                            <con3:value>
+                                <con1:xpathText>.</con1:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-afffa6a.N2bf656e0.0.17500c8751e.N7ffe">
+            <con:stage id="_StageId-afffa6a.N2bf656e0.0.17500c8751e.N7ffc" name="StageResponse">
+                <con:context>
+                    <con1:userNsDecl prefix="stor" namespace="http://www.agarcia.mx/EnterpriseObjects/Store"/>
+                </con:context>
+                <con:actions>
+                    <con2:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-afffab4.N31097a65.0.17598cbac93.N7ec1</con1:id>
+                        <con2:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con2:location>
+                        <con2:expr>
+                            <con1:xsltTransform>
+                                <con1:resource ref="StoreApp/StoreService/Resources/Transforms/GetSAALMAStoreResponseTransform"/>
+                                <con1:input>$body/*</con1:input>
+                            </con1:xsltTransform>
+                        </con2:expr>
+                    </con2:replace>
+                    <con3:report>
+                        <con1:id>_ActionId-afffa3c.6e328949.0.1759426fc81.N7ffc</con1:id>
+                        <con3:expr>
+                            <con1:xqueryText>$body</con1:xqueryText>
+                        </con3:expr>
+                        <con3:labels>
+                            <con3:key>Out.Tracking</con3:key>
+                            <con3:varName>TrackingID</con3:varName>
+                            <con3:value>
+                                <con1:xpathText>.</con1:xpathText>
+                            </con3:value>
+                        </con3:labels>
+                    </con3:report>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-afffa6a.N2bf656e0.0.17500c8751e.N7ffb">
+            <con:stage id="_StageId-afffaa6.26d63f9.0.17550ed1760.N7bf5" name="StageError" xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+                <con:context>
+                    <con1:userNsDecl prefix="com" namespace="http://www.agarcia.mx/EnterpriseObjects/Common"/>
+                    <con1:userNsDecl prefix="stor" namespace="http://www.agarcia.mx/EnterpriseObjects/Store"/>
+                </con:context>
+                <con:actions>
+                    <con3:ifThenElse>
+                        <con1:id>_ActionId-afffaa6.26d63f9.0.17550ed1760.N7bf4</con1:id>
+                        <con3:case id="_BranchId-afffaa6.26d63f9.0.17550ed1760.N7bf3">
+                            <con3:condition>
+                                <con1:xqueryText>$fault/ctx:errorCode="OSB-382505"</con1:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:replace varName="body" contents-only="true">
+                                    <con1:id>_ActionId-afffaa6.26d63f9.0.17550ed1760.N7bf2</con1:id>
+                                    <con3:location>
+                                        <con1:xpathText>$body</con1:xpathText>
+                                    </con3:location>
+                                    <con3:expr>
+                                        <con1:xsltTransform>
+                                            <con1:resource ref="StoreApp/StoreService/Resources/Transforms/ErrorHandlerTransform"/>
+                                            <con1:input>$body/*</con1:input>
+                                            <con1:param name="Code">
+                                                <con1:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0010", "ERROR_CODE", "NOT FOUND")</con1:path>
+                                            </con1:param>
+                                            <con1:param name="Message">
+                                                <con1:path>dvm:lookup("MetaData/dvm/ERROR_CODE.dvm", "CODE", "GEN-0010", "USER_MESSAGE", "NOT FOUND")</con1:path>
+                                            </con1:param>
+                                            <con1:param name="Detail">
+                                                <con1:path>fn-bea:serialize($fault/ctx:details)</con1:path>
+                                            </con1:param>
+                                            <con1:param name="InstanceID">
+                                                <con1:path>$body/stor:ProcessStoreEBM/stor:Header/com:InstanceID</con1:path>
+                                            </con1:param>
+                                            <con1:param name="TrackingID">
+                                                <con1:path>$body/stor:ProcessStoreEBM/stor:Header/com:TrackingID</con1:path>
+                                            </con1:param>
+                                        </con1:xsltTransform>
+                                    </con3:expr>
+                                </con3:replace>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:case id="_BranchId-afffa71.7fd0d64c.0.1757a7a1ed4.N7ff9">
+                            <con3:condition>
+                                <con1:xqueryText>not(fn:empty($body/soap-env:Fault))</con1:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:replace varName="body" contents-only="true">
+                                    <con1:id>_ActionId-afffaa6.26d63f9.0.17550ed1760.N7bf1</con1:id>
+                                    <con3:location>
+                                        <con1:xpathText>$body</con1:xpathText>
+                                    </con3:location>
+                                    <con3:expr>
+                                        <con1:xsltTransform>
+                                            <con1:resource ref="StoreApp/StoreService/Resources/Transforms/ErrorHandlerTransform"/>
+                                            <con1:input>$body/*</con1:input>
+                                            <con1:param name="Code">
+                                                <con1:path>$fault/ctx:errorCode/text()</con1:path>
+                                            </con1:param>
+                                            <con1:param name="Message">
+                                                <con1:path>$fault/ctx:reason/text()</con1:path>
+                                            </con1:param>
+                                            <con1:param name="Detail">
+                                                <con1:path>fn-bea:serialize($fault/ctx:details)</con1:path>
+                                            </con1:param>
+                                            <con1:param name="InstanceID">
+                                                <con1:path>$body/stor:ProcessStoreEBM/stor:Header/com:InstanceID</con1:path>
+                                            </con1:param>
+                                            <con1:param name="TrackingID">
+                                                <con1:path>$body/stor:ProcessStoreEBM/stor:Header/com:TrackingID</con1:path>
+                                            </con1:param>
+                                        </con1:xsltTransform>
+                                    </con3:expr>
+                                </con3:replace>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default>
+                            <con3:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-afffa71.7fd0d64c.0.1757a7a1ed4.N7f8e</con1:id>
+                                <con3:location>
+                                    <con1:xpathText>$body</con1:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con1:xsltTransform>
+                                        <con1:resource ref="StoreApp/StoreService/Resources/Transforms/ErrorHandlerTransform"/>
+                                        <con1:input>$body/*</con1:input>
+                                        <con1:param name="Code">
+                                            <con1:path>$fault/ctx:errorCode/text()</con1:path>
+                                        </con1:param>
+                                        <con1:param name="Message">
+                                            <con1:path>$fault/ctx:reason/text()</con1:path>
+                                        </con1:param>
+                                        <con1:param name="Detail">
+                                            <con1:path>$fault/ctx:details</con1:path>
+                                        </con1:param>
+                                        <con1:param name="InstanceID">
+                                            <con1:path>$body/stor:ProcessStoreEBM/stor:Header/com:InstanceID</con1:path>
+                                        </con1:param>
+                                        <con1:param name="TrackingID">
+                                            <con1:path>$body/stor:ProcessStoreEBM/stor:Header/com:TrackingID</con1:path>
+                                        </con1:param>
+                                    </con1:xsltTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con3:default>
+                    </con3:ifThenElse>
+                    <con4:report xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                        <con2:id>_ActionId-afffa3c.6e328949.0.1759426fc81.N7abe</con2:id>
+                        <con1:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con1:expr>
+                        <con1:labels>
+                            <con1:key>Error.TrackingID</con1:key>
+                            <con1:varName>TrackingID</con1:varName>
+                            <con1:value>
+                                <con2:xpathText>.</con2:xpathText>
+                            </con1:value>
+                        </con1:labels>
+                    </con4:report>
+                    <con1:reply>
+                        <con1:id>_ActionId-afffaa6.26d63f9.0.17550ed1760.N7bf0</con1:id>
+                    </con1:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="Pipeline Pair Node Get">
+                <con:request>request-afffa6a.N2bf656e0.0.17500c8751e.N7fff</con:request>
+                <con:response>response-afffa6a.N2bf656e0.0.17500c8751e.N7ffe</con:response>
+            </con:pipeline-node>
+            <con:route-node name="RouteStoreGet" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config">
+                <con:context/>
+                <con:actions>
+                    <con1:route>
+                        <con2:id>_ActionId-afffa6a.N2bf656e0.0.17500c8751e.N8000</con2:id>
+                        <con1:service ref="StoreApp/StoreService/BusinessService/ProcessStoreService" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>ProcessStore</con1:operation>
+                        <con1:outboundTransform/>
+                        <con1:responseTransform/>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+        <con:shared-variables>
+            <con:variable>InstanceID</con:variable>
+            <con:variable>TrackingID</con:variable>
+        </con:shared-variables>
+    </con:router>
+</con:pipelineEntry>

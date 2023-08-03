@@ -1,0 +1,500 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.1" xmlns:f="http://java.sun.com/jsf/core" xmlns:af="http://xmlns.oracle.com/adf/faces/rich"
+          xmlns:c="http://java.sun.com/jsp/jstl/core" xmlns:trh="http://myfaces.apache.org/trinidad/html"
+          xmlns:wf="http://xmlns.oracle.com/bpel/workflow/workflow-taglib.tld"
+          xmlns:wlc="http://xmlns.oracle.com/bpel/workflow/worklist">
+    <c:set var="pc01elegibilidadgenerichumantaskBundle"
+           value="#{adfBundle['pc01elegibilidadgenerichumantask.PC01ElegibilidadGenericHumanTaskBundle']}"/>
+    <jsp:directive.page contentType="text/html;charset=UTF-8"/>
+    <f:view>
+        <af:document title="GHTPC01ElegibilidadForm.jspx" id="d1">
+            <af:messages id="m1"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:resource type="javascript" source="/jsLibs/taskDetailsWithTemplate.js"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:resource type="css" source="/resources/css/pc01.css"/>
+            <af:resource type="javascript">
+            <![CDATA[
+              function iniciarDescargaReporteElegibilidad(evt)
+              {
+                    //find and set the interval for the poll so the polling starts
+                    var poll = evt.getSource().findComponent('poll');
+                    if (poll != null) {
+                        poll.setInterval(2000);
+                    }
+                    // Find and queue the event associated with the invisible button 
+                    var invisibleButton = evt.getSource().findComponent('btdr');
+                    AdfActionEvent.queue(invisibleButton, true); 
+              }
+              
+              function finalizaDescargaReporteElegibilidad(evt)
+              {
+                    //find and set the interval for the poll so the polling starts
+                    var poll = evt.getSource().findComponent('poll');
+                    if (poll != null) {
+                        poll.setInterval(-1);
+                    }
+                    // Find and queue the event associated with the invisible button 
+                    var invisibleButton = evt.getSource().findComponent('btfn');
+                    AdfActionEvent.queue(invisibleButton, true); 
+              }
+            ]]>
+            </af:resource>
+            <af:form id="f1" usesUpload="true">
+                <af:pageTemplate viewId="/templates/bcieTaskTemplate.jspx" id="pTID">
+                    <f:facet name="action">
+                        <af:toolbar visible="#{actionAvailable.toolbarAvailable}" id="actionTlb">
+                            <af:switcher id="customActionButtons" facetName="#{actionAvailable.isCustomActionButtons}">
+                                <f:facet name="true">
+                                    <af:panelGroupLayout layout="horizontal" id="pgl7">
+                                        <af:button
+                                                   text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_DETERMINAR_ELEGIBLE}"
+                                                   disabled="#{!bindings.FINALIZARTAREA.enabled}"
+                                                   id="b4" styleClass="headerLink"
+                                                   action="#{elegibilidadActionsBean.invokeFinalizarTarea}"
+                                                   visible="true">
+                                                   <!--visible="#{wf:isCustomActionAvailable('FINALIZARTAREA', 'bindings.customActions')}"-->
+                                            
+                                        </af:button>
+                                        <af:button
+                                                   text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_RETORNAR_RESPONSABLE}"
+                                                   disabled="#{!bindings.RETORNAR.enabled}"
+                                                   action="#{elegibilidadActionsBean.invokeRetornar}"
+                                                   id="b7" styleClass="headerLink"
+                                                   visible="true">
+                                                   <!--visible="#{wf:isCustomActionAvailable('RETORNAR', 'bindings.customActions')}"-->
+                                                                                                  
+                                        </af:button>
+                                        <af:button
+                                                   text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_REFORMULAR_OPERACION}"
+                                                   disabled="#{!bindings.REFORMULAR.enabled}"
+                                                   id="b6" styleClass="headerLink"
+                                                   action="#{elegibilidadActionsBean.invokeReformularOperacion}"
+                                                   visible="true">
+                                                   <!--visible="#{wf:isCustomActionAvailable('REFORMULAR', 'bindings.customActions')}"-->
+                                                       
+                                            
+                                        </af:button>
+                                        <af:button
+                                                   text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_CANCELAR_OPERACION}"
+                                                   disabled="#{!bindings.CANCELAROPERACION.enabled}"
+                                                   action="#{elegibilidadActionsBean.invokeOperacionCancelada}"
+                                                   id="b1" styleClass="headerLink"
+                                                   visible="true">
+                                                   <!--visible="#{wf:isCustomActionAvailable('CANCELAROPERACION', 'bindings.customActions')}"-->
+                                                       
+                                            
+                                        </af:button>
+                                    </af:panelGroupLayout>
+                                </f:facet>
+                            </af:switcher>
+                            <af:button actionListener="#{invokeActionBean.setOperation}" text="#{resources.CLAIM}"
+                                       id="Claim" action="#{invokeActionBean.invokeOperation}" partialSubmit="false"
+                                       visible="#{actionAvailable.claimAvailable}" styleClass="headerLink">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Claim"/>
+                            </af:button>
+                            <af:button id="acknowledge" actionListener="#{invokeActionBean.setOperation}"
+                                       text="#{resources.ACKNOWLEDGE}" action="#{invokeActionBean.invokeOperation}"
+                                       partialSubmit="false" visible="#{actionAvailable.isFyiTask}"
+                                       styleClass="headerLink">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Acknowledge"/>
+                            </af:button>
+                            <af:button id="resume" actionListener="#{invokeActionBean.setOperation}"
+                                       text="#{resources.RESUME}" action="#{invokeActionBean.invokeOperation}"
+                                       partialSubmit="false" visible="#{actionAvailable.resumeAvailable}"
+                                       styleClass="headerLink">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Resume"/>
+                            </af:button>
+                            <af:panelGroupLayout layout="horizontal" id="pgl4">
+                                <af:group rendered="#{!((empty actionAvailable.customActions) and (empty actionAvailable.redirectActions) and (empty actionAvailable.otherActions)) || bindings.update.enabled}"
+                                          id="g5">
+                                    <af:menuBar id="mb1" styleClass="actionMenuBar" rendered="false">
+                                        <af:menu id="acts" text="#{resources.TASK_ACTIONS}"
+                                                 visible="#{actionAvailable.actionsAvailable || bindings.update.enabled}"
+                                                 styleClass="actionMenu">
+                                            <af:group id="g1">
+                                                <!--af:forEach var="childNode1" items="#{actionAvailable.customActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{childNode1.displayName}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi2">
+                                                        <f:attribute name="ACTION_MENU_ITEM"
+                                                                     value="#{childNode1.action}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach-->
+                                            </af:group>
+                                            <af:group id="g4">
+                                                <af:forEach var="childNode2" items="#{actionAvailable.redirectActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode2]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="true" id="cmi1">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode2}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g3">
+                                                <af:forEach var="childNode3" items="#{actionAvailable.otherActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode3]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi4">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode3}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g2">
+                                                <af:commandMenuItem id="save" textAndAccessKey="#{resources.SAVE}"
+                                                                    actionListener="#{invokeActionBean.setAction}"
+                                                                    action="#{invokeActionBean.action}"
+                                                                    partialSubmit="false"
+                                                                    rendered="#{actionAvailable.updateAvailable}">
+                                                    <f:attribute name="ACTION_MENU_ITEM" value="bindings.update"/>
+                                                </af:commandMenuItem>
+                                            </af:group>
+                                        </af:menu>
+                                    </af:menuBar>
+                                </af:group>
+                            </af:panelGroupLayout>
+                            <af:spacer width="10" id="s6"/>
+                            <af:link shortDesc="#{resources.PREVIOUS_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/nexttraversalarrow_ena.png'  : '/hw_images/previoustraversalarrow_ena.png'}"
+                                     action="fetchPreviousTask"
+                                     visible="#{pageFlowScope.enableNavigationButton != null}" id="l1"/>
+                            <af:spacer width="10" id="s1"/>
+                            <af:link shortDesc="#{resources.NEXT_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/previoustraversalarrow_ena.png' : '/hw_images/nexttraversalarrow_ena.png'}"
+                                     action="fetchNextTask" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l2"/>
+                            <af:spacer width="10" id="s2"/>
+                            <af:link shortDesc="#{resources.SHORT_DESC_CLOSE}" icon="/hw_images/close_ena.png"
+                                     action="closeTaskFlow" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l3"/>
+                            <af:popup id="reassignPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog id="reAsDg" dialogListener="#{invokeActionBean.reassignAction}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           title="#{resources.REASSIGNPAGE}">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="reAsIdB" mode="REASSIGN" showActionButtons="false"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="requestInfoPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.INFOREQUESTEDPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.requestInfoAction}" id="reqIfD">
+                                    <wlc:requestInfoDialog workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                           id="rqIDgC"
+                                                           selectedTaskId="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds[0]}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="routePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.ROUTEPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.routeTaskAction}" id="rteDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="rteIdB" mode="ROUTE"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="decomposePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{pageFlowScope.ADFHumanTaskBean.decomposeDialogTitle}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.decomposeTaskAction}" id="dcmpDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.ADFHumanTaskBean.workflowContext}"
+                                                         id="dcmpIdB" mode="DECOMPOSE"
+                                                         selectedTaskObject="#{pageFlowScope.ADFHumanTaskBean.task}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="popupEnterPasswordDialog" contentDelivery="lazyUncached"
+                                      childCreation="deferred">
+                                <af:dialog title="#{resources.ENTER_PASSWORD}"
+                                           dialogListener="#{invokeActionBean.validatePassword}" type="okCancel"
+                                           modal="true" cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}" closeIconVisible="false"
+                                           id="pwdDlg">
+                                    <af:panelGroupLayout id="pgl3">
+                                        <af:panelFormLayout id="pfl1">
+                                            <af:inputText id="pwdBox" rows="1" columns="50"
+                                                          value="#{invokeActionBean.password}"
+                                                          label="#{resources.PASSWORD}" secret="true" required="true"/>
+                                        </af:panelFormLayout>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="helpPopup" childCreation="deferred">
+                                <af:switcher facetName="#{pageFlowScope.taskDocumentationBean.isTaskDoc}" id="s3">
+                                    <f:facet name="true">
+                                        <af:panelGroupLayout layout="vertical" id="pgl6">
+                                            <af:link text="#{resources.OPEN_IN_WINDOW}"
+                                                     destination="#{pageFlowScope.taskDocumentationBean.docURL}"
+                                                     targetFrame="help" id="help"
+                                                     rendered="#{!empty bindings.activityId.inputValue}"/>
+                                            <af:outputFormatted value="#{pageFlowScope.taskDocumentationBean.taskDoc}"
+                                                                id="of1"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <f:facet name="false">
+                                        <af:outputText value="#{resources.TASK_DOC_NOT_AVAILABLE}" id="ot2"/>
+                                    </f:facet>
+                                </af:switcher>
+                            </af:popup>
+                            <!-- FINALIZAR TAREA -->
+                            <af:poll id="poll" interval="-1"
+                                                     binding="#{elegibilidadActionsBean.descargarReportePoll}"
+                                                     clientComponent="true"
+                                                     pollListener="#{elegibilidadActionsBean.pollListener}"/>
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="p1"
+                                      binding="#{elegibilidadActionsBean.popupFinalizarTarea}">
+                                <af:dialog id="d2" type="none">
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl16">
+                                            <af:button text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_ACEPTAR}" id="b18">
+                                                <af:clientListener method="iniciarDescargaReporteElegibilidad" type="action"/>
+                                            </af:button>
+                                            <af:button text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_CANCELAR}" id="b9"
+                                                       action="#{elegibilidadActionsBean.cancelarFinalizarTarea}"/>
+                                            <af:button text="DescargarReporte" id="btdr"
+                                                       clientComponent="true" visible="false">
+                                                <af:fileDownloadActionListener filename="#{elegibilidadActionsBean.reporteFileName}"
+                                                                               method="#{elegibilidadActionsBean.downloadReporteElegibilidadOnBase}"
+                                                                               contentType="application/octet-stream"/>
+                                            </af:button>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <af:panelGroupLayout id="pgl15" layout="horizontal" halign="center">
+                                        <af:outputText value="#{pc01elegibilidadgenerichumantaskBundle.CONFIRMA_FINALIZARTAREA}" id="ot20"/>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>     
+                             <af:popup childCreation="deferred" autoCancel="disabled" id="p111"
+                                      binding="#{elegibilidadActionsBean.popupFinalizarTareaDescarga}">
+                                <af:dialog id="d22" type="none" closeIconVisible="false">
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pg6">
+                                            <af:button text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_ACEPTAR}" id="btfn"
+                                                       action="#{elegibilidadActionsBean.aceptarFinalizarTarea}"
+                                                       actionListener="#{invokeActionBean.setOperation}"
+                                                       partialSubmit="false">
+                                                       <f:attribute name="DC_OPERATION_BINDING" value="bindings.FINALIZARTAREA"/>
+                                            </af:button>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <af:panelGroupLayout id="pgl25" layout="horizontal" halign="center">
+                                        <af:outputText value="#{pc01elegibilidadgenerichumantaskBundle.MSG_DESCARGA_REPORTE_EXITOSA}" id="ot30"/>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <!-- MAS INFORMACION -->
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="p2"
+                                      binding="#{elegibilidadActionsBean.popupMasInformacion}">
+                                <af:dialog id="d3" type="none">
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl14">
+                                            <af:button text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_ACEPTAR}" id="b10"
+                                                       action="#{elegibilidadActionsBean.aceptarMasInformacion}"
+                                                       actionListener="#{invokeActionBean.setOperation}">
+                                                        <f:attribute name="DC_OPERATION_BINDING" value="bindings.MASINFORMACION"/>
+                                                
+                                                       </af:button>
+                                            <af:button text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_CANCELAR}" id="b11"
+                                                       action="#{elegibilidadActionsBean.cancelarMasInformacion}"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <af:panelGroupLayout id="pgl13" layout="horizontal" halign="center">
+                                        <af:outputText value="#{pc01elegibilidadgenerichumantaskBundle.CONFIRMA_MASINFO}" id="ot19"/>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <!-- REFORMULAR -->
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="p3"
+                                      binding="#{elegibilidadActionsBean.popupReformularOperacion}">
+                                <af:dialog id="d4" type="none">
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl12">
+                                            <af:button text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_ACEPTAR}" id="b12"
+                                                       action="#{elegibilidadActionsBean.aceptarReformularOperacion}"
+                                                       actionListener="#{invokeActionBean.setOperation}">
+                                                        <f:attribute name="DC_OPERATION_BINDING" value="bindings.REFORMULAR"/>
+                                                      
+                                                       </af:button>
+                                            <af:button text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_CANCELAR}" id="b13"
+                                                       action="#{elegibilidadActionsBean.cancelarReformularOperacion}"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <af:panelGroupLayout id="pgl11" layout="horizontal" halign="center">
+                                        <af:outputText value="#{pc01elegibilidadgenerichumantaskBundle.CONFIRMA_REFORMULAR}" id="ot18"/>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <!-- CANCELAR OPERACION -->
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="p4"
+                                      binding="#{elegibilidadActionsBean.popupCancelarOperacion}">
+                                <af:dialog id="d5" type="none">
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl20">
+                                            <af:button text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_ACEPTAR}" id="b14"
+                                                       action="#{elegibilidadActionsBean.aceptarOperacionCancelada}"
+                                                       actionListener="#{invokeActionBean.setOperation}">
+                                                        <f:attribute name="DC_OPERATION_BINDING"
+                                                         value="bindings.CANCELAROPERACION"/>
+                                                      
+                                                       </af:button>
+                                            <af:button text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_CANCELAR}" id="b15"
+                                                       action="#{elegibilidadActionsBean.cancelarOperacionCancelada}"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <af:panelGroupLayout id="pgl19" layout="horizontal" halign="center">
+                                        <af:outputText value="#{pc01elegibilidadgenerichumantaskBundle.CONFIRMA_CANCELAR_OPERACION}" id="ot21"/>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <!-- RETORNAR -->
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="p5"
+                                      binding="#{elegibilidadActionsBean.popupRetornar}">
+                                <af:dialog id="d6" type="none">
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl18">
+                                            <af:button text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_ACEPTAR}" id="b16"
+                                                       action="#{elegibilidadActionsBean.aceptarRetornar}"
+                                                       actionListener="#{invokeActionBean.setOperation}">
+                                                       <!--f:attribute name="DC_OPERATION_BINDING" value="bindings.RETORNAR"/-->
+                                                       <f:attribute name="DC_OPERATION_BINDING" value="bindings.MASINFORMACION"/>
+                                                       </af:button>
+                                            <af:button text="#{pc01elegibilidadgenerichumantaskBundle.BTN_TXT_CANCELAR}" id="b17"
+                                                       action="#{elegibilidadActionsBean.cancelarRetornar}"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <af:panelGroupLayout id="pgl17" layout="horizontal" halign="center">
+                                        <af:outputText value="#{pc01elegibilidadgenerichumantaskBundle.CONFIRMA_RETORNAR}" id="ot22"/>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                        </af:toolbar>
+                    </f:facet>
+                    <f:facet name="header">
+                        <af:region value="#{bindings.encabezadoBTF1.regionModel}" id="r1"/>
+                    </f:facet>
+                    <f:facet name="body">
+                        <af:panelGroupLayout id="pgl10" layout="vertical">
+                            <af:panelAccordion discloseMany="true" id="pa1" discloseNone="true"
+                                               styleClass="secctionAccordion">
+                                <af:showDetailItem id="pane1"
+                                                   text="#{pc01elegibilidadgenerichumantaskBundle.PNL_DETALLE_OPERACION_TITLE}"
+                                                   disclosed="false"
+                                                   disclosureListener="#{pageFlowScope.elegibilidadBean.panelDetalleOperacionDisclosureListener}"
+                                                   immediate="true">
+                                    <af:panelGroupLayout id="pgl8">
+                                        <af:region value="#{bindings.detalleOperacionEditableBTF1.regionModel}"
+                                                   id="r6"/>
+                                        <af:spacer width="10" height="10" id="s11"/>
+                                    </af:panelGroupLayout>
+                                </af:showDetailItem>
+                                <af:showDetailItem text="#{pc01elegibilidadgenerichumantaskBundle.PNL_DOCUMENTOS_TITLE}"
+                                                   id="sdi1"
+                                                   disclosureListener="#{pageFlowScope.elegibilidadBean.panelDocumentosDisclosureListener}"
+                                                   immediate="true">
+                                    <af:region value="#{bindings.gestorDocumentosBTF1.regionModel}" id="r3"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem text="#{pc01elegibilidadgenerichumantaskBundle.PNL_DATOS_TAREA_TITLE}"
+                                                   id="sdi2" disclosed="true" immediate="true">
+                                    <af:panelGroupLayout id="pgl1" layout="vertical">
+                                        <af:region value="#{bindings.cuestionarioElegibilidadBTF1.regionModel}"
+                                                   id="r5"/>
+                                        <af:spacer width="10" height="10" id="s5"/>
+                                        <af:panelHeader text="#{pc01elegibilidadgenerichumantaskBundle.TXT_CONCLUSION}" id="ph1">
+                                            <f:facet name="context"/>
+                                            <f:facet name="menuBar"/>
+                                            <f:facet name="toolbar"/>
+                                            <f:facet name="legend"/>
+                                            <f:facet name="info"/>
+                                            <af:panelGroupLayout id="pgl2" layout="vertical">
+                                                <af:panelLabelAndMessage label="#{pc01elegibilidadgenerichumantaskBundle.TXT_OPERACION_ELEGIBLE}"
+                                                                         id="plam1">
+                                                    <af:outputText value="#{bindings.EsElegible.inputValue eq 0 ? 'No':'Si'}"
+                                                                   shortDesc="#{bindings.EsElegible.hints.tooltip}"
+                                                                   id="ot1">
+                                                        <af:convertNumber groupingUsed="false"
+                                                                          pattern="#{bindings.EsElegible.format}"/>
+                                                    </af:outputText>
+                                                </af:panelLabelAndMessage>
+                                                <af:outputText value="#{bindings.ComentarioElegibilidad.inputValue}"
+                                                               shortDesc="#{bindings.ComentarioElegibilidad.hints.tooltip}"
+                                                               id="ot3"/>
+                                                <af:spacer width="10" height="10" id="s8"/>
+                                            </af:panelGroupLayout>
+                                        </af:panelHeader>
+                                        <af:panelFormLayout id="pfl2" labelAlignment="top">
+                                            <af:inputText label="#{pc01elegibilidadgenerichumantaskBundle.TXT_CONCLUSION_GERENTE}" id="it1"
+                                                          rows="5" columns="100"
+                                                          value="#{bindings.ComentarioDeterminarAttrVar.inputValue}"
+                                                          autoSubmit="true" maximumLength="1000"/>
+                                            <af:spacer width="10" height="10" id="s10"/>
+                                        </af:panelFormLayout>
+                                    </af:panelGroupLayout>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="pane2"
+                                                   text="#{pc01elegibilidadgenerichumantaskBundle.PNL_COMENTARIOS_TITLE}"
+                                                   immediate="true"
+                                                   disclosureListener="#{pageFlowScope.elegibilidadBean.panelComentariosDisclosureListener}">
+                                    <af:region value="#{bindings.comentariosBTF1.regionModel}" id="r4"/>
+                                </af:showDetailItem>
+                            </af:panelAccordion>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:facet name="comment"/>
+                    <f:facet name="attachment"/>
+                    <f:facet name="history">
+                        <af:panelGroupLayout layout="vertical" id="pglHistory" rendered="false">
+                            <af:switcher facetName="#{actionAvailable.showHistory}" id="s4">
+                                <f:facet name="true">
+                                    <af:showDetailHeader size="2" id="histHd" text="#{resources.HISTORY}"
+                                                         disclosureListener="#{pageFlowScope.aleComponentBean.toggle}"
+                                                         disclosed="false">
+                                        <f:facet name="info"/>
+                                        <f:facet name="legend"/>
+                                        <f:facet name="menuBar"/>
+                                        <f:facet name="toolbar"/>
+                                        <f:facet name="context"/>
+                                        <af:panelGroupLayout layout="vertical"
+                                                             binding="#{pageFlowScope.aleComponentBean.historyPanel}"
+                                                             id="historyPanel">
+                                            <wlc:taskHistory initParam="#{pageFlowScope.aleComponentBean.comp}"
+                                                             showTabularView="true" showGraphicalView="true"
+                                                             id="taskHst"/>
+                                        </af:panelGroupLayout>
+                                    </af:showDetailHeader>
+                                </f:facet>
+                            </af:switcher>
+                            <af:switcher facetName="#{pageFlowScope.ADFHumanTaskBean.hasSubTasks}"
+                                         binding="#{invokeActionBean.subTaskPanel}" id="s7">
+                                <f:facet name="true">
+                                    <af:showDetailHeader size="2" id="decompHd" text="#{resources.SUB_TASKS}"
+                                                         disclosed="false">
+                                        <af:panelGroupLayout layout="vertical" id="pgl5">
+                                            <wlc:taskDecompose initParam="#{pageFlowScope.ADFHumanTaskBean.subTaskComp}"
+                                                               id="th1"/>
+                                        </af:panelGroupLayout>
+                                    </af:showDetailHeader>
+                                </f:facet>
+                            </af:switcher>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:facet name="upperbody"/>
+                    <f:facet name="lowerbody"/>
+                    <f:attribute name="title"
+                                 value="#{data.pc01elegibilidadgenerichumantask_PC01DeterminarElegibilidadPageDef.NombreTarea}"/>
+                </af:pageTemplate>
+            </af:form>
+        </af:document>
+    </f:view>
+</jsp:root>

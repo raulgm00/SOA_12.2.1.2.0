@@ -1,0 +1,3 @@
+create or replace TYPE T_TAGS_DEFINICION as object (
+  TAG VARCHAR2(100),
+VALOR  VARCHAR2 (4000));

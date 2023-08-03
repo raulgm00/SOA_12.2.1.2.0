@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="CANALES/ConsultarVotaciones/Votaciones/Wsdl/ConsultarVotaciones"/>
+            <con:binding>
+                <con:name>ConsultarVotaciones_ptt-binding</con:name>
+                <con:namespace>http://xmlns.oracle.com/OSB_BCIE/CANALES/ConsultarVotaciones</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="error" name="error-a050a98.5789f1ee.0.151b81a87d1.N7ef7" xmlns:con2="http://www.bea.com/wli/sb/typesystem/config" xmlns:con1="http://www.bea.com/wli/sb/stages/config">
+            <con:stage id="_StageId-a050a98.5789f1ee.0.151b81a87d1.N7ef6" name="StageError" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                <con:context/>
+                <con:actions>
+                    <con3:ifThenElse>
+                        <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a050a98.5789f1ee.0.151b81a87d1.N7ef5</con4:id>
+                        <con3:case id="_BranchId-a050a98.5789f1ee.0.151b81a87d1.N7ef4">
+                            <con3:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError) = 0</con2:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:assign varName="codigoError">
+                                    <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a050a98.5789f1ee.0.151b81a87d1.N7ef3</con4:id>
+                                    <con3:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con3:expr>
+                                </con3:assign>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default/>
+                    </con3:ifThenElse>
+                    <con3:assign varName="inMapError">
+                        <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a050a98.5789f1ee.0.151b81a87d1.N7ef2</con4:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(data($codigoError))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout>
+                        <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a050a98.5789f1ee.0.151b81a87d1.N7ef1</con4:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true">
+                        <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-a050a98.5789f1ee.0.151b81a87d1.N7ef0</con4:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con4:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con4:resource ref="CANALES/ConsultarVotaciones/Votaciones/XQUERY/MapeoError_PS_TO_ConsultarVotacionesJSON_PS_Response"/>
+                                <con4:param name="message">
+                                    <con4:path>xs:string(fn:data($fault/ctx:errorCode))</con4:path>
+                                </con4:param>
+                                <con4:param name="responseMapeoErrorMessage">
+                                    <con4:path>$outMapError</con4:path>
+                                </con4:param>
+                            </con4:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-a050a98.5789f1ee.0.151b81a87d1.N7eef</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteNodeConsultarVotaciones" error-handler="error-a050a98.5789f1ee.0.151b81a87d1.N7ef7">
+                <con:context>
+                    <con2:userNsDecl prefix="con" namespace="http://www.bcie.org/ConsultarVotacionesMO"/>
+                </con:context>
+                <con:actions>
+                    <con1:route>
+                        <con2:id>_ActionId-N3f579bc1.421030d5.0.1516f35c6da.N7ff9</con2:id>
+                        <con1:service ref="ADAPTADORES/ModeloNegocio/DominioOperacion/SolicitudAprobacion/ConsultarVotaciones/PS/ConsultarVotaciones_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>consultarVotaciones</con1:operation>
+                        <con1:outboundTransform>
+                            <con4:log>
+                                <con2:id>_ActionId-N3f57c7ff.Nbf4cf9f.0.1624f0c3619.N7ffe</con2:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con4:expr>
+                                <con4:message>ConsultarVotacionesRqEncriptados</con4:message>
+                            </con4:log>
+                            <con3:wsCallout>
+                                <con2:id>_ActionId-N3f57c7ff.6d46df89.0.16225776b3d.N7ff8</con2:id>
+                                <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/DecodificarParametros/PS/DecodificarParametros_Ps" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con3:operation>DecodificarParametros</con3:operation>
+                                <con3:request>
+                                    <con3:body wrapped="false">inParametros</con3:body>
+                                </con3:request>
+                                <con3:response>
+                                    <con3:body wrapped="false">outParametros</con3:body>
+                                </con3:response>
+                                <con3:requestTransform>
+                                    <con3:assign varName="inParametros">
+                                        <con2:id>_ActionId-N3f57c7ff.6d46df89.0.16225776b3d.N7ff5</con2:id>
+                                        <con3:expr>
+                                            <con2:xqueryTransform>
+                                                <con2:resource ref="CANALES/ConsultarVotaciones/Votaciones/XQUERY/PipelineRq_To_DecodificarParametrosRq"/>
+                                                <con2:param name="ConsultarVotacionesRequest">
+                                                    <con2:path>$body/con:ConsultarVotacionesRequest</con2:path>
+                                                </con2:param>
+                                            </con2:xqueryTransform>
+                                        </con3:expr>
+                                    </con3:assign>
+                                </con3:requestTransform>
+                                <con3:responseTransform>
+                                    <con3:assign varName="varConsultarVotacion">
+                                        <con2:id>_ActionId-N3f57c7ff.6d46df89.0.16225776b3d.N7ff2</con2:id>
+                                        <con3:expr>
+                                            <con2:xqueryTransform>
+                                                <con2:resource ref="CANALES/ConsultarVotaciones/Votaciones/XQUERY/DecodificarParametrosRs_To_ConsultarVotacionRq"/>
+                                                <con2:param name="DecodificarParametrosResponse">
+                                                    <con2:path>$outParametros</con2:path>
+                                                </con2:param>
+                                            </con2:xqueryTransform>
+                                        </con3:expr>
+                                    </con3:assign>
+                                </con3:responseTransform>
+                            </con3:wsCallout>
+                            <con4:log>
+                                <con2:id>_ActionId-N3f57c7ff.Nbf4cf9f.0.1624f0c3619.N7ffb</con2:id>
+                                <con4:logLevel>info</con4:logLevel>
+                                <con4:expr>
+                                    <con2:xqueryText>$varConsultarVotacion</con2:xqueryText>
+                                </con4:expr>
+                                <con4:message>ConsultarVotacionesRs-Desencriptados</con4:message>
+                            </con4:log>
+                            <con3:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-N3f579bc1.421030d5.0.1516f35c6da.N7ff6</con2:id>
+                                <con3:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con2:xqueryTransform>
+                                        <con2:resource ref="CANALES/ConsultarVotaciones/Votaciones/XQUERY/ConsultarVotaciones_PS_TO_ConsultarVotaciones_PS_Request"/>
+                                        <con2:param name="RequestConsultar">
+                                            <con2:path>$varConsultarVotacion</con2:path>
+                                        </con2:param>
+                                    </con2:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con1:outboundTransform>
+                        <con1:responseTransform>
+                            <con3:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-N3f579bc1.421030d5.0.1516f35c6da.N7ff3</con2:id>
+                                <con3:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con3:location>
+                                <con3:expr>
+                                    <con2:xqueryTransform>
+                                        <con2:resource ref="CANALES/ConsultarVotaciones/Votaciones/XQUERY/ConsultarVotaciones_PS_TO_ConsultarVotaciones_PS_Response"/>
+                                        <con2:param name="ResponseConsultarVotacion">
+                                            <con2:path>$body/*[1]</con2:path>
+                                        </con2:param>
+                                    </con2:xqueryTransform>
+                                </con3:expr>
+                            </con3:replace>
+                        </con1:responseTransform>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

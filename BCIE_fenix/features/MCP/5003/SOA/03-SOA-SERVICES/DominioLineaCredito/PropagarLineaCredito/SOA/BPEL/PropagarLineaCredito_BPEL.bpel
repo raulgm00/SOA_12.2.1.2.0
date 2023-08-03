@@ -1,0 +1,1038 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sat Dec 12 17:07:37 CST 2015
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="PropagarLineaCredito_BPEL"
+         targetNamespace="http://xmlns.oracle.com/DominioLineaCredito/PropagarLineaCredito/PropagarLineaCredito_BPEL"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:client="http://xmlns.oracle.com/DominioLineaCredito/PropagarLineaCredito/PropagarLineaCredito_BPEL"
+         xmlns:ora="http://schemas.oracle.com/xpath/extension" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:ns1="http://www.bice.org/PropagarLineaCreditoService"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns3="http://www.bcie.org/ResultBO"
+         xmlns:ns4="http://www.bcie.org/ErrorBO" xmlns:ns2="http://www.bcie.org/LineaCreditoMO"
+         xmlns:ns5="http://www.bice.org/ActualizarLineaCreditoService" xmlns:ns6="http://xmlns.bcie.com/ComisionService"
+         xmlns:ns7="http://www.bcie.org/ComisionMO" xmlns:ns8="http://www.bice.org/CrearCommitmentFLEXCUBEService"
+         xmlns:ns17="http://www.bcie.org/TerminoBO" xmlns:ns9="http://www.bcie.org/OperacionBO"
+         xmlns:ns19="http://www.bcie.org/AprobacionBO" xmlns:ns15="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns16="http://www.bcie.org/CondicionBO" xmlns:ns12="http://www.bcie.org/ProductoBO"
+         xmlns:ns13="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns18="http://www.bcie.org/ComisionBO"
+         xmlns:ns11="http://www.bcie.org/CatalogoBO" xmlns:ns14="http://www.bcie.org/ContratoBO"
+         xmlns:ns10="http://www.bcie.org/ClienteBO" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns20="http://xmlns.oracle.com/ClienteEsIFI/ClienteEsIFI_DecisionService" xmlns:ns22="http://www.bcie.org"
+         xmlns:ns21="http://xmlns.oracle.com/bpel" xmlns:ns24="http://www.bcie.org/DocumentoBO"
+         xmlns:ns23="http://www.bcie.org/AtributoBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns28="http://www.bcie.org/ReglaBO" xmlns:ns25="http://www.bcie.org/CommonBO"
+         xmlns:ns29="http://www.bcie.org/MatrizTCCBO" xmlns:ns27="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns26="http://www.bcie.org/DesembolsoBO" xmlns:ns30="http://www.bcie.org/ConsultarCommitmentSAD"
+         xmlns:ns31="http://www.bcie.org/ActualizarCommitmentSAD" xmlns:ns33="http://www.bcie.org/ConsultarFLEXCUBE"
+         xmlns:ns41="http://www.bcie.org/ValidarEstadoFlexcubeMO"
+         xmlns:ns32="http://xmlns.bcie.com/Flexcube14/LineaCreditoService"
+         xmlns:ns34="http://xmlns.bcie.com/Flexcube14/ClienteService"
+         xmlns:ns35="http://www.bcie.org/FLEXCUBE14/ClienteMO" xmlns:ns36="http://www.bcie.org/FLEXCUBE14/ResultBO"
+         xmlns:ns37="http://www.bcie.org/FLEXCUBE14/ErrorBO" xmlns:ns38="http://www.bcie.org/FLEXCUBE14/LineaCreditoMO"
+         xmlns:ns39="http://xmlns.bcie.com/ClienteService" xmlns:ns40="http://www.bcie.org/ClienteMO">
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bice.org/PropagarLineaCreditoService"
+          location="../WSDLs/PropagarLineaCreditoSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="PropagarLineaCredito" partnerLinkType="ns1:PropagarLineaCredito_BPEL"
+                 myRole="PropagarLineaCreditoPT"/>
+    <partnerLink name="ConsultarLineaCredito" partnerLinkType="ns5:ConsultarLineaCredito"
+                 partnerRole="ConsultarLineaCreditoByIdLineaCreditoPT"/>
+    <partnerLink name="ConsultarComisionByIdLineaCredito" partnerLinkType="ns6:ConsultarComisionByIdLineaCredito"
+                 partnerRole="ConsultarComisionByIdLineaCreditoPT"/>
+    <partnerLink name="CrearCommitmentFLEXCUBEService" partnerLinkType="ns8:CrearCommitmentFLEXCUBEService"
+                 partnerRole="CrearCommitmentFLEXCUBEPT"/>
+    <partnerLink name="ActualizarLineaCreditoService" partnerLinkType="ns5:ActualizarLineaCreditoService"
+                 partnerRole="ActualizarLineaCreditoPT"/>
+    <partnerLink name="ValidarTipoClienteIFI" partnerLinkType="ns20:ValidarTipoClienteIFI"
+                 partnerRole="IDecisionService"/>
+    <partnerLink name="ConsultarFechaCargo_SB" partnerLinkType="ns6:ConsultarFechaCargo_SB"
+                 partnerRole="ConsultarFechaCargoPT"/>
+    <partnerLink name="ActualizarCommitment_SB" partnerLinkType="ns31:ActualizarCommitment_SB"
+                 partnerRole="ActualizarCommitment_PT"/>
+    <partnerLink name="ConsultarFlexcube_SB" partnerLinkType="ns33:ConsultarFlexcube_SB"
+                 partnerRole="ConsultarFLEXCUBE_PT"/>
+    <partnerLink name="ValidarEstadoFlexcube_SB" partnerLinkType="ns41:ValidarEstadoFlexcube_SB"
+                 partnerRole="ValidarEstadoFlexcubePT"/>
+    <partnerLink name="CrearCommitmentFlexcube14" partnerLinkType="ns32:CrearCommitmentFlexcube14"
+                 partnerRole="crearCommitmentFLEXCUBE_V14_PT"/>
+    <partnerLink name="ConsultarCodigoClienteFlexcube14" partnerLinkType="ns34:ConsultarCodigoClienteFlexcube14"
+                 partnerRole="consultarCodigoClienteFLEXCUBE_V14_PT"/>
+    <partnerLink name="ConsultarClienteById" partnerLinkType="ns39:ConsultarClienteById" partnerRole="ClientePT"/>
+  </partnerLinks>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:PropagarLineaCreditoRequestMessage"/>
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:PropagarLineaCreditoResponseMessage"/>
+    <variable name="crearCommitmentFLEXCUBE_InputVariable" messageType="ns8:CrearCommitmentFLEXCUBERequestMessage"/>
+    <variable name="faultVar" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="consultarLineaCreditoByIdLineaCredito_OutputVariable"
+              messageType="ns5:ConsultarLineaCreditoByIdLineaCreditoResponseMessage"/>
+    <variable name="consultarComisionByIdLineaCredito_OutputVariable"
+              messageType="ns6:responseConsultarComisionByIdLineaCreditoMessage"/>
+    <variable name="inConsultarFechaCargo" messageType="ns6:requestConsultarFechaCargoMessage"/>
+    <variable name="outConsultarFechaCargo" messageType="ns6:responseConsultarFechaCargoMessage"/>
+    <variable name="inActualizarCommitment" messageType="ns31:requestActualizarCommitmentMessage"/>
+    <variable name="outActualizarCommitment" messageType="ns31:responseActualizarCommitmentMessage"/>
+    <variable name="inConsultarFlexcube" messageType="ns33:requestConsultarFLEXCUBEMessage"/>
+    <variable name="outConsultarFlexcube" messageType="ns33:responseConsultarFLEXCUBEMessage"/>
+    <variable name="montoAmpliacion" type="xsd:double">
+      <from>0.0</from>
+    </variable>
+    <variable name="inValidarEstadoFlexcube" messageType="ns41:ValidarEstadoFlexcubeRequestMessage"/>
+    <variable name="outValidarEstadoFlexcube" messageType="ns41:ValidarEstadoFlexcubeResponseMessage"/>
+    <variable name="ConsultarCodigoClienteFlexcube14_InputVariable"
+              messageType="ns34:requestConsultarCodigoClienteMessage"/>
+    <variable name="ConsultarCodigoClienteFlexcube14_OutputVariable"
+              messageType="ns34:responseConsultarCodigoClienteMessage"/>
+    <variable name="CrearCommitmentFlexcube14_InputVariable" messageType="ns32:requestCrearCommitmentMessage"/>
+    <variable name="CrearCommitmentFlexcube14_OutputVariable" messageType="ns32:responseCrearCommitmentMessage"/>
+    <variable name="ConsultarClienteByID_InputVariable" messageType="ns39:requestConsultarClienteMessageByIdCliente"/>
+    <variable name="ConsultarClienteByID_OutputVariable" messageType="ns39:responseConsultarClienteMessageByIdCliente"/>
+    <variable name="inConsultarFlexcube_Recall" messageType="ns33:requestConsultarFLEXCUBEMessage"/>
+    <variable name="outConsultarFlexcube_Recall" messageType="ns33:responseConsultarFLEXCUBEMessage"/>
+  </variables>
+  <faultHandlers>
+    <catch faultName="bpelx:remoteFault" faultVariable="remoteFault" faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="Sequence9">
+        <assign name="AssignError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+          </copy>
+          <copy>
+            <from>$remoteFault.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+          </copy>
+          <copy>
+            <from>$remoteFault.code</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:error/ns4:errorCode</to>
+          </copy>
+          <copy>
+            <from>$remoteFault.detail</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:error/ns4:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyRemote" variable="outputVariable" partnerLink="PropagarLineaCredito"
+               portType="ns1:PropagarLineaCreditoPT" operation="propagarLineaCredito"/>
+      </sequence>
+    </catch>
+    <catchAll>
+      <sequence name="Sequence5">
+        <assign name="AssignError">
+          <copy>
+            <from>'-9'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+          </copy>
+          <copy>
+            <from>'Error general en el servicio PropagarLineaCredito'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:error/ns4:errorDescription</to>
+          </copy>
+          <copy>
+            <from>0</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:error/ns4:errorCode</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="PropagarLineaCredito"
+               portType="ns1:PropagarLineaCreditoPT" operation="propagarLineaCredito"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+    <!-- Receive input from requestor. (Note: This maps to operation defined in PropagarLineaCredito_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="PropagarLineaCredito" portType="ns1:PropagarLineaCreditoPT"
+             operation="propagarLineaCredito" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignFlowName">
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>oraext:setFlowInstanceTitle(concat("idLineaCredito= ",string($inputVariable.request/ns2:idLineaCredito)))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarLineaCredito">
+      <variables>
+        <variable name="consultarLineaCreditoByIdLineaCredito_InputVariable"
+                  messageType="ns5:ConsultarLineaCreditoByIdLineaCreditoRequestMessage"/>
+        <variable name="ActEstadoMonto_actualizarLineaCredito_InputVariable"
+                  messageType="ns5:ActualizarLineaCreditoRequestMessage"/>
+        <variable name="ActEstadoMonto_actualizarLineaCredito_OutputVariable"
+                  messageType="ns5:ActualizarLineaCreditoResponseMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpel:selectionFailure" faultVariable="selectFault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence7">
+            <assign name="Assign_SelectionFailure">
+              <copy>
+                <from>$selectFault.code</from>
+                <to>$faultVar.code</to>
+              </copy>
+              <copy>
+                <from>'Selection Failure al Consultar Línea Credito'</from>
+                <to>$faultVar.summary</to>
+              </copy>
+              <copy>
+                <from>concat($selectFault.summary,' + ', $selectFault.detail)</from>
+                <to>$faultVar.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <rethrow name="RethrowError"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="Assign_ErrorGeneral">
+              <copy>
+                <from>'-1'</from>
+                <to>$faultVar.code</to>
+              </copy>
+              <copy>
+                <from>'Error General al Consultar Linea Credito'</from>
+                <to>$faultVar.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$faultVar.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="SequenceConsultarLineaCredito">
+        <invoke name="InvokeValidarEstadoFlexcube" bpelx:invokeAsDetail="no" partnerLink="ValidarEstadoFlexcube_SB"
+                portType="ns41:ValidarEstadoFlexcubePT" operation="ValidarEstadoFlexcube"
+                inputVariable="inValidarEstadoFlexcube" outputVariable="outValidarEstadoFlexcube"/>
+        <if name="IfValidaFlexcube">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outValidarEstadoFlexcube.ValidarEstadoFlexcubeResponse/ns41:Resultado/ns3:result = 'OK'</condition>
+          <empty name="Continua"/>
+          <else>
+            <sequence name="Sequence15">
+              <assign name="AssignERRORValidarEstadoFlexcube">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                </copy>
+                <copy>
+                  <from>'Flexcube no se encuentra activo actualmente, no es posible propagar la linea de credito  en este momento'</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyERROR" variable="outputVariable" partnerLink="PropagarLineaCredito"
+                     portType="ns1:PropagarLineaCreditoPT" operation="propagarLineaCredito"/>
+              <exit name="ERROR"/>
+            </sequence>
+          </else>
+        </if>
+        <assign name="Assign_ConsultarLineaCreditoInputVariable">
+          <copy>
+            <from>$inputVariable.request/ns2:idLineaCredito</from>
+            <to>$consultarLineaCreditoByIdLineaCredito_InputVariable.request/ns2:idLineaCredito</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarLineaCredito" bpelx:invokeAsDetail="no" partnerLink="ConsultarLineaCredito"
+                portType="ns5:ConsultarLineaCreditoByIdLineaCreditoPT" operation="consultarLineaCreditoByIdLineaCredito"
+                inputVariable="consultarLineaCreditoByIdLineaCredito_InputVariable"
+                outputVariable="consultarLineaCreditoByIdLineaCredito_OutputVariable"/>
+        <if name="IfConsultarLinea">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$consultarLineaCreditoByIdLineaCredito_OutputVariable.response/ns2:Resultado/ns3:result='OK'</condition>
+          <sequence name="SequenceConsultarLineaOK">
+            <if name="IfValidaLineaFlexcube">
+              <documentation>
+                <![CDATA[FLEXCUBE]]>
+              </documentation>
+              <condition>string-length($consultarLineaCreditoByIdLineaCredito_OutputVariable.response/ns2:Operacion/ns9:contrato/ns14:LineaCredito[1]/ns15:Flexcube/ns15:id) &gt; 0</condition>
+              <sequence name="SequenceLineaFlexcube">
+                <if name="NO_FECHA_VALOR">
+                  <condition>string-length($inputVariable.request/ns2:fechaValor) = 0</condition>
+                  <sequence>
+                    <assign name="AssignRequestConsultarFechaCargo">
+                      <copy>
+                        <from>'RequestConsultarFechaCargo'</from>
+                        <to>$inConsultarFechaCargo.request/ns7:idComision</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeConsultarFechaCargo" partnerLink="ConsultarFechaCargo_SB"
+                            portType="ns6:ConsultarFechaCargoPT" operation="ConsultarFechaCargo"
+                            inputVariable="inConsultarFechaCargo" bpelx:invokeAsDetail="no"
+                            outputVariable="outConsultarFechaCargo"/>
+                  </sequence>
+                  <else>
+                    <assign name="AssignFechaValor">
+                      <copy>
+                        <from>$inputVariable.request/ns2:fechaValor</from>
+                        <to>$outConsultarFechaCargo.response/ns7:fechaCargo</to>
+                      </copy>
+                      <copy>
+                        <from>'OK'</from>
+                        <to>$outConsultarFechaCargo.response/ns7:Resultado/ns3:result</to>
+                      </copy>
+                    </assign>
+                  </else>
+                </if>
+                <if name="IfValidaOK">
+                  <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                  <condition>$outConsultarFechaCargo.response/ns7:Resultado/ns3:result = 'OK'</condition>
+                  <empty name="Empty"/>
+                  <else>
+                    <documentation>
+                      <![CDATA[ERROR]]>
+                    </documentation>
+                    <sequence name="SequenceErrorConsultarFechaCargo">
+                      <assign name="AssignConsultarFechaCargoError">
+                        <copy>
+                          <from>'ERROR'</from>
+                          <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                        </copy>
+                        <copy>
+                          <from>concat('ConsultarFechaCargo:  ',$outConsultarFechaCargo.response/ns7:Resultado/ns3:message)</from>
+                          <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                        </copy>
+                      </assign>
+                      <reply name="ReplyConsultarFechaCargoError" variable="outputVariable"
+                             partnerLink="PropagarLineaCredito" portType="ns1:PropagarLineaCreditoPT"
+                             operation="propagarLineaCredito"/>
+                      <exit name="Exit"/>
+                    </sequence>
+                  </else>
+                </if>
+                <assign name="AssignRequestConsultarFlexcube">
+                  <copy>
+                    <from>$consultarLineaCreditoByIdLineaCredito_OutputVariable.response/ns2:Operacion/ns9:contrato/ns14:LineaCredito/ns15:Flexcube/ns15:id</from>
+                    <to>$inConsultarFlexcube.request/ns2:codigoContrato</to>
+                  </copy>
+                  <copy>
+                    <from>'LINEA'</from>
+                    <to>$inConsultarFlexcube.request/ns2:nivelDetalle</to>
+                  </copy>
+                </assign>
+                <scope name="Scope1">
+                  <sequence name="Sequence21">
+                    <sequence>
+                      <invoke name="InvokeConsultarFlexcube" partnerLink="ConsultarFlexcube_SB"
+                              portType="ns33:ConsultarFLEXCUBE_PT" operation="ConsultarFLEXCUBE"
+                              inputVariable="inConsultarFlexcube" bpelx:invokeAsDetail="no"
+                              outputVariable="outConsultarFlexcube"/>
+                    </sequence>
+                    <if name="IfError">
+                      <documentation>
+                        <![CDATA[Error]]>
+                      </documentation>
+                      <condition>$outConsultarFlexcube.response/ns2:Resultado/ns3:result="ERROR"</condition>
+                      <sequence>
+                        <assign name="AssignRequestConsultarFlexcube_Recall">
+                          <copy>
+                            <from variable="inConsultarFlexcube"/>
+                            <to variable="inConsultarFlexcube_Recall"/>
+                          </copy>
+                        </assign>
+                        <invoke name="ConsultarFlexcube_Recall" bpelx:invokeAsDetail="no"
+                                partnerLink="ConsultarFlexcube_SB" portType="ns33:ConsultarFLEXCUBE_PT"
+                                operation="ConsultarFLEXCUBE" inputVariable="inConsultarFlexcube_Recall"
+                                outputVariable="outConsultarFlexcube_Recall"/>
+                        <assign name="AssignRequestConsultarFlexcube_Response">
+                          <copy>
+                            <from variable="outConsultarFlexcube_Recall"/>
+                            <to variable="outConsultarFlexcube"/>
+                          </copy>
+                        </assign>
+                      </sequence>
+                      <else>
+                        <documentation>
+                          <![CDATA[OK]]>
+                        </documentation>
+                        <empty name="Empty1"/>
+                      </else>
+                    </if>
+                  </sequence>
+                </scope>
+                <if name="IfValidaOK">
+                  <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                  <condition>$outConsultarFlexcube.response/ns2:Resultado/ns3:result = 'OK'</condition>
+                  <empty name="Empty"/>
+                  <else>
+                    <documentation>
+                      <![CDATA[ERROR]]>
+                    </documentation>
+                    <sequence name="SequenceErrorConsultarFlexcube">
+                      <assign name="AssignConsultarFlexcubeError">
+                        <copy>
+                          <from>'ERROR'</from>
+                          <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                        </copy>
+                        <copy>
+                          <from>concat('ConsultarFlexcube:  ',$outConsultarFlexcube.response/ns2:Resultado/ns3:message)</from>
+                          <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                        </copy>
+                      </assign>
+                      <reply name="ReplyConsultarFlexcubeError" variable="outputVariable"
+                             partnerLink="PropagarLineaCredito" portType="ns1:PropagarLineaCreditoPT"
+                             operation="propagarLineaCredito"/>
+                      <exit name="Exit"/>
+                    </sequence>
+                  </else>
+                </if>
+                <assign name="assingMontoAmpliacion">
+                  <copy>
+                    <from>$consultarLineaCreditoByIdLineaCredito_OutputVariable.response/ns2:Operacion/ns9:contrato/ns14:LineaCredito/ns15:Monto[ns25:tipo/ns11:DescripcionCorta='MONTO_AMPLIACION']/ns25:importe +$consultarLineaCreditoByIdLineaCredito_OutputVariable.response/ns2:Operacion/ns9:contrato/ns14:LineaCredito/ns15:MontoLinea</from>
+                    <to>$montoAmpliacion</to>
+                  </copy>
+                </assign>
+                <if name="IfActualizaCommitment">
+                  <condition>$montoAmpliacion &gt;= 0</condition>
+                  <sequence>
+                    <assign name="XQ_RequestActualizarContrato">
+                      <bpelx:annotation>
+                        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                      </bpelx:annotation>
+                      <copy>
+                        <from>ora:processXQuery10('../Transformations/XQ_RequestActualizarContrato.xqy', 'outConsultarFechaCargo.response', $outConsultarFechaCargo.response, 'outConsultarFlexcube.response', $outConsultarFlexcube.response, 'consultarLineaCreditoByIdLineaCredito_OutputVariable.response', $consultarLineaCreditoByIdLineaCredito_OutputVariable.response)</from>
+                        <to variable="inActualizarCommitment" part="request"/>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeActualizarCommitment" partnerLink="ActualizarCommitment_SB"
+                            portType="ns31:ActualizarCommitment_PT" operation="ActualizarCommitment"
+                            inputVariable="inActualizarCommitment" bpelx:invokeAsDetail="no"
+                            outputVariable="outActualizarCommitment"/>
+                  </sequence>
+                  <else>
+                    <sequence name="Sequence14">
+                      <assign name="exit">
+                        <copy>
+                          <from>'OK'</from>
+                          <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                        </copy>
+                        <copy>
+                          <from>'Sin actualizar commitment.'</from>
+                          <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                        </copy>
+                      </assign>
+                      <reply name="Reply" variable="outputVariable" partnerLink="PropagarLineaCredito"
+                             portType="ns1:PropagarLineaCreditoPT" operation="propagarLineaCredito"/>
+                      <exit name="Exit"/>
+                    </sequence>
+                  </else>
+                </if>
+                <if name="IfValidaOK">
+                  <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                  <condition>$outActualizarCommitment.response/ns2:Resultado/ns3:result = 'OK'</condition>
+                  <sequence name="SequenceOkActializarCommitment">
+                    <assign name="Assign_ActEstadoMontonput">
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>$inputVariable.request/ns2:idLineaCredito</from>
+                        <to>$ActEstadoMonto_actualizarLineaCredito_InputVariable.request/ns2:LineaCredito/ns15:idLineaCredito</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>false()</from>
+                        <to>$ActEstadoMonto_actualizarLineaCredito_InputVariable.request/ns2:LineaCredito/ns15:EstadoMonto</to>
+                      </copy>
+                    </assign>
+                    <invoke name="ActEstadoMonto"
+                            partnerLink="ActualizarLineaCreditoService" portType="ns5:ActualizarLineaCreditoPT"
+                            operation="actualizarLineaCredito"
+                            inputVariable="ActEstadoMonto_actualizarLineaCredito_InputVariable"
+                            outputVariable="ActEstadoMonto_actualizarLineaCredito_OutputVariable"
+                            bpelx:invokeAsDetail="no"/>
+                    <assign name="AssignActualizarCommitmentOK">
+                      <copy>
+                        <from>'OK'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                      </copy>
+                      <copy>
+                        <from>'Contrato Actualizado Correctamente'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                      </copy>
+                    </assign>
+                  </sequence>
+                  <else>
+                    <documentation>
+                      <![CDATA[ERROR]]>
+                    </documentation>
+                    <sequence name="SequenceErrorActualizarCommitment">
+                      <assign name="AssignActualizarCommitmentError">
+                        <copy>
+                          <from>'ERROR'</from>
+                          <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                        </copy>
+                        <copy>
+                          <from>concat('ConsultarActualizarCommitment:  ',$outActualizarCommitment.response/ns2:Resultado/ns3:message)</from>
+                          <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                        </copy>
+                      </assign>
+                    </sequence>
+                  </else>
+                </if>
+                <reply name="ReplyActualizarCommitment" variable="outputVariable"
+                       partnerLink="PropagarLineaCredito" portType="ns1:PropagarLineaCreditoPT"
+                       operation="propagarLineaCredito"/>
+                <exit name="Exit"/>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[NO_FLEXCUBE]]>
+                </documentation>
+                <sequence name="Sequence11">
+                  <empty name="Empty"/>
+                </sequence>
+              </else>
+            </if>
+            <scope name="ScopeValidarClienteIfi">
+              <variables>
+                <variable name="callFunctionStateless_InputVariable" messageType="ns20:callFunctionStatelessMessage"/>
+                <variable name="callFunctionStateless_OutputVariable"
+                          messageType="ns20:callFunctionStatelessDecisionMessage"/>
+              </variables>
+              <sequence name="SequenceValidarClienteIfi">
+                <assign name="Assign_ValidarClienteInput">
+                  <copy>
+                    <from>'ClienteEsIFI_DecisionService'</from>
+                    <to>$callFunctionStateless_InputVariable.payload/@name</to>
+                  </copy>
+                  <copy>
+                    <from>string($consultarLineaCreditoByIdLineaCredito_OutputVariable.response/ns2:Operacion/ns9:cliente/ns10:tipoPersona/ns11:Id)</from>
+                    <to>$callFunctionStateless_InputVariable.payload/ns20:parameterList/ns22:ClienteEsIFIRequest/ns22:idTipoPersona</to>
+                  </copy>
+                </assign>
+                <invoke name="Invoke_ValidarClienteIFI" bpelx:invokeAsDetail="no" partnerLink="ValidarTipoClienteIFI"
+                        portType="ns20:IDecisionService" operation="callFunctionStateless"
+                        inputVariable="callFunctionStateless_InputVariable"
+                        outputVariable="callFunctionStateless_OutputVariable"/>
+                <if name="IfRespuestaValidacion">
+                  <documentation>
+                    <![CDATA[true IFI]]>
+                  </documentation>
+                  <condition>$callFunctionStateless_OutputVariable.payload/ns20:resultList/ns22:ClienteEsIFIResponse/ns22:respuesta='true'</condition>
+                  <assign name="Assign_IFI">
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>'I'</from>
+                      <to>$consultarLineaCreditoByIdLineaCredito_OutputVariable.response/ns2:Operacion/ns9:cliente/ns10:tipoPersona/ns11:codigoExterno</to>
+                    </copy>
+                  </assign>
+                  <else>
+                    <documentation>
+                      <![CDATA[false IFI]]>
+                    </documentation>
+                    <assign name="Assign_NOIFI">
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>'D'</from>
+                        <to>$consultarLineaCreditoByIdLineaCredito_OutputVariable.response/ns2:Operacion/ns9:cliente/ns10:tipoPersona/ns11:codigoExterno</to>
+                      </copy>
+                    </assign>
+                  </else>
+                </if>
+              </sequence>
+            </scope>
+            <scope name="ScopeEjecutivo">
+              <sequence name="Sequence12">
+                <assign name="Assign_Ejecutivo">
+                  <copy>
+                    <from>ids:getUserProperty($consultarLineaCreditoByIdLineaCredito_OutputVariable.response/ns2:Operacion/ns9:responsable,'employeenumber')</from>
+                    <to>$consultarLineaCreditoByIdLineaCredito_OutputVariable.response/ns2:Operacion/ns9:responsable</to>
+                  </copy>
+                </assign>
+              </sequence>
+            </scope>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceConsultarLineaERROR">
+              <assign name="Assign_ConsultarLineaCredito">
+                <copy bpelx:insertMissingToData="yes">
+                  <from>'-1'</from>
+                  <to>$faultVar.code</to>
+                </copy>
+                <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                  <from>'Error al Consultar LineaCredito'</from>
+                  <to>$faultVar.summary</to>
+                </copy>
+                <copy>
+                  <from>$consultarLineaCreditoByIdLineaCredito_OutputVariable.response/ns2:Resultado/ns3:message</from>
+                  <to>$faultVar.detail</to>
+                </copy>
+              </assign>
+              <throw name="ThrowErrorConsultar" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarComision">
+      <variables>
+        <variable name="consultarComisionByIdLineaCredito_InputVariable"
+                  messageType="ns6:requestConsultarComisionByIdLineaCreditoMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpel:selectionFailure" faultVariable="selectFault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence7">
+            <assign name="Assign_SelectionFailure">
+              <copy>
+                <from>$selectFault.code</from>
+                <to>$faultVar.code</to>
+              </copy>
+              <copy>
+                <from>'Selection Failure al Consultar Comision'</from>
+                <to>$faultVar.summary</to>
+              </copy>
+              <copy>
+                <from>concat($selectFault.summary,' + ', $selectFault.detail)</from>
+                <to>$faultVar.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <rethrow name="RethrowError"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="Assign_ErrorGeneral">
+              <copy>
+                <from>'-1'</from>
+                <to>$faultVar.code</to>
+              </copy>
+              <copy>
+                <from>'Error General al Consultar Comision'</from>
+                <to>$faultVar.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$faultVar.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="SequenceConsultarComision">
+        <assign name="Assign_ConsultarComisionInput">
+          <copy>
+            <from>$inputVariable.request/ns2:idLineaCredito</from>
+            <to>$consultarComisionByIdLineaCredito_InputVariable.request/ns7:idLineaCredito</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarComision" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarComisionByIdLineaCredito" portType="ns6:ConsultarComisionByIdLineaCreditoPT"
+                operation="ConsultarComisionByIdLineaCredito"
+                inputVariable="consultarComisionByIdLineaCredito_InputVariable"
+                outputVariable="consultarComisionByIdLineaCredito_OutputVariable"/>
+        <if name="IfConsultarComision">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$consultarComisionByIdLineaCredito_OutputVariable.response/ns7:Resultado/ns3:result='OK'</condition>
+          <sequence name="SequenceConsultarComisionOK">
+            <empty name="Empty"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceConsultarComisionERROR">
+              <assign name="Assign_ConsultarLineaCredito">
+                <copy>
+                  <from>'-1'</from>
+                  <to>$faultVar.code</to>
+                </copy>
+                <copy>
+                  <from>'Error al Consultar LineaCredito'</from>
+                  <to>$faultVar.summary</to>
+                </copy>
+                <copy>
+                  <from>$consultarComisionByIdLineaCredito_OutputVariable.response/ns7:Resultado/ns3:error/ns4:errorDescription</from>
+                  <to>$faultVar.detail</to>
+                </copy>
+              </assign>
+              <throw name="ThrowErrorConsultar" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <assign name="ConsultarComision_TO_CrearCommitment">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:processXQuery10('../Transformations/ConsultarComision_TO_CrearCommitment.xqy', 'consultarComisionByIdLineaCredito_OutputVariable.response', $consultarComisionByIdLineaCredito_OutputVariable.response, 'consultarLineaCreditoByIdLineaCredito_OutputVariable.response', $consultarLineaCreditoByIdLineaCredito_OutputVariable.response)</from>
+        <to variable="crearCommitmentFLEXCUBE_InputVariable" part="request"/>
+      </copy>
+    </assign>
+    <scope name="ScopeCrearCommitment">
+      <variables>
+        <variable name="crearCommitmentFLEXCUBE_OutputVariable"
+                  messageType="ns8:CrearCommitmentFLEXCUBEResponseMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpel:selectionFailure" faultVariable="selectFault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence7">
+            <assign name="Assign_SelectionFailure">
+              <copy>
+                <from>$selectFault.code</from>
+                <to>$faultVar.code</to>
+              </copy>
+              <copy>
+                <from>'Selection Failure al CrearCommitment'</from>
+                <to>$faultVar.summary</to>
+              </copy>
+              <copy>
+                <from>concat($selectFault.summary,' + ', $selectFault.detail)</from>
+                <to>$faultVar.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <rethrow name="RethrowError"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="Assign_ErrorGeneral">
+              <copy>
+                <from>'-1'</from>
+                <to>$faultVar.code</to>
+              </copy>
+              <copy>
+                <from>'Error General al Crear Commitment'</from>
+                <to>$faultVar.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$faultVar.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence3">
+        <bpelx:skipCondition>1&gt;0</bpelx:skipCondition>
+        <invoke name="Invoke_CrearCommitment" bpelx:invokeAsDetail="no" partnerLink="CrearCommitmentFLEXCUBEService"
+                portType="ns8:CrearCommitmentFLEXCUBEPT" operation="crearCommitmentFLEXCUBE"
+                inputVariable="crearCommitmentFLEXCUBE_InputVariable"
+                outputVariable="crearCommitmentFLEXCUBE_OutputVariable"/>
+        <if name="IfCrearCommitmentOutput">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$crearCommitmentFLEXCUBE_OutputVariable.response/ns2:Resultado/ns3:result='OK'</condition>
+          <assign name="Assign_OutputOK">
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>$crearCommitmentFLEXCUBE_OutputVariable.response/ns2:codigoContrato</from>
+              <to>$outputVariable.response/ns2:codigoContratoFLEXCUBE</to>
+            </copy>
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>$crearCommitmentFLEXCUBE_OutputVariable.response/ns2:Resultado/ns3:result</from>
+              <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+            </copy>
+            <copy>
+              <from>'Registro Exitoso'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+            </copy>
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>$crearCommitmentFLEXCUBE_OutputVariable.response/ns2:plantillaLimite</from>
+              <to>$outputVariable.response/ns2:plantillaLimite</to>
+            </copy>
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>$crearCommitmentFLEXCUBE_OutputVariable.response/ns2:serialLimite</from>
+              <to>$outputVariable.response/ns2:serialLimite</to>
+            </copy>
+          </assign>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="Sequence16">
+              <assign name="Assign_OutputError">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                </copy>
+                <copy>
+                  <from>concat('Error al Cargar Commitment',' - ',$crearCommitmentFLEXCUBE_OutputVariable.response/ns2:Resultado/ns3:message)</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                </copy>
+              </assign>
+              <reply name="Reply" variable="outputVariable" partnerLink="PropagarLineaCredito"
+                     portType="ns1:PropagarLineaCreditoPT" operation="propagarLineaCredito"/>
+              <exit name="Exit"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeCrearCommitmentFlexcube14">
+      <faultHandlers>
+        <catch faultName="bpel:selectionFailure" faultVariable="selectFault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence7">
+            <assign name="Assign_SelectionFailure">
+              <copy>
+                <from>$selectFault.code</from>
+                <to>$faultVar.code</to>
+              </copy>
+              <copy>
+                <from>'Selection Failure al CrearCommitment Flexcube14'</from>
+                <to>$faultVar.summary</to>
+              </copy>
+              <copy>
+                <from>concat($selectFault.summary,' + ', $selectFault.detail)</from>
+                <to>$faultVar.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <rethrow name="RethrowError"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="Assign_ErrorGeneral">
+              <copy>
+                <from>'-1'</from>
+                <to>$faultVar.code</to>
+              </copy>
+              <copy>
+                <from>'Error General al Crear Commitment Flexcube 14'</from>
+                <to>$faultVar.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$faultVar.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence15">
+        <assign name="AssignInputConsultarClienteByID">
+          <copy>
+            <from>$consultarLineaCreditoByIdLineaCredito_OutputVariable.response/ns2:Operacion/ns9:cliente/ns10:idCliente</from>
+            <to>$ConsultarClienteByID_InputVariable.request/ns40:idCliente</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarClienteByID" bpelx:invokeAsDetail="no" partnerLink="ConsultarClienteById"
+                portType="ns39:ClientePT" operation="consultarByIdCliente"
+                inputVariable="ConsultarClienteByID_InputVariable"
+                outputVariable="ConsultarClienteByID_OutputVariable"/>
+        <assign name="CrearCommitment_TO_CrearCommitmentFlexcube14">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:processXQuery10('../Transformations/CrearCommitmentFLEXCUBE_TO_CrearCommitmentFlexcube14.xqy', 'crearCommitmentFLEXCUBE_InputVariable.request', $crearCommitmentFLEXCUBE_InputVariable.request)</from>
+            <to variable="CrearCommitmentFlexcube14_InputVariable" part="requestCrearCommitment"/>
+          </copy>
+        </assign>
+        <invoke name="InvokeCrearCommitmentFlexcube14" bpelx:invokeAsDetail="no"
+                partnerLink="CrearCommitmentFlexcube14" portType="ns32:crearCommitmentFLEXCUBE_V14_PT"
+                operation="crearCommitment" inputVariable="CrearCommitmentFlexcube14_InputVariable"
+                outputVariable="CrearCommitmentFlexcube14_OutputVariable"/>
+        <if name="IfCrearCommitmentFlexcube14">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$CrearCommitmentFlexcube14_OutputVariable.responseCrearCommitment/ns38:Response/ns38:Resultado/ns36:result ='OK'</condition><assign name="Assign_OutputOK"
+                                                                                                                                                         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+      
+      
+      
+   <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+         xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+         <from>$CrearCommitmentFlexcube14_OutputVariable.responseCrearCommitment/ns38:Response/ns38:Codigo_Contrato</from>
+         <to>$outputVariable.response/ns2:codigoContratoFLEXCUBE</to>
+      </copy><copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                   xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+         <from>$CrearCommitmentFlexcube14_OutputVariable.responseCrearCommitment/ns38:Response/ns38:Resultado/ns36:result</from>
+         <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+      </copy><copy>
+         <from>'Registro Exitoso'</from>
+         <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+      </copy><copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                   xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+         <from>$CrearCommitmentFlexcube14_OutputVariable.responseCrearCommitment/ns38:Response/ns38:Plantilla_Limite</from>
+         <to>$outputVariable.response/ns2:plantillaLimite</to>
+      </copy><copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>$CrearCommitmentFlexcube14_OutputVariable.responseCrearCommitment/ns38:Response/ns38:Serial_Limite</from>
+              <to>$outputVariable.response/ns2:serialLimite</to>
+            </copy></assign>
+          <else>
+            <documentation>
+              <![CDATA[Error]]>
+            </documentation>
+            <sequence name="Sequence18">
+              <assign name="Assign_OutputError">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                </copy>
+                <copy>
+                  <from>concat('Error al ConsultarCodigoCliente Flexcube14t',' - ',$CrearCommitmentFlexcube14_OutputVariable.responseCrearCommitment/ns38:Response/ns38:Resultado/ns36:message)</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                </copy>
+              </assign>
+              <reply name="Reply" variable="outputVariable" partnerLink="PropagarLineaCredito"
+                     portType="ns1:PropagarLineaCreditoPT" operation="propagarLineaCredito"/>
+              <exit name="Exit"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeActualizarLineaCredito">
+      <bpelx:skipCondition>string-length(string($outputVariable.response/ns2:codigoContratoFLEXCUBE))&lt;1</bpelx:skipCondition>
+      <variables>
+        <variable name="actualizarLineaCredito_InputVariable" messageType="ns5:ActualizarLineaCreditoRequestMessage"/>
+        <variable name="actualizarLineaCredito_OutputVariable" messageType="ns5:ActualizarLineaCreditoResponseMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpel:selectionFailure" faultVariable="selectFault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <sequence name="Sequence7">
+            <assign name="Assign_SelectionFailure">
+              <copy>
+                <from>$selectFault.code</from>
+                <to>$faultVar.code</to>
+              </copy>
+              <copy>
+                <from>'Selection Failure al ActualizarLineaCredito'</from>
+                <to>$faultVar.summary</to>
+              </copy>
+              <copy>
+                <from>concat($selectFault.summary,' + ', $selectFault.detail)</from>
+                <to>$faultVar.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catch>
+        <catch faultName="bpelx:remoteFault" faultVariable="faultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+          <rethrow name="RethrowError"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence8">
+            <assign name="Assign_ErrorGeneral">
+              <copy>
+                <from>'-1'</from>
+                <to>$faultVar.code</to>
+              </copy>
+              <copy>
+                <from>'Error General al Actualizar LineaCredito'</from>
+                <to>$faultVar.summary</to>
+              </copy>
+              <copy>
+                <from>ora:getFaultAsString()</from>
+                <to>$faultVar.detail</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="SequenceActualizarLineaCredito">
+        <assign name="Assign_InputActualizar">
+          <copy bpelx:insertMissingToData="yes">
+            <from>$inputVariable.request/ns2:idLineaCredito</from>
+            <to>$actualizarLineaCredito_InputVariable.request/ns2:LineaCredito/ns15:idLineaCredito</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>$outputVariable.response/ns2:plantillaLimite</from>
+            <to>$actualizarLineaCredito_InputVariable.request/ns2:LineaCredito/ns15:CodigoPantallaLimite</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>$outputVariable.response/ns2:serialLimite</from>
+            <to>$actualizarLineaCredito_InputVariable.request/ns2:LineaCredito/ns15:CodigoSerialLimite</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>$outputVariable.response/ns2:codigoContratoFLEXCUBE</from>
+            <to>$actualizarLineaCredito_InputVariable.request/ns2:LineaCredito/ns15:Flexcube/ns15:id</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+            <from>false()</from>
+            <to>$actualizarLineaCredito_InputVariable.request/ns2:LineaCredito/ns15:EstadoMonto</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ActualizarLineaCredito" bpelx:invokeAsDetail="no"
+                partnerLink="ActualizarLineaCreditoService" portType="ns5:ActualizarLineaCreditoPT"
+                operation="actualizarLineaCredito" inputVariable="actualizarLineaCredito_InputVariable"
+                outputVariable="actualizarLineaCredito_OutputVariable"/>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="PropagarLineaCredito" portType="ns1:PropagarLineaCreditoPT"
+           operation="propagarLineaCredito" variable="outputVariable"/>
+  </sequence>
+</process>

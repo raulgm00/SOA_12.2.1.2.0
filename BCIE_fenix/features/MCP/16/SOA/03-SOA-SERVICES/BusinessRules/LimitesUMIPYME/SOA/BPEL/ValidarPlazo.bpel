@@ -1,0 +1,561 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Nov 18 15:33:50 CST 2016
+  Author:  david-fernandez
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ValidarPlazo"
+               targetNamespace="http://xmlns.oracle.com/BusinessRulesServices/LimitesUMIPYME/ValidarPlazo"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/BusinessRulesServices/LimitesUMIPYME/ValidarPlazo"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ValidarPlazoSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/ConsultarDesembolsosByIdSAD"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns3="http://www.bcie.org/DesembolsoMO"
+         xmlns:ns4="http://www.bcie.org/ReglaBO" xmlns:ns7="http://www.bcie.org/ResultBO"
+         xmlns:ns5="http://www.bcie.org/CatalogoBO" xmlns:ns6="http://www.bcie.org/AtributoBO"
+         xmlns:ns8="http://www.bcie.org/ErrorBO" xmlns:ns9="http://www.bcie.org/ConsultarPlazoComponenteSAD"
+         xmlns:ns12="http://www.bcie.org/CommonBO" xmlns:ns15="http://www.bcie.org/MatrizTCCBO"
+         xmlns:ns14="http://www.bcie.org/LineaCreditoBO" xmlns:ns11="http://www.bcie.org/ProductoBO"
+         xmlns:ns13="http://www.bcie.org/HerramientaCEBO" xmlns:ns16="http://www.bcie.org/ComisionBO"
+         xmlns:ns10="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns17="http://www.bcie.org/ConsultarPlazoGraciaByLineaFinancieraSAD">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ValidarPlazoSOR" location="../WSDLs/ValidarPlazoSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="validarplazo_client" partnerLinkType="ns1:ValidarPlazo" myRole="ValidarPlazo_PT"/>
+    <partnerLink name="ConsultaDesembolsoById_SB" partnerLinkType="ns2:ConsultaDesembolsoById_SB"
+                 partnerRole="ConsultarDesembolsosById_PT"/>
+    <partnerLink name="ConsultarPlazoComponente_SB" partnerLinkType="ns9:ConsultarPlazoComponente_SB"
+                 partnerRole="ConsultarPlazoComponente_PT"/>
+    <partnerLink name="ConsultarPlazoGraciaByLineaFinanciera_SB"
+                 partnerLinkType="ns17:ConsultarPlazoGraciaByLineaFinanciera_SB"
+                 partnerRole="ConsultarPlazoGraciaByLineaFinanciera_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestValidarPlazoMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseValidarPlazoMessage"/>
+    <variable name="inConsultarDesembolsoById" messageType="ns2:requestConsultarDesembolsosByIdMessage"/>
+    <variable name="outConsultarDesembolsoById" messageType="ns2:responseConsultarDesembolsosByIdMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="inConsultarPlazoComponente" messageType="ns9:requestConsultarPlazoComponenteMessage"/>
+    <variable name="outConsultarPlazoComponente" messageType="ns9:responseConsultarPlazoComponenteMessage"/>
+    <variable name="inConsultarPlazoGraciaByLineaFinanciera" messageType="ns17:requestConsultarPlazoGraciaByLineaFinancieraMessage"/>
+    <variable name="outConsultarPlazoGraciaByLineaFinanciera" messageType="ns17:responseConsultarPlazoGraciaByLineaFinancieraMessage"/>
+    <variable name="CompletarConsultarPlazoComponente" messageType="ns2:responseConsultarDesembolsosByIdMessage"/>
+    <variable name="ValidarConsultarPlazoGracia" messageType="ns17:responseConsultarPlazoGraciaByLineaFinancieraMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceFaultAll">
+        <assign name="AssignFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns7:result</to>
+          </copy>
+          <copy>
+            <from>concat('Error en BPEL ValidarPlazo: ',ora:getFaultAsString())</from>
+            <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyFaultAll" variable="outputVariable" partnerLink="validarplazo_client"
+               portType="ns1:ValidarPlazo_PT" operation="ValidarPlazo"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ValidarPlazo.wsdl) -->
+    <receive name="receiveInput" partnerLink="validarplazo_client" portType="ns1:ValidarPlazo_PT" operation="ValidarPlazo" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idDesembolso: ",$inputVariable.request/ns3:idDesembolso))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <assign name="AssignRequestConsultarDesembolsoById">
+      <copy>
+        <from>$inputVariable.request/ns3:idDesembolso</from>
+        <to>$inConsultarDesembolsoById.request/ns3:idContratoDesembolso</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultarDesembolsoById" partnerLink="ConsultaDesembolsoById_SB"
+            portType="ns2:ConsultarDesembolsosById_PT" operation="ConsultarDesembolsosById"
+            inputVariable="inConsultarDesembolsoById" bpelx:invokeAsDetail="no"
+            outputVariable="outConsultarDesembolsoById"/>
+    <if name="IfValidaOK">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>$outConsultarDesembolsoById.response/ns3:Resultado/ns7:result = 'OK'</condition>
+      <empty name="Empty"/>
+      <else>
+        <documentation>
+          <![CDATA[ERROR]]>
+        </documentation>
+        <sequence name="SequenceErrorConsultarDesembolsoById">
+          <assign name="AssignErrorConsultarDesembolsoById">
+            <copy>
+              <from>'OK'</from>
+              <to>$outputVariable.response/ns3:Resultado/ns7:result</to>
+            </copy>
+            <copy>
+              <from>'NO_EVALUADA'</from>
+              <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:DescripcionCorta</to>
+            </copy>
+            <copy>
+              <from>concat('ConsultarDesembolsoById:  ',$outConsultarDesembolsoById.response/ns3:Resultado/ns7:message)</from>
+              <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+            </copy>
+          </assign>
+          <reply name="ReplyErrorConsultarDesembolsoById" variable="outputVariable" partnerLink="validarplazo_client"
+                 portType="ns1:ValidarPlazo_PT" operation="ValidarPlazo"/>
+          <exit name="Exit"/>
+        </sequence>
+      </else>
+    </if>
+    <if name="IfValidaLineaFinanciera">
+      <documentation>
+        <![CDATA[ExisteLinea]]>
+      </documentation>
+      <condition>string-length($outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:Programa/ns13:LineaFinanciera/ns5:codigoExterno) &gt; 0</condition>
+      <empty name="Empty"/>
+      <else>
+        <documentation>
+          <![CDATA[NoExisteLinea]]>
+        </documentation>
+        <sequence name="SequenceNoExisteLinea">
+          <assign name="AssignNoexisteLinea">
+            <copy>
+              <from>'NO_EVALUADA'</from>
+              <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:DescripcionCorta</to>
+            </copy>
+            <copy>
+              <from>'OK'</from>
+              <to>$outputVariable.response/ns3:Resultado/ns7:result</to>
+            </copy>
+            <copy>
+              <from>concat('No existe linea financiera para evaluar plazo gracia en este desembolso: ',$inputVariable.request/ns3:idDesembolso)</from>
+              <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+            </copy>
+          </assign>
+          <reply name="ReplyNoExisteLinea" variable="outputVariable" partnerLink="validarplazo_client"
+                 portType="ns1:ValidarPlazo_PT" operation="ValidarPlazo"/>
+          <exit name="Exit"/>
+        </sequence>
+      </else>
+    </if>
+    <if name="IfTipoLimite">
+      <documentation>
+        <![CDATA[COMPONENTE]]>
+      </documentation>
+      <condition>$inputVariable.request/ns3:TipoLimite/ns12:value = 'COMPONENTE'</condition>
+      <sequence name="SequenceLimiteComponente">
+        <assign name="AssignConsultarPlazoComponente">
+          <copy>
+            <from>$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:Programa/ns13:LineaFinanciera/ns5:codigoExterno</from>
+            <to>$inConsultarPlazoComponente.request/ns3:ContratoDesembolso/ns10:Programa/ns13:LineaFinanciera/ns5:codigoExterno</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarPlazoComponente" partnerLink="ConsultarPlazoComponente_SB"
+                portType="ns9:ConsultarPlazoComponente_PT" operation="ConsultarPlazoComponente"
+                inputVariable="inConsultarPlazoComponente" bpelx:invokeAsDetail="no"
+                outputVariable="outConsultarPlazoComponente"/>
+        <if name="IfValidaOK">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outConsultarPlazoComponente.response/ns3:Resultado/ns7:result = 'OK'</condition>
+          <sequence name="SequenceOkConsultarPlazoComponente">
+            <if name="IfValidaPlazoComponente">
+              <documentation>
+                <![CDATA[ExistenRegistros]]>
+              </documentation>
+              <condition>count($outConsultarPlazoComponente.response/ns3:Componente) &gt; 0</condition>
+              <empty name="Empty"/>
+              <else>
+                <documentation>
+                  <![CDATA[NoExistenRegistros]]>
+                </documentation>
+                <sequence name="SequenceSinRegistrosConsultarPlazoComponente">
+                  <assign name="AssignSinRegistrosConsultarPlazoComponente">
+                    <copy>
+                      <from>'CUMPLIDA'</from>
+                      <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:DescripcionCorta</to>
+                    </copy>
+                    <copy>
+                      <from>'OK'</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns7:result</to>
+                    </copy>
+                    <copy>
+                      <from>concat('La linea: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:Programa/ns13:LineaFinanciera/ns5:codigoExterno,'  no presenta plazos componente')</from>
+                      <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+                    </copy>
+                    <copy>
+                      <from>concat('La linea: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:Programa/ns13:LineaFinanciera/ns5:codigoExterno,'  no presenta plazos componente')</from>
+                      <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:Descripcion</to>
+                    </copy>
+                  </assign>
+                  <reply name="ReplySinRegistrosConsultarPlazoComponente" variable="outputVariable"
+                         partnerLink="validarplazo_client" portType="ns1:ValidarPlazo_PT" operation="ValidarPlazo"/>
+                  <exit name="Exit"/>
+                </sequence>
+              </else>
+            </if>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceErrorConsultarPlazoComponente">
+              <assign name="AssignErrorConsultarPlazoComponente">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns7:result</to>
+                </copy>
+                <copy>
+                  <from>concat('ConsultarPlazoComponente:  ',$outConsultarPlazoComponente.response/ns3:Resultado/ns7:message)</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyErrorConsultarPlazoComponente" variable="outputVariable"
+                     partnerLink="validarplazo_client" portType="ns1:ValidarPlazo_PT" operation="ValidarPlazo"/>
+              <exit name="Exit"/>
+            </sequence>
+          </else>
+        </if>
+        <assign name="XQ_CompletaPlazoComponente">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:processXQuery10('../Transformations/XQ_CompletaPlazoComponente.xqy', 'outConsultarDesembolsoById.response', $outConsultarDesembolsoById.response, 'outConsultarPlazoComponente.response', $outConsultarPlazoComponente.response)</from>
+            <to variable="CompletarConsultarPlazoComponente" part="response"/>
+          </copy>
+        </assign>
+        <if name="IfValidaPlazoComponente">
+          <condition>count($CompletarConsultarPlazoComponente.response/ns3:ContratoDesembolso/ns10:producto/ns10:Componente) &gt; 0 and $CompletarConsultarPlazoComponente.response/ns3:ContratoDesembolso/ns10:producto/ns10:Componente/ns10:Plazo/ns12:Valor = $outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:condicionesFinancieras/ns10:interes/ns10:Frecuencia/ns12:Valor and $CompletarConsultarPlazoComponente.response/ns3:ContratoDesembolso/ns10:producto/ns10:Componente/ns10:Plazo/ns12:Tipo/ns5:codigoExterno = $outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:condicionesFinancieras/ns10:interes/ns10:Frecuencia/ns12:Tipo/ns5:codigoExterno</condition>
+          <assign name="AssignCumplePlazoComponente">
+            <copy>
+              <from>'CUMPLIDA'</from>
+              <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:DescripcionCorta</to>
+            </copy>
+            <copy>
+              <from>'OK'</from>
+              <to>$outputVariable.response/ns3:Resultado/ns7:result</to>
+            </copy>
+            <copy>
+              <from>concat('La frecuencia de interes cumple con el plazo establecido: ',$CompletarConsultarPlazoComponente.response/ns3:ContratoDesembolso/ns10:producto/ns10:Componente/ns10:Plazo/ns12:Valor, ' ',$CompletarConsultarPlazoComponente.response/ns3:ContratoDesembolso/ns10:producto/ns10:Componente/ns10:Plazo/ns12:Tipo/ns5:codigoExterno )</from>
+              <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+            </copy>
+            <copy>
+              <from>concat('La frecuencia de interes cumple con el plazo establecido: ',$CompletarConsultarPlazoComponente.response/ns3:ContratoDesembolso/ns10:producto/ns10:Componente/ns10:Plazo/ns12:Valor, ' ',$CompletarConsultarPlazoComponente.response/ns3:ContratoDesembolso/ns10:producto/ns10:Componente/ns10:Plazo/ns12:Tipo/ns5:codigoExterno )</from>
+              <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:Descripcion</to>
+            </copy>
+          </assign>
+          <else>
+            <assign name="AssignNoCumplePlazoComponente">
+              <copy>
+                <from>'NO_CUMPLIDA'</from>
+                <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:DescripcionCorta</to>
+              </copy>
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns7:result</to>
+              </copy>
+              <copy>
+                <from>concat('La frecuencia de interes no cumple con el plazo establecido: ',$CompletarConsultarPlazoComponente.response/ns3:ContratoDesembolso/ns10:producto/ns10:Componente/ns10:Plazo/ns12:Valor, ' ',$CompletarConsultarPlazoComponente.response/ns3:ContratoDesembolso/ns10:producto/ns10:Componente/ns10:Plazo/ns12:Tipo/ns5:codigoExterno )</from>
+                <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+              </copy>
+              <copy>
+                <from>concat('La frecuencia de interes no cumple con el plazo establecido: ',$CompletarConsultarPlazoComponente.response/ns3:ContratoDesembolso/ns10:producto/ns10:Componente/ns10:Plazo/ns12:Valor, ' ',$CompletarConsultarPlazoComponente.response/ns3:ContratoDesembolso/ns10:producto/ns10:Componente/ns10:Plazo/ns12:Tipo/ns5:codigoExterno )</from>
+                <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:Descripcion</to>
+              </copy>
+            </assign>
+          </else>
+        </if>
+      </sequence>
+      <elseif>
+        <documentation>
+          <![CDATA[GRACIA]]>
+        </documentation>
+        <condition>$inputVariable.request/ns3:TipoLimite/ns12:value = 'GRACIA'</condition>
+        <sequence name="SequenceLimiteGracia">
+          <assign name="AssignConsultarPlazoGraciaByLineaFinanciera">
+            <copy>
+              <from>$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:Programa/ns13:LineaFinanciera/ns5:codigoExterno</from>
+              <to>$inConsultarPlazoGraciaByLineaFinanciera.request/ns3:ContratoDesembolso/ns10:Programa/ns13:LineaFinanciera/ns5:codigoExterno</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeConsultarPlazoGraciaByLineaFinanciera"
+                  partnerLink="ConsultarPlazoGraciaByLineaFinanciera_SB"
+                  portType="ns17:ConsultarPlazoGraciaByLineaFinanciera_PT"
+                  operation="ConsultarPlazoGraciaByLineaFinanciera"
+                  inputVariable="inConsultarPlazoGraciaByLineaFinanciera" bpelx:invokeAsDetail="no"
+                  outputVariable="outConsultarPlazoGraciaByLineaFinanciera"/>
+          <if name="IfValidaOK">
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>$outConsultarPlazoGraciaByLineaFinanciera.response/ns3:Resultado/ns7:result = 'OK'</condition>
+            <sequence name="SequenceOkConsultarPlazoGracia">
+              <if name="IfValidaRegistros">
+                <documentation>
+                  <![CDATA[ExistenRegistros]]>
+                </documentation>
+                <condition>count($outConsultarPlazoGraciaByLineaFinanciera.response/ns3:LimitePlazo) &gt; 0</condition>
+                <empty name="Empty"/>
+                <else>
+                  <documentation>
+                    <![CDATA[SinRegistros]]>
+                  </documentation>
+                  <sequence name="SequenceSinRegistrosConsultarPlazoGracia">
+                    <assign name="AssignSinRegistrosConsultarPlazoGracia">
+                      <copy>
+                        <from>'CUMPLIDA'</from>
+                        <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:DescripcionCorta</to>
+                      </copy>
+                      <copy>
+                        <from>'OK'</from>
+                        <to>$outputVariable.response/ns3:Resultado/ns7:result</to>
+                      </copy>
+                      <copy>
+                        <from>concat('La linea: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:Programa/ns13:LineaFinanciera/ns5:codigoExterno,'  no presenta plazos capital')</from>
+                        <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+                      </copy>
+                      <copy>
+                        <from>concat('La linea: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:Programa/ns13:LineaFinanciera/ns5:codigoExterno,'  no presenta plazos capital')</from>
+                        <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:Descripcion</to>
+                      </copy>
+                    </assign>
+                    <reply name="ReplySinRegistrosConsultarPlazoGracia" variable="outputVariable"
+                           partnerLink="validarplazo_client" portType="ns1:ValidarPlazo_PT" operation="ValidarPlazo"/>
+                    <exit name="Exit"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <sequence name="SequenceErrorConsultarPlazoGracia">
+                <assign name="AssignErrorConsultarPlazoGracia">
+                  <copy>
+                    <from>'OK'</from>
+                    <to>$outputVariable.response/ns3:Resultado/ns7:result</to>
+                  </copy>
+                  <copy>
+                    <from>'CUMPLIDA'</from>
+                    <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:DescripcionCorta</to>
+                  </copy>
+                  <copy>
+                    <from>concat('ConsultarPlazoGracia:  ',$outConsultarPlazoGraciaByLineaFinanciera.response/ns3:Resultado/ns7:message)</from>
+                    <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyErrorConsultarPlazoGracia" variable="outputVariable" partnerLink="validarplazo_client"
+                       portType="ns1:ValidarPlazo_PT" operation="ValidarPlazo"/>
+                <exit name="Exit"/>
+              </sequence>
+            </else>
+          </if>
+          <if name="IfValidaDatosRequeridosParaFechas">
+            <documentation>
+              <![CDATA[SinDatos]]>
+            </documentation>
+            <condition>string-length($outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:condicionesFinancieras/ns10:periodoGracia/ns10:Frecuencia/ns12:Valor) = 0 or string-length($outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:condicionesFinancieras/ns10:periodoGracia/ns10:Frecuencia/ns12:Tipo/ns5:codigoExterno) = 0 or string-length($outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:EstimadoDesembolso/ns10:Plazo) = 0 or string-length($outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:EstimadoDesembolso/ns10:Frecuencia/ns5:codigoExterno) = 0</condition>
+            <sequence name="SequenceSinDatosRequeridos">
+              <assign name="AssignSinDatosRequeridos">
+                <copy>
+                  <from>'NO_EVALUADA'</from>
+                  <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:DescripcionCorta</to>
+                </copy>
+                <copy>
+                  <from>'OK'</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns7:result</to>
+                </copy>
+                <copy>
+                  <from>concat('Se requiere alguno de los siguientes datos faltantes, PeridoGraciaFrecuenciaValor: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:condicionesFinancieras/ns10:periodoGracia/ns10:Frecuencia/ns12:Valor,' FrecuenciaTipoCodigoExterno: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:condicionesFinancieras/ns10:periodoGracia/ns10:Frecuencia/ns12:Tipo/ns5:codigoExterno,' EstimadoDesembolsoPlazo: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:EstimadoDesembolso/ns10:Plazo,' EstimadoDesembolsoFrecuenciaCodigoExterno: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:EstimadoDesembolso/ns10:Frecuencia/ns5:codigoExterno)</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+                </copy>
+                <copy>
+                  <from>concat('Se requiere alguno de los siguientes datos faltantes, PeridoGraciaFrecuenciaValor: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:condicionesFinancieras/ns10:periodoGracia/ns10:Frecuencia/ns12:Valor,' FrecuenciaTipoCodigoExterno: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:condicionesFinancieras/ns10:periodoGracia/ns10:Frecuencia/ns12:Tipo/ns5:codigoExterno,' EstimadoDesembolsoPlazo: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:EstimadoDesembolso/ns10:Plazo,' EstimadoDesembolsoFrecuenciaCodigoExterno: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:EstimadoDesembolso/ns10:Frecuencia/ns5:codigoExterno)</from>
+                  <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:Descripcion</to>
+                </copy>
+              </assign>
+              <reply name="ReplySinDatosRequeridos" variable="outputVariable" partnerLink="validarplazo_client"
+                     portType="ns1:ValidarPlazo_PT" operation="ValidarPlazo"/>
+              <exit name="Exit"/>
+            </sequence>
+            <else>
+              <documentation>
+                <![CDATA[ConDatos]]>
+              </documentation>
+              <empty name="Empty"/>
+            </else>
+          </if>
+          <assign name="XQ_ValidarFechasPlazo">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/XQ_ValidarFechasPlazo.xqy', 'outConsultarDesembolsoById.response', $outConsultarDesembolsoById.response)</from>
+              <to variable="outConsultarDesembolsoById" part="response"/>
+            </copy>
+          </assign>
+          <assign name="XQ_CompletaPlazoGracia">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/XQ_CompletaPlazoGracia.xqy', 'outConsultarDesembolsoById.response', $outConsultarDesembolsoById.response, 'outConsultarPlazoGraciaByLineaFinanciera.response', $outConsultarPlazoGraciaByLineaFinanciera.response)</from>
+              <to variable="ValidarConsultarPlazoGracia" part="response"/>
+            </copy>
+          </assign>
+          <if name="IfValidarConsultarPlazoGracia">
+            <documentation>
+              <![CDATA[CompletarPlazoGracia]]>
+            </documentation>
+            <condition>count($ValidarConsultarPlazoGracia.response/ns3:LimitePlazo) &gt; 0</condition>
+            <empty name="Empty"/>
+            <else>
+              <documentation>
+                <![CDATA[NoCompletarPlazoGracia]]>
+              </documentation>
+              <sequence name="SequenceNoCompletarPlazoGracia">
+                <assign name="AssignNoCompletarPlazoGracia">
+                  <copy>
+                    <from>'CUMPLIDA'</from>
+                    <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:DescripcionCorta</to>
+                  </copy>
+                  <copy>
+                    <from>'OK'</from>
+                    <to>$outputVariable.response/ns3:Resultado/ns7:result</to>
+                  </copy>
+                  <copy>
+                    <from>concat('La linea: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:Programa/ns13:LineaFinanciera/ns5:codigoExterno,'  no presenta plazos capital')</from>
+                    <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+                  </copy>
+                  <copy>
+                    <from>concat('La linea: ',$outConsultarDesembolsoById.response/ns3:ContratoDesembolso/ns10:Programa/ns13:LineaFinanciera/ns5:codigoExterno,'  no presenta plazos capital')</from>
+                    <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:Descripcion</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyNoCompletarPlazoGracia" variable="outputVariable" partnerLink="validarplazo_client"
+                       portType="ns1:ValidarPlazo_PT" operation="ValidarPlazo"/>
+                <exit name="Exit"/>
+              </sequence>
+            </else>
+          </if>
+          <assign name="XQ_ValidaPlazoGracia">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/XQ_ValidaPlazoGracia.xqy', 'outConsultarDesembolsoById.response', $outConsultarDesembolsoById.response, 'ValidarConsultarPlazoGracia.response', $ValidarConsultarPlazoGracia.response)</from>
+              <to variable="ValidarConsultarPlazoGracia" part="response"/>
+            </copy>
+          </assign>
+          <assign name="XQ_ResponseForEachRegla">
+            <bpelx:annotation>
+              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+              <from>ora:processXQuery10('../Transformations/XQ_ResponseForEachRegla.xqy', 'ValidarConsultarPlazoGracia.response', $ValidarConsultarPlazoGracia.response)</from>
+              <to variable="outputVariable" part="response"/>
+            </copy>
+          </assign>
+          <!--
+          <if name="IfValidaPlazoGracia">
+            <condition>sum($ValidarConsultarPlazoGracia.response/ns3:LimitePlazo/ns12:Tipo/ns5:estatus) = 0</condition>
+            <assign name="AssignCumpleValidarPlazoGracia">
+              <copy>
+                <from>'CUMPLIDA'</from>
+                <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:DescripcionCorta</to>
+              </copy>
+              <copy>
+                <from>sum($ValidarConsultarPlazoGracia.response/ns3:LimitePlazo/ns12:Tipo/ns5:estatus)</from>
+                <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:codigoExterno</to>
+              </copy>
+              <copy>
+                <from>'Los plazos cumplen con las validaciones correspondientes debido a que sus fechas de disponibilidad estan vigentes'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+              </copy>
+            </assign>
+            <else>
+              <assign name="AssignNoCumpleValidarPlazoGracia">
+                <copy>
+                  <from>'NO CUMPLIDA'</from>
+                  <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:DescripcionCorta</to>
+                </copy>
+                <copy>
+                  <from>sum($ValidarConsultarPlazoGracia.response/ns3:LimitePlazo/ns12:Tipo/ns5:estatus)</from>
+                  <to>$outputVariable.response/ns3:Regla/ns4:Estado/ns5:codigoExterno</to>
+                </copy>
+                <copy>
+                  <from>concat('La validacion no se cumple devido a que el plazo con los siguientes datos no esta vigente, Descripcion Plazo: ',$ValidarConsultarPlazoGracia.response/ns3:LimitePlazo[ns12:Tipo/ns5:estatus = 1]/ns10:TipoLimite/ns5:Descripcion[1],' Fecha Disponibilidad: ',$ValidarConsultarPlazoGracia.response/ns3:LimitePlazo[ns12:Tipo/ns5:estatus = 1]/ns12:Tipo/ns5:Id[1], ' Fecha Vencimiento: ',$ValidarConsultarPlazoGracia.response/ns3:LimitePlazo[ns12:Tipo/ns5:estatus = 1]/ns12:Tipo/ns5:Descripcion[1])</from>
+                  <to>$outputVariable.response/ns3:Resultado/ns7:message</to>
+                </copy>
+              </assign>
+            </else>
+          </if>
+          -->
+        </sequence>
+      </elseif>
+      <else>
+        <documentation>
+          <![CDATA[OTRO]]>
+        </documentation>
+        <empty name="Empty"/>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="validarplazo_client" portType="ns1:ValidarPlazo_PT" operation="ValidarPlazo" variable="outputVariable"/>
+  </sequence>
+</process>

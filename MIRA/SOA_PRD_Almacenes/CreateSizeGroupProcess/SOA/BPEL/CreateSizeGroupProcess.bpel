@@ -1,0 +1,89 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Aug 08 16:15:23 CDT 2019
+  Author:  Marisol
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CreateSizeGroupProcess"
+               targetNamespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSizeGroupProcess/v1.0"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSizeGroupProcess/v1.0"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/Items/PROCreateSizeGroupProcess/v1.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSizeGroupEntity"
+         xmlns:ns3="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns4="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage">
+
+    <import ui:processWSDL="true" namespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateSizeGroupProcess/v1.0" location="../WSDLs/CreateSizeGroupProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="createsizegroupprocess_client" partnerLinkType="client:CreateSizeGroupProcess" myRole="CreateSizeGroupProcessProvider"/>
+    <partnerLink name="PROCreateSizeGroupProcessPXY" partnerLinkType="ns1:PROCreateSizeGroupProcess"
+                 partnerRole="PROCreateSizeGroupProcessProvider"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:CreateSizeGroupProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:CreateSizeGroupProcessResponseMessage"/>
+    <variable name="Invoke_PROCreateGrp_in" messageType="ns1:PROCreateSizeGroupProcessRequestMessage"/>
+    <variable name="Invoke_PROCreateGrp_out" messageType="ns1:PROCreateSizeGroupProcessResponseMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CreateSizeGroupProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="createsizegroupprocess_client" portType="client:CreateSizeGroupProcess" operation="create" variable="inputVariable" createInstance="yes"/>
+    <assign name="Assign1">
+      <copy>
+        <from>$inputVariable.payload</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$Invoke_PROCreateGrp_in.payload</to>
+      </copy>
+    </assign>
+    <invoke name="Invoke_PROCreateGrp" bpelx:invokeAsDetail="no" partnerLink="PROCreateSizeGroupProcessPXY"
+            portType="ns1:PROCreateSizeGroupProcess" operation="create" inputVariable="Invoke_PROCreateGrp_in"
+            outputVariable="Invoke_PROCreateGrp_out"/>
+    <assign name="Assign2">
+      <copy>
+        <from>$Invoke_PROCreateGrp_out.payload</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="createsizegroupprocess_client" portType="client:CreateSizeGroupProcess" operation="create" variable="outputVariable"/>
+  </sequence>
+</process>

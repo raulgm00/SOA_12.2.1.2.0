@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioCliente/GestionCobro/V1/Wsdl/ADAPTER/ConsultarGestionCobroSAD"/>
+            <con:binding>
+                <con:name>ConsultarGestionCobroPTSOAP12Bnd</con:name>
+                <con:namespace>http://www.bcie.org/GestionCobroMO</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="error" name="error-a050a58.N53155bcf.0.156e7cdc25e.N7ef1">
+            <con:stage id="_StageId-a050a58.N53155bcf.0.156e7cdc25e.N7ef0" name="StageError">
+                <con:context/>
+                <con:actions>
+                    <con4:ifThenElse>
+                        <con1:id>_ActionId-a050a58.N53155bcf.0.156e7cdc25e.N7ee6</con1:id>
+                        <con4:case id="_BranchId-a050a58.N53155bcf.0.156e7cdc25e.N7ee5">
+                            <con4:condition>
+                                <con1:xqueryText>fn:count($codigoError) = 0</con1:xqueryText>
+                            </con4:condition>
+                            <con4:actions>
+                                <con4:assign varName="codigoError">
+                                    <con1:id>_ActionId-a050a58.N53155bcf.0.156e7cdc25e.N7ee2</con1:id>
+                                    <con4:expr>
+                                        <con1:xqueryText>$fault/ctx:errorCode</con1:xqueryText>
+                                    </con4:expr>
+                                </con4:assign>
+                            </con4:actions>
+                        </con4:case>
+                        <con4:default/>
+                    </con4:ifThenElse>
+                    <con4:assign varName="inMapeoError">
+                        <con1:id>_ActionId-a050a58.N53155bcf.0.156e7cdc25e.N7edf</con1:id>
+                        <con4:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con1:param name="codigoError">
+                                    <con1:path>xs:string(fn:data($codigoError))</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con4:expr>
+                    </con4:assign>
+                    <con4:wsCallout>
+                        <con1:id>_ActionId-a050a58.N53155bcf.0.156e7cdc25e.N7edc</con1:id>
+                        <con4:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con4:operation>MapearError</con4:operation>
+                        <con4:request>
+                            <con4:body wrapped="false">inMapeoError</con4:body>
+                        </con4:request>
+                        <con4:response>
+                            <con4:body wrapped="false">outMapeoError</con4:body>
+                        </con4:response>
+                        <con4:requestTransform/>
+                        <con4:responseTransform/>
+                    </con4:wsCallout>
+                    <con4:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-a050a58.N53155bcf.0.156e7cdc25e.N7ed6</con1:id>
+                        <con4:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con4:location>
+                        <con4:expr>
+                            <con1:xqueryTransform>
+                                <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioCliente/GestionCobro/ConsultarGestionCobro/XQUERY/Error_TO_ConsultarGestionCobro_PS_Response"/>
+                                <con1:param name="message">
+                                    <con1:path>xs:string(fn:data($fault/ctx:reason))</con1:path>
+                                </con1:param>
+                                <con1:param name="responseMapeoErrorMessage">
+                                    <con1:path>$outMapeoError</con1:path>
+                                </con1:param>
+                            </con1:xqueryTransform>
+                        </con4:expr>
+                    </con4:replace>
+                    <con1:reply>
+                        <con1:id>_ActionId-a050a58.N53155bcf.0.156e7cdc25e.N7ed9</con1:id>
+                    </con1:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteConsultarGestionCobro" error-handler="error-a050a58.N53155bcf.0.156e7cdc25e.N7ef1">
+                <con:context>
+                    <con1:userNsDecl prefix="ges" namespace="http://www.bcie.org/GestionCobroMO"/>
+                </con:context>
+                <con:actions>
+                    <con2:route>
+                        <con1:id>_ActionId-a050a58.N53155bcf.0.156e7cdc25e.N7f04</con1:id>
+                        <con2:service ref="ADAPTADORES/ModeloNegocio/DominioCliente/GestionCobro/ConsultarGestionCobro/BS/ConsultarGestionCobro_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:operation>ConsultarGestionCobro</con2:operation>
+                        <con2:outboundTransform>
+                            <con3:log>
+                                <con1:id>_ActionId-a050a58.N53155bcf.0.156e7cdc25e.N7f01</con1:id>
+                                <con3:logLevel>info</con3:logLevel>
+                                <con3:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con3:expr>
+                                <con3:message>ConsultarGestionCobro_REQUEST</con3:message>
+                            </con3:log>
+                            <con4:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a050a58.N53155bcf.0.156e7cdc25e.N7ef7</con1:id>
+                                <con4:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con4:location>
+                                <con4:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioCliente/GestionCobro/ConsultarGestionCobro/XQUERY/ConsultarGestionCobro_PS_TO_ConsultarGestionCobro_BS_Request"/>
+                                        <con1:param name="ConsultarGestionCobroRequest">
+                                            <con1:path>$body/ges:ConsultarGestionCobroRequest</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con4:expr>
+                            </con4:replace>
+                        </con2:outboundTransform>
+                        <con2:responseTransform>
+                            <con4:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a050a58.N53155bcf.0.156e7cdc25e.N7ef4</con1:id>
+                                <con4:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con4:location>
+                                <con4:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/DominioCliente/GestionCobro/ConsultarGestionCobro/XQUERY/ConsultarGestionCobro_BS_TO_ConsultarGestionCobro_PS_Response"/>
+                                        <con1:param name="ConsultarGestionCobroOutputCollection">
+                                            <con1:path>$body/*[1]</con1:path>
+                                        </con1:param>
+                                    </con1:xqueryTransform>
+                                </con4:expr>
+                            </con4:replace>
+                            <con3:log>
+                                <con1:id>_ActionId-a050a58.N53155bcf.0.156e7cdc25e.N7efe</con1:id>
+                                <con3:logLevel>info</con3:logLevel>
+                                <con3:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con3:expr>
+                                <con3:message>ConsultarGestionCobro_RESPONSE</con3:message>
+                            </con3:log>
+                        </con2:responseTransform>
+                    </con2:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

@@ -1,0 +1,419 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.1" xmlns:f="http://java.sun.com/jsf/core" xmlns:af="http://xmlns.oracle.com/adf/faces/rich"
+          xmlns:c="http://java.sun.com/jsp/jstl/core" xmlns:trh="http://myfaces.apache.org/trinidad/html"
+          xmlns:wf="http://xmlns.oracle.com/bpel/workflow/workflow-taglib.tld"
+          xmlns:wlc="http://xmlns.oracle.com/bpel/workflow/worklist" xmlns:tr="http://myfaces.apache.org/trinidad">
+    <c:set var="pc02preparaciongenerichumantaskBundle"
+           value="#{adfBundle['pc02preparaciongenerichumantask.PC02PreparacionGenericHumanTaskBundle']}"/>
+    <jsp:directive.page contentType="text/html;charset=UTF-8"/>
+    <f:view>
+        <af:document title="PC02AnalizarAdquisicionesForm.jspx" id="d1">
+            <af:messages id="m1"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:resource type="javascript" source="/jsLibs/taskDetailsWithTemplate.js"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:form id="f1" usesUpload="true">
+                <af:pageTemplate viewId="/templates/bcieTaskTemplate.jspx" id="pTID">
+                    <?audit suppress oracle.adf.faces.pt-type-not-found?>
+                    <f:facet name="action">
+                        <af:toolbar visible="#{actionAvailable.toolbarAvailable}" id="actionTlb">
+                            <af:switcher id="customActionButtons" facetName="#{actionAvailable.isCustomActionButtons}">
+                                <f:facet name="true">
+                                    <af:panelGroupLayout layout="horizontal" id="pgl6">
+                                        <af:button text="#{pc02preparaciongenerichumantaskBundle.BTN_TXT_FINALIZAR_TAREA}"
+                                                   disabled="#{!bindings.FINALIZARTAREA.enabled}"
+                                                   action="#{preparacionActionsBean.invokeFinalizarTarea}"
+                                                   partialSubmit="true"
+                                                   rendered="#{!pageFlowScope.preparacionBean.esEstadoCompletado}"
+                                                   styleClass="headerLink"
+                                                   visible="#{wf:isCustomActionAvailable('FINALIZARTAREA', 'bindings.customActions')}" id="b4">
+                                        </af:button>
+												   
+                                        <af:button text="#{pc02preparaciongenerichumantaskBundle.BTN_TXT_MAS_INFORMACION}"
+                                                   disabled="#{!bindings.MASINFORMACION.enabled}"
+                                                   styleClass="headerLink"
+                                                   rendered="#{!pageFlowScope.preparacionBean.esEstadoCompletado}"
+                                                   action="#{preparacionActionsBean.invokeMasInformacionAction}"
+                                                   partialSubmit="true"
+                                                   visible="#{wf:isCustomActionAvailable('MASINFORMACION', 'bindings.customActions')}" id="b5">
+                                        </af:button>
+                                    </af:panelGroupLayout>
+                                </f:facet>
+                            </af:switcher>
+                            <!-- Atiende incidencia FNXII-5586
+                            <af:button actionListener="#{invokeActionBean.setOperation}" text="#{resources.CLAIM}"
+                                       id="Claim" partialSubmit="false"
+                                       styleClass="headerLink" visible="#{actionAvailable.claimAvailable}"
+                                       action="#{invokeActionBean.invokeOperation}">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Claim"/>
+                            </af:button>
+                            -->
+                            <af:button id="acknowledge" actionListener="#{invokeActionBean.setOperation}"
+                                       text="#{resources.ACKNOWLEDGE}" action="#{invokeActionBean.invokeOperation}"
+                                       styleClass="headerLink" partialSubmit="false"
+                                       visible="#{actionAvailable.isFyiTask}">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Acknowledge"/>
+                            </af:button>
+                            <af:button id="resume" actionListener="#{invokeActionBean.setOperation}"
+                                       text="#{resources.RESUME}" action="#{invokeActionBean.invokeOperation}"
+                                       styleClass="headerLink" partialSubmit="false"
+                                       visible="#{actionAvailable.resumeAvailable}">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Resume"/>
+                            </af:button>
+                            <af:panelGroupLayout layout="horizontal" id="pgl1">
+                                <af:group rendered="#{!((empty actionAvailable.customActions) and (empty actionAvailable.redirectActions) and (empty actionAvailable.otherActions)) || bindings.update.enabled}"
+                                          id="g1">
+                                    <af:menuBar id="mb1" styleClass="actionMenuBar" rendered="false">
+                                        <af:menu id="acts" text="#{resources.TASK_ACTIONS}" styleClass="actionMenu"
+                                                 visible="#{actionAvailable.actionsAvailable || bindings.update.enabled}">
+                                            <af:group id="g4">
+                                                <af:forEach var="childNode1" items="#{actionAvailable.customActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{childNode1.displayName}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi2">
+                                                        <f:attribute name="ACTION_MENU_ITEM"
+                                                                     value="#{childNode1.action}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g2">
+                                                <af:forEach var="childNode2" items="#{actionAvailable.redirectActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode2]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="true" id="cmi1">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode2}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g3">
+                                                <af:forEach var="childNode3" items="#{actionAvailable.otherActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode3]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi4">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode3}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g5">
+                                                <af:commandMenuItem id="save" textAndAccessKey="#{resources.SAVE}"
+                                                                    actionListener="#{invokeActionBean.setAction}"
+                                                                    action="#{invokeActionBean.action}"
+                                                                    partialSubmit="false"
+                                                                    rendered="#{actionAvailable.updateAvailable}">
+                                                    <f:attribute name="ACTION_MENU_ITEM" value="bindings.update"/>
+                                                </af:commandMenuItem>
+                                            </af:group>
+                                        </af:menu>
+                                    </af:menuBar>
+                                </af:group>
+                            </af:panelGroupLayout>
+                            <af:spacer width="10" id="s9"/>
+                            <af:image source="/images/info.png" id="pt_i2" shortDesc="Info"/>
+                            <af:spacer width="10" id="s4"/>
+                            <af:link shortDesc="#{resources.PREVIOUS_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/nexttraversalarrow_ena.png'  : '/hw_images/previoustraversalarrow_ena.png'}"
+                                     action="fetchPreviousTask"
+                                     visible="#{pageFlowScope.enableNavigationButton != null}" id="l1"/>
+                            <af:spacer width="10" id="s8"/>
+                            <af:link shortDesc="#{resources.NEXT_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/previoustraversalarrow_ena.png' : '/hw_images/nexttraversalarrow_ena.png'}"
+                                     action="fetchNextTask" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l3"/>
+                            <af:spacer width="10" id="s6"/>
+                            <af:link shortDesc="#{resources.SHORT_DESC_CLOSE}" icon="/hw_images/close_ena.png"
+                                     action="closeTaskFlow" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l2"/>
+                            <af:popup id="reassignPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog id="reAsDg" dialogListener="#{invokeActionBean.reassignAction}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           title="#{resources.REASSIGNPAGE}">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="reAsIdB" mode="REASSIGN" showActionButtons="false"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="requestInfoPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.INFOREQUESTEDPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.requestInfoAction}" id="reqIfD">
+                                    <wlc:requestInfoDialog workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                           id="rqIDgC"
+                                                           selectedTaskId="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds[0]}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="routePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.ROUTEPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.routeTaskAction}" id="rteDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="rteIdB" mode="ROUTE"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="decomposePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{pageFlowScope.ADFHumanTaskBean.decomposeDialogTitle}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.decomposeTaskAction}" id="dcmpDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.ADFHumanTaskBean.workflowContext}"
+                                                         id="dcmpIdB" mode="DECOMPOSE"
+                                                         selectedTaskObject="#{pageFlowScope.ADFHumanTaskBean.task}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="popupEnterPasswordDialog" contentDelivery="lazyUncached"
+                                      childCreation="deferred">
+                                <af:dialog title="#{resources.ENTER_PASSWORD}"
+                                           dialogListener="#{invokeActionBean.validatePassword}" type="okCancel"
+                                           modal="true" cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}" closeIconVisible="false"
+                                           id="pwdDlg">
+                                    <af:panelGroupLayout id="pgl4">
+                                        <af:panelFormLayout id="pfl1">
+                                            <af:inputText id="pwdBox" rows="1" columns="50"
+                                                          value="#{invokeActionBean.password}"
+                                                          label="#{resources.PASSWORD}" secret="true" required="true"/>
+                                        </af:panelFormLayout>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="helpPopup" childCreation="deferred">
+                                <af:switcher facetName="#{pageFlowScope.taskDocumentationBean.isTaskDoc}" id="s7">
+                                    <f:facet name="true">
+                                        <af:panelGroupLayout layout="vertical" id="pgl2">
+                                            <af:link text="#{resources.OPEN_IN_WINDOW}"
+                                                     destination="#{pageFlowScope.taskDocumentationBean.docURL}"
+                                                     targetFrame="help" id="help"
+                                                     rendered="#{!empty bindings.activityId.inputValue}"/>
+                                            <af:outputFormatted value="#{pageFlowScope.taskDocumentationBean.taskDoc}"
+                                                                id="of1"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <f:facet name="false">
+                                        <af:outputText value="#{resources.TASK_DOC_NOT_AVAILABLE}" id="ot16"/>
+                                    </f:facet>
+                                </af:switcher>
+                            </af:popup>
+                        </af:toolbar>
+                    </f:facet>
+                    <f:facet name="header">
+                        <af:panelGroupLayout id="pglHeader" layout="vertical">
+                            <af:region value="#{bindings.MensajesCintaBTF1.regionModel}" id="r2"/>
+                            <af:region value="#{bindings.encabezadoBTF1.regionModel}" id="r1"/>
+                        </af:panelGroupLayout>
+                        <!--af:showDetailHeader id="titleSysCustRg" text="#{bindings.title.inputValue}" size="2"
+                                             inlineStyle="padding: 5px;" icon="/hw_images/singleapprover_35x35.png"
+                                             shortDesc="#{resources.TASK_HEADER}"
+                                             disclosed="#{actionAvailable.discloseHeader}">
+                            <f:facet name="context">
+                                <af:link icon="/hw_images/info.png" id="button" clientComponent="true"
+                                         rendered="#{!empty bindings.activityId.inputValue}">
+                                    <af:showPopupBehavior popupId="helpPopup" align="afterEnd" alignId="button"/>
+                                </af:link>
+                            </f:facet>
+                            <af:panelGroupLayout layout="horizontal" inlineStyle="padding: 5px;width:95%;"
+                                                 id="rowPanel1" valign="top">
+                                <af:panelFormLayout id="colregionPanel1" inlineStyle="padding: 5px;">
+                                    <af:panelLabelAndMessage id="acquiredBy" label="#{resources.ACQUIRED_BY}">
+                                        <af:outputText value="#{bindings.acquiredBy.inputValue}" id="ot7"/>
+                                    </af:panelLabelAndMessage>
+                                    <af:panelLabelAndMessage id="assignees" label="#{resources.ASSIGNEES}">
+                                        <af:iterator var="assignees" varStatus="varS"
+                                                     value="#{bindings.assignees.collectionModel}" id="i2">
+                                            <af:switcher facetName="#{varS.index == 0}" id="s2">
+                                                <f:facet name="false">
+                                                    <af:outputText value=", " id="ot8"/>
+                                                </f:facet>
+                                            </af:switcher>
+                                            <af:switcher facetName="#{!empty assignees.displayName}" id="s1">
+                                                <f:facet name="true">
+                                                    <af:outputText value="#{assignees.displayName}" id="ot13"/>
+                                                </f:facet>
+                                                <f:facet name="false">
+                                                    <af:outputText value="#{assignees.id}" id="ot2"/>
+                                                </f:facet>
+                                            </af:switcher>
+                                        </af:iterator>
+                                    </af:panelLabelAndMessage>
+                                    <af:panelLabelAndMessage id="createdDate" label="#{resources.CREATE_DATE}">
+                                        <af:outputText value="#{bindings.createdDate.inputValue}" noWrap="true"
+                                                       id="ot5">
+                                            <f:convertDateTime type="#{pageFlowScope.dt}" timeZone="#{pageFlowScope.tz}"
+                                                               dateStyle="#{pageFlowScope.df}"
+                                                               timeStyle="#{pageFlowScope.tf}"
+                                                               pattern="#{pageFlowScope.dateTimePattern}"/>
+                                        </af:outputText>
+                                    </af:panelLabelAndMessage>
+                                    <af:panelLabelAndMessage id="creator" label="#{resources.CREATOR}">
+                                        <af:outputText value="#{bindings.creatorDisplayName.inputValue}" id="ot1"/>
+                                    </af:panelLabelAndMessage>
+                                    <af:panelLabelAndMessage id="dueDate" label="#{resources.DUE_DATE}"
+                                                             rendered="#{!empty bindings.dueDate.inputValue}">
+                                        <af:outputText value="#{bindings.dueDate.inputValue}" noWrap="true" id="ot3">
+                                            <f:convertDateTime type="#{pageFlowScope.dt}" timeZone="#{pageFlowScope.tz}"
+                                                               dateStyle="#{pageFlowScope.df}"
+                                                               timeStyle="#{pageFlowScope.tf}"
+                                                               pattern="#{pageFlowScope.dateTimePattern}"/>
+                                        </af:outputText>
+                                    </af:panelLabelAndMessage>
+                                    <af:panelLabelAndMessage id="expirationDate" label="#{resources.EXPIRATION_DATE}">
+                                        <af:outputText value="#{bindings.expirationDate.inputValue}" id="ot4">
+                                            <f:convertDateTime type="#{pageFlowScope.dt}" timeZone="#{pageFlowScope.tz}"
+                                                               dateStyle="#{pageFlowScope.df}"
+                                                               timeStyle="#{pageFlowScope.tf}"
+                                                               pattern="#{pageFlowScope.dateTimePattern}"/>
+                                        </af:outputText>
+                                    </af:panelLabelAndMessage>
+                                    <af:panelLabelAndMessage id="outcome" label="#{resources.OUTCOME}"
+                                                             rendered="#{!empty bindings.actionDisplayName.inputValue}">
+                                        <af:outputText value="#{bindings.actionDisplayName.inputValue}" id="ot15"/>
+                                    </af:panelLabelAndMessage>
+                                    <af:inputText id="priority" value="#{bindings.priority.inputValue}"
+                                                  label="#{resources.PRIORITY}"
+                                                  required="#{bindings.priority.mandatory}" columns="3"
+                                                  validator="#{actionAvailable.validatePriorityValue}"/>
+                                    <af:panelLabelAndMessage id="state" label="#{resources.STATE}">
+                                        <af:outputText value="#{resources[bindings.state.inputValue]}" id="ot9"/>
+                                    </af:panelLabelAndMessage>
+                                    <af:panelLabelAndMessage id="taskNumber" label="#{resources.TASK_NUMBER}">
+                                        <af:outputText value="#{bindings.taskNumber.inputValue}" id="ot17"/>
+                                    </af:panelLabelAndMessage>
+                                    <af:panelLabelAndMessage id="updatedDate" label="#{resources.UPDATE_DATE}">
+                                        <af:outputText value="#{bindings.updatedDate.inputValue}" noWrap="true"
+                                                       id="ot12">
+                                            <f:convertDateTime type="#{pageFlowScope.dt}" timeZone="#{pageFlowScope.tz}"
+                                                               dateStyle="#{pageFlowScope.df}"
+                                                               timeStyle="#{pageFlowScope.tf}"
+                                                               pattern="#{pageFlowScope.dateTimePattern}"/>
+                                        </af:outputText>
+                                    </af:panelLabelAndMessage>
+                                </af:panelFormLayout>
+                            </af:panelGroupLayout>
+                        </af:showDetailHeader-->
+                    </f:facet>
+                    <f:facet name="upperbody">
+                        
+                    </f:facet>
+                    <f:facet name="body">
+                    <af:panelAccordion discloseNone="true" styleClass="secctionAccordion" discloseMany="true"
+                                           id="pa1">
+                            <af:showDetailItem id="pane2"
+                                               text="#{pc02preparaciongenerichumantaskBundle.PNL_DOCUMENTOS_TITLE}"
+                                               disclosureListener="#{pageFlowScope.preparacionBean.panelDocumentosDisclosureListener}">
+                                <af:region value="#{bindings.gestorDocumentosBTF1.regionModel}" id="r3"/>
+                            </af:showDetailItem>
+                            <af:showDetailItem text="#{pc02preparaciongenerichumantaskBundle.PNL_DATOS_DE_LA_TAREA_TITLE}" id="sdi2"
+                                               disclosed="false">
+                                <af:panelGroupLayout layout="vertical" inlineStyle="padding:5px;" id="pglBody">
+						
+								</af:panelGroupLayout>
+                            </af:showDetailItem>
+                            <af:showDetailItem id="sdi1"
+                                               text="#{pc02preparaciongenerichumantaskBundle.PNL_COMENTARIOS_TITLE}"
+                                               immediate="true"
+                                               disclosureListener="#{pageFlowScope.preparacionBean.panelComentariosDisclosureListener}">
+                                <af:region value="#{bindings.comentariosBTF1.regionModel}" id="r4"/>
+                            </af:showDetailItem>
+                        </af:panelAccordion>
+                    </f:facet>
+                    <f:facet name="lowerbody"/>
+                    <f:facet name="history">
+                        <af:panelGroupLayout layout="vertical" id="pglHistory" rendered="false">
+                            <af:switcher facetName="#{actionAvailable.showHistory}" id="s3">
+                                <f:facet name="true">
+                                    <af:showDetailHeader size="2" id="histHd" text="#{resources.HISTORY}"
+                                                         disclosureListener="#{pageFlowScope.aleComponentBean.toggle}"
+                                                         disclosed="false">
+                                        <f:facet name="info"/>
+                                        <f:facet name="legend"/>
+                                        <f:facet name="menuBar"/>
+                                        <f:facet name="toolbar"/>
+                                        <f:facet name="context"/>
+                                        <af:panelGroupLayout layout="vertical"
+                                                             binding="#{pageFlowScope.aleComponentBean.historyPanel}"
+                                                             id="historyPanel">
+                                            <wlc:taskHistory initParam="#{pageFlowScope.aleComponentBean.comp}"
+                                                             showTabularView="true" showGraphicalView="true"
+                                                             id="taskHst"/>
+                                        </af:panelGroupLayout>
+                                    </af:showDetailHeader>
+                                </f:facet>
+                            </af:switcher>
+                            <af:switcher facetName="#{pageFlowScope.ADFHumanTaskBean.hasSubTasks}"
+                                         binding="#{invokeActionBean.subTaskPanel}" id="s5">
+                                <f:facet name="true">
+                                    <af:showDetailHeader size="2" id="decompHd" text="#{resources.SUB_TASKS}"
+                                                         disclosed="false">
+                                        <af:panelGroupLayout layout="vertical" id="pgl7">
+                                            <wlc:taskDecompose initParam="#{pageFlowScope.ADFHumanTaskBean.subTaskComp}"
+                                                               id="th1"/>
+                                        </af:panelGroupLayout>
+                                    </af:showDetailHeader>
+                                </f:facet>
+                            </af:switcher>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:attribute name="title" value="#{bindings.NombreTarea}"/>
+                </af:pageTemplate>
+            </af:form>
+              <af:form id="f2">
+                <af:popup childCreation="deferred" autoCancel="disabled" id="popupFinalizarTarea" 
+                contentDelivery="lazyUncached" binding="#{preparacionActionsBean.popupFinalizarTarea}">
+                    <af:dialog id="d2" type="none" title="#{pc02preparaciongenerichumantaskBundle.CONIFRMA_MENSAJE}">
+                        <f:facet name="buttonBar">
+                            <af:panelGroupLayout id="pgl9">
+                                <af:button text="#{pc02preparaciongenerichumantaskBundle.BTN_TXT_ACEPTAR}" id="b6"
+                                           actionListener="#{invokeActionBean.setOperation}"
+                                 action="#{preparacionActionsBean.finalizarAceptar}"> 
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.FINALIZARTAREA"/>
+				</af:button>
+                                <af:button text="#{pc02preparaciongenerichumantaskBundle.BTN_TXT_CANCELAR}" id="b7"
+                                           action="#{preparacionActionsBean.finalizarCancelar}"/>
+                            </af:panelGroupLayout>
+                        </f:facet>
+                        <af:panelFormLayout id="pfl2">
+                            <f:facet name="footer"/>
+                            <af:panelGroupLayout id="pglFinalizarTarea" layout="vertical" halign="center">
+                                <af:outputText value="#{pc02preparaciongenerichumantaskBundle.CONFIRMAR_FINALIZAR_TAREA}" id="ot1"/>
+                                <af:region value="#{bindings.MensajesFinalizarTareaBTF.regionModel}" id="r5"/>
+                            </af:panelGroupLayout>
+                        </af:panelFormLayout>
+                    </af:dialog>
+                </af:popup>
+                <af:popup childCreation="deferred" autoCancel="disabled" id="popupMasInformacion"
+                          contentDelivery="lazyUncached" binding="#{preparacionActionsBean.popupMasInformacion}">
+                    <af:dialog id="d3" type="none" title="#{pc02preparaciongenerichumantaskBundle.MENSAJE_POPUP}">
+                        <af:panelFormLayout id="pfl3">
+                            <f:facet name="footer"/>
+                            <af:panelGroupLayout id="pglMasInformacion" layout="vertical">
+                                <af:outputText value="#{pc02preparaciongenerichumantaskBundle.CONFIRMAR_MAS_INFORMACION}" id="ot2"/>
+                                <af:region value="#{bindings.MensajesMasInformacionBTF.regionModel}" id="r6"/>
+                            </af:panelGroupLayout>
+                        </af:panelFormLayout>
+                        <f:facet name="buttonBar">
+                            <af:panelGroupLayout id="panelGroup">
+                                <af:button text="#{pc02preparaciongenerichumantaskBundle.BTN_TXT_ACEPTAR}" id="b8"
+                                           actionListener="#{invokeActionBean.setOperation}"
+                                action="#{preparacionActionsBean.invokeMasInformacion}"> 
+                                 <f:attribute name="DC_OPERATION_BINDING" value="bindings.MASINFORMACION"/>
+                                </af:button>
+                                <af:button id="b9" text="#{pc02preparaciongenerichumantaskBundle.BTN_TXT_CANCELAR}"
+                                           action="#{preparacionActionsBean.cancelarMasInformacion}"/>
+                            </af:panelGroupLayout>
+                        </f:facet>
+                    </af:dialog>
+                </af:popup>
+            </af:form>
+        </af:document>
+    </f:view>
+</jsp:root>

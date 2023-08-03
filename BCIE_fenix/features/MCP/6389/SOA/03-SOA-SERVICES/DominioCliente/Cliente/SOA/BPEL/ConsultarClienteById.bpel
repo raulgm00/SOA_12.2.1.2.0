@@ -1,0 +1,300 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Jun 27 11:12:14 CDT 2016
+  Author:  Perla Osorio
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConsultarClienteById"
+               targetNamespace="http://xmlns.oracle.com/DominioCliente/Cliente/ConsultarClienteById"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioCliente/Cliente/ConsultarClienteById"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ClienteService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://www.bcie.org/ClienteMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns3="http://www.bcie.org/ValidarMoraSOR"
+         xmlns:ns4="http://www.bcie.org/ClienteBO" xmlns:ns6="http://www.bcie.org/ResultBO"
+         xmlns:ns5="http://www.bcie.org/CatalogoBO" xmlns:ns7="http://www.bcie.org/ErrorBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ClienteService" location="../WSDLs/ConsultarClienteByIdSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="consultarclientebyid_client" partnerLinkType="ns1:ConsultarClienteById" myRole="ConsultarClienteById_PT"/>
+    <partnerLink name="ConsultarClienteById_SB" partnerLinkType="ns1:ConsultarClienteById_SB" partnerRole="ClientePT"/>
+    <partnerLink name="ValidarMora_SB" partnerLinkType="ns3:ValidarMora_SB" partnerRole="ValidarMora_PT"/>
+    <partnerLink name="ValidarReserva_SB" partnerLinkType="ns1:ValidarReserva_SB" partnerRole="ValidarReservaPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConsultarClienteByIdMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConsultarClienteByIdMessage"/>
+    <variable name="outConsultarClienteById" messageType="ns1:responseConsultarClienteMessageByIdCliente"/>
+    <variable name="outValidarMora" messageType="ns3:responseValidarMoraMessage"/>
+    <variable name="setTitleInstanceVar" type="xsd:string"/>
+    <variable name="outValidarReserva" messageType="ns1:responseValidarReservaMessage"/>
+  </variables>
+  <faultHandlers>
+    <catch faultName="bpelx:remoteFault" faultVariable="FaultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="Sequence3">
+        <assign name="remoteFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns6:result</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns6:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyRemoteFault" variable="outputVariable" partnerLink="consultarclientebyid_client"
+               portType="ns1:ConsultarClienteById_PT" operation="consultarClienteById"/>
+      </sequence>
+    </catch>
+    <catch faultName="bpelx:bindingFault" faultVariable="FaultVar" faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="Sequence2">
+        <assign name="bindingFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns6:result</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns6:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyBindingFault" variable="outputVariable" partnerLink="consultarclientebyid_client"
+               portType="ns1:ConsultarClienteById_PT" operation="consultarClienteById"/>
+      </sequence>
+    </catch>
+    <catchAll>
+      <sequence name="Sequence4">
+        <assign name="allFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns6:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns2:Resultado/ns6:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyAllFault" variable="outputVariable" partnerLink="consultarclientebyid_client"
+               portType="ns1:ConsultarClienteById_PT" operation="consultarClienteById"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConsultarClienteById.wsdl) -->
+    <receive name="receiveInput" partnerLink="consultarclientebyid_client" portType="ns1:ConsultarClienteById_PT" operation="consultarClienteById" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat('idCliente = ',$inputVariable.request/ns2:idCliente))</from>
+        <to>$setTitleInstanceVar</to>
+      </copy>
+    </assign>
+    <scope name="ConsultarClienteById">
+      <variables>
+        <variable name="inConsultarClienteById" messageType="ns1:requestConsultarClienteMessageByIdCliente"/>
+      </variables>
+      <sequence name="ConsultarClienteById_Sequence">
+        <validate name="ValidateInput" variables="inputVariable"/>
+        <if name="IfValidaIdClienteNoValido">
+          <documentation>
+            <![CDATA[NoValido]]>
+          </documentation>
+          <condition>$inputVariable.request/ns2:idCliente = 0</condition>
+          <sequence name="Sequence5">
+            <assign name="Assign_idClienteNoValido">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns6:result</to>
+              </copy>
+              <copy>
+                <from>"IdCliente no válido"</from>
+                <to>$outputVariable.response/ns2:Resultado/ns6:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="consultarclientebyid_client"
+                   portType="ns1:ConsultarClienteById_PT" operation="consultarClienteById"/>
+            <exit name="Exit"/>
+          </sequence>
+          <else>
+            <empty name="Empty"/>
+          </else>
+        </if>
+        <assign name="requestConsultarClienteById">
+          <copy>
+            <from>$inputVariable.request/ns2:idCliente</from>
+            <to>$inConsultarClienteById.request/ns2:idCliente</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarClienteById" bpelx:invokeAsDetail="no" partnerLink="ConsultarClienteById_SB"
+                portType="ns1:ClientePT" operation="consultarByIdCliente" inputVariable="inConsultarClienteById"
+                outputVariable="outConsultarClienteById"/>
+        <if name="IfValidaErrorConsultarClienteById">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$outConsultarClienteById.response/ns2:Resultado/ns6:result = 'ERROR'</condition>
+          <sequence name="ValidaErrorConsultarClienteById">
+            <assign name="ErrorConsultarClienteById">
+              <copy>
+                <from>$outConsultarClienteById.response/ns2:Resultado/ns6:result</from>
+                <to>$outputVariable.response/ns2:Resultado/ns6:result</to>
+              </copy>
+              <copy>
+                <from>$outConsultarClienteById.response/ns2:Resultado/ns6:message</from>
+                <to>$outputVariable.response/ns2:Resultado/ns6:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyErrorConsultarClienteById" variable="outputVariable"
+                   partnerLink="consultarclientebyid_client" portType="ns1:ConsultarClienteById_PT"
+                   operation="consultarClienteById"/>
+            <exit name="Exit"/>
+          </sequence>
+          <else>
+            <empty name="Empty"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ValidarMora">
+      <variables>
+        <variable name="inValidarMora" messageType="ns3:requestValidarMoraMessage"/>
+      </variables>
+      <if name="IfValidaInfoMora">
+        <documentation>
+          <![CDATA[infoMora]]>
+        </documentation>
+        <condition>$inputVariable.request/ns2:infoMora = 'true'</condition>
+        <sequence name="ValidaInfoMora">
+          <assign name="requestValidarMora">
+            <copy>
+              <from>$inputVariable.request/ns2:idCliente</from>
+              <to>$inValidarMora.request/ns4:idCliente</to>
+            </copy>
+            <copy>
+              <from>$outConsultarClienteById.response/ns2:Cliente/ns4:idFacturador</from>
+              <to>$inValidarMora.request/ns4:idFacturador</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeValidarMora_SB" bpelx:invokeAsDetail="no" partnerLink="ValidarMora_SB"
+                  portType="ns3:ValidarMora_PT" operation="ValidarMora" inputVariable="inValidarMora"
+                  outputVariable="outValidarMora"/>
+          <if name="IfValidaErrorValidarMora">
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <condition>$outValidarMora.response/ns2:Resultado/ns6:result = 'ERROR'</condition>
+            <sequence name="Sequence1">
+              <assign name="errorValidarMora">
+                <copy>
+                  <from>$outValidarMora.response/ns2:Resultado/ns6:result</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns6:result</to>
+                </copy>
+                <copy>
+                  <from>$outValidarMora.response/ns2:Resultado/ns6:message</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns6:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyErrorValidarMora" variable="outputVariable" partnerLink="consultarclientebyid_client"
+                     portType="ns1:ConsultarClienteById_PT" operation="consultarClienteById"/>
+              <exit name="Exit"/>
+            </sequence>
+            <else>
+              <empty name="Empty"/>
+            </else>
+          </if>
+        </sequence>
+        <else>
+          <empty name="Empty"/>
+        </else>
+      </if>
+    </scope>
+    <scope name="ValidarDeterioro">
+      <variables>
+        <variable name="inValidarReserva" messageType="ns1:requestValidarReservaMessage"/>
+      </variables>
+      <if name="IfValidaInfoDeterioro">
+        <documentation>
+          <![CDATA[infoDeterioro]]>
+        </documentation>
+        <condition>$inputVariable.request/ns2:infoDeterioro = 'true'</condition>
+        <sequence name="Sequence6">
+          <assign name="requestValidarReserva">
+            <copy>
+              <from>$inputVariable.request/ns2:idCliente</from>
+              <to>$inValidarReserva.request/ns4:idCliente</to>
+            </copy>
+            <copy ignoreMissingFromData="yes">
+              <from>$outConsultarClienteById.response/ns2:Cliente/ns4:idFacturador</from>
+              <to>$inValidarReserva.request/ns4:idFacturador</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeValidarReserva_SB" bpelx:invokeAsDetail="no" partnerLink="ValidarReserva_SB"
+                  portType="ns1:ValidarReservaPT" operation="validarReserva" inputVariable="inValidarReserva"
+                  outputVariable="outValidarReserva"/>
+        </sequence>
+        <else>
+          <empty name="Empty"/>
+        </else>
+      </if>
+    </scope>
+    <assign name="XQ_ConsultarClienteById_Response">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:processXQuery10('../Transformations/XQ_ConsultarClienteById_Response.xqy', 'outConsultarClienteById.response', $outConsultarClienteById.response, 'outValidarMora.response', $outValidarMora.response, 'outValidarReserva.response', $outValidarReserva.response)</from>
+        <to variable="outputVariable" part="response"/>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="consultarclientebyid_client" portType="ns1:ConsultarClienteById_PT" operation="consultarClienteById" variable="outputVariable"/>
+  </sequence>
+</process>

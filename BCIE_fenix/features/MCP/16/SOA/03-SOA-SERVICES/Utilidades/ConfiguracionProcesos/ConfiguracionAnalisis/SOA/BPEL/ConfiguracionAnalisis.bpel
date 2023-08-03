@@ -1,0 +1,314 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Sat Sep 12 12:09:33 CST 2015
+  Author:  david-ramirez
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionAnalisis"
+               targetNamespace="http://xmlns.oracle.com/ConfiguracionAnalisis/ConfiguracionAnalisis/ConfiguracionAnalisis"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionAnalisis/ConfiguracionAnalisis/ConfiguracionAnalisis"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/ProductoService"
+         xmlns:ns4="http://www.bcie.org/ConfiguracionProcesosMO" xmlns:ns3="http://www.bcie.org/ProductoMO"
+         xmlns:ns10="http://www.bcie.org/ProductoBO" xmlns:ns5="http://www.bcie.org/ConfiguracionProcesosBO"
+         xmlns:ns9="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns6="http://www.bcie.org/OperacionBO"
+         xmlns:ns11="http://www.bcie.org/ResultBO" xmlns:ns8="http://www.bcie.org/CatalogoBO"
+         xmlns:ns7="http://www.bcie.org/ClienteBO" xmlns:ns12="http://www.bcie.org/ErrorBO"
+         xmlns:ns13="http://xmlns.oracle.com/pcbpel/adapter/http/ConfiguracionAnalisis/ConfiguracionAnalisis/httpService"
+         xmlns:ns14="http://xmlns.oracle.com/ClienteEsIFI/ClienteEsIFI_DecisionService"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns16="http://www.bcie.org"
+         xmlns:ns15="http://xmlns.oracle.com/bpel" xmlns:ns17="http://www.bcie.com/ConsultarRolesPorProceso"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns18="http://www.bcie.org/ConsultarRolesPorProcesoMO"
+         xmlns:ns19="http://www.bcie.org/ConsultarRolesPorProcesoBO" xmlns:ns20="http://www.bcie.org/MatrizTCCService"
+         xmlns:ns22="http://www.bcie.org/MatrizTCCBO" xmlns:ns21="http://www.bcie.org/MatrizTCCMO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.oracle.com/ClienteEsIFI/ClienteEsIFI_DecisionService"
+          location="oramds:/apps/Resources/ComponentesComunes/BusinessRules/ValidarClienteEsIFI/V1/Wsdl/ClienteEsIFI_DecisionService.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ProductoService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioProducto/Producto/V1/Wsdl/Producto.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionAnalisisSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configuracionanalisisService" partnerLinkType="ns1:ConfiguracionAnalisis" myRole="ConfiguracionAnalisisPT"/>
+    <partnerLink name="ConsultarProductoByIdOperacionService"
+                 partnerLinkType="ns2:ConsultarProductoByIdOperacionService" partnerRole="ProductoPT"/>
+    <partnerLink name="ValidarTipoClienteIFI" partnerLinkType="ns14:ValidarTipoClienteIFI"
+                 partnerRole="IDecisionService"/>
+    <partnerLink name="ConsultarROl" partnerLinkType="ns17:ConsultarROl" partnerRole="ConsultarRolesPorProceso_ptt"/>
+    <partnerLink name="ObtenerTCCInicio" partnerLinkType="ns20:ObtenerTCCInicio" partnerRole="MatrizTCCPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConfiguracionAnalisisMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConfiguracionAnalisisMessage"/>
+    <variable name="InConsultarROL" messageType="ns17:requestMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence3">
+         <assign name="Assign_Error">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns11:result</to>
+          </copy>
+ 
+          <copy>
+            <from>'Error en ConfiguracionAnalisis'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns11:message</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns4:Resultado/ns11:error/ns12:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="configuracionanalisisService"
+               portType="ns1:ConfiguracionAnalisisPT" operation="configuracionAnalisis"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionAnalisis.wsdl) -->
+    <receive name="receiveInput" partnerLink="configuracionanalisisService" portType="ns1:ConfiguracionAnalisisPT" operation="configuracionAnalisis" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignFlowName">
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>oraext:setFlowInstanceTitle(concat( "idOperacion= ", $inputVariable.request/ns4:idOperacion," idProceso= " , $inputVariable.request/ns4:idProceso))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarProducto">
+      <variables>
+        <variable name="inConsultarProducto" messageType="ns2:requestConsultarByIdOperacionMessage"/>
+        <variable name="outConsultarProducto" messageType="ns2:responseConsultarByIdOperacionMessage"/>
+      </variables>
+      <sequence name="Sequence1">
+        <assign name="AssignConsultarProducto">
+          <copy>
+            <from>$inputVariable.request/ns4:idOperacion</from>
+            <to>$inConsultarProducto.request/ns3:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarProducto" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarProductoByIdOperacionService" portType="ns2:ProductoPT"
+                operation="consultarByIdOperacion" inputVariable="inConsultarProducto"
+                outputVariable="outConsultarProducto"/>
+        <if name="IfError">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$outConsultarProducto.response/ns3:Resultado/ns11:error/ns12:errorCode='ERROR'</condition>
+          <sequence name="Sequence4">
+            <scope name="ScopeRespuestaError">
+              <sequence name="Sequence5">
+                <assign name="AssignErrorConsulta">
+                  <copy>
+                    <from>$outConsultarProducto.response/ns3:Resultado</from>
+                    <to>$outputVariable.response/ns4:Resultado</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyOutput" variable="outputVariable" partnerLink="configuracionanalisisService"
+                       portType="ns1:ConfiguracionAnalisisPT" operation="configuracionAnalisis"/>
+                <exit name="ExitError"/>
+              </sequence>
+            </scope>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[EjecucionCorrecta]]>
+            </documentation>
+            <empty name="EjecucionCorrecta"/>
+          </else>
+        </if>
+        <assign name="AssignResultadoProducto">
+          <copy>
+            <from>$outConsultarProducto.response/ns3:Producto</from>
+            <to>$outputVariable.response/ns4:configuracionAnalisis/ns5:producto</to>
+          </copy>
+          <copy>
+            <from>$outConsultarProducto.response/ns3:Operacion</from>
+            <to>$outputVariable.response/ns4:configuracionAnalisis/ns5:operacion</to>
+          </copy>
+          <copy>
+            <from>$outConsultarProducto.response/ns3:Resultado</from>
+            <to>$outputVariable.response/ns4:Resultado</to>
+          </copy>
+        </assign>
+      </sequence>
+    </scope>
+    <scope name="ScopeValidarTipoClienteIFI">
+      <variables>
+        <variable name="inValidarTipoCliente" messageType="ns14:callFunctionStatelessMessage"/>
+        <variable name="outValidarTipoCliente" messageType="ns14:callFunctionStatelessDecisionMessage"/>
+      </variables>
+      <sequence name="Sequence2">
+        <assign name="AssignTipoCliente">
+          <copy>
+            <from>'ClienteEsIFI_DecisionService'</from>
+            <to>$inValidarTipoCliente.payload/@name</to>
+          </copy>
+          <copy>
+            <from>$outputVariable.response/ns4:configuracionAnalisis/ns5:operacion/ns6:cliente/ns7:tipoPersona/ns8:Id</from>
+            <to>$inValidarTipoCliente.payload/ns14:parameterList/ns16:ClienteEsIFIRequest/ns16:idTipoPersona</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeValidarTipoCliente" bpelx:invokeAsDetail="no" partnerLink="ValidarTipoClienteIFI"
+                portType="ns14:IDecisionService" operation="callFunctionStateless"
+                inputVariable="inValidarTipoCliente" outputVariable="outValidarTipoCliente"/>
+        <assign name="AssignTipoCliente">
+          <copy>
+            <from>$outValidarTipoCliente.payload/ns14:resultList/ns16:ClienteEsIFIResponse/ns16:respuesta</from>
+            <to>$outputVariable.response/ns4:configuracionAnalisis/ns5:esIFI</to>
+          </copy>
+        </assign>
+      </sequence>
+    </scope>
+    <scope name="ScopeRequiereSCR">
+      <if name="IfNoRequiereSCR">
+        <documentation>
+          <![CDATA[No requiere SCR]]>
+        </documentation>
+        <condition>$outputVariable.response/ns4:configuracionAnalisis/ns5:operacion/ns6:tipoGarantia/ns8:Id=2 and$outputVariable.response/ns4:configuracionAnalisis/ns5:operacion/ns6:cliente/ns7:sector/ns8:Id=1</condition>
+        <assign name="AssignNoRequiereSCR">
+          <copy>
+            <from>'false'</from>
+            <to>$outputVariable.response/ns4:configuracionAnalisis/ns5:requiereSCR</to>
+          </copy>
+        </assign>
+        <else>
+          <documentation>
+            <![CDATA[Requiere SCR]]>
+          </documentation>
+          <assign name="AssignRequiereSCR">
+            <copy>
+              <from>'true'</from>
+              <to>$outputVariable.response/ns4:configuracionAnalisis/ns5:requiereSCR</to>
+            </copy>
+          </assign>
+        </else>
+      </if>
+    </scope>
+    <scope name="ScopeConsultarRol">
+      <variables>
+        <variable name="InConsultarROL" messageType="ns17:requestMessage"/>
+        <variable name="OutConsultarROL" messageType="ns17:replyMessage"/>
+        <variable name="CountRol" type="xsd:unsignedInt"/>
+      </variables>
+      <sequence name="Sequence6">
+        <assign name="AssignInConsultarRol">
+          <copy>
+            <from>3</from>
+            <to>$InConsultarROL.request/ns18:Proceso/ns19:idProceso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarROL" partnerLink="ConsultarROl"
+                portType="ns17:ConsultarRolesPorProceso_ptt" operation="ConsultarRolesPorProceso"
+                inputVariable="InConsultarROL" outputVariable="OutConsultarROL" bpelx:invokeAsDetail="no"/>
+        <assign name="AssignCountRol">
+          <copy>
+            <from>count($OutConsultarROL.response/ns18:ListadoRoles/ns19:listadoRoles)</from>
+            <to>$CountRol</to>
+          </copy>
+        </assign>
+        <forEach parallel="no" counterName="CounterRoles" name="ForEachConsultarRoles">
+          <bpelx:skipCondition>$CountRol=0</bpelx:skipCondition>
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>$CountRol</finalCounterValue>
+          <scope name="Scope1">
+            <assign name="AssignOutConsultarRol">
+              <copy bpelx:insertMissingToData="yes">
+                <from>$OutConsultarROL.response/ns18:ListadoRoles/ns19:listadoRoles[$CounterRoles]/ns8:Id</from>
+                <to>$outputVariable.response/ns4:configuracionAnalisis/ns5:RolesEquipoTrabajo/ns5:Rol[$CounterRoles]/ns8:Id</to>
+              </copy>
+              <copy bpelx:insertMissingToData="yes">
+                <from>$OutConsultarROL.response/ns18:ListadoRoles/ns19:listadoRoles[$CounterRoles]/ns8:DescripcionCorta</from>
+                <to>$outputVariable.response/ns4:configuracionAnalisis/ns5:RolesEquipoTrabajo/ns5:Rol[$CounterRoles]/ns8:DescripcionCorta</to>
+              </copy>
+              <copy bpelx:insertMissingToData="yes">
+                <from>$OutConsultarROL.response/ns18:ListadoRoles/ns19:listadoRoles[$CounterRoles]/ns8:Descripcion</from>
+                <to>$outputVariable.response/ns4:configuracionAnalisis/ns5:RolesEquipoTrabajo/ns5:Rol[$CounterRoles]/ns8:Descripcion</to>
+              </copy>
+            </assign>
+          </scope>
+        </forEach>
+      </sequence>
+    </scope>
+    <scope name="ScopeObtenerTCCInicio">
+      <variables>
+        <variable name="InvokeObtenerTCCInicio_obtenerTCCInicio_InputVariable"
+                  messageType="ns20:obtenerTCCInicioRequestMessage"/>
+        <variable name="outInvokeObtenerTCCInicio" messageType="ns20:obtenerTCCInicioResponseMessage"/>
+      </variables>
+      <faultHandlers>
+        <catchAll>
+          <empty name="Error"/>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="SequenceObtenerTCCInicio">
+        <assign name="AssignObtenerTCCInicio">
+          <copy>
+            <from>$inputVariable.request/ns4:idOperacion</from>
+            <to>$InvokeObtenerTCCInicio_obtenerTCCInicio_InputVariable.request/ns21:idOperacion</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.request/ns4:idProceso</from>
+            <to>$InvokeObtenerTCCInicio_obtenerTCCInicio_InputVariable.request/ns21:idProceso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeObtenerTCCInicio" partnerLink="ObtenerTCCInicio" portType="ns20:MatrizTCCPT"
+                operation="obtenerTCCInicio" inputVariable="InvokeObtenerTCCInicio_obtenerTCCInicio_InputVariable"
+                outputVariable="outInvokeObtenerTCCInicio" bpelx:invokeAsDetail="no"/>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configuracionanalisisService" portType="ns1:ConfiguracionAnalisisPT" operation="configuracionAnalisis" variable="outputVariable"/>
+  </sequence>
+</process>

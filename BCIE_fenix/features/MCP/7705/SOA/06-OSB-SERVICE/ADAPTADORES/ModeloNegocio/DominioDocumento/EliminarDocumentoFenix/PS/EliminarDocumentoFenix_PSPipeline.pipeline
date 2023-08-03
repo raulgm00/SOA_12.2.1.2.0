@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Wsdl/ADAPTER/EliminarDocumentoFenixSAD"/>
+            <con:binding>
+                <con:name>EliminarDocumentoFenix12Bnd</con:name>
+                <con:namespace>http://xmlns.bcie.com/DocumentoService</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-N3f579bc0.2fa34003.0.15710ca0110.N7fcc">
+        <con:pipeline type="error" name="error-N3f579bc0.2fa34003.0.15710ca0110.N7fcc">
+            <con:stage id="_StageId-N3f579bc0.2fa34003.0.15710ca0110.N7f22" name="StageError" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con4="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con3:assign varName="inMapeoError" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f579bc0.2fa34003.0.15710ca0110.N7f21</con2:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(fn:data($fault/ctx:errorCode))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f579bc0.2fa34003.0.15710ca0110.N7f20</con2:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS.proxyPipeline" xsi:type="con:PipelineRef"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapeoError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapeoError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true" xmlns:con5="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-N3f579bc0.2fa34003.0.15710ca0110.N7f1f</con2:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/DominioDocumento/EliminarDocumentoFenix/XQUERY/Error_TO_EliminarDocumentoFenix"/>
+                                <con2:param name="message">
+                                    <con2:path>xs:string(fn:data($fault/ctx:reason))</con2:path>
+                                </con2:param>
+                                <con2:param name="responseMapeoErrorMessage">
+                                    <con2:path>$outMapeoError</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-N3f579bc0.2fa34003.0.15710ca0110.N7f1e</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteNodeEliminarDocumento">
+                <con:context>
+                    <con2:userNsDecl prefix="doc" namespace="http://www.bcie.org/DocumentoMO"/>
+                </con:context>
+                <con:actions>
+                    <con1:route>
+                        <con2:id>_ActionId-N3f579bc0.2fa34003.0.15710ca0110.N7ffd</con2:id>
+                        <con1:service ref="ADAPTADORES/ModeloNegocio/DominioDocumento/EliminarDocumentoFenix/BS/EliminarDocumentoFenix_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con1:operation>EliminarDocumentoFenix</con1:operation>
+                        <con1:outboundTransform>
+                            <con3:log>
+                                <con2:id>_ActionId-N3f579bc0.2fa34003.0.15710ca0110.N7f98</con2:id>
+                                <con3:logLevel>info</con3:logLevel>
+                                <con3:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con3:expr>
+                                <con3:message>EliminarDocumentoFenix-Request</con3:message>
+                            </con3:log>
+                            <con4:replace varName="body" contents-only="true">
+                                <con2:id>_ActionId-N3f579bc0.2fa34003.0.15710ca0110.N7f8f</con2:id>
+                                <con4:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con4:location>
+                                <con4:expr>
+                                    <con2:xqueryTransform>
+                                        <con2:resource ref="ADAPTADORES/ModeloNegocio/DominioDocumento/EliminarDocumentoFenix/XQUERY/EliminarDocumentoFenix_PS_TO_EliminarDocumentoFenix_BS_Request"/>
+                                        <con2:param name="EliminarDocumentoFenixRequest">
+                                            <con2:path>$body/doc:EliminarDocumentoFenixRequest</con2:path>
+                                        </con2:param>
+                                    </con2:xqueryTransform>
+                                </con4:expr>
+                            </con4:replace>
+                        </con1:outboundTransform>
+                        <con1:responseTransform>
+                            <con4:replace contents-only="true" varName="body">
+                                <con2:id>_ActionId-N3f579bc0.2fa34003.0.15710ca0110.N7f92</con2:id>
+                                <con4:location>
+                                    <con2:xpathText>.</con2:xpathText>
+                                </con4:location>
+                                <con4:expr>
+                                    <con2:xqueryTransform>
+                                        <con2:resource ref="ADAPTADORES/ModeloNegocio/DominioDocumento/EliminarDocumentoFenix/XQUERY/EliminarDocumentoFenix_BS_TO_EliminarDocumentoFenix_PS_Response"/>
+                                        <con2:param name="OutputParameters">
+                                            <con2:path>$body/*[1]</con2:path>
+                                        </con2:param>
+                                    </con2:xqueryTransform>
+                                </con4:expr>
+                            </con4:replace>
+                            <con3:log>
+                                <con2:id>_ActionId-N3f579bc0.2fa34003.0.15710ca0110.N7f95</con2:id>
+                                <con3:logLevel>info</con3:logLevel>
+                                <con3:expr>
+                                    <con2:xqueryText>$body</con2:xqueryText>
+                                </con3:expr>
+                                <con3:message>EliminarDocumentoFenix-Response</con3:message>
+                            </con3:log>
+                        </con1:responseTransform>
+                    </con1:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

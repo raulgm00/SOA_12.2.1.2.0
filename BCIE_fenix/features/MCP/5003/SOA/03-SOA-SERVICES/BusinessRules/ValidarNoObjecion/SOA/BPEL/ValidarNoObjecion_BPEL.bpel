@@ -1,0 +1,454 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Jan 27 12:47:04 CST 2016
+  Author:  luis-morales
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ValidarNoObjecion_BPEL"
+               targetNamespace="http://xmlns.oracle.com/BusinessRulesServices/ValidarNoObjecionBR/ValidarNoObjecion_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/BusinessRulesServices/ValidarNoObjecionBR/ValidarNoObjecion_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ValidarNoObjecionService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://xmlns.oracle.com/ValidarNoObjecionBR/ValidarNoObjecionBR_DecisionService_1"
+         xmlns:ns3="http://xmlns.bcie.com/DeclaracionJuradaService" xmlns:ns4="http://www.bcie.org/DeclaracionJuradaMO"
+         xmlns:ns10="http://xmlns.bcie.org/EstadosDeclaracion" xmlns:ns5="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns7="http://www.bcie.org/ResultBO" xmlns:ns9="http://xmlns.oracle.com/bpel"
+         xmlns:ns6="http://www.bcie.org/CatalogoBO" xmlns:ns8="http://www.bcie.org/ErrorBO"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns11="http://xmlns.oracle.com/ValidarNoObjecion_Rules/ValidarNoObjecion_Rules_DecisionService_1"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/ValidarNoObjecionService" location="../WSDLs/ValidarNoObjecionSBRWrapper1.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="validarnoobjecion_bpel_client" partnerLinkType="ns1:ValidarNoObjecionPT_PLT"
+                 myRole="ValidarNoObjecionPT_Role"/>
+    <partnerLink name="ValidarNoObjecion_Rules.ValidarNoObjecion_Rules_DecisionService_1"
+                 partnerLinkType="ns11:ValidarNoObjecion_Rules.ValidarNoObjecion_Rules_DecisionService_1"
+                 partnerRole="IDecisionService"/>
+    <partnerLink name="ConsultarDeclaracionJuradaSB" partnerLinkType="ns3:ConsultarDeclaracionJuradaSB"
+                 partnerRole="DeclaracionJuradaPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ValidarNoObjecionRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ValidarNoObjecionResponseMessage"/>
+    <variable name="outConsultarDeclaracion" messageType="ns3:responseConsultarDeclaracionJuradaByIdOperacionMessage"/>
+    <variable name="estadoNoObjecion" type="xsd:boolean"/>
+    <variable name="esValida" type="xsd:boolean"/>
+    <variable name="FechaVigente" type="xsd:boolean"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ValidarNoObjecion_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="validarnoobjecion_bpel_client" portType="ns1:ValidarNoObjecionPT" operation="validarNoObjecion" variable="inputVariable" createInstance="yes"/>
+    <scope name="ConsultarDeclaracionJuradaScope">
+      <variables>
+        <variable name="inConsultarDeclaracion"
+                  messageType="ns3:requestConsultarDeclaracionJuradaByIdOperacionMessage"/>
+        <variable name="remoteFault" messageType="bpelx:RuntimeFaultMessage"/>
+      </variables>
+      <faultHandlers>
+        <catchAll>
+          <sequence name="ErrorConsultarDeclaracion">
+            <assign name="ErrorResponse">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+              </copy>
+              <copy>
+                <from>$remoteFault.detail</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:error/ns8:errorCode</to>
+              </copy>
+              <copy>
+                <from>$remoteFault.summary</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:error/ns8:errorType</to>
+              </copy>
+              <copy>
+                <from>'No se ha podido consultar la declaración'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="validarnoobjecion_bpel_client"
+                   portType="ns1:ValidarNoObjecionPT" operation="validarNoObjecion"/>
+            <exit name="Exit1"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="ConsultarDeclaracionJuradaSequence">
+        <assign name="AssignIdOperacion">
+          <copy>
+            <from>$inputVariable.request/ns4:idOperacion</from>
+            <to>$inConsultarDeclaracion.request/ns4:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="ConsultarDeclaracionJuradaInvoke"
+                partnerLink="ConsultarDeclaracionJuradaSB" portType="ns3:DeclaracionJuradaPT"
+                operation="consultarDeclaracionJurada" inputVariable="inConsultarDeclaracion"
+                outputVariable="outConsultarDeclaracion" bpelx:invokeAsDetail="no"/>
+        <if name="ExisteError">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outConsultarDeclaracion.response/ns4:Resultado/ns7:result != 'ERROR'</condition>
+          <sequence name="Sequence1">
+            <empty name="ValidarNoObjecion"/>
+            <if name="IfDeclaracionMayorA1">
+              <documentation>
+                <![CDATA[Mayor que 1]]>
+              </documentation>
+              <condition>count($outConsultarDeclaracion.response/ns4:DeclaracionJurada) &gt; 1 and $inputVariable.request/ns4:excluirEnProceso = 'true'</condition>
+              <assign name="XQConsultarDeclaracion">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:processXQuery10('../Transformations/TransformConsultarDeclaracion.xqy', 'outConsultarDeclaracion.response', $outConsultarDeclaracion.response)</from>
+                  <to variable="outConsultarDeclaracion" part="response"/>
+                </copy>
+              </assign>
+              <else>
+                <documentation>
+                  <![CDATA[Menor]]>
+                </documentation>
+                <empty name="Continua"/>
+              </else>
+            </if>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <throw name="ErrorConsultarDeclaracion" faultName="bpelx:remoteFault" faultVariable="remoteFault"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <forEach parallel="no" counterName="DeclaracionCounter" name="DeclaracionList">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($outConsultarDeclaracion.response/ns4:DeclaracionJurada)</finalCounterValue>
+      <scope name="DeclaracionScope">
+        <variables>
+          <variable name="inValidarNoObjecion" messageType="ns11:callFunctionStatelessMessage"/>
+          <variable name="outValidarNoObjecion" messageType="ns11:callFunctionStatelessDecisionMessage"/>
+        </variables>
+        <sequence name="EstadoNoObjecionSequence">
+          <assign name="AssignEstadoNoObjecion">
+            <copy>
+              <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoDeclaracion/ns5:nombreEstadoDeclaracion</from>
+              <to>$inValidarNoObjecion.payload/ns11:parameterList/ns10:EstadosDeclaracionRequest/ns10:EstadosDeclaracion</to>
+            </copy>
+            <copy>
+              <from>'ValidarNoObjecion_Rules_DecisionService_1'</from>
+              <to>$inValidarNoObjecion.payload/@name</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeValidarNoObjecion" bpelx:invokeAsDetail="no"
+                  partnerLink="ValidarNoObjecion_Rules.ValidarNoObjecion_Rules_DecisionService_1"
+                  portType="ns11:IDecisionService" operation="callFunctionStateless"
+                  inputVariable="inValidarNoObjecion" outputVariable="outValidarNoObjecion"/>
+          <assign name="AssignEstadoNoObjecion">
+            <copy>
+              <from>$outValidarNoObjecion.payload/ns11:resultList/ns10:EstadosDeclaracionResponse/ns10:NoObjecion</from>
+              <to>$estadoNoObjecion</to>
+            </copy>
+          </assign>
+          <if name="EstadoNoObjecion">
+            <documentation>
+              <![CDATA[True]]>
+            </documentation>
+            <condition>$estadoNoObjecion = 1</condition>
+            <sequence name="ValidacionFechaVigenteScope">
+              <assign name="AssignNoObjecion">
+                <copy>
+                  <from>true()</from>
+                  <to>$esValida</to>
+                </copy>
+              </assign>
+              <if name="FechaVigencia">
+                <documentation>
+                  <![CDATA[MayorFechaActual]]>
+                </documentation>
+                <condition>$esValida = 1 and $outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:fechaVencimiento &gt; xp20:current-dateTime() </condition>
+                <sequence>
+                  <assign name="AssignValida">
+                    <copy ignoreMissingFromData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:idDeclaracion</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:idDeclaracion</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:codigoExternoDeclaracion</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:codigoExternoDeclaracion</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:fechaRegistro</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:fechaRegistro</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:fechaFirmaDeclaracion</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:fechaFirmaDeclaracion</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:fechaVencimiento</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:fechaVencimiento</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoDeclaracion/ns5:codigoEstadoDeclaracion</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:estadoDeclaracion/ns5:codigoEstadoDeclaracion</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoDeclaracion/ns5:nombreEstadoDeclaracion</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:estadoDeclaracion/ns5:nombreEstadoDeclaracion</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoBusqueda/ns5:codigoEstadoBusqueda</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:estadoBusqueda/ns5:codigoEstadoBusqueda</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoBusqueda/ns5:nombreEstadoBusqueda</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:estadoBusqueda/ns5:nombreEstadoBusqueda</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:calificacionDeRiesgo/ns5:codigoCalificacionDeRiesgo</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:calificacionDeRiesgo/ns5:codigoCalificacionDeRiesgo</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:calificacionDeRiesgo/ns5:nombreCalificacionDeRiesgo</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:calificacionDeRiesgo/ns5:nombreCalificacionDeRiesgo</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:comentarioDeclaracion</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:comentarioDeclaracion</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:comentarioBusqueda</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:comentarioBusqueda</to>
+                    </copy>
+                    <copy>
+                      <from>true()</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:estadoDeclaracion/ns5:EstadoNoObjecion</to>
+                    </copy>
+                    <copy>
+                      <from>'Si'</from>
+                      <to>$outputVariable.response/ns4:Declaracion/ns5:estadoDeclaracion/ns5:nombreEstadoNoObjecion</to>
+                    </copy>
+                    <copy>
+                      <from>'OK'</from>
+                      <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+                    </copy>
+                    <copy>
+                      <from>'La declaración cuenta con la no objeción'</from>
+                      <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+                    </copy>
+                  </assign>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[MenorFechaActual]]>
+                  </documentation>
+                  <sequence>
+                    <assign name="AssignFalse">
+                      <copy ignoreMissingFromData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:idDeclaracion</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:idDeclaracion</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:codigoExternoDeclaracion</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:codigoExternoDeclaracion</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:fechaFirmaDeclaracion</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:fechaFirmaDeclaracion</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:fechaRegistro</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:fechaRegistro</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:fechaVencimiento</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:fechaVencimiento</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:calificacionDeRiesgo/ns5:nombreCalificacionDeRiesgo</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:calificacionDeRiesgo/ns5:nombreCalificacionDeRiesgo</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoDeclaracion/ns5:codigoEstadoDeclaracion</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:estadoDeclaracion/ns5:codigoEstadoDeclaracion</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoDeclaracion/ns5:nombreEstadoDeclaracion</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:estadoDeclaracion/ns5:nombreEstadoDeclaracion</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoBusqueda/ns5:codigoEstadoBusqueda</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:estadoBusqueda/ns5:codigoEstadoBusqueda</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoBusqueda/ns5:nombreEstadoBusqueda</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:estadoBusqueda/ns5:nombreEstadoBusqueda</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:calificacionDeRiesgo/ns5:codigoCalificacionDeRiesgo</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:calificacionDeRiesgo/ns5:codigoCalificacionDeRiesgo</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:comentarioDeclaracion</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:comentarioDeclaracion</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:comentarioBusqueda</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:comentarioBusqueda</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>false()</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:estadoDeclaracion/ns5:EstadoNoObjecion</to>
+                      </copy>
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>'No'</from>
+                        <to>$outputVariable.response/ns4:Declaracion/ns5:estadoDeclaracion/ns5:nombreEstadoNoObjecion</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>'OK'</from>
+                        <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes">
+                        <from>'La declaración cuenta con la No Objeción, pero no se encuentra dentro del plazo de la fecha vigente'</from>
+                        <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+                      </copy>
+                    </assign>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+            <else>
+              <documentation>
+                <![CDATA[False]]>
+              </documentation>
+              <assign name="AssignDeclaracionSinbObjecion">
+                <copy ignoreMissingFromData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:codigoExternoDeclaracion</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:codigoExternoDeclaracion</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>'OK'</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>'La declaración no cuenta con la no objeción'</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:fechaFirmaDeclaracion</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:fechaFirmaDeclaracion</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:fechaRegistro</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:fechaRegistro</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:fechaVencimiento</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:fechaVencimiento</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoDeclaracion/ns5:codigoEstadoDeclaracion</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:estadoDeclaracion/ns5:codigoEstadoDeclaracion</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoDeclaracion/ns5:nombreEstadoDeclaracion</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:estadoDeclaracion/ns5:nombreEstadoDeclaracion</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoBusqueda/ns5:codigoEstadoBusqueda</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:estadoBusqueda/ns5:codigoEstadoBusqueda</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:estadoBusqueda/ns5:nombreEstadoBusqueda</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:estadoBusqueda/ns5:nombreEstadoBusqueda</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:calificacionDeRiesgo/ns5:codigoCalificacionDeRiesgo</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:calificacionDeRiesgo/ns5:codigoCalificacionDeRiesgo</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:calificacionDeRiesgo/ns5:nombreCalificacionDeRiesgo</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:calificacionDeRiesgo/ns5:nombreCalificacionDeRiesgo</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:idDeclaracion</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:idDeclaracion</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:comentarioDeclaracion</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:comentarioDeclaracion</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$outConsultarDeclaracion.response/ns4:DeclaracionJurada[$DeclaracionCounter]/ns5:comentarioBusqueda</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:comentarioBusqueda</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>false()</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:estadoDeclaracion/ns5:EstadoNoObjecion</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>'No'</from>
+                  <to>$outputVariable.response/ns4:Declaracion/ns5:estadoDeclaracion/ns5:nombreEstadoNoObjecion</to>
+                </copy>
+              </assign>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+    </forEach>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="validarnoobjecion_bpel_client" portType="ns1:ValidarNoObjecionPT" operation="validarNoObjecion" variable="outputVariable"/>
+  </sequence>
+</process>

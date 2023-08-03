@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/Utilidades/PublicarJMS/V1/Wsdl/PublicarJMS"/>
+            <con:binding>
+                <con:name>PublicarJMSPT12Bnd</con:name>
+                <con:namespace>http://www.bcie.org/PublicarJMS</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router errorHandler="error-a050aa3.N42467559.0.15680a1d2e0.N7fc6">
+        <con:pipeline type="error" name="error-a050aa3.N42467559.0.15680a1d2e0.N7fc6">
+            <con:stage id="_StageId-a050aa3.N42467559.0.15680a1d2e0.N7f1c" name="StageError" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con5="http://www.bea.com/wli/sb/stages/publish/config" xmlns:con4="http://www.bea.com/wli/sb/typesystem/config" xmlns:con6="http://www.bea.com/wli/sb/stages/logging/config">
+                <con:context/>
+                <con:actions>
+                    <con3:ifThenElse xmlns:con7="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con8:id xmlns:con8="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aa3.N42467559.0.15680a1d2e0.N7f1b</con8:id>
+                        <con3:case id="_BranchId-a050aa3.N42467559.0.15680a1d2e0.N7f1a">
+                            <con3:condition>
+                                <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">fn:count($codigoError)=0</con2:xqueryText>
+                            </con3:condition>
+                            <con3:actions>
+                                <con3:assign varName="codigoError">
+                                    <con8:id xmlns:con8="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aa3.N42467559.0.15680a1d2e0.N7f19</con8:id>
+                                    <con3:expr>
+                                        <con2:xqueryText xmlns:con4="http://www.bea.com/wli/sb/stages/config">$fault/ctx:errorCode</con2:xqueryText>
+                                    </con3:expr>
+                                </con3:assign>
+                            </con3:actions>
+                        </con3:case>
+                        <con3:default/>
+                    </con3:ifThenElse>
+                    <con3:assign varName="inMapeoError" xmlns:con7="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con8:id xmlns:con8="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aa3.N42467559.0.15680a1d2e0.N7f18</con8:id>
+                        <con3:expr>
+                            <con2:xqueryTransform xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                                <con2:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/XQUERY/CodigoError_TO_Error_PS_Request"/>
+                                <con2:param name="codigoError">
+                                    <con2:path>xs:string(data($codigoError))</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con3:expr>
+                    </con3:assign>
+                    <con3:wsCallout xmlns:con7="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con8:id xmlns:con8="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aa3.N42467559.0.15680a1d2e0.N7f17</con8:id>
+                        <con3:service ref="ADAPTADORES/ModeloNegocio/Utilidades/MapeoError/PS/MapeoError_PS.proxyPipeline" xsi:type="con:PipelineRef"/>
+                        <con3:operation>MapearError</con3:operation>
+                        <con3:request>
+                            <con3:body wrapped="false">inMapeoError</con3:body>
+                        </con3:request>
+                        <con3:response>
+                            <con3:body wrapped="false">outMapeoError</con3:body>
+                        </con3:response>
+                        <con3:requestTransform/>
+                        <con3:responseTransform/>
+                    </con3:wsCallout>
+                    <con3:replace varName="body" contents-only="true" xmlns:con7="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con8:id xmlns:con8="http://www.bea.com/wli/sb/stages/config">_ActionId-a050aa3.N42467559.0.15680a1d2e0.N7f16</con8:id>
+                        <con3:location>
+                            <con2:xpathText xmlns:con4="http://www.bea.com/wli/sb/stages/config">.</con2:xpathText>
+                        </con3:location>
+                        <con3:expr>
+                            <con8:xqueryTransform xmlns:con8="http://www.bea.com/wli/sb/stages/config">
+                                <con8:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/PublicarJMS/XQUERY/Error_TO_PublicarJMS_Response"/>
+                                <con8:param name="message">
+                                    <con8:path>xs:string(fn:data($fault/ctx:reason))</con8:path>
+                                </con8:param>
+                                <con8:param name="responseMapeoErrorMessage">
+                                    <con8:path>$outMapeoError</con8:path>
+                                </con8:param>
+                            </con8:xqueryTransform>
+                        </con3:expr>
+                    </con3:replace>
+                    <con2:reply xmlns:con4="http://www.bea.com/wli/sb/stages/config">
+                        <con4:id>_ActionId-a050aa3.N42467559.0.15680a1d2e0.N7f15</con4:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:route-node name="RouteNodePublicarJMS">
+                <con:context>
+                    <con1:userNsDecl prefix="com" namespace="http://www.bcie.org/CommonBO"/>
+                    <con1:userNsDecl prefix="pub" namespace="http://www.bcie.org/PublicarJMSMO"/>
+                </con:context>
+                <con:actions>
+                    <con2:route>
+                        <con1:id>_ActionId-a050aa3.N42467559.0.15680a1d2e0.N7ffd</con1:id>
+                        <con2:service ref="ADAPTADORES/ModeloNegocio/Utilidades/PublicarJMS/BS/PublicarJMS_BS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:operation>Produce_Message</con2:operation>
+                        <con2:outboundTransform>
+                            <con3:log>
+                                <con1:id>_ActionId-a050aa3.N42467559.0.15680a1d2e0.N7ffa</con1:id>
+                                <con3:logLevel>info</con3:logLevel>
+                                <con3:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con3:expr>
+                                <con3:message>PublicarJMS_PS_Request</con3:message>
+                            </con3:log>
+                            <con4:transport-headers>
+                                <con1:id>_ActionId-a050aa3.N42467559.0.15680a1d2e0.N7f0c</con1:id>
+                                <con4:header-set>outbound-request</con4:header-set>
+                                <con4:header value="expression" name="jca.jms.JMSDestinationName">
+                                    <con1:xqueryText>$body/pub:PublicarJMSRequest/pub:JMS/com:nombreJMS/text()</con1:xqueryText>
+                                </con4:header>
+                            </con4:transport-headers>
+                            <con4:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a050aa3.N42467559.0.15680a1d2e0.N7f06</con1:id>
+                                <con4:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con4:location>
+                                <con4:expr>
+                                    <con1:xqueryText>$body/pub:PublicarJMSRequest/pub:JMS/com:mensaje/*</con1:xqueryText>
+                                </con4:expr>
+                            </con4:replace>
+                        </con2:outboundTransform>
+                        <con2:responseTransform>
+                            <con4:replace varName="body" contents-only="true">
+                                <con1:id>_ActionId-a050aa3.N42467559.0.15680a1d2e0.N7f09</con1:id>
+                                <con4:location>
+                                    <con1:xpathText>.</con1:xpathText>
+                                </con4:location>
+                                <con4:expr>
+                                    <con1:xqueryTransform>
+                                        <con1:resource ref="ADAPTADORES/ModeloNegocio/Utilidades/PublicarJMS/XQUERY/PublicarJMS_BS_Response"/>
+                                    </con1:xqueryTransform>
+                                </con4:expr>
+                            </con4:replace>
+                            <con3:log>
+                                <con1:id>_ActionId-a050aa3.N42467559.0.15680a1d2e0.N7ff7</con1:id>
+                                <con3:logLevel>info</con3:logLevel>
+                                <con3:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con3:expr>
+                                <con3:message>PublicarJMS_PS_Response</con3:message>
+                            </con3:log>
+                        </con2:responseTransform>
+                    </con2:route>
+                </con:actions>
+            </con:route-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

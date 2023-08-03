@@ -1,0 +1,915 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Feb 03 17:11:54 CST 2016
+  Author:  luis-morales
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ObtenerTccInicio_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioMatrizTCC/ObtenerTCCInicio/ObtenerTccInicio_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioMatrizTCC/ObtenerTCCInicio/ObtenerTccInicio_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ObtenerTCCInicioService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://www.bcie.org/ConsultarOperacionEnProcesoService" xmlns:ns3="http://www.bcie.org/MatrizTCCMO"
+         xmlns:ns4="http://www.bcie.org/ConsultarOperacionEnProcesoMO"
+         xmlns:ns5="http://www.bcie.org/ConsultarOperacionEnProcesoBO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns6="http://www.bcie.org/ResultBO" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns7="http://www.bcie.org/ErrorBO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns13="http://www.bcie.org/TerminoBO" xmlns:ns8="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns9="http://www.bcie.org/CondicionBO" xmlns:ns12="http://www.bcie.org/DocumentoBO"
+         xmlns:ns14="http://www.bcie.org/ComisionBO" xmlns:ns10="http://www.bcie.org/CatalogoBO"
+         xmlns:ns11="http://www.bcie.org/AtributoBO" xmlns:ns15="http://www.bcie.org/MatrizTCCService"
+         xmlns:ns16="http://www.bcie.org/MatrizTCCBO" xmlns:ns17="http://xmlns.bcie.com/ComisionService"
+         xmlns:ns18="http://www.bcie.org/TerminoService" xmlns:ns19="http://www.bcie.org/CondicionService"
+         xmlns:ns20="http://www.bcie.org/CrearComisionService" xmlns:ns21="http://www.bcie.org/CondicionMO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns22="http://www.bcie.org/TerminoMO"
+         xmlns:ns23="http://www.bcie.org/ComisionMO" xmlns:ns24="http://www.bcie.org/OperacionBO"
+         xmlns:ns26="http://www.bcie.org/ProductoBO" xmlns:ns27="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns25="http://www.bcie.org/ClienteBO" xmlns:ns28="http://www.bcie.org/CrearTreCategoriaCondicionSAD">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/ObtenerTCCInicioService" location="../WSDLs/ObtenerTCCInicioSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="obtenertccinicio_service" partnerLinkType="ns1:ObtenerTCCInicioPT_PLT"
+                 myRole="ObtenerTCCInicioPT_Role"/>
+    <partnerLink name="ConsultarTCCConfiguracion" partnerLinkType="ns15:ConsultarTCCConfiguracion"
+                 partnerRole="TCCConfiguracionPT"/>
+    <partnerLink name="ConsultarComision" partnerLinkType="ns17:ConsultarComision" partnerRole="ConsultarComisionPT"/>
+    <partnerLink name="ConsultarTermino" partnerLinkType="ns18:ConsultarTermino" partnerRole="ConsultarTerminoPT"/>
+    <partnerLink name="ConsultarCondicion" partnerLinkType="ns19:ConsultarCondicion"
+                 partnerRole="ConsultarCondicionbyIdOperacionPT"/>
+    <partnerLink name="CrearComision" partnerLinkType="ns20:CrearComision" partnerRole="CrearComisionPT"/>
+    <partnerLink name="CrearCondicion" partnerLinkType="ns19:CrearCondicion" partnerRole="CondicionPT"/>
+    <partnerLink name="CrearTermino" partnerLinkType="ns18:CrearTermino" partnerRole="TerminoPT"/>
+    <partnerLink name="CrearTreCategoriaCondicion" partnerLinkType="ns28:CrearTreCategoriaCondicion"
+                 partnerRole="CrearTreCategoriaCondicion_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:obtenerTCCInicioRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:obtenerTCCInicioResponseMessage"/>
+         <variable name="consultarTCCConfiguracion_OutputVariable"
+                  messageType="ns15:ConsultarTCCConfiguracionResponseMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+    <variable name="fault" messageType="bpelx:RuntimeFaultMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence12">
+        <assign name="AssignOutput">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="obtenertccinicio_service"
+               portType="ns1:ObtenerTCCInicioPT" operation="obtenerTCCInicio"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ObtenerTccInicio_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="obtenertccinicio_service" portType="ns1:ObtenerTCCInicioPT" operation="obtenerTCCInicio" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignTitulo">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat($inputVariable.request/ns3:idOperacion,'-',$inputVariable.request/ns3:idProceso))</from>
+        <to>$setTitleVar</to>
+      </copy>
+      <copy>
+        <from>'OK'</from>
+        <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+      </copy>
+      <copy>
+        <from>'Ejecución Exitosa'</from>
+        <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarTCCConfiguracion">
+      <variables>
+        <variable name="consultarTCCConfiguracion_InputVariable"
+                  messageType="ns15:ConsultarTCCConfiguracionRequestMessage"/>
+          
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="remoteFault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <rethrow name="Rethrow"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence22">
+            <assign name="AssignErrorGeneral">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+              </copy>
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>ora:getFaultAsString()</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:error/ns7:errorDescription</to>
+              </copy>
+              <copy>
+                <from>'Error al consultar TCC Configuracion'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="fault"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence1">
+        <assign name="Assign_ConsultarTCCConfiguracionInput">
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$inputVariable.request/ns3:idProceso</from>
+            <to>$consultarTCCConfiguracion_InputVariable.request/ns3:idTcaProcesoBPM</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$inputVariable.request/ns3:idOperacion</from>
+            <to>$consultarTCCConfiguracion_InputVariable.request/ns3:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarTCCConfiguracion" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarTCCConfiguracion" portType="ns15:TCCConfiguracionPT"
+                operation="consultarTCCConfiguracion" inputVariable="consultarTCCConfiguracion_InputVariable"
+                outputVariable="consultarTCCConfiguracion_OutputVariable"/>
+        <if name="IfConsultaVacia">
+          <documentation>
+            <![CDATA[ConsultaVacia]]>
+          </documentation>
+          <condition>count($consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion)&lt;=0</condition>
+          <sequence name="Sequence23">
+            <assign name="AssignVacia">
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+              </copy>
+              <copy>
+                <from>'Consulta de TCCConfiguracion Vacia'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyVacia" variable="outputVariable" partnerLink="obtenertccinicio_service"
+                   portType="ns1:ObtenerTCCInicioPT" operation="obtenerTCCInicio"/>
+            <exit name="ExitVacia"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ConsultaResultados]]>
+            </documentation>
+            <empty name="ConsultaConResultados"/>
+          </else>
+        </if>
+        <if name="IfError">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$consultarTCCConfiguracion_OutputVariable.response/ns3:Resultado/ns6:result='ERROR'</condition>
+          <sequence name="Sequence21">
+            <assign name="AssignError">
+              <copy>
+                <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:Resultado/ns6:error</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:error</to>
+              </copy>
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+              </copy>
+              <copy>
+                <from>'Error al consultar TCC Configuracion'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="fault"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <empty name="OK"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeValidarExistencias">
+      <variables>
+                
+            <variable name="consultarTermino_OutputVariable" messageType="ns18:ConsultarTerminoResponseMessage"/>
+            
+            <variable name="ConsultarComision_OutputVariable" messageType="ns17:responseConsultarComisionMessage"/>
+            <variable name="consultarCondicionbyIdOperacion_OutputVariable"
+                      messageType="ns19:ConsultarCondicionbyIdOperacionResponseMessage"/>
+      </variables>
+      <faultHandlers>
+        <catchAll>
+          <sequence name="Sequence24">
+            <assign name="AssignErrorGeneral">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+              </copy>
+              <copy>
+                <from>'Error General al Consultar Existencias'</from>
+                <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyErrorConsultarExistencias" variable="outputVariable"
+                   partnerLink="obtenertccinicio_service" portType="ns1:ObtenerTCCInicioPT"
+                   operation="obtenerTCCInicio"/>
+            <exit name="ExitConsultar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence6">
+        <scope name="ScopeConsultarTermino">
+          <variables>
+            <variable name="consultarTermino_InputVariable" messageType="ns18:ConsultarTerminoRequestMessage"/>
+            
+          </variables>
+          
+            <sequence name="Sequence10">
+              <assign name="AssignConsultarTerminoInput">
+                <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                  <from>$inputVariable.request/ns3:idOperacion</from>
+                  <to>$consultarTermino_InputVariable.request/ns22:idOperacion</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeConsultarTerminoByIdOperacion" bpelx:invokeAsDetail="no"
+                      partnerLink="ConsultarTermino" portType="ns18:ConsultarTerminoPT" operation="consultarTermino"
+                      inputVariable="consultarTermino_InputVariable" outputVariable="consultarTermino_OutputVariable"/>
+         
+          </sequence>
+        </scope>
+        <scope name="ScopeConsultarCondicion">
+          <variables>
+            <variable name="consultarCondicionbyIdOperacion_InputVariable"
+                      messageType="ns19:ConsultarCondicionbyIdOperacionRequestMessage"/>
+          </variables>
+          <sequence name="Sequence9">
+            <assign name="AssignConsultarCondicionInputVariable">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$inputVariable.request/ns3:idOperacion</from>
+                <to>$consultarCondicionbyIdOperacion_InputVariable.request/ns21:idOperacion</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarCondicionByIdOperacion" bpelx:invokeAsDetail="no"
+                    partnerLink="ConsultarCondicion" portType="ns19:ConsultarCondicionbyIdOperacionPT"
+                    operation="consultarCondicionbyIdOperacion"
+                    inputVariable="consultarCondicionbyIdOperacion_InputVariable"
+                    outputVariable="consultarCondicionbyIdOperacion_OutputVariable"/>
+          </sequence>
+        </scope>
+        <scope name="ScopeConsultarComision">
+          <variables>
+            <variable name="ConsultarComision_InputVariable" messageType="ns17:requestConsultarComisionMessage"/>
+          </variables>
+          <sequence name="Sequence11">
+            <assign name="AssignConsultarComisionInput">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$inputVariable.request/ns3:idOperacion</from>
+                <to>$ConsultarComision_InputVariable.request/ns23:idOperacion</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarComisionByIdOperacion" bpelx:invokeAsDetail="no"
+                    partnerLink="ConsultarComision" portType="ns17:ConsultarComisionPT" operation="ConsultarComision"
+                    inputVariable="ConsultarComision_InputVariable" outputVariable="ConsultarComision_OutputVariable"/>
+          </sequence>
+        </scope>
+        <forEach parallel="no" counterName="tccCount" name="ForEachTCC">
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion)</finalCounterValue>
+          <scope name="ScopeTCCConfig">
+            <sequence>
+              <forEach parallel="no" counterName="terminoCount" name="ForEachTermino">
+                <bpelx:skipCondition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$tccCount]/ns16:tipo!='TERMINO'</bpelx:skipCondition>
+                <startCounterValue>1</startCounterValue>
+                <finalCounterValue>count($consultarTermino_OutputVariable.response/ns22:Termino)</finalCounterValue>
+                <scope name="ScopeTermino">
+                  <assign name="EliminarTCCConfig">
+                    <bpelx:skipCondition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$tccCount]/ns16:idTca != $consultarTermino_OutputVariable.response/ns22:Termino[$terminoCount]/ns13:tipoTermino/ns13:idCatTermino</bpelx:skipCondition>
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>0</from>
+                      <to>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$tccCount]/ns16:idTCCConfig</to>
+                    </copy>
+                  </assign>
+                </scope>
+              </forEach>
+              <forEach parallel="no" counterName="condicionCounter" name="ForEachCondicion">
+                <bpelx:skipCondition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$tccCount]/ns16:tipo!='CONDICION'</bpelx:skipCondition>
+                <startCounterValue>1</startCounterValue>
+                <finalCounterValue>count($consultarCondicionbyIdOperacion_OutputVariable.response/ns21:ListaCondiciones/ns9:Condicion)</finalCounterValue>
+                <scope name="ScopeCondicion">
+                  <assign name="EliminarTCCConfig">
+                    <bpelx:skipCondition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$tccCount]/ns16:idTca != $consultarCondicionbyIdOperacion_OutputVariable.response/ns21:ListaCondiciones/ns9:Condicion[$condicionCounter]/ns9:tipoCondicion/ns9:idCatCondicion</bpelx:skipCondition>
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>0</from>
+                      <to>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$tccCount]/ns16:idTCCConfig</to>
+                    </copy>
+                  </assign>
+                </scope>
+              </forEach>
+              <forEach parallel="no" counterName="comisionCount" name="ForEachComision">
+                <bpelx:skipCondition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$tccCount]/ns16:tipo!='COMISION'</bpelx:skipCondition>
+                <startCounterValue>1</startCounterValue>
+                <finalCounterValue>count($ConsultarComision_OutputVariable.response/ns23:Comision)</finalCounterValue>
+                <scope name="ScopeComision">
+                   <assign name="EliminarTCCConfig">
+                    <bpelx:skipCondition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$tccCount]/ns16:idTca != $ConsultarComision_OutputVariable.response/ns23:Comision[$comisionCount]/ns14:tipoComision/ns14:idCatComision</bpelx:skipCondition>
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>0</from>
+                      <to>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$tccCount]/ns16:idTCCConfig</to>
+                    </copy>
+                  </assign>
+                </scope>
+              </forEach>
+            </sequence>
+          </scope>
+        </forEach>
+      </sequence>
+    </scope>
+    <scope name="ScopeIteraResultadoTCCConfiguracion">
+      <bpelx:skipCondition>count($consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion)=0</bpelx:skipCondition>
+      <sequence name="Sequence2">
+        <forEach parallel="no" counterName="countTCC" name="ForEachRegistro">
+          <startCounterValue>1</startCounterValue>
+          <finalCounterValue>count($consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion)</finalCounterValue>
+          <scope name="ScopeForEach">
+            <sequence name="SequenceForEach">
+              <if name="IfTipo">
+                <documentation>
+                  <![CDATA[Termino]]>
+                </documentation>
+                <condition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:tipo = 'TERMINO' and $consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:idTCCConfig != 0</condition>
+                <scope name="ScopeTERMINO">
+                  <bpelx:skipCondition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:tipo != 'TERMINO'</bpelx:skipCondition>
+                  <variables>
+                    <variable name="ConsultarTermino_InputVariable" messageType="ns18:ConsultarTerminoRequestMessage"/>
+                    <variable name="ConsultarTermino_OutputVariable"
+                              messageType="ns18:ConsultarTerminoResponseMessage"/>
+                                 <variable name="CrearTermino_InputVariable" messageType="ns18:CrearTerminoRequestMessage"/>
+                  </variables>
+                  <sequence name="Sequence5">
+                    <if name="IfPrecargaTermino">
+                      <documentation>
+                        <![CDATA[Precarga]]>
+                      </documentation>
+                      <condition>string-length($consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:idPrecarga)&gt;0</condition>
+                      <sequence name="Sequence13">
+                        <assign name="AssignConsultarTerminoPrecargaInput">
+                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                            <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:idPrecarga</from>
+                            <to>$ConsultarTermino_InputVariable.request/ns22:idTermino</to>
+                          </copy>
+                        </assign>
+                        <invoke name="InvokeConsultarTermino" bpelx:invokeAsDetail="no" partnerLink="ConsultarTermino"
+                                portType="ns18:ConsultarTerminoPT" operation="consultarTermino"
+                                inputVariable="ConsultarTermino_InputVariable"
+                                outputVariable="ConsultarTermino_OutputVariable"/>
+                        <assign name="AssignCrearTerminoInputVar">
+                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                            <from>$ConsultarTermino_OutputVariable.response/ns22:Termino[1]</from>
+                            <to>$CrearTermino_InputVariable.request/ns22:Termino</to>
+                          </copy>
+                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                            <from>xp20:current-date()</from>
+                            <to>$CrearTermino_InputVariable.request/ns22:Termino/ns13:fechaRegistro</to>
+                          </copy>
+                          <copy>
+                            <from>''</from>
+                            <to>$CrearTermino_InputVariable.request/ns22:Termino/ns13:idTermino</to>
+                          </copy>
+                          <copy>
+                            <from>$inputVariable.request/ns3:idOperacion</from>
+                            <to>$CrearTermino_InputVariable.request/ns22:Termino/ns13:operacion</to>
+                          </copy>
+                        </assign>
+                        <assign name="Assign_Nombre_Termino">
+                          <bpelx:skipCondition>string-length($CrearTermino_InputVariable.request/ns22:Termino/ns13:nombre)!=0</bpelx:skipCondition>
+                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                            <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:nombre</from>
+                            <to>$CrearTermino_InputVariable.request/ns22:Termino/ns13:nombre</to>
+                          </copy>
+                        </assign>
+                      </sequence>
+                      <else>
+                        <documentation>
+                          <![CDATA[NoPrecarga]]>
+                        </documentation>
+                        <sequence name="Sequence14">
+                          <assign name="AssignTerminoDefault">
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>$inputVariable.request/ns3:idOperacion</from>
+                              <to>$CrearTermino_InputVariable.request/ns22:Termino/ns13:operacion</to>
+                            </copy>
+                            <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                              <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:nombre</from>
+                              <to>$CrearTermino_InputVariable.request/ns22:Termino/ns13:nombre</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:idTca</from>
+                              <to>$CrearTermino_InputVariable.request/ns22:Termino/ns13:tipoTermino/ns13:idCatTermino</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>xp20:current-date()</from>
+                              <to>$CrearTermino_InputVariable.request/ns22:Termino/ns13:fechaRegistro</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>true()</from>
+                              <to>$CrearTermino_InputVariable.request/ns22:Termino/ns13:estado</to>
+                            </copy>
+                          </assign>
+                        </sequence>
+                      </else>
+                    </if>
+                    <scope name="ScopeCrearTermino">
+                      <variables>
+                     
+                        <variable name="CrearTermino_OutputVariable" messageType="ns18:CrearTerminoResponseMessage"/>
+                      </variables>
+                      <faultHandlers>
+                        <catchAll>
+                          <empty name="Continua"/>
+                        </catchAll>
+                      </faultHandlers>
+                      <sequence>
+                        <if name="IfMandatoria">
+                          <documentation>
+                            <![CDATA[Mandatoria]]>
+                          </documentation>
+                          <condition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:esMandatorio=1</condition>
+                          <assign name="AssignMandatoria">
+                            <copy>
+                              <from>8</from>
+                              <to>$CrearTermino_InputVariable.request/ns22:Termino/ns13:estadoTCC/ns11:id</to>
+                            </copy>
+                          </assign>
+                          <else>
+                            <documentation>
+                              <![CDATA[Sugerida]]>
+                            </documentation>
+                            <assign name="AssignSugerida">
+                              <copy>
+                                <from>1</from>
+                                <to>$CrearTermino_InputVariable.request/ns22:Termino/ns13:estadoTCC/ns11:id</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                        <invoke name="InvokeCrearTermino" bpelx:invokeAsDetail="no" partnerLink="CrearTermino"
+                                portType="ns18:TerminoPT" operation="crearTermino"
+                                inputVariable="CrearTermino_InputVariable"
+                                outputVariable="CrearTermino_OutputVariable"/>
+                        <if name="IfError">
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <condition>$CrearTermino_OutputVariable.response/ns22:Resultado/ns6:result = 'ERROR'</condition>
+                          <sequence name="Sequence16">
+                            <assign name="AssignErrorCrearTermino">
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>'ERROR'</from>
+                                <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                              </copy>
+                              <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                <from>$CrearTermino_OutputVariable.response/ns22:Resultado/ns6:message</from>
+                                <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$CrearTermino_OutputVariable.response/ns22:Resultado/ns6:error</from>
+                                <to>$outputVariable.response/ns3:Resultado/ns6:error</to>
+                              </copy>
+                            </assign>
+                            <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                          </sequence>
+                          <else>
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <empty name="TerminoCreado"/>
+                          </else>
+                        </if>
+                      </sequence>
+                    </scope>
+                  </sequence>
+                </scope>
+                <elseif>
+                  <documentation>
+                    <![CDATA[Condicion]]>
+                  </documentation>
+                  <condition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:tipo = 'CONDICION' and $consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:idTCCConfig != 0</condition>
+                  <sequence name="Sequence25">
+                    <scope name="ScopeCONDICION">
+                      <bpelx:skipCondition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:tipo != 'CONDICION'</bpelx:skipCondition>
+                      <variables>
+                        <variable name="ConsultarCondicion_InputVariable"
+                                  messageType="ns19:ConsultarCondicionbyIdOperacionRequestMessage"/>
+                        <variable name="ConsultarCondicionbyIdOperacion_OutputVariable"
+                                  messageType="ns19:ConsultarCondicionbyIdOperacionResponseMessage"/>
+                        <variable name="CrearCondicion_InputVariable" messageType="ns19:CrearCondicionRequestMessage"/>
+                      </variables>
+                      <sequence name="Sequence4">
+                        <if name="IfPrecargaCondicion">
+                          <documentation>
+                            <![CDATA[idPrecarga]]>
+                          </documentation>
+                          <condition>string-length($consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:idPrecarga)&gt;0</condition>
+                          <sequence name="Sequence17">
+                            <assign name="AssignConsultarCondicion">
+                              <copy>
+                                <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:idPrecarga</from>
+                                <to>$ConsultarCondicion_InputVariable.request/ns21:idCondicion</to>
+                              </copy>
+                            </assign>
+                            <invoke name="InvokeConsultarCondicion" bpelx:invokeAsDetail="no"
+                                    partnerLink="ConsultarCondicion" portType="ns19:ConsultarCondicionbyIdOperacionPT"
+                                    operation="consultarCondicionbyIdOperacion"
+                                    inputVariable="ConsultarCondicion_InputVariable"
+                                    outputVariable="ConsultarCondicionbyIdOperacion_OutputVariable"/>
+                            <assign name="AssignCrearCondicionInput">
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$ConsultarCondicionbyIdOperacion_OutputVariable.response/ns21:ListaCondiciones/ns9:Condicion[1]</from>
+                                <to>$CrearCondicion_InputVariable.request/ns21:Condicion</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>xp20:current-date()</from>
+                                <to>$CrearCondicion_InputVariable.request/ns21:Condicion/ns9:fechaRegistro</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>''</from>
+                                <to>$CrearCondicion_InputVariable.request/ns21:Condicion/ns9:idCondicion</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$inputVariable.request/ns3:idOperacion</from>
+                                <to>$CrearCondicion_InputVariable.request/ns21:Condicion/ns9:operacion</to>
+                              </copy>
+                            </assign>
+                            <assign name="Assign_Nombre_Condicion">
+                              <bpelx:skipCondition>string-length($CrearCondicion_InputVariable.request/ns21:Condicion/ns9:nombre)!=0</bpelx:skipCondition>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:nombre</from>
+                                <to>$CrearCondicion_InputVariable.request/ns21:Condicion/ns9:idCondicion</to>
+                              </copy>
+                            </assign>
+                          </sequence>
+                          <else>
+                            <documentation>
+                              <![CDATA[NOidPrecarga]]>
+                            </documentation>
+                            <assign name="AssignCondicionDefault">
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>''</from>
+                                <to>$CrearCondicion_InputVariable.request/ns21:Condicion/ns9:idCondicion</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:nombre</from>
+                                <to>$CrearCondicion_InputVariable.request/ns21:Condicion/ns9:nombre</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$inputVariable.request/ns3:idOperacion</from>
+                                <to>$CrearCondicion_InputVariable.request/ns21:Condicion/ns9:operacion</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:idTca</from>
+                                <to>$CrearCondicion_InputVariable.request/ns21:Condicion/ns9:tipoCondicion/ns9:idCatCondicion</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>xp20:current-date()</from>
+                                <to>$CrearCondicion_InputVariable.request/ns21:Condicion/ns9:tipoCondicion/ns9:fechaRegistro</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>true()</from>
+                                <to>$CrearCondicion_InputVariable.request/ns21:Condicion/ns9:tipoCondicion/ns9:estado</to>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                        <scope name="ScopeCrearCondicion">
+                          <variables>
+                            <variable name="CrearCondicion_OutputVariable"
+                                      messageType="ns19:CrearCondicionResponseMessage"/>
+                          </variables>
+                          <faultHandlers>
+                            <catchAll>
+                              <empty name="Continua"/>
+                            </catchAll>
+                          </faultHandlers>
+                          <sequence name="Sequence18">
+                            <if name="IfMandatoria">
+                              <documentation>
+                                <![CDATA[Mandatoria]]>
+                              </documentation>
+                              <condition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:esMandatorio=1</condition>
+                              <assign name="AssignMandatoria">
+                                <copy>
+                                  <from>8</from>
+                                  <to>$CrearCondicion_InputVariable.request/ns21:Condicion/ns9:estadoTCC/ns11:id</to>
+                                </copy>
+                              </assign>
+                              <else>
+                                <documentation>
+                                  <![CDATA[Sugerida]]>
+                                </documentation>
+                                <assign name="AssignSugerida">
+                                  <copy>
+                                    <from>1</from>
+                                    <to>$CrearCondicion_InputVariable.request/ns21:Condicion/ns9:estadoTCC/ns11:id</to>
+                                  </copy>
+                                </assign>
+                              </else>
+                            </if>
+                            <invoke name="InvokeCrearCondicion" bpelx:invokeAsDetail="no" partnerLink="CrearCondicion"
+                                    portType="ns19:CondicionPT" operation="crearCondicion"
+                                    inputVariable="CrearCondicion_InputVariable"
+                                    outputVariable="CrearCondicion_OutputVariable"/>
+                            <if name="IfError">
+                              <documentation>
+                                <![CDATA[ERROR]]>
+                              </documentation>
+                              <condition>$CrearCondicion_OutputVariable.response/ns21:Resultado/ns6:result = 'ERROR'</condition>
+                              <sequence name="Sequence16">
+                                <assign name="AssignErrorCrearCondicion">
+                                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                    <from>'ERROR'</from>
+                                    <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                                  </copy>
+                                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                    <from>$CrearCondicion_OutputVariable.response/ns21:Resultado/ns6:error</from>
+                                    <to>$outputVariable.response/ns3:Resultado/ns6:error</to>
+                                  </copy>
+                                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                    <from>$CrearCondicion_OutputVariable.response/ns21:Resultado/ns6:message</from>
+                                    <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                                  </copy>
+                                </assign>
+                                <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                              </sequence>
+                              <else>
+                                <documentation>
+                                  <![CDATA[OK]]>
+                                </documentation>
+                                <empty name="CondicionCreada"/>
+                              </else>
+                            </if>
+                            <scope name="ScopeCategoriaCondicion">
+                              <bpelx:skipCondition>count($ConsultarCondicionbyIdOperacion_OutputVariable.response/ns21:ListaCondiciones/ns9:Condicion[1]/ns9:categoriaCondicion)=0</bpelx:skipCondition>
+                              <variables>
+                                <variable name="crearTreCategoriaCondicion_InputVariable"
+                                          messageType="ns28:CrearTreCategoriaCondicionRequestMessage"/>
+                                <variable name="crearTreCategoriaCondicion_OutputVariable"
+                                          messageType="ns28:CrearTreCategoriaCondicionResponseMessage"/>
+                              </variables>
+                              <faultHandlers>
+                                <catchAll>
+                                  <empty name="Erro_CrearCategorias"/>
+                                </catchAll>
+                              </faultHandlers>
+                              <sequence name="Sequence26">
+                                <assign name="Assign_CrearTreCategoriaCondicion_Input">
+                                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                    <from>$ConsultarCondicionbyIdOperacion_OutputVariable.response/ns21:ListaCondiciones/ns9:Condicion[1]/ns9:categoriaCondicion</from>
+                                    <to>$crearTreCategoriaCondicion_InputVariable.request/ns21:TreCategoriaCondicion/ns9:categoriaCondicion</to>
+                                  </copy>
+                                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                    <from>$CrearCondicion_OutputVariable.response/ns21:codigoContrato</from>
+                                    <to>$crearTreCategoriaCondicion_InputVariable.request/ns21:TreCategoriaCondicion/ns9:idCondicion</to>
+                                  </copy>
+                                </assign>
+                                <invoke name="InvokeTreCrearCategoriaCondicion" bpelx:invokeAsDetail="no"
+                                        partnerLink="CrearTreCategoriaCondicion"
+                                        portType="ns28:CrearTreCategoriaCondicion_PT"
+                                        operation="CrearTreCategoriaCondicion"
+                                        inputVariable="crearTreCategoriaCondicion_InputVariable"
+                                        outputVariable="crearTreCategoriaCondicion_OutputVariable"/>
+                              </sequence>
+                            </scope>
+                          </sequence>
+                        </scope>
+                      </sequence>
+                    </scope>
+                  </sequence>
+                </elseif>
+                <elseif>
+                  <documentation>
+                    <![CDATA[Comision]]>
+                  </documentation>
+                  <condition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:tipo = 'COMISION' and $consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:idTCCConfig != 0</condition>
+                  <scope name="ScopeCOMISION">
+                    <bpelx:skipCondition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:tipo != 'COMISION'</bpelx:skipCondition>
+                    <variables>
+                      <variable name="ConsultarComision_InputVariable"
+                                messageType="ns17:requestConsultarComisionMessage"/>
+                      <variable name="ConsultarComision_OutputVariable"
+                                messageType="ns17:responseConsultarComisionMessage"/>
+                                <variable name="CrearComision_InputVariable" messageType="ns20:CrearComisionRequestMessage"/>
+                    </variables>
+                    <sequence name="Sequence3">
+                      <if name="IfPrecargaComision">
+                        <documentation>
+                          <![CDATA[idPrecarga]]>
+                        </documentation>
+                        <condition>string-length($consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:idPrecarga)&gt;0</condition>
+                        <sequence name="Sequence20">
+                          <assign name="AssignConsultarComisionInput">
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:idPrecarga</from>
+                              <to>$ConsultarComision_InputVariable.request/ns23:idComision</to>
+                            </copy>
+                          </assign>
+                          <invoke name="InvokeConsultarComision" bpelx:invokeAsDetail="no" partnerLink="ConsultarComision"
+                                  portType="ns17:ConsultarComisionPT" operation="ConsultarComision"
+                                  inputVariable="ConsultarComision_InputVariable"
+                                  outputVariable="ConsultarComision_OutputVariable"/>
+                          <assign name="AssignCrearComision">
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>$ConsultarComision_OutputVariable.response/ns23:Comision</from>
+                              <to>$CrearComision_InputVariable.request/ns23:Comision</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>$inputVariable.request/ns3:idOperacion</from>
+                              <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:idOperacion</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>''</from>
+                              <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:idComision</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>xp20:current-date()</from>
+                              <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:baseCalculo</to>
+                            </copy>
+                          </assign>
+                          <assign name="Assign_Nombre_Comision">
+                            <bpelx:skipCondition>string-length($CrearComision_InputVariable.request/ns23:Comision/ns14:nombre)!=0</bpelx:skipCondition>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:nombre</from>
+                              <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:nombre</to>
+                            </copy>
+                          </assign>
+                        </sequence>
+                        <else>
+                          <documentation>
+                            <![CDATA[NOidPrecarga]]>
+                          </documentation>
+                          <assign name="AssignComisionDefault">
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:idTca</from>
+                              <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:tipoComision/ns14:idCatComision</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:nombre</from>
+                              <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:nombre</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>xp20:current-date()</from>
+                              <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:fechaRegistro</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>true()</from>
+                              <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:estado</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>''</from>
+                              <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:idComision</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>$inputVariable.request/ns3:idOperacion</from>
+                              <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:idOperacion</to>
+                            </copy>
+                            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                              <from>0</from>
+                              <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:banSugerida</to>
+                            </copy>
+                          </assign>
+                        </else>
+                      </if>
+                      <scope name="ScopeCrearComision">
+                        <variables>
+                          
+                          <variable name="CrearComision_OutputVariable"
+                                    messageType="ns20:CrearComisionResponseMessage"/>
+                        </variables>
+                        <faultHandlers>
+                          <catchAll>
+                            <empty name="Continua"/>
+                          </catchAll>
+                        </faultHandlers>
+                        <sequence name="Sequence19">
+                           <if name="IfMandatoria">
+                          <documentation>
+                            <![CDATA[Mandatoria]]>
+                          </documentation>
+                          <condition>$consultarTCCConfiguracion_OutputVariable.response/ns3:ListaTCCConfiguracion/ns16:TCCConfiguracion[$countTCC]/ns16:esMandatorio=1</condition>
+                          <assign name="AssignMandatoria">
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                <from>8</from>
+                                <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:estadoTCC/ns11:id</to>
+                              </copy>
+                            </assign>
+                          <else>
+                            <documentation>
+                              <![CDATA[Sugerida]]>
+                            </documentation>
+                            <assign name="AssignSugerida">
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>1</from>
+                                  <to>$CrearComision_InputVariable.request/ns23:Comision/ns14:estadoTCC/ns11:id</to>
+                                </copy>
+                              </assign>
+                          </else>
+                        </if>
+                      
+                          <invoke name="InvokeCrearComision" bpelx:invokeAsDetail="no" partnerLink="CrearComision"
+                                  portType="ns20:CrearComisionPT" operation="crearComision"
+                                  inputVariable="CrearComision_InputVariable"
+                                  outputVariable="CrearComision_OutputVariable"/>
+                                  
+                                  <if name="IfError">
+                            <documentation>
+                              <![CDATA[ERROR]]>
+                            </documentation>
+                            <condition>$CrearComision_OutputVariable.response/ns23:Resultado/ns6:result = 'ERROR'</condition>
+                          <sequence name="Sequence16">
+                            <assign name="AssignErrorCrearComision">
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>'ERROR'</from>
+                                  <to>$outputVariable.response/ns3:Resultado/ns6:result</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$CrearComision_OutputVariable.response/ns23:Resultado/ns6:error</from>
+                                  <to>$outputVariable.response/ns3:Resultado/ns6:error</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$CrearComision_OutputVariable.response/ns23:Resultado/ns6:message</from>
+                                  <to>$outputVariable.response/ns3:Resultado/ns6:message</to>
+                                </copy>
+                              </assign>
+                            <throw name="ThrowError" faultName="bpelx:remoteFault"/>
+                          </sequence>
+                          <else>
+                              <documentation>
+                                <![CDATA[OK]]>
+                              </documentation>
+                              <empty name="ComisionCreada"/>
+                          </else>
+                        </if>
+                        </sequence>
+                      </scope>
+                    </sequence>
+                  </scope>
+                </elseif>
+                <else>
+                  <documentation>
+                    <![CDATA[Ninguno]]>
+                  </documentation>
+                  <empty name="Ninguno"/>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+        </forEach>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="obtenertccinicio_service" portType="ns1:ObtenerTCCInicioPT" operation="obtenerTCCInicio" variable="outputVariable"/>
+  </sequence>
+</process>

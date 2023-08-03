@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con4="http://www.bea.com/wli/sb/stages/transform/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="true" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="MDS/Resources/ComponentesComunes/DominioOperacion/Evaluacion/V1/Wsdl/ADAPTER/EnviarEvaluacionSAD"/>
+            <con:binding>
+                <con:name>EnviarEvaluacionPTSOAP12Bnd</con:name>
+                <con:namespace>http://xmlns.bcie.com/EnviarEvaluacion</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="request" name="request-a050a59.5b2b40c4.0.160755360c5.N7fe9">
+            <con:stage id="_StageId-a050a59.5b2b40c4.0.160755360c5.N7fe7" name="StageRequest">
+                <con:context>
+                    <con2:userNsDecl prefix="eval" namespace="http://www.bcie.org/EvaluacionMO"/>
+                </con:context>
+                <con:actions>
+                    <con3:log>
+                        <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7fd1</con2:id>
+                        <con3:logLevel>info</con3:logLevel>
+                        <con3:expr>
+                            <con2:xqueryText>$body/eval:EnviarEvaluacionRequest</con2:xqueryText>
+                        </con3:expr>
+                        <con3:message>EnviarEvaluacionRq-EnviarEvaluacionPP</con3:message>
+                    </con3:log>
+                    <con4:assign varName="varEnviarEvaluacionRq">
+                        <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7fde</con2:id>
+                        <con4:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/EVAL/EnviarEvaluacion/XQUERY/PipelineRq_To_EnviarEvaluacionRq"/>
+                                <con2:param name="EnviarEvaluacionRequest">
+                                    <con2:path>$body/eval:EnviarEvaluacionRequest</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con4:expr>
+                    </con4:assign>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-a050a59.5b2b40c4.0.160755360c5.N7fe8">
+            <con:stage id="_StageId-a050a59.5b2b40c4.0.160755360c5.N7fe6" name="StageResponse">
+                <con:context>
+                    <con2:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO"/>
+                    <con2:userNsDecl prefix="eval" namespace="http://www.bcie.org/EvaluacionMO"/>
+                    <con2:userNsDecl prefix="err" namespace="http://www.bcie.org/ErrorBO"/>
+                </con:context>
+                <con:actions>
+                    <con3:log>
+                        <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7fce</con2:id>
+                        <con3:logLevel>info</con3:logLevel>
+                        <con3:expr>
+                            <con2:xqueryText>$body/eval:EnviarEvaluacionResponse</con2:xqueryText>
+                        </con3:expr>
+                        <con3:message>EnviarEvaluacionRs-EnviarEvaluacionPP</con3:message>
+                    </con3:log>
+                    <con4:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7fd4</con2:id>
+                        <con4:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con4:location>
+                        <con4:expr>
+                            <con2:xqueryText>$varEnviarEvaluacionRs</con2:xqueryText>
+                        </con4:expr>
+                    </con4:replace>
+                    <con4:ifThenElse>
+                        <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f72</con2:id>
+                        <con4:case id="_BranchId-a050a59.5b2b40c4.0.160755360c5.N7f71">
+                            <con4:condition>
+                                <con2:xqueryConditionExpr>
+                                    <con2:compExpr operator="!=">
+                                        <con2:leftPath>$body/eval:EnviarEvaluacionResponse/eval:Resultado/res:result</con2:leftPath>
+                                        <con2:rightPath>'OK'</con2:rightPath>
+                                    </con2:compExpr>
+                                </con2:xqueryConditionExpr>
+                            </con4:condition>
+                            <con4:actions>
+                                <con4:assign varName="varEnviarCorreoRq">
+                                    <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f6e</con2:id>
+                                    <con4:expr>
+                                        <con2:xqueryTransform>
+                                            <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                                            <con2:param name="Accion">
+                                                <con2:path>'Enviar Evaluación'</con2:path>
+                                            </con2:param>
+                                            <con2:param name="MensajeDeError">
+                                                <con2:path>concat($body/eval:EnviarEvaluacionResponse/eval:Resultado/res:message,' ',$body/eval:EnviarEvaluacionResponse/eval:Resultado/res:error/err:errorDescription)</con2:path>
+                                            </con2:param>
+                                        </con2:xqueryTransform>
+                                    </con4:expr>
+                                </con4:assign>
+                                <con4:wsCallout>
+                                    <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f6b</con2:id>
+                                    <con4:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con4:operation>enviarCorreoElectronico</con4:operation>
+                                    <con4:request>
+                                        <con4:body wrapped="false">varEnviarCorreoRq</con4:body>
+                                    </con4:request>
+                                    <con4:response>
+                                        <con4:body wrapped="false">varEnviarCorreoRs</con4:body>
+                                    </con4:response>
+                                    <con4:requestTransform>
+                                        <con3:log>
+                                            <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f68</con2:id>
+                                            <con3:logLevel>info</con3:logLevel>
+                                            <con3:expr>
+                                                <con2:xqueryText>$varEnviarCorreoRq</con2:xqueryText>
+                                            </con3:expr>
+                                            <con3:message>varEnviarCorreoRq-EnviarEvaluacionPP</con3:message>
+                                        </con3:log>
+                                    </con4:requestTransform>
+                                    <con4:responseTransform>
+                                        <con3:log>
+                                            <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f65</con2:id>
+                                            <con3:logLevel>info</con3:logLevel>
+                                            <con3:expr>
+                                                <con2:xqueryText>$varEnviarCorreoRs</con2:xqueryText>
+                                            </con3:expr>
+                                            <con3:message>varEnviarCorreoRs-EnviarEvaluacionPP</con3:message>
+                                        </con3:log>
+                                    </con4:responseTransform>
+                                </con4:wsCallout>
+                            </con4:actions>
+                        </con4:case>
+                        <con4:default/>
+                    </con4:ifThenElse>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="error" name="error-a050a59.5b2b40c4.0.160755360c5.N7f92">
+            <con:stage id="_StageId-a050a59.5b2b40c4.0.160755360c5.N7f91" name="StageErrorHandler">
+                <con:context>
+                    <con2:userNsDecl prefix="res" namespace="http://www.bcie.org/ResultBO"/>
+                    <con2:userNsDecl prefix="eval" namespace="http://www.bcie.org/EvaluacionMO"/>
+                    <con2:userNsDecl prefix="err" namespace="http://www.bcie.org/ErrorBO"/>
+                </con:context>
+                <con:actions>
+                    <con3:log>
+                        <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f8e</con2:id>
+                        <con3:logLevel>info</con3:logLevel>
+                        <con3:expr>
+                            <con2:xqueryText>$body</con2:xqueryText>
+                        </con3:expr>
+                        <con3:message>Error-EnviarEvaluacionPPEH</con3:message>
+                    </con3:log>
+                    <con4:assign varName="varError">
+                        <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f8b</con2:id>
+                        <con4:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/EVAL/EnviarEvaluacion/XQUERY/Error_TO_EnviarEvaluacionPipelineRs"/>
+                                <con2:param name="message">
+                                    <con2:path>fn:data($bosy/soap12-env:Fault/soap12-env:Reason)</con2:path>
+                                </con2:param>
+                                <con2:param name="errorType">
+                                    <con2:path>fn:data($fault/ctx:reason)</con2:path>
+                                </con2:param>
+                                <con2:param name="errorDescripcion">
+                                    <con2:path>fn:data($fault/ctx:details)</con2:path>
+                                </con2:param>
+                                <con2:param name="errorCode">
+                                    <con2:path>fn:data($fault/ctx:errorCode)</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con4:expr>
+                    </con4:assign>
+                    <con4:replace varName="body" contents-only="true">
+                        <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f88</con2:id>
+                        <con4:location>
+                            <con2:xpathText>.</con2:xpathText>
+                        </con4:location>
+                        <con4:expr>
+                            <con2:xqueryText>$varError</con2:xqueryText>
+                        </con4:expr>
+                    </con4:replace>
+                    <con4:assign varName="varEnviarCorreoRq">
+                        <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f82</con2:id>
+                        <con4:expr>
+                            <con2:xqueryTransform>
+                                <con2:resource ref="ADAPTADORES/Proveedores/FLEXCUBE/CrearClienteFLEXCUBE/XQUERY/Excepcion_To_EnviarCorreoElectronico"/>
+                                <con2:param name="Accion">
+                                    <con2:path>'Enviar Evaluación'</con2:path>
+                                </con2:param>
+                                <con2:param name="MensajeDeError">
+                                    <con2:path>concat($body/eval:EnviarEvaluacionResponse/eval:Resultado/res:message,' ' ,$body/eval:EnviarEvaluacionResponse/eval:Resultado/res:error/err:errorDescription)</con2:path>
+                                </con2:param>
+                            </con2:xqueryTransform>
+                        </con4:expr>
+                    </con4:assign>
+                    <con4:wsCallout>
+                        <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f7f</con2:id>
+                        <con4:service ref="COMPOSICIONES/Entidades/Utilidades/EnviarCorreoElectronico/PS/EnviarCorreoService_PS" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con4:operation>enviarCorreoElectronico</con4:operation>
+                        <con4:request>
+                            <con4:body wrapped="false">varEnviarCorreoRq</con4:body>
+                        </con4:request>
+                        <con4:response>
+                            <con4:body wrapped="false">varEnviarCorreoRs</con4:body>
+                        </con4:response>
+                        <con4:requestTransform>
+                            <con3:log>
+                                <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f7c</con2:id>
+                                <con3:logLevel>info</con3:logLevel>
+                                <con3:expr>
+                                    <con2:xqueryText>$varEnviarCorreoRq</con2:xqueryText>
+                                </con3:expr>
+                                <con3:message>varEnviarCorreoRq-EnviarEvaluacionPPEH</con3:message>
+                            </con3:log>
+                        </con4:requestTransform>
+                        <con4:responseTransform>
+                            <con3:log>
+                                <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f79</con2:id>
+                                <con3:logLevel>info</con3:logLevel>
+                                <con3:expr>
+                                    <con2:xqueryText>$varEnviarCorreoRs</con2:xqueryText>
+                                </con3:expr>
+                                <con3:message>varEnviarCorreoRs-EnviarEvaluacionPPEH</con3:message>
+                            </con3:log>
+                        </con4:responseTransform>
+                    </con4:wsCallout>
+                    <con2:reply>
+                        <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7f85</con2:id>
+                    </con2:reply>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:branch-node type="operation" id="_FlowId-a050a59.5b2b40c4.0.160755360c5.N7fea" name="BranchEnviarOperacion">
+                <con:context/>
+                <con:branch-table>
+                    <con:branch name="EnviarEvaluacion">
+                        <con:operator>equals</con:operator>
+                        <con:value/>
+                        <con:flow>
+                            <con:pipeline-node name="PipelineEnviarOperacion">
+                                <con:request>request-a050a59.5b2b40c4.0.160755360c5.N7fe9</con:request>
+                                <con:response>response-a050a59.5b2b40c4.0.160755360c5.N7fe8</con:response>
+                            </con:pipeline-node>
+                            <con:route-node name="RouteEnviarOperacion" error-handler="error-a050a59.5b2b40c4.0.160755360c5.N7f92">
+                                <con:context>
+                                    <con2:userNsDecl prefix="eval" namespace="http://www.bcie.org/EvaluacionMO"/>
+                                </con:context>
+                                <con:actions>
+                                    <con1:route>
+                                        <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7fe1</con2:id>
+                                        <con1:service ref="ADAPTADORES/Proveedores/EVAL/BS/EVAL" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                        <con1:operation>enviarEvaluacion</con1:operation>
+                                        <con1:outboundTransform>
+                                            <con4:replace varName="body" contents-only="true">
+                                                <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7fd7</con2:id>
+                                                <con4:location>
+                                                    <con2:xpathText>.</con2:xpathText>
+                                                </con4:location>
+                                                <con4:expr>
+                                                    <con2:xqueryText>$varEnviarEvaluacionRq</con2:xqueryText>
+                                                </con4:expr>
+                                            </con4:replace>
+                                        </con1:outboundTransform>
+                                        <con1:responseTransform>
+                                            <con4:assign varName="varEnviarEvaluacionRs">
+                                                <con2:id>_ActionId-a050a59.5b2b40c4.0.160755360c5.N7fdb</con2:id>
+                                                <con4:expr>
+                                                    <con2:xqueryTransform>
+                                                        <con2:resource ref="ADAPTADORES/Proveedores/EVAL/EnviarEvaluacion/XQUERY/EnviarEvaluacionRs_To_PipelineRs"/>
+                                                        <con2:param name="enviarEvaluacionResponse">
+                                                            <con2:path>$body/*</con2:path>
+                                                        </con2:param>
+                                                    </con2:xqueryTransform>
+                                                </con4:expr>
+                                            </con4:assign>
+                                        </con1:responseTransform>
+                                    </con1:route>
+                                </con:actions>
+                            </con:route-node>
+                        </con:flow>
+                    </con:branch>
+                    <con:default-branch>
+                        <con:flow/>
+                    </con:default-branch>
+                </con:branch-table>
+            </con:branch-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

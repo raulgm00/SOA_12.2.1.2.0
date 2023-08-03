@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="Applications/RetailMerchandising/RPM/RPMPriceChange/Resources/RPMApprovedPriceChangeDBListenerPXY-concrete"/>
+            <con:binding>
+                <con:name>RPMApprovedPriceChangeDBListenerPXY_ptt-binding</con:name>
+                <con:namespace>http://xmlns.oracle.com/pcbpel/adapter/db/PriceChangeTaskSvcApp/PriceChangeTaskSvc/RPMApprovedPriceChangeDBListenerPXY</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline name="RPMReceivePriceChange_response" type="response"/>
+        <con:pipeline name="RPMReceivePriceChange_request" type="request">
+            <con:stage name="stage1">
+                <con:context>
+                    <con1:varNsDecl prefix="rpm" namespace="http://xmlns.oracle.com/pcbpel/adapter/db/top/RPMApprovedPriceChangeDBListenerPXY" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                </con:context>
+                <con:actions>
+                    <con:log xmlns:con="http://www.bea.com/wli/sb/stages/logging/config">
+                        <con1:id xmlns:con1="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.N5ed29252.e.16b680b70cb.N8000</con1:id>
+                        <con:logLevel>warning</con:logLevel>
+                        <con:expr>
+                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$body</con:xqueryText>
+                        </con:expr>
+                        <con:message>[RPM PRICE CHANGE RECEIVED]</con:message>
+                    </con:log>
+                    <con1:ifThenElse xmlns:con1="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.a.16be7bc7dc3.N7fff</con2:id>
+                        <con1:case>
+                            <con1:condition>
+                                <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:evType = 'C'</con:xqueryText>
+                            </con1:condition>
+                            <con1:actions>
+                                <con2:route xmlns:con2="http://www.bea.com/wli/sb/stages/publish/config">
+                                    <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.a.16be7bc7dc3.N7ffd</con3:id>
+                                    <con2:service ref="RetailOperations/Buy/CostChangeTaskSvc/PS/CostChangeTaskSvcPXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                    <con2:operation>saveCostChangeEventData</con2:operation>
+                                    <con2:outboundTransform>
+                                        <con1:replace varName="body" contents-only="true">
+                                            <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.1.16bddc24b8f.N7fe0</con3:id>
+                                            <con1:location>
+                                                <con:xpathText xmlns:con="http://www.bea.com/wli/sb/stages/config">.</con:xpathText>
+                                            </con1:location>
+                                            <con1:expr>
+                                                <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<cos:saveCostChangeEventDataRequest xmlns:cos="http://mx.agarcia.ea/Capabilities/Foundation/Party/CostChangeTask"
+xmlns:v1="http://mx.agarcia.ea/Canonical/Commons/ChangeCost/v1" >
+         <cos:event>
+            <v1:id  Name="{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:evDesc)}" type="{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:evType)}">{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:pcExportId)}</v1:id>
+
+            <v1:effectiveDate>{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:startDt)}</v1:effectiveDate>
+            <v1:expirationDate>{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:endDt)}</v1:expirationDate>
+            <v1:scope>{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:levelCd)}</v1:scope>
+            <v1:cause>{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:reasonCd)}</v1:cause>
+            <v1:status>{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:exportFlg)}</v1:status>
+            <v1:currency>MXN</v1:currency>
+            <v1:userRequestor>
+                               <v1:id help="AGARCIA_SOA">{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:createdBy)}</v1:id>
+            </v1:userRequestor>
+            
+         </cos:event>
+ </cos:saveCostChangeEventDataRequest>]]></con:xqueryText>
+                                            </con1:expr>
+                                        </con1:replace>
+                                        <con3:log xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config">
+                                            <con4:id xmlns:con4="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.a.16be7bc7dc3.N7ffc</con4:id>
+                                            <con3:logLevel>warning</con3:logLevel>
+                                            <con3:expr>
+                                                <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$body</con:xqueryText>
+                                            </con3:expr>
+                                            <con3:message>[INVOKING COST CHANGE TASK SERVICE]</con3:message>
+                                        </con3:log>
+                                    </con2:outboundTransform>
+                                </con2:route>
+                            </con1:actions>
+                        </con1:case>
+                        <con1:default>
+                            <con1:route xmlns:con1="http://www.bea.com/wli/sb/stages/publish/config">
+                                <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.3.16be1a9a8b1.N7ff4</con2:id>
+                                <con1:service ref="RetailOperations/SellService/PriceChangeTaskSvc/PS/PriceChangeTaskSvcPXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con1:operation>savePriceChangeEventData</con1:operation>
+                                <con1:outboundTransform>
+                                    <con2:replace varName="body" contents-only="true" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                        <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.3.16be1a9a8b1.N7ff3</con3:id>
+                                        <con2:location>
+                                            <con:xpathText xmlns:con="http://www.bea.com/wli/sb/stages/config">.</con:xpathText>
+                                        </con2:location>
+                                        <con2:expr>
+                                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<v1:savePriceChangeEventData xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:v1="http://mx.agarcia.ea/RetailOperations/SellService/PriceChangeTaskSvc/v1" xmlns:v11="http://mx.agarcia.ea/Canonical/Commons/ChangePrice/v1" xmlns:v12="http://mx.agarcia.ea/Canonical/Commons/RetailStore/v1" xmlns:v13="http://mx.agarcia.ea/Canonical/Commons/Items/v1" xmlns:v14="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1">
+         <v1:event>
+            <v11:idType Name="{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:evDesc)}" type="{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:evType)}">{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:pcExportId)}</v11:idType>
+            <v11:effectiveDate>{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:startDt)}</v11:effectiveDate>
+            <v11:expirationDate>{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:endDt)}</v11:expirationDate>
+            <v11:scope>{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:levelCd)}</v11:scope>
+            <v11:cause>{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:reasonCd)}</v11:cause>
+            <v11:status>{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:exportFlg)}</v11:status>
+            <v11:currency>MXN</v11:currency>
+            <v11:userRequestor>
+                               <v11:id help="AGARCIA_SOA">{data($body/rpm:XxPcExportHeadCollection/rpm:XxPcExportHead/rpm:createdBy)}</v11:id>
+            </v11:userRequestor>
+            <v11:retailStores>
+               <v11:retailStore>
+                  <v12:storeID>?</v12:storeID>
+              </v11:retailStore>
+            </v11:retailStores>
+
+
+
+
+         </v1:event>
+      </v1:savePriceChangeEventData>]]></con:xqueryText>
+                                        </con2:expr>
+                                    </con2:replace>
+                                    <con:log xmlns:con="http://www.bea.com/wli/sb/stages/logging/config">
+                                        <con1:id xmlns:con1="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.3.16be1a9a8b1.N7ff2</con1:id>
+                                        <con:logLevel>warning</con:logLevel>
+                                        <con:expr>
+                                            <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">$body</con:xqueryText>
+                                        </con:expr>
+                                        <con:message>[INVOKING PRICE CHANGE TASK SERVICE]</con:message>
+                                    </con:log>
+                                </con1:outboundTransform>
+                            </con1:route>
+                        </con1:default>
+                    </con1:ifThenElse>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="RPMReceivePriceChange">
+                <con:comment/>
+                <con:request>RPMReceivePriceChange_request</con:request>
+                <con:response>RPMReceivePriceChange_response</con:response>
+            </con:pipeline-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

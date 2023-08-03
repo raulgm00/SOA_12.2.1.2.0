@@ -1,0 +1,523 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Jan 14 19:03:57 CST 2016
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CrearClienteDefinitivo_BPEL"
+         targetNamespace="http://xmlns.oracle.com/DominioCliente/CrearClienteDefinitivo/CrearClienteDefinitivo"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:client="http://xmlns.oracle.com/DominioCliente/CrearClienteDefinitivo/CrearClienteDefinitivo"
+         xmlns:ora="http://schemas.oracle.com/xpath/extension" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:ns1="http://xmlns.bcie.com/ClienteService"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/UsuarioService"
+         xmlns:ns3="http://xmlns.bcie.com/OperacionService" xmlns:ns4="http://www.bcie.org/ClienteMO"
+         xmlns:ns7="http://www.bcie.org/ResultBO" xmlns:ns9="http://www.bcie.org/UsuarioMO"
+         xmlns:ns10="http://www.bcie.org/UsuarioBO" xmlns:ns6="http://www.bcie.org/CatalogoBO"
+         xmlns:ns5="http://www.bcie.org/ClienteBO" xmlns:ns8="http://www.bcie.org/ErrorBO"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns11="http://www.bcie.org/OperacionMO"
+         xmlns:ns12="http://www.bcie.org/OperacionBO" xmlns:ns13="http://www.bcie.org/ProductoBO"
+         xmlns:ns14="http://www.bcie.org/DeclaracionJuradaBO" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns15="http://xmlns.bcie.com/Flexcube14/ClienteService" xmlns:ns23="http://www.bcie.org/TerminoBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns19="http://www.bcie.org/CommonBO"
+         xmlns:ns18="http://www.bcie.org/LineaCreditoBO" xmlns:ns20="http://www.bcie.org/CondicionBO"
+         xmlns:ns22="http://www.bcie.org/DocumentoBO" xmlns:ns25="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns24="http://www.bcie.org/ComisionBO" xmlns:ns16="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns17="http://www.bcie.org/ContratoBO" xmlns:ns21="http://www.bcie.org/AtributoBO"
+         xmlns:ns26="http://www.bcie.org/FLEXCUBE14/ClienteMO" xmlns:ns28="http://www.bcie.org/FLEXCUBE14/ErrorBO"
+         xmlns:ns27="http://www.bcie.org/FLEXCUBE14/ResultBO">
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ClienteService" location="../WSDLs/CrearClienteDefinitivoSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="CrearClienteDefinitivo" partnerLinkType="ns1:CrearClienteDefinitivo"
+                 myRole="CrearClienteDefinitivoPT"/>
+    <partnerLink name="ConsultarAtributosUsuarioService" partnerLinkType="ns2:ConsultarAtributosUsuarioService"
+                 partnerRole="UsuarioPT"/>
+    <partnerLink name="ConsultarClienteService" partnerLinkType="ns1:ConsultarClienteService" partnerRole="ClientePT"/>
+    <partnerLink name="CrearClienteFLEXCUBE" partnerLinkType="ns1:CrearClienteFLEXCUBE"
+                 partnerRole="CrearClienteFLEXCUBEPT"/>
+    <partnerLink name="ConsultarOperacionByIdOperacionService"
+                 partnerLinkType="ns3:ConsultarOperacionByIdOperacionService"
+                 partnerRole="ConsultarOperacionById12Port"/>
+    <partnerLink name="ActualizarClienteFenixService" partnerLinkType="ns1:ActualizarClienteFenixService"
+                 partnerRole="ActualizarClientePT"/>
+    <partnerLink name="CrearClienteFLEXCUBE14" partnerLinkType="ns15:CrearClienteFLEXCUBE14"
+                 partnerRole="crearClienteFLEXCUBE_V14_PT"/>
+  </partnerLinks>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestCrearClienteDefinitivoMessage"/>
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseCrearClienteDefinitivoMessage"/>
+    <variable name="consultarByIdCliente_OutputVariable" messageType="ns1:responseConsultarClienteMessageByIdCliente"/>
+    <variable name="ConsultarOperacionById_OutputVariable" messageType="ns3:responseConsultarOperacionMessage"/>
+    <variable name="faultVar" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence6">
+        <assign name="Assign_Error">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="CrearClienteDefinitivo"
+               portType="ns1:CrearClienteDefinitivoPT" operation="crearClienteDefinitivo"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CrearClienteDefinitivo.wsdl) -->
+    <receive name="receiveInput" partnerLink="CrearClienteDefinitivo" portType="ns1:CrearClienteDefinitivoPT"
+             operation="crearClienteDefinitivo" variable="inputVariable" createInstance="yes"/>
+    <scope name="ScopeConsultarCliente">
+      <variables>
+        <variable name="consultarByIdCliente_InputVariable"
+                  messageType="ns1:requestConsultarClienteMessageByIdCliente"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="remotefault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence3">
+            <assign name="Assign_ErrorConsultarCliente">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+              </copy>
+              <copy>
+                <from>'Error general al Consultar Cliente'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence1">
+        <assign name="AssignSetTitleVar">
+          <copy>
+            <from>oraext:setFlowInstanceTitle(concat('idCliente = ', $inputVariable.request/ns4:idCliente))</from>
+            <to>$setTitleVar</to>
+          </copy>
+        </assign>
+        <assign name="Assign_ConsultarClienteInput">
+          <copy>
+            <from>$inputVariable.request/ns4:idCliente</from>
+            <to>$consultarByIdCliente_InputVariable.request/ns4:idCliente</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarCliente" partnerLink="ConsultarClienteService" portType="ns1:ClientePT"
+                operation="consultarByIdCliente" inputVariable="consultarByIdCliente_InputVariable"
+                outputVariable="consultarByIdCliente_OutputVariable" bpelx:invokeAsDetail="no"/>
+        <if name="IfErrorConsulta">
+          <documentation>
+            <![CDATA[ConsultaERROR]]>
+          </documentation>
+          <condition>$consultarByIdCliente_OutputVariable.response/ns4:Resultado/ns7:result = 'ERROR'</condition>
+          <sequence name="Sequence4">
+             <if name="IfConsultaVacia">
+              <documentation>
+                <![CDATA[Vacia]]>
+              </documentation>
+              <condition>$consultarByIdCliente_OutputVariable.response/ns4:Resultado/ns7:message = 'Consulta sin resultados'</condition>
+              <sequence name="Sequence14">
+                <assign name="AssignVacia">
+                  <copy>
+                    <from>'OK'</from>
+                    <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+                  </copy>
+                  <copy>
+                    <from>'Consulta de Cliente sin resultados'</from>
+                    <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyVacia" variable="outputVariable" partnerLink="CrearClienteDefinitivo"
+                       portType="ns1:CrearClienteDefinitivoPT" operation="crearClienteDefinitivo"/>
+                <exit name="ExitVacia"/>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[ERROR]]>
+                </documentation>
+                <empty name="ErrorConsulta"/>
+              </else>
+            </if>
+            
+            <assign name="Assign_ErrorConsultarCliente">
+              <copy>
+                <from>concat('Error al Consultar Cliente ','+ ',$consultarByIdCliente_OutputVariable.response/ns4:Resultado/ns7:message)</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[ConsultaOK]]>
+            </documentation>
+            <sequence name="Sequence13">
+              <scope name="ScopeConsultarAtributosUsuario">
+                <variables>
+                  <variable name="consultarAtributosUsuario_InputVariable"
+                            messageType="ns2:requestConsultarAtributosUsuarioMessage"/>
+                  <variable name="consultarAtributosUsuario_OutputVariable"
+                            messageType="ns2:responseConsultarAtributosUsuarioMessage"/>
+                </variables>
+                <sequence name="Sequence2">
+                  <assign name="Assign_ConsultarAtributosUsuarioInput">
+                    <copy>
+                      <from>$consultarByIdCliente_OutputVariable.response/ns4:Cliente/ns5:ejecutivo</from>
+                      <to>$consultarAtributosUsuario_InputVariable.request/ns9:listaNombres/ns10:nombreUsuario</to>
+                    </copy>
+                  </assign>
+                  <invoke name="Invoke_ConsultarAtributosUsuario" bpelx:invokeAsDetail="no"
+                          partnerLink="ConsultarAtributosUsuarioService" portType="ns2:UsuarioPT"
+                          operation="consultarAtributosUsuario" inputVariable="consultarAtributosUsuario_InputVariable"
+                          outputVariable="consultarAtributosUsuario_OutputVariable"/>
+                  <assign name="Assign_ConsultarAtributosUsuarioOutput">
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>$consultarAtributosUsuario_OutputVariable.response/ns9:listaUsuarios/ns10:usuario[1]/ns10:employeeNumber</from>
+                      <to>$consultarByIdCliente_OutputVariable.response/ns4:Cliente/ns5:ejecutivo</to>
+                    </copy>
+                  </assign>
+                </sequence>
+              </scope>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarOperacion">
+      <bpelx:skipCondition>count($consultarByIdCliente_OutputVariable.response/ns4:Operaciones)&lt;=0</bpelx:skipCondition>
+      <variables>
+        <variable name="ConsultarOperacionById_InputVariable" messageType="ns3:requestConsultarOperacionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="remotefault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence3">
+            <assign name="Assign_ErrorConsultarOperacion">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+              </copy>
+              <copy>
+                <from>'Error general al Consultar Operacion'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence5">
+        <assign name="Assign_ConsultarOperacionInput">
+          <copy>
+            <from>$consultarByIdCliente_OutputVariable.response/ns4:Operaciones[1]/ns5:idOperacion</from>
+            <to>$ConsultarOperacionById_InputVariable.request/ns11:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_ConsultarOperacion" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarOperacionByIdOperacionService" portType="ns3:ConsultarOperacionById12Port"
+                operation="ConsultarOperacionById" inputVariable="ConsultarOperacionById_InputVariable"
+                outputVariable="ConsultarOperacionById_OutputVariable"/>
+        <if name="IfErrorConsultarOperacion">
+          <documentation>
+            <![CDATA[ErrorConsultar]]>
+          </documentation>
+          <condition>$ConsultarOperacionById_OutputVariable.response/ns11:Resultado/ns7:result = 'ERROR'</condition>
+          <sequence name="Sequence9">
+            <assign name="Assign_ErrorConsultarOperacion">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+              </copy>
+              <copy>
+                <from>$ConsultarOperacionById_OutputVariable.response/ns11:Resultado/ns7:message</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[OkConsultar]]>
+            </documentation>
+            <empty name="NingunaAccion"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeCrearClienteFlexcube">
+      <variables>
+        <variable name="crearClienteFLX_InputVariable" messageType="ns1:requestCrearClienteFLEXCUBEMessage"/>
+        <variable name="crearClienteFLX_OutputVariable" messageType="ns1:responseCrearClienteFLEXCUBEMessage"/>
+      </variables>
+      <faultHandlers>
+        <catch faultName="bpelx:remoteFault" faultVariable="fault" faultMessageType="bpelx:RuntimeFaultMessage">
+          <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+        </catch>
+        <catchAll>
+          <sequence name="Sequence3">
+            <assign name="Assign_ErrorConsultarOperacion">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+              </copy>
+              <copy>
+                <from>'Error al registrar Cliente en FLEXCUBE'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+              </copy>
+            </assign>
+            <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+          </sequence>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence7">
+        <bpelx:skipCondition>1&gt; 0</bpelx:skipCondition>
+        <assign name="Assign_CrearClienteFLXInput">
+          <copy>
+            <from>$consultarByIdCliente_OutputVariable.response/ns4:Cliente</from>
+            <to>$crearClienteFLX_InputVariable.request/ns4:Cliente</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$ConsultarOperacionById_OutputVariable.response/ns11:Operacion/ns12:idOperacion</from>
+            <to>$crearClienteFLX_InputVariable.request/ns4:Operacion/ns12:idOperacion</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$ConsultarOperacionById_OutputVariable.response/ns11:Operacion/ns12:actividadEconomicaAsociada/ns6:codigoExterno</from>
+            <to>$crearClienteFLX_InputVariable.request/ns4:Operacion/ns12:actividadEconomicaAsociada/ns6:codigoExterno</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$ConsultarOperacionById_OutputVariable.response/ns11:Operacion/ns12:ejeEstrategico/ns6:codigoExterno</from>
+            <to>$crearClienteFLX_InputVariable.request/ns4:Operacion/ns12:ejeEstrategico/ns6:codigoExterno</to>
+          </copy>
+        </assign>
+        <assign name="Assign_NDNoOperacion">
+          <bpelx:skipCondition>count($consultarByIdCliente_OutputVariable.response/ns4:Operaciones)&gt;0</bpelx:skipCondition>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>'ND'</from>
+            <to>$crearClienteFLX_InputVariable.request/ns4:Operacion/ns12:idOperacion</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>'ND'</from>
+            <to>$crearClienteFLX_InputVariable.request/ns4:Operacion/ns12:actividadEconomicaAsociada/ns6:codigoExterno</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>'ND'</from>
+            <to>$crearClienteFLX_InputVariable.request/ns4:Operacion/ns12:ejeEstrategico/ns6:codigoExterno</to>
+          </copy>
+        </assign>
+        <invoke name="Invoke_CrearClienteFlexcube" bpelx:invokeAsDetail="no" partnerLink="CrearClienteFLEXCUBE"
+                portType="ns1:CrearClienteFLEXCUBEPT" operation="crearCliente"
+                inputVariable="crearClienteFLX_InputVariable" outputVariable="crearClienteFLX_OutputVariable"/>
+        <if name="IfErrorCrearCliente">
+          <documentation>
+            <![CDATA[ERRORflexcube]]>
+          </documentation>
+          <condition>$crearClienteFLX_OutputVariable.response/ns4:Resultado/ns7:result = 'ERROR'</condition>
+          <assign name="Assign_ErrorFlexcube">
+            <copy>
+              <from>$crearClienteFLX_OutputVariable.response/ns4:Resultado/ns7:result</from>
+              <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+            </copy>
+            <copy>
+              <from>concat('Error al crearClienteDefinitivo',' - ',$crearClienteFLX_OutputVariable.response/ns4:Resultado/ns7:message)</from>
+              <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+            </copy>
+          </assign>
+          <else>
+            <documentation>
+              <![CDATA[OKflexcube]]>
+            </documentation>
+            <sequence>
+              <scope name="ScopeActualizarCliente">
+                <variables>
+                  <variable name="actualizarCliente_InputVariable" messageType="ns1:requestActualizarClienteMessage"/>
+                  <variable name="actualizarCliente_OutputVariable" messageType="ns1:responseActualizarClienteMessage"/>
+                </variables>
+                <sequence name="Sequence12">
+                  <assign name="Assign_ActualizarClienteInput">
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>$inputVariable.request/ns4:idCliente</from>
+                      <to>$actualizarCliente_InputVariable.request/ns4:Cliente/ns5:idCliente</to>
+                    </copy>
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>$crearClienteFLX_OutputVariable.response/ns4:Cliente/ns5:idFacturador</from>
+                      <to>$actualizarCliente_InputVariable.request/ns4:Cliente/ns5:idFacturador</to>
+                    </copy>
+                    <copy>
+                      <from>2</from>
+                      <to>$actualizarCliente_InputVariable.request/ns4:Cliente/ns5:tipoCliente/ns6:Id</to>
+                    </copy>
+                  </assign>
+                  <invoke name="Invoke_ActualizarCliente" partnerLink="ActualizarClienteFenixService"
+                          portType="ns1:ActualizarClientePT" operation="actualizarCliente"
+                          inputVariable="actualizarCliente_InputVariable"
+                          outputVariable="actualizarCliente_OutputVariable" bpelx:invokeAsDetail="no"/>
+                </sequence>
+              </scope>
+              <assign name="Assign_Respuesta_OutputVariable">
+                <copy>
+                  <from>$crearClienteFLX_OutputVariable.response/ns4:Cliente/ns5:idFacturador</from>
+                  <to>$outputVariable.response/ns4:Cliente/ns5:idFacturador</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.request/ns4:idCliente</from>
+                  <to>$outputVariable.response/ns4:Cliente/ns5:idCliente</to>
+                </copy>
+                <copy>
+                  <from>'OK'</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+                </copy>
+                <copy>
+                  <from>'Operación exitosa'</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+                </copy>
+              </assign>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeCrearClienteFlexcube14">
+      <variables>
+        <variable name="crearClienteFLX14_InputVariable" messageType="ns15:requestCrearClienteMessage"/>
+        <variable name="crearClienteFLX14_OutputVariable" messageType="ns15:responseCrearClienteMessage"/>
+        <variable name="actualizarCliente_InputVariable" messageType="ns1:requestActualizarClienteMessage"/>
+        <variable name="actualizarCliente_OutputVariable" messageType="ns1:responseActualizarClienteMessage"/>
+      </variables>
+      <faultHandlers><catch faultName="bpelx:remoteFault" faultVariable="fault"
+                            faultMessageType="bpelx:RuntimeFaultMessage"
+                            xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+   </catch><catchAll xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <sequence name="Sequence3">
+         <assign name="Assign_ErrorConsultarOperacion">
+            <copy>
+               <from>'ERROR'</from>
+               <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+            </copy>
+            <copy>
+               <from>'Error al registrar Cliente en FLEXCUBE'</from>
+               <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+            </copy>
+         </assign>
+         <throw name="ThrowError" faultName="bpelx:remoteFault" faultVariable="faultVar"/>
+      </sequence>
+   </catchAll></faultHandlers>
+      <sequence name="Sequence15">
+        <assign name="XQCrearClienteDefinitivo_TO_CrearClienteFLX14">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:processXQuery10('../Transformations/XQCrearClienteDefinitivo_TO_CrearClienteFLX14.xqy', 'consultarByIdCliente_OutputVariable.response', $consultarByIdCliente_OutputVariable.response, 'ConsultarOperacionById_OutputVariable.response', $ConsultarOperacionById_OutputVariable.response)</from>
+            <to variable="crearClienteFLX14_InputVariable" part="requestCrearCliente"/>
+          </copy>
+        </assign>
+        <assign name="AssignTipoPersona_CrearClienteFLX14">
+          <copy>
+            <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/DominioCliente/Cliente/V1/DVM/TipoPersonaFlexCube.dvm","idTipoPersona",$consultarByIdCliente_OutputVariable.response/ns4:Cliente/ns5:tipoPersona/ns6:Id,"codigoFlexcube","")</from>
+            <to>$crearClienteFLX14_InputVariable.requestCrearCliente/ns26:Cliente/ns26:Tipo_Persona</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeCrearClienteFlexcube14" partnerLink="CrearClienteFLEXCUBE14"
+                portType="ns15:crearClienteFLEXCUBE_V14_PT" operation="crearCliente"
+                inputVariable="crearClienteFLX14_InputVariable" outputVariable="crearClienteFLX14_OutputVariable"
+                bpelx:invokeAsDetail="no"/>
+        <if name="IfErrorCrearClienteFlex14">
+          <documentation>
+            <![CDATA[Error]]>
+          </documentation>
+          <condition>$crearClienteFLX14_OutputVariable.responseCrearCliente/ns26:Response/ns26:Resultado/ns27:result != 'OK'</condition>
+          <assign name="Assign_ErrorFlexcube14">
+            <copy>
+              <from>$crearClienteFLX14_OutputVariable.responseCrearCliente/ns26:Response/ns26:Resultado/ns27:result</from>
+              <to>$outputVariable.response/ns4:Resultado/ns7:result</to>
+            </copy>
+            <copy>
+              <from>concat('Error al crearClienteDefinitivo Flexcube14',' - ',$crearClienteFLX14_OutputVariable.responseCrearCliente/ns26:Response/ns26:Resultado/ns27:message)</from>
+              <to>$outputVariable.response/ns4:Resultado/ns7:message</to>
+            </copy>
+          </assign>
+          <else>
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <sequence name="Sequence16">
+              <assign name="Assign_ActualizarClienteInput">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$inputVariable.request/ns4:idCliente</from>
+                  <to>$actualizarCliente_InputVariable.request/ns4:Cliente/ns5:idCliente</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$crearClienteFLX14_OutputVariable.responseCrearCliente/ns26:Response/ns26:Codigo_Cliente</from>
+                  <to>$actualizarCliente_InputVariable.request/ns4:Cliente/ns5:idFacturador</to>
+                </copy>
+                <copy>
+                  <from>2</from>
+                  <to>$actualizarCliente_InputVariable.request/ns4:Cliente/ns5:tipoCliente/ns6:Id</to>
+                </copy>
+              </assign>
+              <invoke name="Invoke_ActualizarCliente" partnerLink="ActualizarClienteFenixService"
+                      portType="ns1:ActualizarClientePT" operation="actualizarCliente"
+                      inputVariable="actualizarCliente_InputVariable"
+                      outputVariable="actualizarCliente_OutputVariable" bpelx:invokeAsDetail="no"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="CrearClienteDefinitivo" portType="ns1:CrearClienteDefinitivoPT"
+           operation="crearClienteDefinitivo" variable="outputVariable"/>
+  </sequence>
+</process>

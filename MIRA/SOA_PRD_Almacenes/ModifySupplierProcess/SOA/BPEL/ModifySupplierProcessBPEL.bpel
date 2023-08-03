@@ -1,0 +1,96 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Jun 14 13:10:55 GMT-06:00 2019
+  Author:  User
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ModifySupplierProcessBPEL"
+               targetNamespace="http://xmlns.oracle.com/ModifySupplierProcess/ModifySupplierProcess/ModifySupplierProcessBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ModifySupplierProcess/ModifySupplierProcess/ModifySupplierProcessBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/Supplier/ModifySupplierProcess/v1.0"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Suppliers/JDAModifySupplierProcess"
+         xmlns:ns4="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Foundation/Party/SupplierEntitySvc">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Supplier/ModifySupplierProcess/v1.0"
+          location="../WSDLs/ModifySupplierProcessWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="modifysupplierprocessbpel_client" partnerLinkType="ns1:ModifySupplierProcessBPEL" myRole="ModifySupplierPType"/>
+    <partnerLink name="JDAModifySupplierProcessPXY" partnerLinkType="ns2:JDAModifySupplierProcessPXY"
+                 partnerRole="ModifySupplierPType"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:modifyRequest"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:modifyResponse"/>
+    <variable name="Inv_JDAModifySupplier_InVar" messageType="ns2:modifyRequest"/>
+    <variable name="Inv_JDAModifySupplier_OutVar" messageType="ns2:modifyResponse"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ModifySupplierProcessBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="modifysupplierprocessbpel_client" portType="ns1:ModifySupplierPType" operation="modifySupplierPType" variable="inputVariable" createInstance="yes"/>
+    <assign name="TrJDAModifySupplierReq">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/TrJDAModifySupplierReq.xsl", $inputVariable.part1)</from>
+        <to variable="Inv_JDAModifySupplier_InVar" part="part1"/>
+      </copy>
+    </assign>
+    <invoke name="Inv_JDAModifySupplier" bpelx:invokeAsDetail="no" partnerLink="JDAModifySupplierProcessPXY"
+            portType="ns2:ModifySupplierPType" operation="modifySupplierPType"
+            inputVariable="Inv_JDAModifySupplier_InVar" outputVariable="Inv_JDAModifySupplier_OutVar"/>
+    <assign name="AssignResponse">
+      <copy ignoreMissingFromData="yes">
+        <from>$Inv_JDAModifySupplier_OutVar.part1/ns4:result</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.part1/ns4:result</to>
+      </copy>
+      <copy ignoreMissingFromData="yes">
+        <from>$Inv_JDAModifySupplier_OutVar.part1/ns4:description</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.part1/ns4:description</to>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="modifysupplierprocessbpel_client" portType="ns1:ModifySupplierPType" operation="modifySupplierPType" variable="outputVariable"/>
+  </sequence>
+</process>

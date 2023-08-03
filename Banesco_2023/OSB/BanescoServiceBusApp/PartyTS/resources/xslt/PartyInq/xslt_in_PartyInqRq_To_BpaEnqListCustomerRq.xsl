@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xsl:stylesheet version="1.0" xmlns:UUIDUserFunction="http://www.oracle.com/XSL/Transform/java/com.bea.wli.sb.stages.functions.UUIDUserFunction" xmlns:IsUserInGroupFunction="http://www.oracle.com/XSL/Transform/java/com.bea.wli.sb.stages.functions.IsUserInGroupFunction" xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc" xmlns:IsUserInRoleFunction="http://www.oracle.com/XSL/Transform/java/com.bea.wli.sb.stages.functions.IsUserInRoleFunction" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20" xmlns:DVMFunctions="http://www.oracle.com/XSL/Transform/java/com.bea.wli.sb.functions.dvm.DVMFunctions" xmlns:ns0="http://xmlns.banesco.com/eopt/PartyInq_V1.0" xmlns:oracle-xsl-mapper="http://www.oracle.com/xsl/mapper/schemas" xmlns:oraxsl="http://www.oracle.com/XSL/Transform/java" xmlns:RuntimeTypeConversionFunctions="http://www.oracle.com/XSL/Transform/java/com.bea.wli.sb.stages.functions.RuntimeTypeConversionFunctions" xmlns:XrefFunctions="http://www.oracle.com/XSL/Transform/java/com.bea.wli.sb.functions.xref.XrefFunctions" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:BasicCredentialsUserFunction="http://www.oracle.com/XSL/Transform/java/com.bea.wli.sb.stages.functions.BasicCredentialsUserFunction" xmlns:tns="http://www.temenos.com/T24/ofs/Request" exclude-result-prefixes=" xsd oracle-xsl-mapper xsi xsl ns0 tns UUIDUserFunction IsUserInGroupFunction oraext IsUserInRoleFunction xp20 DVMFunctions oraxsl RuntimeTypeConversionFunctions XrefFunctions BasicCredentialsUserFunction"
+                xmlns:ns1="http://xmlns.banesco.com/eo/Banking_V1.0"
+                xmlns:eoPar="http://xmlns.banesco.com/eo/Party_V1.0"
+                xmlns:eoStatus="http://xmlns.banesco.com/eo/Status_V1.0"
+                xmlns:ns2="http://xmlns.banesco.com/eo/Common_V1.0"
+                xmlns:enqins="http://www.temenos.com/T24/ofs/EnquiryInput"
+                xmlns:reqcns="http://www.temenos.com/T24/ofs/RequestCommon"
+                xmlns:ns3="http://xmlns.banesco.com/appopt/AOptCommon_V1.0">
+   <oracle-xsl-mapper:schema>
+      <oracle-xsl-mapper:mapSources>
+         <oracle-xsl-mapper:source type="XSD">
+            <oracle-xsl-mapper:schema location="../../../../Commons/xsd/EOpt/Party/PartyInq/PartyInq_V1.0.xsd"/>
+            <oracle-xsl-mapper:rootElement name="PartyInqRq" namespace="http://xmlns.banesco.com/eopt/PartyInq_V1.0"/>
+         </oracle-xsl-mapper:source>
+         <oracle-xsl-mapper:source type="XSD">
+            <oracle-xsl-mapper:schema location="../../../../Commons/xsd/AppOpt/AOptCommon/AOptCommon_V1.0.xsd"/>
+            <oracle-xsl-mapper:rootElement name="MsgHdrRq" namespace="http://xmlns.banesco.com/appopt/AOptCommon_V1.0"/>
+            <oracle-xsl-mapper:param name="varHeader"/>
+         </oracle-xsl-mapper:source>
+      </oracle-xsl-mapper:mapSources>
+      <oracle-xsl-mapper:mapTargets>
+         <oracle-xsl-mapper:target type="XSD">
+            <oracle-xsl-mapper:schema location="../../../../Commons/backends/T24/resources/xsd/BpaEnqListCustomer/EnquiryCustomerPerCorpLISConsultaClientesPerCorpLISRequest.xsd"/>
+            <oracle-xsl-mapper:rootElement name="BPAENQLISTCUSTOMERRequest" namespace="http://www.temenos.com/T24/ofs/Request"/>
+         </oracle-xsl-mapper:target>
+      </oracle-xsl-mapper:mapTargets>
+   </oracle-xsl-mapper:schema>
+   <!--User Editing allowed BELOW this line - DO NOT DELETE THIS LINE-->
+   <xsl:param name="varHeader"/>
+   <xsl:template match="/">
+   <opaq:opaqueElement xmlns:opaq="http://xmlns.oracle.com/pcbpel/adapter/opaque/">
+      <tns:BPAENQLISTCUSTOMERRequest>
+         <RequestCommon>
+            <UserName>
+                  <xsl:value-of select="$varHeader//ns3:ClientApp/ns3:UserId"/>
+               </UserName>
+         </RequestCommon>
+         <EnquiryInput>
+            <EnquiryCriteriaCollection>
+               <EnquiryCriteria>
+                  <Field>LT.FULL.NAME</Field>
+                  <Operator>LK</Operator>
+                  <xsl:choose>
+                     <xsl:when test="/ns0:PartyInqRq/ns0:OrgName/eoPar:FullName/text() != &quot;&quot;">
+                        <Value>
+                              <xsl:value-of select="concat (&quot;...&quot;, /ns0:PartyInqRq/ns0:OrgName/eoPar:FullName, &quot;... &quot; )"/>
+                           </Value>
+                     </xsl:when>
+                     <xsl:otherwise>
+                        <Value>
+                           <xsl:value-of select="concat (&quot;...&quot;, /ns0:PartyInqRq/ns0:PersonName/eoPar:FullName, &quot;...&quot; )"/>
+                        </Value>
+                     </xsl:otherwise>
+                  </xsl:choose>
+               </EnquiryCriteria>
+            </EnquiryCriteriaCollection>
+         </EnquiryInput>
+      </tns:BPAENQLISTCUSTOMERRequest>
+    </opaq:opaqueElement>
+   </xsl:template>
+</xsl:stylesheet>

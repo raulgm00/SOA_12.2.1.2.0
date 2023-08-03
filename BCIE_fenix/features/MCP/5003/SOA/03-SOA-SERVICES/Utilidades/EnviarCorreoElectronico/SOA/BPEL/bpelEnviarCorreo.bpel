@@ -1,0 +1,1382 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Oct 19 12:08:39 CDT 2017
+  Author:  rafael-garcia
+  Type: BPEL 2.0 Process
+  Purpose: Asynchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="bpelEnviarCorreo"
+         targetNamespace="http://xmlns.oracle.com/Utilidades/EnviarCorreoElectronico/bpelEnviarCorreo"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+            xmlns:client="http://xmlns.oracle.com/Utilidades/EnviarCorreoElectronico/bpelEnviarCorreo"
+         xmlns:ora="http://schemas.oracle.com/xpath/extension"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://www.bcie.org/CorreoMO"
+         xmlns:ns2="http://xmlns.bcie.com/CorreoElectronicoService" 
+         xmlns:ns3="http://xmlns.bcie.com/UsuarioService"
+         xmlns:ns4="http://www.bcie.org/OperacionMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns5="http://www.bcie.org/ResultBO" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns6="http://www.bcie.org/ErrorBO" 
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns7="http://www.bcie.org/CorreoBO"
+         xmlns:ns8="http://www.bcie.org/OperacionBO"
+         xmlns:ns11="http://www.bcie.org/ProductoBO" 
+         xmlns:ns12="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns10="http://www.bcie.org/CatalogoBO" 
+         xmlns:ns9="http://www.bcie.org/ClienteBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns13="http://xmlns.bcie.com/ConsultarRolByPlantilla" 
+         xmlns:ns14="http://xmlns.bcie.com/ClienteService"
+         xmlns:ns15="http://www.bcie.org/ClienteMO" 
+         xmlns:ns16="http://www.bcie.org/UsuarioMO"
+         xmlns:ns17="http://www.bcie.org/UsuarioBO"
+         xmlns:ns25="http://www.bcie.org/TerminoBO"
+         xmlns:ns21="http://www.bcie.org/CommonBO" 
+         xmlns:ns20="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns22="http://www.bcie.org/CondicionBO" 
+         xmlns:ns24="http://www.bcie.org/DocumentoBO"
+         xmlns:ns27="http://www.bcie.org/HerramientaCEBO" 
+         xmlns:ns26="http://www.bcie.org/ComisionBO"
+         xmlns:ns18="http://www.bcie.org/DesembolsoBO" 
+         xmlns:ns19="http://www.bcie.org/ContratoBO"
+         xmlns:ns23="http://www.bcie.org/AtributoBO" 
+         xmlns:ns28="http://xmlns.bcie.com/DocumentoService"
+         xmlns:ns29="http://www.bcie.org/DocumentoMO"
+         xmlns:ns30="http://xmlns.bcie.com/ObtenerRolesUsuariosByPlantilla"
+         xmlns:ns31="http://www.bcie.org/ConsultarConfiguracion">
+
+    <!--import ui:processWSDL="true" namespace="http://xmlns.oracle.com/Utilidades/EnviarCorreoElectronico/bpelEnviarCorreo"
+            location="../WSDLs/bpelEnviarCorreo.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/-->
+  <import namespace="http://www.bcie.org/CorreoMO"
+          location="oramds:/apps/Resources/ComponentesComunes/Utilidades/EnviarCorreoElectronico/V1/Schema/CorreoElectronicoMO.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://xmlns.oracle.com/Utilidades/EnviarCorreoElectronico/bpelEnviarCorreo"
+          location="oramds:/apps/Resources/ComponentesComunes/Utilidades/EnviarCorreoElectronico/V1/WSDL/BPEL/EnviarCorreoElectronicoSOR.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/CorreoMO" location="../WSDLs/EnviarCorreoElectronicoSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+    <partnerLinks>
+        <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+        <partnerLink name="bpelenviarcorreo_client" partnerLinkType="client:bpelEnviarCorreo" myRole="bpelEnviarCorreoProvider" partnerRole="bpelEnviarCorreoRequester"/>
+       <partnerLink name="ConstruirCorreoElectronico" partnerLinkType="ns2:ConstruirCorreoElectronico"
+                 partnerRole="ConstruirCorreoElectronicoPT"/>
+    <partnerLink name="CrearBitacoraCorreo" partnerLinkType="ns2:CrearBitacoraCorreo"
+                 partnerRole="CrearBitacoraCorreoElectronicoPT"/>
+    <partnerLink name="ConsultarAtributosUsuario" partnerLinkType="ns3:ConsultarAtributosUsuario"
+                 partnerRole="UsuarioPT"/>
+    <partnerLink name="EnviarCorreoElectronico" partnerLinkType="ns2:EnviarCorreoElectronico"
+                 partnerRole="CorreoElectronicoPT"/>
+    <partnerLink name="ConsultarPlantillaByProceso" partnerLinkType="ns2:ConsultarPlantillaByProceso"
+                 partnerRole="ConsultarPlantillaByProcesoPT"/>
+    <partnerLink name="ConsultarDocumentosFenix" partnerLinkType="ns28:ConsultarDocumentosFenix"
+                 partnerRole="ConsultarDocumentosFenixPT"/>
+    <partnerLink name="ObtenerRolesUsuariosByPlantilla" partnerLinkType="ns30:ObtenerRolesUsuariosByPlantilla"
+                 partnerRole="ObtenerRolesUsuariosByPlantillaPT"/>
+    <partnerLink name="ConsultarConfiguracion" partnerLinkType="ns31:ConsultarConfiguracion"
+                 partnerRole="ConsultarConfiguracionPT"/>
+    <partnerLink name="ValidarEnvioNotifSupervTCC" partnerLinkType="ns2:ValidarEnvioNotifSupervTCC"
+                 partnerRole="ValidarEnvioNotifSupervTCCPT"/>
+    <partnerLink name="ObtenerDocumentoOnbase_PS" partnerLinkType="ns28:ObtenerDocumentoOnbase_PS"
+                 partnerRole="DocumentoPT"/>
+    <partnerLink name="ConsultarDocumentos" partnerLinkType="ns28:ConsultarDocumentos" partnerRole="DocumentoOnbasePT"/>
+  </partnerLinks>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        VARIABLES                                                        
+        List of messages and XML documents used within this BPEL process 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    <variables>
+        <!-- Reference to the message passed as input during initiation -->
+        <variable name="inputVariable" messageType="client:bpelEnviarCorreoRequestMessage"/>
+
+        <!-- Reference to the message that will be sent back to the requester during callback -->
+        <variable name="outputVariable" messageType="client:bpelEnviarCorreoResponseMessage"/>
+        
+        <!-- Reference to the message that will be returned to the requester-->
+    <variable name="emails" messageType="client:bpelEnviarCorreoRequestMessage"/>
+    <!--variable name="EnviarCorreoElectronicoFault" messageType="ns1:EnviarCorreoElectronicoFaultMessage"/-->
+    <variable name="CC" type="xsd:string"/>
+    <variable name="TO" type="xsd:string"/>
+    <variable name="InputCC" type="xsd:string"/>
+    <variable name="varInvokeWsConsultarDocumentosFenixRs" messageType="ns28:ConsultarDocumentosFenixResponseMessage"/>
+    <variable name="varInvokeObtenerRolesUsuariosByPlantillaRs"
+              messageType="ns30:responseObtenerRolesUsuariosByPlantillaMessage"/>
+    <variable name="varInvokeWsConsultarDocumentosFenixRq" messageType="ns28:ConsultarDocumentosFenixRequestMessage"/>
+    <variable name="InvokeConsultarAtributos_TO_consultarAtributosUsuario_InputVariable"
+              messageType="ns3:requestConsultarAtributosUsuarioMessage"/>
+    <variable name="InvokeConsultarAtributos_TO_consultarAtributosUsuario_OutputVariable"
+              messageType="ns3:responseConsultarAtributosUsuarioMessage"/>
+    <variable name="varInvokeWsObtenerDocumentoOnBaseRq" messageType="ns28:requestObtenerDocumentoOnBaseMessage"/>
+    <variable name="varInvokeWsObtenerDocumentoOnBaseRs" messageType="ns28:responseObtenerDocumentoOnBaseMessage"/>
+    <variable name="inConsultarDocumentosOnBase" messageType="ns28:RequestConsultarDocumentoOnBaseMessages"/>
+    <variable name="outConsultarDocumentosOnBase" messageType="ns28:ResponseConsultarDocumentosOnBaseMessage"/>
+  </variables>
+
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+       ORCHESTRATION LOGIC                                               
+       Set of activities coordinating the flow of messages across the    
+       services integrated within this business process                  
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    <sequence name="main">
+        <!-- Receive input from requestor. (Note: This maps to operation defined in bpelEnviarCorreo.wsdl) -->
+        <receive name="receiveInput" partnerLink="bpelenviarcorreo_client" portType="client:bpelEnviarCorreo" operation="process" variable="inputVariable" createInstance="yes"/>
+       
+       
+       <assign name="assignCC">
+      <copy ignoreMissingFromData="yes">
+        <from>$inputVariable.payload/ns1:correoElectronico/ns7:cc/ns7:usuario</from>
+        <to>$InputCC</to>
+      </copy>
+    </assign>
+        <scope name="scopeEnviarCorreoElectronico">
+      <variables>
+        <variable name="inInvoke_ConsultarPlantilla" messageType="ns2:ConsultarPlantillaByProcesoRequestMessage"/>
+        <variable name="outInvoke_ConsultarPlantilla" messageType="ns2:ConsultarPlantillaByProcesoResponseMessage"/>
+        <variable name="CorreosTo" element="ns1:TipoString"/>
+        <variable name="varIdDocumento" type="xsd:long"/>
+        <variable name="varMensaje" type="xsd:string"/>
+        <variable name="varAsunto" type="xsd:string"/>
+        <variable name="Manager_Variable" type="xsd:string"/>
+      </variables>
+      <faultHandlers>
+        <catchAll bpelx:name="CatchGeneral">
+          <assign name="assignErrorCatchAll">
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from><literal>ERROR</literal></from>
+              <to>$outputVariable.payload/ns1:Resultado/ns5:result</to>
+            </copy>
+          </assign>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="sequenceEnviarCorreoElectronico">
+        <scope name="scopeConsultarPlantilla">
+          <sequence name="sequenceConsultarPlantilla">
+            <assign name="assignConsultarPlantilla" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$inputVariable.payload/ns1:correoElectronico/ns7:proceso</from>
+                <to>$inInvoke_ConsultarPlantilla.ConsultarPlantillaByProceso/ns1:id_proceso</to>
+              </copy>
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$inputVariable.payload/ns1:correoElectronico/ns7:DescripcionTCAPlantilla</from>
+                <to>$inInvoke_ConsultarPlantilla.ConsultarPlantillaByProceso/ns1:pDescripcionTCAPlantilla</to>
+              </copy>
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$inputVariable.payload/ns1:correoElectronico/ns7:id_plantilla</from>
+                <to>$inInvoke_ConsultarPlantilla.ConsultarPlantillaByProceso/ns1:idPlantilla</to>
+              </copy>
+             
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$inputVariable.payload/ns1:correoElectronico/ns7:evento</from>
+                <to>$inInvoke_ConsultarPlantilla.ConsultarPlantillaByProceso/ns1:evento</to>
+              </copy>
+            </assign>
+            <if name="ifProceso">
+              <documentation>
+                <![CDATA[Aprobacion]]>
+              </documentation>
+              <condition>$inputVariable.payload/ns1:correoElectronico/ns7:proceso = 4 or $inputVariable.payload/ns1:correoElectronico/ns7:parametros[ns7:tag= 'TAREA']/ns7:valor = '219' or $inputVariable.payload/ns1:correoElectronico/ns7:parametros[ns7:tag= 'TAREA']/ns7:valor = '156'</condition>
+              <assign name="assignIdTarea">
+               <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$inputVariable.payload/ns1:correoElectronico/ns7:parametros[ns7:tag= 'TAREA']/ns7:valor</from>
+                <to>$inInvoke_ConsultarPlantilla.ConsultarPlantillaByProceso/ns1:idTarea</to>
+              </copy>
+              </assign>
+              <else>
+                <documentation>
+                  <![CDATA[Otra]]>
+                </documentation>
+                <empty name="NoIdTarea"/>
+              </else>
+            </if>
+            <invoke name="Invoke_ConsultarPlantilla" partnerLink="ConsultarPlantillaByProceso"
+                    portType="ns2:ConsultarPlantillaByProcesoPT" operation="consultarPlantillaByProceso"
+                    inputVariable="inInvoke_ConsultarPlantilla" outputVariable="outInvoke_ConsultarPlantilla"
+                    bpelx:invokeAsDetail="no">
+              <documentation>
+                <![CDATA[Se invoca un adaptador que te devuelve los datos de una plantilla los parametros 
+son opcionales, se puede enviar idPlantilla o evento y IdProceso y finalmente 
+evento, idProceso y IdTarea]]>
+              </documentation>
+            </invoke>
+            <if name="IfResultadConsultarPlantilla">
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <condition>$outInvoke_ConsultarPlantilla.ConsultarPlantillaByProcesoResponse/ns1:Resultado/ns5:result = 'Error'</condition>
+              <sequence name="SequenceErrorPlantilla">
+                <assign name="Assign_ErrorPlantilla" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                  <copy>
+                    <from>$outInvoke_ConsultarPlantilla.ConsultarPlantillaByProcesoResponse/ns1:Resultado/ns5:result</from>
+                    <to>$outputVariable.payload/ns1:Resultado/ns5:result</to>
+                  </copy>
+                  <copy>
+                    <from>'Error al consultar la plantilla'</from>
+                    <to>$outputVariable.payload/ns1:Resultado/ns5:message</to>
+                  </copy>
+                  <copy>
+                    <from>'-1'</from>
+                    <to>$outputVariable.payload/ns1:Resultado/ns5:error/ns6:errorCode</to>
+                  </copy>
+                  <copy>
+                    <from>$outInvoke_ConsultarPlantilla.ConsultarPlantillaByProcesoResponse/ns1:Resultado/ns5:message</from>
+                    <to>$outputVariable.payload/ns1:Resultado/ns5:error/ns6:errorDescription</to>
+                  </copy>
+                </assign>
+                <!--reply name="ReplyErrorPlantilla" variable="outputVariable"
+                       partnerLink="enviarcorreoelectronicobpel_client" portType="ns1:EnviarCorreoElectronicoPT"
+                       operation="enviarCorreoElectronico"/-->
+                <exit name="ExitErrorPlantilla"/>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[OK]]>
+                </documentation>
+                <assign name="Assign_Plantilla">
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>$outInvoke_ConsultarPlantilla.ConsultarPlantillaByProcesoResponse/ns1:ProcesoEventoPlantilla/ns7:id</from>
+                    <to>$inputVariable.payload/ns1:correoElectronico/ns7:id_plantilla</to>
+                  </copy>
+                </assign>
+              </else>
+            </if>
+          </sequence>
+        </scope>
+        <sequence name="sequenceValidarPlantilla49">
+          <documentation>
+            <![CDATA[Se utiliza el if para saber si es plantilla 49 si corresponde se busca al manager del usuario que nos envian
+el manager es el gerente de pais este se agrega en los usuarios To para que sea notificado]]>
+          </documentation>
+          <if name="ifEsFinSupervicion">
+            <documentation>
+              <![CDATA[EsPlantilla49]]>
+            </documentation>
+            <condition>$outInvoke_ConsultarPlantilla.ConsultarPlantillaByProcesoResponse/ns1:ProcesoEventoPlantilla/ns7:id = 49</condition>
+            <assign name="assingToGerentePais">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>ids:getManager($inputVariable.payload/ns1:correoElectronico/ns7:to/ns7:usuario[1])</from>
+                <to>$inputVariable.payload/ns1:correoElectronico/ns7:to/ns7:usuario[2]</to>
+              </copy>
+            </assign>
+            <else>
+              <documentation>
+                <![CDATA[NoEsPlantilla49]]>
+              </documentation>
+              <empty name="NoEs49"/>
+            </else>
+          </if>
+        </sequence>
+        <scope name="scopeTipoPlantilla">
+          <documentation>
+            <![CDATA[Se valida el tipo de plantila en base a la informacion de la plantill utilizando
+el atributo(IdTCACatalodoEvento) se valida que sea de tipo 3 en caso de 
+cumplirse, se consume un procedimiento que indica si se alcanza el porcentaje
+en caso de no alcanzar el porcentaje se finaliza el flujo, si alcanza el porcentaje
+se sigue el flujo normal.]]>
+          </documentation>
+          <variables>
+            <variable name="varInvoketValidarEnvioNotifSupervTCCRq"
+                      messageType="ns2:requestValidarEnvioNotifSupervTCCRequestMessage"/>
+            <variable name="varInvoketValidarEnvioNotifSupervTCCRs"
+                      messageType="ns2:responseValidarEnvioNotifSupervTCCResponseMessage"/>
+          </variables>
+          <if name="ifTipoPlantilla">
+            <documentation>
+              <![CDATA[Porcentaje]]>
+            </documentation>
+            <condition>$outInvoke_ConsultarPlantilla.ConsultarPlantillaByProcesoResponse/ns1:ProcesoEventoPlantilla/ns7:categoriaEvento/ns10:Id = 3</condition>
+            <sequence name="Sequence1">
+              <assign name="assignValidarEnvioNotifSupervTCCRq">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$inputVariable.payload/ns1:correoElectronico/ns7:IdSupervicion</from>
+                  <to>$varInvoketValidarEnvioNotifSupervTCCRq.ValidarEnvioNotifSupervTCCRequest/ns1:ID_SUPERVISION</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$inputVariable.payload/ns1:correoElectronico/ns7:idOperacion</from>
+                  <to>$varInvoketValidarEnvioNotifSupervTCCRq.ValidarEnvioNotifSupervTCCRequest/ns1:ID_OPERACION</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$outInvoke_ConsultarPlantilla.ConsultarPlantillaByProcesoResponse/ns1:ProcesoEventoPlantilla/ns7:descripcion</from>
+                  <to>$varInvoketValidarEnvioNotifSupervTCCRq.ValidarEnvioNotifSupervTCCRequest/ns1:DESC_PLANTILLA</to>
+                </copy>
+              </assign>
+              <invoke name="invokeValidarEnvioNotifSupervTCC" bpelx:invokeAsDetail="no"
+                      partnerLink="ValidarEnvioNotifSupervTCC" portType="ns2:ValidarEnvioNotifSupervTCCPT"
+                      operation="validarEnvioNotifSupervTCC" inputVariable="varInvoketValidarEnvioNotifSupervTCCRq"
+                      outputVariable="varInvoketValidarEnvioNotifSupervTCCRs"/>
+              <if name="IfCumplePorcentaje">
+                <documentation>
+                  <![CDATA[CumplePorcentaje]]>
+                </documentation>
+                <condition>$varInvoketValidarEnvioNotifSupervTCCRs.ValidarEnvioNotifSupervTCCResponse/ns1:ESTADO = 'TRUE' and $varInvoketValidarEnvioNotifSupervTCCRs.ValidarEnvioNotifSupervTCCResponse/ns1:CODIGO =0 </condition>
+                <empty name="Empty1"/>
+                <else>
+                  <documentation>
+                    <![CDATA[NoCumplePorcentaje]]>
+                  </documentation>
+                  <sequence name="sequenceNoAlcanzaPorcentaje">
+                    <assign name="Assign_NoAlcanlzaPorcentaje" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                      <copy>
+                        <from>'No cumple el porcentaje Requerido'</from>
+                        <to>$outputVariable.payload/ns1:Resultado/ns5:message</to>
+                      </copy>
+                      <copy>
+                        <from>'-1'</from>
+                        <to>$outputVariable.payload/ns1:Resultado/ns5:error/ns6:errorCode</to>
+                      </copy>
+                    </assign>
+                    <!--reply name="replyNoAlcanzaPorcentaje" variable="outputVariable"
+                           partnerLink="enviarcorreoelectronicobpel_client" portType="ns1:EnviarCorreoElectronicoPT"
+                           operation="enviarCorreoElectronico"/-->
+                    <exit name="Exit1"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+            <else>
+              <documentation>
+                <![CDATA[Evento]]>
+              </documentation>
+              <empty name="NoNEcesitaPorcentaje"/>
+            </else>
+          </if>
+        </scope>
+        <scope name="scopeObtenerDocumento">
+          <variables>
+            <variable name="documentoContent" messageType="client:bpelEnviarCorreoRequestMessage"/>
+          </variables>
+          <if name="ifExisteIdFlujo">
+            <documentation>
+              <![CDATA[ExisteId]]>
+            </documentation>
+            <condition>string($inputVariable.payload/ns1:correoElectronico/ns7:IdFlujo ) !=''</condition>
+            <sequence name="sequenceExisteIdFlujo">
+              <assign name="assignWsConsultarDocumentosFenixRq">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$inputVariable.payload/ns1:correoElectronico/ns7:idClienteFenix</from>
+                  <to>$varInvokeWsConsultarDocumentosFenixRq.request/ns29:idCliente</to>
+                </copy>
+                <copy bpelx:insertMissingToData="yes">
+                  <from><literal>true</literal></from>
+                  <to>$varInvokeWsConsultarDocumentosFenixRq.request/ns29:Content</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$inputVariable.payload/ns1:correoElectronico/ns7:idOperacion</from>
+                  <to>$varInvokeWsConsultarDocumentosFenixRq.request/ns29:idOperacion</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$inputVariable.payload/ns1:correoElectronico/ns7:IdFlujo</from>
+                  <to>$varInvokeWsConsultarDocumentosFenixRq.request/ns29:idFlujo</to>
+                </copy>
+              </assign>
+              <invoke name="invokeWsConsultarDocumentosFenix" bpelx:invokeAsDetail="no"
+                      partnerLink="ConsultarDocumentosFenix" portType="ns28:ConsultarDocumentosFenixPT"
+                      operation="ConsultarDocumentosFenix" inputVariable="varInvokeWsConsultarDocumentosFenixRq"
+                      outputVariable="varInvokeWsConsultarDocumentosFenixRs"/>
+              <if name="ifConsultaDocumentoOK">
+                <documentation>
+                  <![CDATA[Ok]]>
+                </documentation>
+                <condition>count($varInvokeWsConsultarDocumentosFenixRs.response/ns29:Documento) &gt;0 and $varInvokeWsConsultarDocumentosFenixRs.response/ns29:Resultado/ns5:result ='OK'</condition>
+                <sequence name="sequenceConsultaDocumentoFenixOK">
+                  <assign name="xqConsultarDocumento_ToObtenerDocumento">
+                    <bpelx:annotation>
+                      <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                    </bpelx:annotation>
+                    <copy>
+                      <from>ora:processXQuery10('../Transformations/ConsultarDocumentoFenix_To_ObtenerDocumento.xqy', 'ConsultarDocumentosFenixResponse', $varInvokeWsConsultarDocumentosFenixRs.response, 'inputVariable.payload', $inputVariable.payload)</from>
+                      <to variable="varInvokeWsObtenerDocumentoOnBaseRq" part="request"/>
+                    </copy>
+                  </assign>
+                  <if name="IfDocumentoNoEnviado">
+                    <documentation>
+                      <![CDATA[IdExternoNotEmpty]]>
+                    </documentation>
+                    <condition>$varInvokeWsObtenerDocumentoOnBaseRq.request/ns29:idExterno/text() != ''</condition>
+                    <sequence>
+                      <invoke name="invokeWsObtenerDocumentoOnBase"
+                              partnerLink="ObtenerDocumentoOnbase_PS" portType="ns28:DocumentoPT"
+                              operation="obtenerDocumentoOnBase" inputVariable="varInvokeWsObtenerDocumentoOnBaseRq"
+                              outputVariable="varInvokeWsObtenerDocumentoOnBaseRs" bpelx:invokeAsDetail="no"/>
+                      <assign name="assignDocument_To_EnviarCorreoRq">
+                        <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                          <from>$varInvokeWsObtenerDocumentoOnBaseRq.request/ns29:idExterno</from>
+                          <to>$varIdDocumento</to>
+                        </copy>
+                        <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                          <from>$varInvokeWsConsultarDocumentosFenixRs.response/ns29:Documento[ns24:idExterno = $varIdDocumento]/ns24:filename</from>
+                          <to>$inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:name</to>
+                        </copy>
+                        <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                          <from>$varInvokeWsObtenerDocumentoOnBaseRq.request/ns29:tipoArchivo</from>
+                          <to>$inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:type</to>
+                        </copy>
+                        <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                          <from>$varInvokeWsObtenerDocumentoOnBaseRs.response/ns29:codigo</from>
+                          <to>$inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:content</to>
+                        </copy>
+                      </assign>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[Content]]>
+                      </documentation>
+                      <sequence name="Sequence4">
+                        <assign name="XQDocumentContent">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/ConsultarDocumentos_TO_EnviarCorreoRequest.xqy', 'varInvokeWsConsultarDocumentosFenixRs.response', $varInvokeWsConsultarDocumentosFenixRs.response, 'inputVariable.payload', $inputVariable.payload)</from>
+                            <to variable="documentoContent" part="payload"/>
+                          </copy>
+                        </assign>
+                        <assign name="AssignDocumentContent">
+                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                            <from>$documentoContent.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:name</from>
+                            <to>$inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:name</to>
+                          </copy>
+                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                            <from>$documentoContent.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:type</from>
+                            <to>$inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:type</to>
+                          </copy>
+                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                            <from>$documentoContent.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:content</from>
+                            <to>$inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:content</to>
+                          </copy>
+                        </assign>
+                      </sequence>
+                    </else>
+                  </if>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[NoDocumentoFenix]]>
+                  </documentation>
+                  <sequence name="Sequence5">
+                    <assign name="AssignConsultaDocumentosOnbase">
+                      <copy>
+                        <from>$inputVariable.payload/ns1:correoElectronico/ns7:idOperacion</from>
+                        <to>$inConsultarDocumentosOnBase.ConsultarDocumentoOnBaseRequest/ns29:idOperacion</to>
+                      </copy>
+                      <copy>
+                        <from>$inputVariable.payload/ns1:correoElectronico/ns7:IdFlujo</from>
+                        <to>$inConsultarDocumentosOnBase.ConsultarDocumentoOnBaseRequest/ns29:idFlujoNegocio</to>
+                      </copy>
+                      <copy>
+                        <from>$inputVariable.payload/ns1:correoElectronico/ns7:IdFlujo</from>
+                        <to>$inConsultarDocumentosOnBase.ConsultarDocumentoOnBaseRequest/ns29:instanciaProceso</to>
+                      </copy>
+                    </assign>
+                    <invoke name="InvokeConsultaDocumentosOnbase"
+                            partnerLink="ConsultarDocumentos" portType="ns28:DocumentoOnbasePT"
+                            operation="ConsultarDocumentosOnBase" inputVariable="inConsultarDocumentosOnBase"
+                            outputVariable="outConsultarDocumentosOnBase" bpelx:invokeAsDetail="no"/>
+                    <if name="IfOK">
+                      <documentation>
+                        <![CDATA[OK]]>
+                      </documentation>
+                      <condition>count($outConsultarDocumentosOnBase.ConsultarDocumentosOnBaseResponse/ns29:Documentos/ns24:etapa/ns24:tipoDocumento/ns24:documento) &gt; 0 and $outConsultarDocumentosOnBase.ConsultarDocumentosOnBaseResponse/ns29:Resultado/ns5:result = 'OK'</condition>
+                      <sequence xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <assign name="xqConsultarDocumentoOnbase_ToObtenerDocumento"
+              xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <bpelx:annotation xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+         <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+         <from>ora:processXQuery10('../Transformations/ConsultarDocumentoOnbase_To_ObtenerDocumento.xqy', 'outConsultarDocumentosOnBase.ConsultarDocumentosOnBaseResponse', $outConsultarDocumentosOnBase.ConsultarDocumentosOnBaseResponse, 'inputVariable.payload', $inputVariable.payload)</from>
+         <to variable="varInvokeWsObtenerDocumentoOnBaseRq" part="request"/>
+      </copy>
+   </assign><if name="IfNotEmptyIdExterno" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         
+      <![CDATA[NotEmpty]]></documentation>
+      <condition>$varInvokeWsObtenerDocumentoOnBaseRq.request/ns29:idExterno/text() != ''</condition>
+      
+      <sequence>
+                            <invoke name="invokeWsObtenerDocumentoOnBase"
+                                    partnerLink="ObtenerDocumentoOnbase_PS" portType="ns28:DocumentoPT"
+                                    operation="obtenerDocumentoOnBase"
+                                    inputVariable="varInvokeWsObtenerDocumentoOnBaseRq"
+                                    outputVariable="varInvokeWsObtenerDocumentoOnBaseRs"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension" bpelx:invokeAsDetail="no"/>
+                            <assign name="assignDocument_To_EnviarCorreoRq">
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                <from>$varInvokeWsObtenerDocumentoOnBaseRq.request/ns29:idExterno</from>
+                                <to>$varIdDocumento</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                <from>$outConsultarDocumentosOnBase.ConsultarDocumentosOnBaseResponse/ns29:Documentos/ns24:etapa/ns24:tipoDocumento/ns24:documento[ns24:idExterno = $varIdDocumento]/ns24:filename</from>
+                                <to>$inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:name</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                <from>$varInvokeWsObtenerDocumentoOnBaseRq.request/ns29:tipoArchivo</from>
+                                <to>$inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:type</to>
+                              </copy>
+                              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes"
+                                    xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                                <from>$varInvokeWsObtenerDocumentoOnBaseRs.response/ns29:codigo</from>
+                                <to>$inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:content</to>
+                              </copy>
+                            </assign>
+                          </sequence><else>
+         <documentation>
+            <![CDATA[RemoveFirstAttachment]]>
+         </documentation>
+         <assign name="RemoveFirstAttachmentEmpty">
+            <extensionAssignOperation>
+               <bpelx:remove xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:target>$inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]</bpelx:target>
+               </bpelx:remove>
+            </extensionAssignOperation>
+         </assign>
+      </else>
+   </if>
+      
+   </sequence><else>
+                        <documentation>
+                          <![CDATA[ErrorOrEmpty]]>
+                        </documentation>
+                        <if name="IfNotEmptyAttachment">
+                          <documentation>
+                            <![CDATA[NotEmpty]]>
+                          </documentation>
+                          <condition>$inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:name/text() != '' and $inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]/ns7:content/text() != ''</condition>
+                          <empty name="Continua"/>
+                          <else>
+                            <documentation>
+                              <![CDATA[RemoveFirstAttachment]]>
+                            </documentation>
+                            <assign name="RemoveFirstAttachmentEmpty">
+                              <extensionAssignOperation>
+                                <bpelx:remove>
+                                  <bpelx:target>$inputVariable.payload/ns1:correoElectronico/ns7:attachment[1]</bpelx:target>
+                                </bpelx:remove>
+                              </extensionAssignOperation>
+                            </assign>
+                          </else>
+                        </if>
+                      </else>
+                    </if>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+            <else>
+              <documentation>
+                <![CDATA[NoExisteId]]>
+              </documentation>
+              <empty name="NoUsaDocumento"/>
+            </else>
+          </if>
+        </scope>
+        <!--scope name="ScopeConsultarRoles">
+          <variables>
+            <variable name="inInvoke_ConsultarRolByPlantilla" messageType="ns13:ConsultarRolByPlantillaRequestMessage"/>
+            <variable name="CountUsuarioCC" type="xsd:int"/>
+          </variables>
+          <sequence name="SequenceConsultarRoles">
+            <assign name="AssignConsultarRolByPlantilla">
+              <copy bpelx:insertMissingToData="yes">
+                <from>$inputVariable.payload/ns1:correoElectronico/ns7:id_plantilla</from>
+                <to>$inInvoke_ConsultarRolByPlantilla.ConsultarRolByPlantillaRequest/ns1:idPlantilla</to>
+              </copy>
+            </assign>
+            <invoke name="Invoke_ConsultarRolByPlantilla" bpelx:invokeAsDetail="no"
+                    partnerLink="ConsultarRolByPlantilla" portType="ns13:consultarRolByPlantilla_pt"
+                    operation="ConsultarRolByPlantilla" inputVariable="inInvoke_ConsultarRolByPlantilla"
+                    outputVariable="outInvoke_ConsultarRolByPlantilla"/>
+            <assign name="XQTransformRoles">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/ConsultarRolByPlantilla_TO_EnviarCorreoElectronicoCC.xqy', 'outInvoke_ConsultarRolByPlantilla.ConsultarRolByPlantillaResponse', $outInvoke_ConsultarRolByPlantilla.ConsultarRolByPlantillaResponse, 'inputVariable.EnviarCorreoElectronicoRequest', $inputVariable.payload)</from>
+                <to variable="inputVariable" part="EnviarCorreoElectronicoRequest"/>
+              </copy>
+            </assign>
+          </sequence>
+        </scope-->
+        <scope name="ScopeConstruirCorreo">
+          <variables>
+            <variable name="inInvoke_ConstruirCorreo" messageType="ns2:ConstruirCorreoElectronicoRequestMessage"/>
+            <variable name="outInvoke_ConstruirCorreo" messageType="ns2:ConstruirCorreoElectronicoResponseMessage"/>
+          </variables>
+          <sequence name="SequenceConstruirCorreo">
+            <assign name="XQTransform_ConstruirCorreo">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/EnviarCorreoElectronico_TO_ConstruirCorreoElectronico.xqy', 'inputVariable.EnviarCorreoElectronicoRequest', $inputVariable.payload)</from>
+                <to variable="inInvoke_ConstruirCorreo" part="ConstruirCorreoElectronicoRequest"/>
+              </copy>
+            </assign>
+            <invoke name="Invoke_ConstruirCorreo" bpelx:invokeAsDetail="no" partnerLink="ConstruirCorreoElectronico"
+                    portType="ns2:ConstruirCorreoElectronicoPT" operation="construirCorreoElectronico"
+                    inputVariable="inInvoke_ConstruirCorreo" outputVariable="outInvoke_ConstruirCorreo"/>
+            <sequence name="SequenceValoresCorreo">
+              <assign name="Assign_ValoresCorreo">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$outInvoke_ConstruirCorreo.ConstruirCorreoElectronicoResponse/ns1:CorreoElectronico/ns7:subject</from>
+                  <to>$inputVariable.payload/ns1:correoElectronico/ns7:subject</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$outInvoke_ConstruirCorreo.ConstruirCorreoElectronicoResponse/ns1:CorreoElectronico/ns7:cc/ns7:usuario[1]</from>
+                  <to>$CC</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$outInvoke_ConstruirCorreo.ConstruirCorreoElectronicoResponse/ns1:CorreoElectronico/ns7:mensaje</from>
+                  <to>$inputVariable.payload/ns1:correoElectronico/ns7:mensaje</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$outInvoke_ConstruirCorreo.ConstruirCorreoElectronicoResponse/ns1:CorreoElectronico/ns7:to/ns7:usuario[1]</from>
+                  <to>$TO</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$outInvoke_ConstruirCorreo.ConstruirCorreoElectronicoResponse/ns1:CorreoElectronico/ns7:mensaje</from>
+                  <to>$varMensaje</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$outInvoke_ConstruirCorreo.ConstruirCorreoElectronicoResponse/ns1:CorreoElectronico/ns7:subject</from>
+                  <to>$varAsunto</to>
+                </copy>
+              </assign>
+              <!--scope name="uScopeConsultarOperacion_Cliente">
+                <bpelx:skipCondition>string($inputVariable.payload/ns1:correoElectronico/ns7:parametros[ns7:tag='ROL']/ns7:valor) != '8'</bpelx:skipCondition>
+                <variables>
+                  <variable name="inInvoke_ConsultarOperacion" messageType="ns4:ConsultarSoloOperacionRequestMessage"/>
+                  <variable name="outInvoke_ConsultarOperacion"
+                            messageType="ns4:ConsultarSoloOperacionResponseMessage"/>
+                  <variable name="count" type="xsd:int"/>
+                  <variable name="inInvoke_ConsultarCliente"
+                            messageType="ns14:requestConsultarClienteMessageByIdCliente"/>
+                  <variable name="outInvoke_ConsultarCliente"
+                            messageType="ns14:responseConsultarClienteMessageByIdCliente"/>
+                </variables>
+                <sequence name="SequenceIfRol">
+                  <assign name="Assign_CountTo" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                    <copy>
+                      <from>count($inputVariable.payload/ns1:correoElectronico/ns7:to/ns7:usuario)+1</from>
+                      <to>$count</to>
+                    </copy>
+                  </assign>
+                  <if name="IfValorTagRol">
+                    <documentation>
+                      <![CDATA[OPERACION]]>
+                    </documentation>
+                    <condition>string($inputVariable.payload/ns1:correoElectronico/ns7:idOperacion) !=''</condition>
+                    <sequence name="SequenceConsultarOperacion">
+                      <assign name="Assign_ConsultarOperacion">
+                        <copy>
+                          <from>$inputVariable.payload/ns1:correoElectronico/ns7:idOperacion</from>
+                          <to>$inInvoke_ConsultarOperacion.ConsultarSoloOperacionRequest/ns4:idOperacion</to>
+                        </copy>
+                      </assign>
+                      <invoke name="Invoke_ConsultarOperacion" bpelx:invokeAsDetail="no"
+                              partnerLink="ConsultarSoloOperacion" portType="ns4:ConsultarSoloOperacionPT"
+                              operation="ConsultarSoloOperacion" inputVariable="inInvoke_ConsultarOperacion"
+                              outputVariable="outInvoke_ConsultarOperacion"/>
+                      <assign name="Assign_Responsable">
+                        <copy bpelx:insertMissingToData="yes">
+                          <from>$outInvoke_ConsultarOperacion.ConsultarSoloOperacionResponse/ns4:Operacion/ns8:responsable</from>
+                          <to>$inputVariable.payload/ns1:correoElectronico/ns7:to/ns7:usuario[$count]</to>
+                        </copy>
+                      </assign>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[CLIENTE]]>
+                      </documentation>
+                      <sequence name="SequenceConsultarCliente">
+                        <assign name="Assign_ConsultarCliente">
+                          <copy>
+                            <from>$inputVariable.payload/ns1:correoElectronico/ns7:idClienteFenix</from>
+                            <to>$inInvoke_ConsultarCliente.request/ns15:idCliente</to>
+                          </copy>
+                        </assign>
+                        <invoke name="Invoke_ConsultarCliente" bpelx:invokeAsDetail="no"
+                                partnerLink="ConsultarClienteById" portType="ns14:ClientePT"
+                                operation="consultarByIdCliente" inputVariable="inInvoke_ConsultarCliente"
+                                outputVariable="outInvoke_ConsultarCliente"/>
+                        <assign name="AssignResponsable">
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$outInvoke_ConsultarCliente.response/ns15:Cliente[1]/ns9:responsableCliente</from>
+                            <to>$inputVariable.payload/ns1:correoElectronico/ns7:to/ns7:usuario[$count]</to>
+                          </copy>
+                        </assign>
+                      </sequence>
+                    </else>
+                  </if>
+                </sequence>
+              </scope-->
+              <if name="ifContieneUsuariosTo">
+                <documentation>
+                  <![CDATA[NoContiene]]>
+                </documentation>
+                <condition>count($inputVariable.payload/ns1:correoElectronico/ns7:to/ns7:usuario) = 0</condition>
+                <assign name="assignVarCorreosTo">
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>$outInvoke_ConstruirCorreo.ConstruirCorreoElectronicoResponse/ns1:CorreoElectronico/ns7:to/ns7:usuario[1]</from>
+                    <to>$CorreosTo</to>
+                  </copy>
+                </assign>
+                <else>
+                  <documentation>
+                    <![CDATA[SiContiene]]>
+                  </documentation>
+                  <empty name="Empty6"/>
+                </else>
+              </if>
+            </sequence>
+          </sequence>
+        </scope>
+        <scope name="scopeConsultarRolesUsuarios">
+          <variables>
+            <variable name="varInvokeObtenerRolesUsuariosByPlantillaRq"
+                      messageType="ns30:requestObtenerRolesUsuariosByPlantillaMessage"/>
+          </variables>
+          <sequence name="sequenceConsultarRolesUsuarios">
+            <assign name="xqBpelRqToObtenerRolesUsuariosByPlantilla">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/BpelRq_To_ObtenerRolesUsuariosByPlantillaRq.xqy', 'inputVariable.EnviarCorreoElectronicoRequest', $inputVariable.payload, 'outInvoke_ConsultarPlantilla.ConsultarPlantillaByProcesoResponse', $outInvoke_ConsultarPlantilla.ConsultarPlantillaByProcesoResponse)</from>
+                <to variable="varInvokeObtenerRolesUsuariosByPlantillaRq" part="request"/>
+              </copy>
+            </assign>
+            <invoke name="invokeObtenerRolesUsuariosByPlantilla" bpelx:invokeAsDetail="no"
+                    partnerLink="ObtenerRolesUsuariosByPlantilla" portType="ns30:ObtenerRolesUsuariosByPlantillaPT"
+                    operation="obtenerRolesUsuariosByPlantilla"
+                    inputVariable="varInvokeObtenerRolesUsuariosByPlantillaRq"
+                    outputVariable="varInvokeObtenerRolesUsuariosByPlantillaRs"/>
+          </sequence>
+        </scope>
+        <if name="If_PLANTILLA_SUSPENSO">
+          <condition>$outInvoke_ConsultarPlantilla.ConsultarPlantillaByProcesoResponse/ns1:ProcesoEventoPlantilla/ns7:id = 52</condition>
+          <sequence name="Sequence2">
+            <assign name="Assign_Consulta_email_Manager">
+              <copy>
+                <from>$inputVariable.payload/ns1:correoElectronico/ns7:to/ns7:usuario</from>
+                <to>$InvokeConsultarAtributos_TO_consultarAtributosUsuario_InputVariable.request/ns16:listaNombres/ns17:nombreUsuario</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarAtributos_TO_M" bpelx:invokeAsDetail="no"
+                    partnerLink="ConsultarAtributosUsuario" portType="ns3:UsuarioPT"
+                    operation="consultarAtributosUsuario"
+                    inputVariable="InvokeConsultarAtributos_TO_consultarAtributosUsuario_InputVariable"
+                    outputVariable="InvokeConsultarAtributos_TO_consultarAtributosUsuario_OutputVariable"/>
+          </sequence>
+          <else>
+            <empty name="Empty7"/>
+          </else>
+        </if>
+        <scope name="scopeConsultarCorreosTo">
+          <variables>
+            <variable name="inInvoke_ConsultarAtributosUsuarioTO"
+                      messageType="ns3:requestConsultarAtributosUsuarioMessage"/>
+            <variable name="outInvoke_ConsultarAtributosUsuarioTO"
+                      messageType="ns3:responseConsultarAtributosUsuarioMessage"/>
+          </variables>
+          <sequence name="SequenceConsultarCorreosTo">
+            <assign name="xqConsultarRolesUsuariosRs_To_ConsultaAtributosRq">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/ConsultarRolesUsuariosRs_To_ConsultaAtributosRq.xqy', 'inputVariable.EnviarCorreoElectronicoRequest', $inputVariable.payload, 'varInvokeObtenerRolesUsuariosByPlantillaRs.response', $varInvokeObtenerRolesUsuariosByPlantillaRs.response, 'InvokeConsultarAtributos_TO_consultarAtributosUsuario_OutputVariable.response', $InvokeConsultarAtributos_TO_consultarAtributosUsuario_OutputVariable.response)</from>
+                <to variable="inInvoke_ConsultarAtributosUsuarioTO" part="request"/>
+              </copy>
+            </assign>
+            <invoke name="Invoke_ConsultarAtributosUsuario" bpelx:invokeAsDetail="no"
+                    partnerLink="ConsultarAtributosUsuario" portType="ns3:UsuarioPT"
+                    operation="consultarAtributosUsuario" inputVariable="inInvoke_ConsultarAtributosUsuarioTO"
+                    outputVariable="outInvoke_ConsultarAtributosUsuarioTO"/>
+            <assign name="XQConsultarAtributosRs_To_CorreosTo">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/ConsultarAtributosRs_To_CorreosToRq.xqy', 'CorreosTo', $CorreosTo, 'outInvoke_ConsultarAtributosUsuarioTO.response', $outInvoke_ConsultarAtributosUsuarioTO.response)</from>
+                <to variable="emails" part="payload"/>
+              </copy>
+            </assign>
+            <assign name="Assign_TO">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$emails.payload/ns1:correoElectronico/ns7:to</from>
+                <to>$inputVariable.payload/ns1:correoElectronico/ns7:to</to>
+              </copy>
+            </assign>
+            <!--if name="IfValorTo">
+              <documentation>
+                <![CDATA[ConValorTO]]>
+              </documentation>
+              <condition>$inputVariable.payload/ns1:correoElectronico/ns7:to/ns7:usuario[1] != ''</condition>
+              <sequence name="SequenceIfValorTO">
+                <assign name="XQTransform_ConsultarAtributosUsuarioTO">
+                  <bpelx:annotation>
+                    <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                  </bpelx:annotation>
+                  <copy>
+                    <from>ora:processXQuery10('../Transformations/EnviarCorreoElectronico_TO_ConsultarAtributosUsuarioTO.xqy', 'inputVariable.EnviarCorreoElectronicoRequest', $inputVariable.payload)</from>
+                    <to variable="inInvoke_ConsultarAtributosUsuarioTO" part="request"/>
+                  </copy>
+                </assign>
+                <assign name="XQTransform_DestinatariosTO">
+                  <bpelx:annotation>
+                    <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                  </bpelx:annotation>
+                  <copy>
+                    <from>ora:processXQuery10('../Transformations/ConsultaAtributosUsuarioTO_TO_EnviarCorreoElectronico.xqy', 'outInvoke_ConsultarAtributosUsuarioTO.response', $outInvoke_ConsultarAtributosUsuarioTO.response)</from>
+                    <to variable="emails" part="EnviarCorreoElectronicoRequest"/>
+                  </copy>
+                </assign>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[SinValorTO]]>
+                </documentation>
+                <sequence name="SequenceValidarValorTO">
+                  <assign name="Assign_TO">
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>$TO</from>
+                      <to>$inputVariable.payload/ns1:correoElectronico/ns7:to/ns7:usuario[1]</to>
+                    </copy>
+                  </assign>
+                </sequence>
+              </else>
+            </if-->
+            <if name="IfValorEmailsTO">
+              <documentation>
+                <![CDATA[CON_VALOR]]>
+              </documentation>
+              <condition>count($inputVariable.payload/ns1:correoElectronico/ns7:to/ns7:usuario)&gt;0</condition>
+              <sequence name="SequenceIfValorEmails">
+                <scope name="ScopeConsultarAtributosCC">
+                  <variables>
+                    <variable name="inInvoke_ConsultarAtributosUsuarioCC"
+                              messageType="ns3:requestConsultarAtributosUsuarioMessage"/>
+                    <variable name="outInvoke_ConsultarAtributosUsuarioCC"
+                              messageType="ns3:responseConsultarAtributosUsuarioMessage"/>
+                    <variable name="IndexCC" type="xsd:int"/>
+                  </variables>
+                  <sequence name="SequenceConsultarAtributosUsuarioCC">
+                    <if name="IfValorCC">
+                      <documentation>
+                        <![CDATA[ConValorCC]]>
+                      </documentation>
+                      <condition>$inputVariable.payload/ns1:correoElectronico/ns7:cc/ns7:usuario[1]!=''</condition>
+                      <sequence name="SequenceIfValorCC">
+                        <assign name="XQTransform_ConsultarAtributosUsuarioCC">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/EnviarCorreoElectronico_TO_ConsultarAtributosUsuarioCC.xqy', 'inputVariable.EnviarCorreoElectronicoRequest', $inputVariable.payload)</from>
+                            <to variable="inInvoke_ConsultarAtributosUsuarioCC" part="request"/>
+                          </copy>
+                        </assign>
+                        <invoke name="Invoke_ConsultarAtributosUsuarioCC" bpelx:invokeAsDetail="no"
+                                partnerLink="ConsultarAtributosUsuario" portType="ns3:UsuarioPT"
+                                operation="consultarAtributosUsuario"
+                                inputVariable="inInvoke_ConsultarAtributosUsuarioCC"
+                                outputVariable="outInvoke_ConsultarAtributosUsuarioCC"/>
+                        <assign name="XQTransform_ConCopia">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/ConsultarAtributosUsuarioCC_TO_EnviarCorreoElectronico.xqy', 'outInvoke_ConsultarAtributosUsuarioCC.response', $outInvoke_ConsultarAtributosUsuarioCC.response)</from>
+                            <to variable="emails" part="payload"/>
+                          </copy>
+                        </assign>
+                        <assign name="Assign_CC">
+                          <copy>
+                            <from>$emails.payload/ns1:correoElectronico/ns7:cc</from>
+                            <to>$inputVariable.payload/ns1:correoElectronico/ns7:cc</to>
+                          </copy>
+                        </assign>
+                      </sequence>
+                    </if>
+                    <if name="NotCCInput">
+                      <condition>string-length($InputCC) = 0 and string-length($CC) &gt; 0</condition>
+                      <assign name="SetCC_Plantilla">
+                        <copy>
+                          <from>count($inputVariable.payload/ns1:correoElectronico/ns7:cc/ns7:usuario) + 1</from>
+                          <to>$IndexCC</to>
+                        </copy>
+                        <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                          <from>$CC</from>
+                          <to>$inputVariable.payload/ns1:correoElectronico/ns7:cc/ns7:usuario[$IndexCC]</to>
+                        </copy>
+                      </assign>
+                    </if>
+                  </sequence>
+                </scope>
+                <scope name="ScopeConsultarAtributosBCC"
+                       xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                  <bpelx:skipCondition xmlns:bpelx="http://schemas.oracle.com/bpel/extension">string($inputVariable.payload/ns1:correoElectronico/ns7:bcc/ns7:usuario[1]) = ''</bpelx:skipCondition>
+                  <variables>
+                    <variable name="inInvoke_ConsultarAtributosUsuarioCC"
+                              messageType="ns3:requestConsultarAtributosUsuarioMessage"/>
+                    <variable name="outInvoke_ConsultarAtributosUsuarioCC"
+                              messageType="ns3:responseConsultarAtributosUsuarioMessage"/>
+                  </variables>
+                  <sequence name="SequenceConsultarAtributosUsuarioBCC">
+                    <assign name="XQTransform_ConsultarAtributosUsuarioBCC">
+                      <bpelx:annotation xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                      </bpelx:annotation>
+                      <copy>
+                        <from>ora:processXQuery10('../Transformations/EnviarCorreoElectronico_TO_ConsultarAtributosUsuarioBCC.xqy', 'inputVariable.EnviarCorreoElectronicoRequest', $inputVariable.payload)</from>
+                        <to variable="inInvoke_ConsultarAtributosUsuarioCC" part="request"/>
+                      </copy>
+                    </assign>
+                    <invoke name="Invoke_ConsultarAtributosUsuarioBCC" bpelx:invokeAsDetail="no"
+                            partnerLink="ConsultarAtributosUsuario" portType="ns3:UsuarioPT"
+                            operation="consultarAtributosUsuario" inputVariable="inInvoke_ConsultarAtributosUsuarioCC"
+                            outputVariable="outInvoke_ConsultarAtributosUsuarioCC"
+                            xmlns:bpelx="http://schemas.oracle.com/bpel/extension"/>
+                    <assign name="XQTransform_ConCopiaOculta">
+                      <bpelx:annotation xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                      </bpelx:annotation>
+                      <copy>
+                        <from>ora:processXQuery10('../Transformations/ConsultarAtributosUsuarioBCC_TO_EnviarCorreoElectronico.xqy', 'outInvoke_ConsultarAtributosUsuarioCC.response', $outInvoke_ConsultarAtributosUsuarioCC.response)</from>
+                        <to variable="emails" part="payload"/>
+                      </copy>
+                    </assign>
+                    <assign name="Assign_BCC">
+                      <copy>
+                        <from>$emails.payload/ns1:correoElectronico/ns7:bcc</from>
+                        <to>$inputVariable.payload/ns1:correoElectronico/ns7:bcc</to>
+                      </copy>
+                    </assign>
+                  </sequence>
+                </scope>
+                <scope name="ScopeEnviarCorreoElectronico">
+                  <variables>
+                    <variable name="inInvoke_EnviarCorreoElectronico"
+                              messageType="ns2:requestEnviarCorreoElectronicoMessage"/>
+                    <variable name="outInvoke_EnviarCorreoElectronico"
+                              messageType="ns2:responseEnviarCorreoElectronicoMessage"/>
+                    <variable name="varCount" type="xsd:int">
+                      <from><literal>1</literal></from>
+                    </variable>
+                    <variable name="varInvokeConsultarConfiguracionRq"
+                              messageType="ns31:ConsultarConfiguracionRequestMessage"/>
+                    <variable name="varInvokeConsultarConfiguracionRs"
+                              messageType="ns31:ConsultarConfiguracionResponseMessage"/>
+                    <variable name="varErrorEnviarCorreo" type="xsd:string">
+                      <from>''</from>
+                    </variable>
+                  </variables>
+                  <sequence name="SequenceEnviarCorreoElectronico">
+                    <assign name="Assign_EnviarCorreoElectronico">
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$inputVariable.payload/ns1:correoElectronico</from>
+                        <to>$inInvoke_EnviarCorreoElectronico.request/ns1:CorreoElectronico</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$varMensaje</from>
+                        <to>$inInvoke_EnviarCorreoElectronico.request/ns1:CorreoElectronico/ns7:mensaje</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$varAsunto</from>
+                        <to>$inInvoke_EnviarCorreoElectronico.request/ns1:CorreoElectronico/ns7:subject</to>
+                      </copy>
+                    </assign>
+                    <if name="ifMensaje">
+                      <documentation>
+                        <![CDATA[Mensaje]]>
+                      </documentation>
+                      <condition>string-length($inInvoke_EnviarCorreoElectronico.request/ns1:CorreoElectronico/ns7:mensaje) &gt; 0</condition>
+                      <repeatUntil name="repeatUntil">
+                        <sequence name="sequenceRepeatUntil">
+                          <scope name="scopeConsumoEnviarCorreo">
+                            <documentation>
+                              <![CDATA[Este scope se utiliza para contralar cualquier excepcion que pudier darse 
+al momento de consumir el servico de enviar correo y evitar que termine
+el bpel y asi pueda hacer los reintentos]]>
+                            </documentation>
+                            <faultHandlers>
+                              <catchAll>
+                                <assign name="assignErrorEnviaCorreo">
+                                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                    <from><literal>Error</literal></from>
+                                    <to>$varErrorEnviarCorreo</to>
+                                  </copy>
+                                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                    <from><literal>ERROR</literal></from>
+                                    <to>$outInvoke_EnviarCorreoElectronico.response/ns1:Resultado/ns5:result</to>
+                                  </copy>
+                                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                    <from><literal>Error en el BpelEnviarCorroElectronico</literal></from>
+                                    <to>$outInvoke_EnviarCorreoElectronico.response/ns1:Resultado/ns5:message</to>
+                                  </copy>
+                                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                    <from>ora:getFaultAsString()</from>
+                                    <to>$outInvoke_EnviarCorreoElectronico.response/ns1:Resultado/ns5:error/ns6:errorDescription</to>
+                                  </copy>
+                                </assign>
+                              </catchAll>
+                            </faultHandlers>
+                            <invoke name="Invoke_EnviarCorreoElectronico" bpelx:invokeAsDetail="no"
+                                    partnerLink="EnviarCorreoElectronico" portType="ns2:CorreoElectronicoPT"
+                                    operation="enviarCorreoElectronico" inputVariable="inInvoke_EnviarCorreoElectronico"
+                                    outputVariable="outInvoke_EnviarCorreoElectronico"/>
+                          </scope>
+                          <if name="IfResultadoEnviarCorreo">
+                            <documentation>
+                              <![CDATA[2doIntento]]>
+                            </documentation>
+                            <condition>($outInvoke_EnviarCorreoElectronico.response/ns1:Resultado/ns5:result = 'ERROR') and ($varCount = 2)</condition>
+                            <sequence name="SequenceIfResultadoOK">
+                              <scope name="ScopeBitacoraCorreoElectronico">
+                                <bpelx:skipCondition>string($inputVariable.payload/ns1:correoElectronico/ns7:to/ns7:usuario[1])=''</bpelx:skipCondition>
+                                <variables>
+                                  <variable name="inInvoke_BitacoraCorreoElectronico"
+                                            messageType="ns2:requestCrearBitacoraCorreoElectronicoMessage"/>
+                                  <variable name="outInvoke_BitacoraCorreoElectronico"
+                                            messageType="ns2:responseCrearBitacoraCorreoElectronicoMessage"/>
+                                  <variable name="varEnviarCorreoError"
+                                            element="ns1:EnviarCorreoElectronicoBPELRequest"/>
+                                  <variable name="varInvokeWsConstruirCorreoElectronicoRq"
+                                            messageType="ns2:ConstruirCorreoElectronicoRequestMessage"/>
+                                  <variable name="varInvokeWsConstruirCorreoElectronicoRs"
+                                            messageType="ns2:ConstruirCorreoElectronicoResponseMessage"/>
+                                  <variable name="varInvokeWsEnviarCorreoElectronicoRq"
+                                            messageType="ns2:requestEnviarCorreoElectronicoMessage"/>
+                                  <variable name="varInvokeWsEnviarCorreoElectronicoRs"
+                                            messageType="ns2:responseEnviarCorreoElectronicoMessage"/>
+                                  <variable name="varInvokeWsCrearBitacoraEditarRq"
+                                            messageType="ns2:requestCrearBitacoraCorreoElectronicoMessage"/>
+                                  <variable name="varInvokeWsCrearBitacoraEditarRs"
+                                            messageType="ns2:responseCrearBitacoraCorreoElectronicoMessage"/>
+                                  <variable name="vaIinvokeConsultarAtributosUsuarioErrorRq"
+                                            messageType="ns3:requestConsultarAtributosUsuarioMessage"/>
+                                  <variable name="vaIinvokeConsultarAtributosUsuarioErrorRs"
+                                            messageType="ns3:responseConsultarAtributosUsuarioMessage"/>
+                                </variables>
+                                <sequence name="SequenceBitacoraCorreoElectronico">
+                                  <assign name="Assign_BitacoraCorreoElectronico">
+                                    <copy>
+                                      <from>$varCount + 5</from>
+                                      <to>$varCount</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$outInvoke_EnviarCorreoElectronico.response/ns1:Resultado/ns5:error/ns6:errorDescription</from>
+                                      <to>$inInvoke_BitacoraCorreoElectronico.requestCrearBitacoraCorreoElectronicoMessage/ns1:BitacoraCorreoElectronico/ns7:descripcionError</to>
+                                    </copy>
+                                    <copy bpelx:insertMissingToData="yes" keepSrcElementName="no"
+                                          ignoreMissingFromData="yes">
+                                      <from>$outInvoke_EnviarCorreoElectronico.response/ns1:Resultado/ns5:message</from>
+                                      <to>$inInvoke_BitacoraCorreoElectronico.requestCrearBitacoraCorreoElectronicoMessage/ns1:BitacoraCorreoElectronico/ns7:mensajeError</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$inputVariable.payload/ns1:correoElectronico/ns7:idClienteFenix</from>
+                                      <to>$inInvoke_BitacoraCorreoElectronico.requestCrearBitacoraCorreoElectronicoMessage/ns1:BitacoraCorreoElectronico/ns7:idCliente</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$inputVariable.payload/ns1:correoElectronico/ns7:idOperacion</from>
+                                      <to>$inInvoke_BitacoraCorreoElectronico.requestCrearBitacoraCorreoElectronicoMessage/ns1:BitacoraCorreoElectronico/ns7:idOperacion</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$inputVariable.payload/ns1:correoElectronico/ns7:id_plantilla</from>
+                                      <to>$inInvoke_BitacoraCorreoElectronico.requestCrearBitacoraCorreoElectronicoMessage/ns1:BitacoraCorreoElectronico/ns7:idTcaPlantillaCorreo</to>
+                                    </copy>
+                                    <copy bpelx:insertMissingToData="yes">
+                                      <from><literal>0</literal></from>
+                                      <to>$inInvoke_BitacoraCorreoElectronico.requestCrearBitacoraCorreoElectronicoMessage/ns1:BitacoraCorreoElectronico/ns7:seHaNotificadoError</to>
+                                    </copy>
+                                  </assign>
+                                  <invoke name="Invoke_BitacoraCorreoElectronico" bpelx:invokeAsDetail="no"
+                                          partnerLink="CrearBitacoraCorreo"
+                                          portType="ns2:CrearBitacoraCorreoElectronicoPT"
+                                          operation="CrearBitacoraCorreoElectronico"
+                                          inputVariable="inInvoke_BitacoraCorreoElectronico"
+                                          outputVariable="outInvoke_BitacoraCorreoElectronico"/>
+                                  <assign name="xqWsConstruirCorreoError">
+                                    <bpelx:annotation>
+                                      <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                                    </bpelx:annotation>
+                                    <copy>
+                                      <from>ora:processXQuery10('../Transformations/CrearBitacoraRs_To_WsConstruirCorreoElectronicoRq.xqy', 'crearBitacoraCorreoElectronico', $outInvoke_BitacoraCorreoElectronico.responsetCrearBitacoraCorreoElectronicoMessage, 'EnviarCorreoElectronico', $inputVariable.payload)</from>
+                                      <to variable="varInvokeWsConstruirCorreoElectronicoRq"
+                                          part="ConstruirCorreoElectronicoRequest"/>
+                                    </copy>
+                                  </assign>
+                                  <invoke name="invokeWsConstruirCorreoElectronico" bpelx:invokeAsDetail="no"
+                                          partnerLink="ConstruirCorreoElectronico"
+                                          portType="ns2:ConstruirCorreoElectronicoPT"
+                                          operation="construirCorreoElectronico"
+                                          inputVariable="varInvokeWsConstruirCorreoElectronicoRq"
+                                          outputVariable="varInvokeWsConstruirCorreoElectronicoRs"/>
+                                  <assign name="xqRolesErrorRs_To_WsConsultarAtributosUsuariosRq">
+                                    <bpelx:annotation>
+                                      <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                                    </bpelx:annotation>
+                                    <copy>
+                                      <from>ora:processXQuery10('../Transformations/RolesErrorRs_To_WsEnviarCorreoElectronicoRq.xqy', 'varInvokeObtenerRolesUsuariosByPlantillaRs.response', $varInvokeObtenerRolesUsuariosByPlantillaRs.response)</from>
+                                      <to variable="vaIinvokeConsultarAtributosUsuarioErrorRq" part="request"/>
+                                    </copy>
+                                  </assign>
+                                  <invoke name="invokeConsultarAtributosUsuarioError"
+                                          partnerLink="ConsultarAtributosUsuario" portType="ns3:UsuarioPT"
+                                          operation="consultarAtributosUsuario"
+                                          inputVariable="vaIinvokeConsultarAtributosUsuarioErrorRq"
+                                          outputVariable="vaIinvokeConsultarAtributosUsuarioErrorRs"
+                                          bpelx:invokeAsDetail="no">
+                                    <documentation>
+                                      <![CDATA[Consulta el correo de los usuarios a los cuales se enviara el correo
+para notificar el error]]>
+                                    </documentation>
+                                  </invoke>
+                                  <assign name="xqAtrirbutosUsuariosRs_To_WsEnviarCorreoElectronicoRq">
+                                    <bpelx:annotation>
+                                      <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                                    </bpelx:annotation>
+                                    <copy>
+                                      <from>ora:processXQuery10('../Transformations/AtrirbutosUsuariosRs_To_EnviarCorreoElectronicoRq.xqy', 'vaIinvokeConsultarAtributosUsuarioErrorRs.response', $vaIinvokeConsultarAtributosUsuarioErrorRs.response)</from>
+                                      <to variable="varInvokeWsEnviarCorreoElectronicoRq" part="request"/>
+                                    </copy>
+                                  </assign>
+                                  <assign name="assignWsEnviarCorreoElectronico">
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$varInvokeWsConstruirCorreoElectronicoRs.ConstruirCorreoElectronicoResponse/ns1:CorreoElectronico/ns7:mensaje</from>
+                                      <to>$varInvokeWsEnviarCorreoElectronicoRq.request/ns1:CorreoElectronico/ns7:mensaje</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$varInvokeWsConstruirCorreoElectronicoRs.ConstruirCorreoElectronicoResponse/ns1:CorreoElectronico/ns7:subject</from>
+                                      <to>$varInvokeWsEnviarCorreoElectronicoRq.request/ns1:CorreoElectronico/ns7:subject</to>
+                                    </copy>
+                                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                      <from>$varInvokeWsConstruirCorreoElectronicoRs.ConstruirCorreoElectronicoResponse/ns1:CorreoElectronico/ns7:cc</from>
+                                      <to>$varInvokeWsEnviarCorreoElectronicoRq.request/ns1:CorreoElectronico/ns7:cc</to>
+                                    </copy>
+                                  </assign>
+                                  <scope name="scopeEnviarCorreoError">
+                                    <faultHandlers>
+                                      <catchAll>
+                                        <assign name="assignError">
+                                          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                            <from><literal>ERROR</literal></from>
+                                            <to>$varInvokeWsEnviarCorreoElectronicoRs.response/ns1:Resultado/ns5:result</to>
+                                          </copy>
+                                        </assign>
+                                      </catchAll>
+                                    </faultHandlers>
+                                    <invoke name="invokeWsEnviarCorreoElectronico" partnerLink="EnviarCorreoElectronico"
+                                            portType="ns2:CorreoElectronicoPT" operation="enviarCorreoElectronico"
+                                            inputVariable="varInvokeWsEnviarCorreoElectronicoRq"
+                                            outputVariable="varInvokeWsEnviarCorreoElectronicoRs"
+                                            bpelx:invokeAsDetail="no"/>
+                                  </scope>
+                                  <if name="ifEnviarCorreoElectronico">
+                                    <documentation>
+                                      <![CDATA[Ok]]>
+                                    </documentation>
+                                    <condition>$varInvokeWsEnviarCorreoElectronicoRs.response/ns1:Resultado/ns5:result = 'OK'</condition>
+                                    <assign name="assignWsCrearBitacoraEditarRq">
+                                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                        <from>$outInvoke_BitacoraCorreoElectronico.responsetCrearBitacoraCorreoElectronicoMessage/ns1:BitacoraId</from>
+                                        <to>$varInvokeWsCrearBitacoraEditarRq.requestCrearBitacoraCorreoElectronicoMessage/ns1:BitacoraCorreoElectronico/ns7:id</to>
+                                      </copy>
+                                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                        <from><literal>1</literal></from>
+                                        <to>$varInvokeWsCrearBitacoraEditarRq.requestCrearBitacoraCorreoElectronicoMessage/ns1:BitacoraCorreoElectronico/ns7:mensajeError</to>
+                                      </copy>
+                                    </assign>
+                                    <else>
+                                      <documentation>
+                                        <![CDATA[Error]]>
+                                      </documentation>
+                                      <assign name="assignWsCrearBitacoraEditarRq">
+                                        <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                          <from>$outInvoke_BitacoraCorreoElectronico.responsetCrearBitacoraCorreoElectronicoMessage/ns1:BitacoraId</from>
+                                          <to>$varInvokeWsCrearBitacoraEditarRq.requestCrearBitacoraCorreoElectronicoMessage/ns1:BitacoraCorreoElectronico/ns7:id</to>
+                                        </copy>
+                                        <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                          <from><literal>2</literal></from>
+                                          <to>$varInvokeWsCrearBitacoraEditarRq.requestCrearBitacoraCorreoElectronicoMessage/ns1:BitacoraCorreoElectronico/ns7:seHaNotificadoError</to>
+                                        </copy>
+                                      </assign>
+                                    </else>
+                                  </if>
+                                  <invoke name="invokeWsCrearBitacoraEditar" bpelx:invokeAsDetail="no"
+                                          partnerLink="CrearBitacoraCorreo"
+                                          portType="ns2:CrearBitacoraCorreoElectronicoPT"
+                                          operation="CrearBitacoraCorreoElectronico"
+                                          inputVariable="varInvokeWsCrearBitacoraEditarRq"
+                                          outputVariable="varInvokeWsCrearBitacoraEditarRs"/>
+                                </sequence>
+                              </scope>
+                            </sequence>
+                            <elseif>
+                              <documentation>
+                                <![CDATA[Ok]]>
+                              </documentation>
+                              <condition>$outInvoke_EnviarCorreoElectronico.response/ns1:Resultado/ns5:result = 'OK'</condition>
+                              <assign name="assignVarCount">
+                                <copy>
+                                  <from>$varCount + 5</from>
+                                  <to>$varCount</to>
+                                </copy>
+                              </assign>
+                            </elseif>
+                            <else>
+                              <documentation>
+                                <![CDATA[ERROR]]>
+                              </documentation>
+                              <sequence name="SequenceErrorEnviarCorreo">
+                                <assign name="assignConsultaConfiguracion">
+                                  <!--copy>
+                                  <from>$outInvoke_EnviarCorreoElectronico.response/ns1:Resultado/ns5:error/ns6:errorDescription</from>
+                                  <to>$EnviarCorreoElectronicoFault.EnviarCorreoElectronicoFault/ns1:Fault/ns6:errorDescription</to>
+                                </copy>
+                                <copy>
+                                  <from>$outInvoke_EnviarCorreoElectronico.response/ns1:Resultado/ns5:error/ns6:errorCode</from>
+                                  <to>$EnviarCorreoElectronicoFault.EnviarCorreoElectronicoFault/ns1:Fault/ns6:errorCode</to>
+                                </copy>
+                                <copy>
+                                  <from>$outInvoke_EnviarCorreoElectronico.response/ns1:Resultado/ns5:error/ns6:errorType</from>
+                                  <to>$EnviarCorreoElectronicoFault.EnviarCorreoElectronicoFault/ns1:Fault/ns6:errorType</to>
+                                </copy>
+                                <copy>
+                                  <from>$inInvoke_EnviarCorreoElectronico.request/ns1:CorreoElectronico</from>
+                                  <to>$EnviarCorreoElectronicoFault.EnviarCorreoElectronicoFault/ns1:Fault/ns6:message</to>
+                                </copy-->
+                                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                    <from>$varCount + 1</from>
+                                    <to>$varCount</to>
+                                  </copy>
+                                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                    <from><literal>TIEMPO_REENVIO_CORREO</literal></from>
+                                    <to>$varInvokeConsultarConfiguracionRq.request/ns31:Parametro/ns21:name</to>
+                                  </copy>
+                                </assign>
+                                <invoke name="invokeConsultarConfiguracion" bpelx:invokeAsDetail="no"
+                                        partnerLink="ConsultarConfiguracion" portType="ns31:ConsultarConfiguracionPT"
+                                        operation="ConsultarConfiguracion"
+                                        inputVariable="varInvokeConsultarConfiguracionRq"
+                                        outputVariable="varInvokeConsultarConfiguracionRs"/>
+                                <if name="IfConsultarConfiguracion">
+                                  <documentation>
+                                    <![CDATA[OK]]>
+                                  </documentation>
+                                  <condition>(count($varInvokeConsultarConfiguracionRs.response/ns31:Parametro) &gt; 0) and ($varInvokeConsultarConfiguracionRs.response/ns31:Resultado/ns5:result = 'OK')</condition>
+                                  <wait name="waitReenvio">
+                                    <for>$varInvokeConsultarConfiguracionRs.response/ns31:Parametro[1]/ns21:value</for>
+                                  </wait>
+                                  <!--empty name="empty"/-->
+                                  <else>
+                                    <documentation>
+                                      <![CDATA[Error]]>
+                                    </documentation>
+                                    <wait name="waitReenvio">
+                                      <for>'PT20S'</for>
+                                    </wait>
+                                    <!--wait name="WaitDefault">
+                                    <for>'PT1M'</for>
+                                  </wait-->
+                                    <!--empty name="vacio"/-->
+                                  </else>
+                                </if>
+                              </sequence>
+                            </else>
+                          </if>
+                        </sequence>
+                        <condition>$varCount &gt; 3</condition>
+                      </repeatUntil>
+                      <else>
+                        <documentation>
+                          <![CDATA[SinMensaje]]>
+                        </documentation>
+                        <exit name="exitSinMensaje"/>
+                      </else>
+                    </if>
+                  </sequence>
+                </scope>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[SIN_VALOR]]>
+                </documentation>
+                <sequence name="SequenceToSinValor">
+                  <assign name="Assign_ErrorToSinValor">
+                    <copy>
+                      <from>'Error'</from>
+                      <to>$outputVariable.payload/ns1:Resultado/ns5:result</to>
+                    </copy>
+                    <copy>
+                      <from>'El correo no tiene destinaratarios'</from>
+                      <to>$outputVariable.payload/ns1:Resultado/ns5:message</to>
+                    </copy>
+                    <copy>
+                      <from>'-1'</from>
+                      <to>$outputVariable.payload/ns1:Resultado/ns5:error/ns6:errorCode</to>
+                    </copy>
+                    <copy>
+                      <from>'No se asignó ningún correo electrónico en la sección Para'</from>
+                      <to>$outputVariable.payload/ns1:Resultado/ns5:error/ns6:errorDescription</to>
+                    </copy>
+                  </assign>
+                  <!--reply name="Reply_ErrorToSinValor" variable="outputVariable"
+                         partnerLink="enviarcorreoelectronicobpel_client" portType="ns1:EnviarCorreoElectronicoPT"
+                         operation="enviarCorreoElectronico"/-->
+                  <exit name="Exit_ErrorToSinValor"/>
+                </sequence>
+              </else>
+            </if>
+          </sequence>
+        </scope>
+        <assign name="Assign_Respuesta">
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>'OK'</from>
+            <to>$outputVariable.payload/ns1:Resultado/ns5:result</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>'El correo se envió exitosamente'</from>
+            <to>$outputVariable.payload/ns1:Resultado/ns5:message</to>
+          </copy>
+        </assign>
+      </sequence>
+    </scope>
+        <!-- 
+          Asynchronous callback to the requester. (Note: the callback location and correlation id is transparently handled using WS-addressing.)
+        -->
+        <!--invoke name="callbackClient" partnerLink="bpelenviarcorreo_client" portType="client:bpelEnviarCorreoCallback" operation="processResponse" inputVariable="outputVariable"
+                bpelx:invokeAsDetail="no"/-->
+    </sequence>
+</process>

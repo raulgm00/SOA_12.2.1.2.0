@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpel:process name="ConsultarDetalleTransferenicaN_SJ"
+              targetNamespace="http://xmlns.oracle.com/OSB_BCIE/ADAPTADORES/"
+              xmlns:tns="http://xmlns.oracle.com/OSB_BCIE/ADAPTADORES/"
+              xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+              xmlns:rescon="http://www.bea.com/alsb/flow/resources/config"
+              xmlns:bea="http://www.bea.com/bpel/ui/extensions"
+              xmlns:ext="http://www.bea.com/bpel/extensions"
+              xmlns:expr="http://www.bea.com/wli/sb/stages/config"
+              xmlns:trf="http://www.bea.com/wli/sb/stages/transform/config"
+              xmlns:bind="http://xmlns.oracle.com/OSB_BCIE/MDS/ConsultarDetalleTransferenicaNSAD" 
+              bea:name="ConsultarDetalleTransferenicaN_SJ"
+              rescon:snippetVersion="1.0"
+              xmlns:des="http://www.bcie.org/DesembolsoMO" xmlns:ns0="http://www.bea.com/wli/sb/reference"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xmlns:ns1="http://www.bcie.org/ConsultarDetalleTransaccionByIdDesembolsoSAD"
+              xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns2="http://www.bea.com/wli/sb/stages/logging/config">
+    <bpel:partnerLinks>
+        <bpel:partnerLink name="ConsultarDetalleTransferenicaN_SJ" partnerLinkType="tns:ConsultarDetalleTransferenicaN_SJ"
+                          myRole="ConsultarDetalleTransferenicaN_SJ">
+	       </bpel:partnerLink>
+        <bpel:partnerLink name="ConsultarDetalleTransaccionByIdDesembolso_PS"
+                          partnerLinkType="tns:ConsultarDetalleTransaccionByIdDesembolso_PS"
+                          partnerRole="ConsultarDetalleTransaccionByIdDesembolso_PS"/>
+    </bpel:partnerLinks>
+
+	   <bpel:variables>
+        <bpel:variable name="request"
+	                      messageType="bind:requestMessage">
+	       </bpel:variable>
+	       <bpel:variable name="response"
+                       messageType="bind:replyMessage">
+	       </bpel:variable>
+        <bpel:variable name="ResponseDetalleTransaccion" element="des:ConsultarDetalleTransaccionNResponse"/>
+        <bpel:variable name="Result" element="des:ConsultarDetalleTransaccionNResponse"/>
+    </bpel:variables>
+
+    <bpel:sequence>
+        <bpel:receive partnerLink="ConsultarDetalleTransferenicaN_SJ" operation="ConsultarDetalleTransferenicaN" variable="request" createInstance="yes">
+	           <rescon:receiveInfo>
+                <rescon:wsdl ref="MDS/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/Wsdl/ADAPTER/ConsultarDetalleTransferenicaNSAD" binding="bind:ConsultarDetalleTransferenicaN_bind"/>
+            </rescon:receiveInfo>
+        </bpel:receive>
+        <bpel:assign>
+            <bpel:extensionAssignOperation>
+                <trf:assign varName="response.ConsultarDetallesTransferenicasOut">
+                    <trf:expr>
+                        <expr:xqueryTransform>
+                            <expr:resource ref="ADAPTADORES/ModeloNegocio/DominioDesembolso/ConsultarDetalleTransaccionN/XQUERY/ConsultarDetalleTransaccionOut_Ini"/>
+                        </expr:xqueryTransform>
+                    </trf:expr>
+                </trf:assign>
+            </bpel:extensionAssignOperation>
+        </bpel:assign>
+        <bpel:scope>
+            <bpel:sequence>
+                <bpel:forEach parallel="yes" counterName="count">
+                    <bpel:startCounterValue>1</bpel:startCounterValue>
+                    <bpel:finalCounterValue>count($request.ConsultarDetallesTransferenicasIn/des:idDesembolso)</bpel:finalCounterValue>
+                    <bpel:completionCondition>
+                        <bpel:branches>count($request.ConsultarDetallesTransferenicasIn/des:idDesembolso)</bpel:branches>
+                    </bpel:completionCondition>
+                    <bpel:scope>
+                        <bpel:variables>
+                            <bpel:variable name="ConsultarDetalleTransaccionRequest"
+                       messageType="ns1:requestConsultarDetalleTransaccionMessage"/>
+        <bpel:variable name="ConsultarDetalleTransaccionResponse"
+                       messageType="ns1:responseConsultarDetalleTransaccionMessage"/>
+                        </bpel:variables>
+                        <bpel:sequence>
+                            <bpel:assign>
+                                <bpel:extensionAssignOperation>
+                                    <trf:assign varName="ConsultarDetalleTransaccionRequest.request">
+                                        <trf:expr>
+                                            <expr:xqueryTransform>
+                                                <expr:resource ref="ADAPTADORES/ModeloNegocio/DominioDesembolso/ConsultarDetalleTransaccionN/XQUERY/ConsultarDetalleTransferenciaNrequest_To_ConsultarDetalleTransferenciaPS"/>
+                                                <expr:param name="ConsultarDetalleTransaccionNRequest">
+                                                    <expr:path>$request.ConsultarDetallesTransferenicasIn</expr:path>
+                                                </expr:param>
+                                                <expr:param name="counter">
+                                                    <expr:path>$count</expr:path>
+                                                </expr:param>
+                                            </expr:xqueryTransform>
+                                        </trf:expr>
+                                    </trf:assign>
+                                </bpel:extensionAssignOperation>
+                            </bpel:assign>
+                            <bpel:invoke partnerLink="ConsultarDetalleTransaccionByIdDesembolso_PS"
+                                         operation="ConsultarDetalleTransaccionByIdDesembolso"
+                                         inputVariable="ConsultarDetalleTransaccionRequest"
+                                         outputVariable="ConsultarDetalleTransaccionResponse">
+                                <rescon:invokeInfo>
+                                    <rescon:service ref="ADAPTADORES/ModeloNegocio/DominioDesembolso/ConsultarDetalleTransaccionByIdDesembolso/PS/ConsultarDetalleTransaccionByIdDesembolso_PS"
+                                                    xsi:type="ns0:ProxyRef"/>
+                                </rescon:invokeInfo>
+                            </bpel:invoke>
+                            <bpel:assign>
+                                <bpel:extensionAssignOperation>
+                                    <trf:assign varName="ResponseDetalleTransaccion">
+                                        <trf:expr>
+                                            <expr:xqueryTransform>
+                                                <expr:resource ref="ADAPTADORES/ModeloNegocio/DominioDesembolso/ConsultarDetalleTransaccionN/XQUERY/ConsultarDetalleTransaccion_To_CosultarDetalleTransaccionNresponse"/>
+                                                <expr:param name="ConsultarDetalleTransaccionResponse">
+                                                    <expr:path>$ConsultarDetalleTransaccionResponse.response</expr:path>
+                                                </expr:param>
+                                                <expr:param name="ConsultarDetalleTransaccionNRequest">
+                                                    <expr:path>$request.ConsultarDetallesTransferenicasIn</expr:path>
+                                                </expr:param>
+                                                <expr:param name="counter">
+                                                    <expr:path>$count</expr:path>
+                                                </expr:param>
+                                            </expr:xqueryTransform>
+                                        </trf:expr>
+                                    </trf:assign>
+                                </bpel:extensionAssignOperation>
+                                <bpel:extensionAssignOperation>
+                                    <trf:insert varName="response.ConsultarDetallesTransferenicasOut">
+                                        <trf:location>
+                                            <expr:xpathText>.</expr:xpathText>
+                                        </trf:location>
+                                        <trf:where>first-child</trf:where>
+                                        <trf:expr>
+                                            <expr:xqueryText>$ResponseDetalleTransaccion/*</expr:xqueryText>
+                                        </trf:expr>
+                                    </trf:insert>
+                                </bpel:extensionAssignOperation>
+                            </bpel:assign>
+                        </bpel:sequence>
+                    </bpel:scope>
+                </bpel:forEach>
+            </bpel:sequence>
+        </bpel:scope>
+        <bpel:reply partnerLink="ConsultarDetalleTransferenicaN_SJ" operation="ConsultarDetalleTransferenicaN" variable="response"></bpel:reply>
+    </bpel:sequence>
+</bpel:process>

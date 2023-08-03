@@ -1,0 +1,335 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Jun 06 12:27:38 CDT 2019
+  Author:  offic
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ItemDiffTranslateProcess"
+               targetNamespace="http://mx.agarcia.ea/Capabilities/Support/Commons/ItemCatalogSvc/BS/ItemDiffTranslateProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://mx.agarcia.ea/Capabilities/Support/Commons/ItemCatalogSvc/BS/ItemDiffTranslateProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns1="http://xmlns.oracle.com/pcbpel/adapter/coherence/ItemCataloApp/ItemDiffTranslate/getCoherence"
+         xmlns:ns2="http://xmlns.oracle.com/pcbpel/adapter/db/ItemCataloApp/ItemDiffTranslate/oneCaseDb"
+         xmlns:ns3="http://xmlns.oracle.com/pcbpel/adapter/coherence/ItemCataloApp/ItemDiffTranslate/putCoherence"
+         xmlns:ns4="http://xmlns.oracle.com/pcbpel/adapter/db/ItemCataloApp/ItemDiffTranslate/threeCaseDb"
+         xmlns:ns5="http://xmlns.oracle.com/pcbpel/adapter/db/top/oneCaseDb"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns6="http://xmlns.oracle.com/pcbpel/adapter/db/top/threeCaseDb"
+         xmlns:ns7="http://xmlns.oracle.com/pcbpel/adapter/db/ItemCataloApp/ItemDiffTranslate/caseTwoPrimary"
+         xmlns:ns8="http://xmlns.oracle.com/pcbpel/adapter/db/top/caseTwoPrimary">
+
+    <import ui:processWSDL="true" namespace="http://mx.agarcia.ea/Capabilities/Support/Commons/ItemCatalogSvc/BS/ItemDiffTranslateProcess" location="../WSDLs/ItemDiffTranslateProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="ItemDiffTranslateService" partnerLinkType="client:ItemDiffTranslateProcess" myRole="ItemDiffTranslateProcessProvider"/>
+    <partnerLink name="getCoherence" partnerLinkType="ns1:Get_plt" partnerRole="Get_role"/>
+    <partnerLink name="oneCaseDb" partnerLinkType="ns2:oneCaseDb_plt" partnerRole="oneCaseDb_role"/>
+    <partnerLink name="putCoherence" partnerLinkType="ns3:Put_plt" partnerRole="Put_role"/>
+    <partnerLink name="threeCaseDb" partnerLinkType="ns4:threeCaseDb_plt" partnerRole="threeCaseDb_role"/>
+    <partnerLink name="caseTwoPrimary" partnerLinkType="ns7:caseTwoPrimary_plt" partnerRole="caseTwoPrimary_role"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:ItemDiffTranslateProcessRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:ItemDiffTranslateProcessResponseMessage"/>
+    <variable name="concat" type="xsd:string"/>
+    <variable name="getCoherence_Get_InputVariable" messageType="ns1:Get_msg"/>
+    <variable name="getCoherence_Get_OutputVariable" messageType="ns1:GetResponse_msg"/>
+    <variable name="oneCase_oneCaseDbSelect_InputVariable" messageType="ns2:oneCaseDbSelect_inputParameters"/>
+    <variable name="oneCase_oneCaseDbSelect_OutputVariable" messageType="ns2:MdmItemsDiffsCollection_msg"/>
+    <variable name="putCoherence_Put_InputVariable" messageType="ns3:Put_msg"/>
+    <variable name="putCoherence_Put_OutputVariable" messageType="ns3:PutResponse_msg"/>
+    <variable name="threeCase_threeCaseDbSelect_InputVariable" messageType="ns4:threeCaseDbSelect_inputParameters"/>
+    <variable name="threeCase_threeCaseDbSelect_OutputVariable" messageType="ns4:MdmItemsDiffsCollection_msg"/>
+    <variable name="getCasePrimary_caseTwoPrimarySelect_InputVariable"
+              messageType="ns7:caseTwoPrimarySelect_inputParameters"/>
+    <variable name="getCasePrimary_caseTwoPrimarySelect_OutputVariable" messageType="ns7:MdmItemsDiffsCollection_msg"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ItemDiffTranslateProcess.wsdl) -->
+    <receive name="receiveInput" partnerLink="ItemDiffTranslateService" portType="client:ItemDiffTranslateProcess" operation="translate" variable="inputVariable" createInstance="yes"/>
+    <assign name="concat">
+      <copy>
+        <from>concat(string($inputVariable.payload/ns5:idC1),string($inputVariable.payload/ns5:appCodeC1),string($inputVariable.payload/ns5:catDetC1),string($inputVariable.payload/ns5:parIdC1),string($inputVariable.payload/ns5:parCatIdC1),string($inputVariable.payload/ns5:targetAppCodeC1))</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$concat</to>
+      </copy>
+    </assign>
+    <invoke name="getCoherence" partnerLink="getCoherence" portType="ns1:Get_ptt"
+            operation="Get" inputVariable="getCoherence_Get_InputVariable"
+            outputVariable="getCoherence_Get_OutputVariable" bpelx:invokeAsDetail="no">
+      <bpelx:toProperties>
+        <bpelx:toProperty name="jca.coherence.Key" variable="concat"/>
+      </bpelx:toProperties>
+    </invoke>
+    <if name="validationCase">
+      <condition>$inputVariable.payload/ns5:appCodeC1='RMS'</condition>
+      <sequence name="caseOne">
+        <if name="validateCoherence">
+          <condition>$getCoherence_Get_OutputVariable.body/ns5:MdmItemsDiffs</condition>
+          <assign name="getCoherence">
+            <copy>
+              <from>$getCoherence_Get_OutputVariable.body</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload</to>
+            </copy>
+          </assign>
+          <else>
+            <sequence>
+              <assign name="getDbCaseOne">
+                <copy>
+                  <from>$inputVariable.payload/ns5:idC1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_oneCaseDbSelect_InputVariable.oneCaseDbSelect_inputParameters/ns5:idC1</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.payload/ns5:appCodeC1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_oneCaseDbSelect_InputVariable.oneCaseDbSelect_inputParameters/ns5:appCodeC1</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.payload/ns5:catDetC1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_oneCaseDbSelect_InputVariable.oneCaseDbSelect_inputParameters/ns5:catDetC1</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.payload/ns5:parIdC1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_oneCaseDbSelect_InputVariable.oneCaseDbSelect_inputParameters/ns5:parIdC1</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.payload/ns5:parCatIdC1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_oneCaseDbSelect_InputVariable.oneCaseDbSelect_inputParameters/ns5:parCatIdC1</to>
+                </copy>
+                <copy>
+                  <from>$inputVariable.payload/ns5:targetAppCodeC1</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_oneCaseDbSelect_InputVariable.oneCaseDbSelect_inputParameters/ns5:targetAppCodeC1</to>
+                </copy>
+              </assign>
+              <invoke name="oneCase" bpelx:invokeAsDetail="no" partnerLink="oneCaseDb" portType="ns2:oneCaseDb_ptt"
+                      operation="oneCaseDbSelect" inputVariable="oneCase_oneCaseDbSelect_InputVariable"
+                      outputVariable="oneCase_oneCaseDbSelect_OutputVariable"/>
+              <assign name="OutputC1">
+                <copy>
+                  <from>$oneCase_oneCaseDbSelect_OutputVariable.MdmItemsDiffsCollection</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload</to>
+                </copy>
+                <copy>
+                  <from>$oneCase_oneCaseDbSelect_OutputVariable.MdmItemsDiffsCollection</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$putCoherence_Put_InputVariable.body</to>
+                </copy>
+              </assign>
+              <invoke name="putCoherence" bpelx:invokeAsDetail="no" partnerLink="putCoherence" portType="ns3:Put_ptt"
+                      operation="Put" inputVariable="putCoherence_Put_InputVariable"
+                      outputVariable="putCoherence_Put_OutputVariable">
+                <bpelx:toProperties>
+                  <bpelx:toProperty name="jca.coherence.Key" variable="concat"/>
+                </bpelx:toProperties>
+              </invoke>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+      <else>
+        <sequence name="Sequence1">
+          <assign name="getCaseThree">
+            <copy>
+              <from>$inputVariable.payload/ns5:idC1</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$threeCase_threeCaseDbSelect_InputVariable.threeCaseDbSelect_inputParameters/ns6:idC3</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.payload/ns5:appCodeC1</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$threeCase_threeCaseDbSelect_InputVariable.threeCaseDbSelect_inputParameters/ns6:appCodeC3</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.payload/ns5:catDetC1</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$threeCase_threeCaseDbSelect_InputVariable.threeCaseDbSelect_inputParameters/ns6:catDefC3</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.payload/ns5:parIdC1</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$threeCase_threeCaseDbSelect_InputVariable.threeCaseDbSelect_inputParameters/ns6:parIdC3</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.payload/ns5:parCatIdC1</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$threeCase_threeCaseDbSelect_InputVariable.threeCaseDbSelect_inputParameters/ns6:parCatIdC3</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.payload/ns5:targetAppCodeC1</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$threeCase_threeCaseDbSelect_InputVariable.threeCaseDbSelect_inputParameters/ns6:targetAppCodeC3</to>
+            </copy>
+          </assign>
+          <invoke name="threeCase" bpelx:invokeAsDetail="no" partnerLink="threeCaseDb" portType="ns4:threeCaseDb_ptt"
+                  operation="threeCaseDbSelect" inputVariable="threeCase_threeCaseDbSelect_InputVariable"
+                  outputVariable="threeCase_threeCaseDbSelect_OutputVariable"/>
+          <if name="validationCaseThree">
+            <condition>string-length(string($threeCase_threeCaseDbSelect_OutputVariable.MdmItemsDiffsCollection/ns6:MdmItemsDiffs/ns6:primaryId))=0 and string($inputVariable.payload/ns5:targetAppCodeC1)!='RMS'</condition>
+            <if name="validationCoherence">
+              <condition>$getCoherence_Get_OutputVariable.body/ns5:MdmItemsDiffs</condition>
+              <assign name="getCoherence">
+                <copy>
+                  <from>$getCoherence_Get_OutputVariable.body</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload</to>
+                </copy>
+              </assign>
+              <else>
+                <sequence name="Sequence2">
+                  <assign name="getCasePrimary">
+                    <copy>
+                      <from>$inputVariable.payload/ns5:idC1</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$getCasePrimary_caseTwoPrimarySelect_InputVariable.caseTwoPrimarySelect_inputParameters/ns8:idC2</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.payload/ns5:appCodeC1</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$getCasePrimary_caseTwoPrimarySelect_InputVariable.caseTwoPrimarySelect_inputParameters/ns8:appCodeC2</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.payload/ns5:catDetC1</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$getCasePrimary_caseTwoPrimarySelect_InputVariable.caseTwoPrimarySelect_inputParameters/ns8:catDefC2</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.payload/ns5:parIdC1</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$getCasePrimary_caseTwoPrimarySelect_InputVariable.caseTwoPrimarySelect_inputParameters/ns8:parnIdC2</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.payload/ns5:parCatIdC1</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$getCasePrimary_caseTwoPrimarySelect_InputVariable.caseTwoPrimarySelect_inputParameters/ns8:parnCatIdC2</to>
+                    </copy>
+                  </assign>
+                  <invoke name="getCasePrimary" bpelx:invokeAsDetail="no" partnerLink="caseTwoPrimary"
+                          portType="ns7:caseTwoPrimary_ptt" operation="caseTwoPrimarySelect"
+                          inputVariable="getCasePrimary_caseTwoPrimarySelect_InputVariable"
+                          outputVariable="getCasePrimary_caseTwoPrimarySelect_OutputVariable"/>
+                  <assign name="getCaseTwo">
+                    <copy>
+                      <from>$getCasePrimary_caseTwoPrimarySelect_OutputVariable.MdmItemsDiffsCollection/ns8:MdmItemsDiffs/ns8:primaryId</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_oneCaseDbSelect_InputVariable.oneCaseDbSelect_inputParameters/ns5:idC1</to>
+                    </copy>
+                    <copy>
+                      <from>$getCasePrimary_caseTwoPrimarySelect_OutputVariable.MdmItemsDiffsCollection/ns8:MdmItemsDiffs/ns8:primaryAppcode</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_oneCaseDbSelect_InputVariable.oneCaseDbSelect_inputParameters/ns5:appCodeC1</to>
+                    </copy>
+                    <copy>
+                      <from>$getCasePrimary_caseTwoPrimarySelect_OutputVariable.MdmItemsDiffsCollection/ns8:MdmItemsDiffs/ns8:primaryCatdef</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_oneCaseDbSelect_InputVariable.oneCaseDbSelect_inputParameters/ns5:catDetC1</to>
+                    </copy>
+                    <copy>
+                      <from>$getCasePrimary_caseTwoPrimarySelect_OutputVariable.MdmItemsDiffsCollection/ns8:MdmItemsDiffs/ns8:primaryParnid</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_oneCaseDbSelect_InputVariable.oneCaseDbSelect_inputParameters/ns5:parIdC1</to>
+                    </copy>
+                    <copy>
+                      <from>$getCasePrimary_caseTwoPrimarySelect_OutputVariable.MdmItemsDiffsCollection/ns8:MdmItemsDiffs/ns8:primaryParncatid</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_oneCaseDbSelect_InputVariable.oneCaseDbSelect_inputParameters/ns5:parCatIdC1</to>
+                    </copy>
+                    <copy>
+                      <from>$inputVariable.payload/ns5:targetAppCodeC1</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$oneCase_oneCaseDbSelect_InputVariable.oneCaseDbSelect_inputParameters/ns5:targetAppCodeC1</to>
+                    </copy>
+                  </assign>
+                  <invoke name="oneCase"
+                                                                                                       bpelx:invokeAsDetail="no"
+                                                                                                       partnerLink="oneCaseDb"
+                                                                                                       portType="ns2:oneCaseDb_ptt"
+                                                                                                       operation="oneCaseDbSelect"
+                                                                                                       inputVariable="oneCase_oneCaseDbSelect_InputVariable"
+                                                                                                       outputVariable="oneCase_oneCaseDbSelect_OutputVariable"
+                                                                                                       xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                                                                                       xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/>
+                  <assign name="OutputC2">
+                    <copy>
+                      <from>$oneCase_oneCaseDbSelect_OutputVariable.MdmItemsDiffsCollection</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload</to>
+                    </copy>
+                    <copy>
+                      <from>$oneCase_oneCaseDbSelect_OutputVariable.MdmItemsDiffsCollection</from>
+                      <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$putCoherence_Put_InputVariable.body</to>
+                    </copy>
+                  </assign>
+                  <invoke name="putCoherence"
+                                                                                                                                                                                 bpelx:invokeAsDetail="no"
+                                                                                                                                                                                 partnerLink="putCoherence"
+                                                                                                                                                                                 portType="ns3:Put_ptt"
+                                                                                                                                                                                 operation="Put"
+                                                                                                                                                                                 inputVariable="putCoherence_Put_InputVariable"
+                                                                                                                                                                                 outputVariable="putCoherence_Put_OutputVariable"
+                                                                                                                                                                                 xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                                                                                                                                                                                 xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <bpelx:toProperties>
+         <bpelx:toProperty name="jca.coherence.Key" variable="concat"/>
+      </bpelx:toProperties>
+   </invoke></sequence>
+              </else>
+            </if>
+            <else>
+              <assign name="OutputC3">
+                <copy>
+                  <from>$threeCase_threeCaseDbSelect_OutputVariable.MdmItemsDiffsCollection/ns6:MdmItemsDiffs/ns6:primaryId</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns5:MdmItemsDiffs/ns5:id</to>
+                </copy>
+                <copy>
+                  <from>$threeCase_threeCaseDbSelect_OutputVariable.MdmItemsDiffsCollection/ns6:MdmItemsDiffs/ns6:primaryAppcode</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns5:MdmItemsDiffs/ns5:appCode</to>
+                </copy>
+                <copy>
+                  <from>$threeCase_threeCaseDbSelect_OutputVariable.MdmItemsDiffsCollection/ns6:MdmItemsDiffs/ns6:primaryCatdef</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns5:MdmItemsDiffs/ns5:catDef</to>
+                </copy>
+                <copy>
+                  <from>$threeCase_threeCaseDbSelect_OutputVariable.MdmItemsDiffsCollection/ns6:MdmItemsDiffs/ns6:primaryParnid</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns5:MdmItemsDiffs/ns5:parentId</to>
+                </copy>
+                <copy>
+                  <from>$threeCase_threeCaseDbSelect_OutputVariable.MdmItemsDiffsCollection/ns6:MdmItemsDiffs/ns6:primaryParncatid</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$outputVariable.payload/ns5:MdmItemsDiffs/ns5:parentCatid</to>
+                </copy>
+              </assign>
+            </else>
+          </if>
+        </sequence>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="ItemDiffTranslateService" portType="client:ItemDiffTranslateProcess" operation="translate" variable="outputVariable"/>
+  </sequence>
+</process>

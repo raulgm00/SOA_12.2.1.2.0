@@ -1,0 +1,271 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Jun 18 09:39:24 GMT-06:00 2019
+  Author:  User
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CreateItemProcess"
+               targetNamespace="http://xmlns.oracle.com/CreateItem/CreateItemProcess/CreateItemProcess"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/CreateItem/CreateItemProcess/CreateItemProcess"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://mx.agarcia.ea/Capabilities/Core/Items/CreateItemProcessSvc/v1.0"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://xmlns.oracle.com/pcbpel/adapter/db/CreateItem/CreateItemProcess/RMSFindSKU"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns6="http://xmlns.oracle.com/pcbpel/adapter/db/RMSFindSKU"
+         xmlns:ns4="http://mx.agarcia.ea/Canonical/Commons/Items/v1"
+         xmlns:ns5="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Core/Items/CreateItemEntity"
+         xmlns:ns7="http://mx.agarcia.ea/Capabilities/Core/Items/CreateItemEntitySvc/v1.0"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns8="http://mx.agarcia.ea/Commons/Schemas/AGStandardMessage"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateItemProcessSvc/v1.0"
+          location="../WSDLs/CreateItemProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Items/CreateItemProcessSvc/v1.0"
+          location="../WSDLs/CreateItemProcessWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="createitemprocess_client" partnerLinkType="ns1:CreateItemProcess" myRole="createItemPType"/>
+    <partnerLink name="RMSFindSKU" partnerLinkType="ns2:RMSFindSKU_plt" partnerRole="RMSFindSKU_role"/>
+    <partnerLink name="RMSCreateStyle" partnerLinkType="ns7:RMSCreateStyle" partnerRole="CreateStyleTaskREST_ptt"/>
+    <partnerLink name="CreateItemTaskSvcPXY" partnerLinkType="ns7:CreateItemTaskSvcPXY"
+                 partnerRole="CreateStyleTaskREST_ptt"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:createItemRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:createItemResponseMessage"/>
+    <variable name="RMSFindSKU_InputVariable" messageType="ns2:RMSFindSKUInput_msg"/>
+    <variable name="RMSFindSKU_OutputVariable" messageType="ns2:RMSFindSKUOutputCollection_msg"/>
+    <variable name="idStyle" type="xsd:string"/>
+    <variable name="InvokeRMSCreateStyle_create_InputVariable" messageType="ns7:create_inputMessage"/>
+    <variable name="InvokeRMSCreateStyle_create_OutputVariable" messageType="ns7:create_outputMessage"/>
+    <variable name="FindSKUVar" element="ns3:createItemRequest"/>
+    <variable name="InvokeCreateItemTask_InputVariable" messageType="ns7:create_inputMessage"/>
+    <variable name="InvokeCreateItemTask_OutputVariable" messageType="ns7:create_outputMessage"/>
+    <variable name="messageError" messageType="ns1:standardMessageFault"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CreateItemProcess.wsdl) --><receive name="receiveInput" partnerLink="createitemprocess_client" portType="ns1:createItemPType" operation="create" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignDivision" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+   <copy>
+        <from>1</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$inputVariable.createItemRequestMessage/ns3:items/ns4:item/ns4:itemHierarchyInfo/ns4:hierarchy[@Type='Division']/ns4:id</to>
+      </copy></assign>
+    <assign name="AssignIdStyle">
+      <copy>
+        <from>$inputVariable.createItemRequestMessage/ns3:items/ns4:item/ns4:id</from>
+        <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$idStyle</to>
+      </copy>
+    </assign>
+    <scope name="Scope2">
+      <faultHandlers>
+        <catch bpelx:name="timeout" faultName="bpelx:timeout" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage"><assign name="AssignError"
+                                                                    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$Fault.detail</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorDescription</to>
+      </copy>
+      <copy>
+         <from>'CRITEM-RMS'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorCode</to>
+      </copy>
+   </assign></catch>
+        <catch bpelx:name="remoteFault" faultName="bpelx:remoteFault" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage"><assign name="AssignError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$Fault.detail</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorDescription</to>
+      </copy>
+      <copy>
+         <from>'CRITEM-RMS'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorCode</to>
+      </copy>
+   </assign></catch>
+        <catch bpelx:name="bindingFault" faultName="bpelx:bindingFault" faultVariable="Fault"
+               faultMessageType="bpelx:RuntimeFaultMessage">
+          <assign name="AssignError">
+            <copy>
+              <from>$Fault.detail</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorDescription</to>
+            </copy>
+            <copy>
+              <from>'CRITEM-RMS'</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorCode</to>
+            </copy>
+          </assign>
+        </catch>
+        <catchAll><assign name="AssgineError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+   <copy>
+         <from>'CRITEM-RMS'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorCode</to>
+      </copy><copy>
+              <from>'Error Invoke Create Style RMS'</from>
+              <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorDescription</to>
+            </copy></assign></catchAll>
+      </faultHandlers>
+      <sequence name="Sequence2">
+        <assign name="AssignRMSCreateItem">
+          <copy>
+            <from>$inputVariable.createItemRequestMessage/ns3:items/ns4:item</from>
+            <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$InvokeRMSCreateStyle_create_InputVariable.request/ns3:items/ns4:item</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeRMSCreateStyle" bpelx:invokeAsDetail="no" partnerLink="RMSCreateStyle"
+                portType="ns7:CreateStyleTaskREST_ptt" operation="create"
+                inputVariable="InvokeRMSCreateStyle_create_InputVariable"
+                outputVariable="InvokeRMSCreateStyle_create_OutputVariable"/>
+      </sequence>
+    </scope>
+    <if name="IfCreateStyle">
+      <condition>$InvokeRMSCreateStyle_create_OutputVariable.response/ns8:result = 'true'</condition>
+      <sequence>
+        <scope name="Scope1">
+          <faultHandlers>
+            <catch bpelx:name="timeout" faultName="bpelx:timeout" faultVariable="Fault"
+                   faultMessageType="bpelx:RuntimeFaultMessage"><assign name="AssignError"
+                                                                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$messageError.fault/ns8:errorDescription</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorDescription</to>
+      </copy>
+      <copy>
+         <from>'CITEM-RMS'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorCode</to>
+      </copy>
+   </assign></catch>
+            <catch bpelx:name="remoteFault" faultName="bpelx:remoteFault" faultVariable="Fault"
+                   faultMessageType="bpelx:RuntimeFaultMessage"><assign name="AssignError"
+                                                                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <copy>
+         <from>$messageError.fault/ns8:errorDescription</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorDescription</to>
+      </copy>
+      <copy>
+         <from>'CITEM-RMS'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorCode</to>
+      </copy>
+   </assign></catch>
+            <catch faultName="bpelx:bindingFault" faultVariable="Fault" faultMessageType="bpelx:RuntimeFaultMessage"
+                   bpelx:name="bindingFault">
+              <assign name="AssignError">
+                <copy>
+                  <from>$messageError.fault/ns8:errorDescription</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorDescription</to>
+                </copy>
+                <copy>
+                  <from>'CITEM-RMS'</from>
+                  <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorCode</to>
+                </copy>
+              </assign>
+            </catch>
+            <catchAll><assign name="AssignError" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+   <copy>
+         <from>$messageError.fault/ns8:errorDescription</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorDescription</to>
+      </copy><copy>
+         <from>'CITEM-RMS'</from>
+         <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$messageError.fault/ns8:errorCode</to>
+      </copy></assign></catchAll>
+          </faultHandlers>
+          <sequence>
+            <assign name="AssignIDStyle">
+              <copy>
+                <from>$idStyle</from>
+                <to expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0">$RMSFindSKU_InputVariable.RMSFindSKUInput_msg/ns6:idStyle</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeRMSFindSKU" bpelx:invokeAsDetail="no" partnerLink="RMSFindSKU"
+                    portType="ns2:RMSFindSKU_ptt" operation="RMSFindSKU" inputVariable="RMSFindSKU_InputVariable"
+                    outputVariable="RMSFindSKU_OutputVariable"/>
+            <assign name="TransformConsultaSKU">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:doXSLTransformForDoc("../Transformations/TransformConsultaSKU.xsl", $RMSFindSKU_OutputVariable.RMSFindSKUOutputCollection)</from>
+                <to variable="FindSKUVar"/>
+              </copy>
+            </assign>
+          </sequence>
+        </scope>
+        <scope name="Scope3">
+          <sequence name="Sequence3">
+            <assign name="TransformCreateItemTaskReq">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:doXSLTransformForDoc("../Transformations/TransformCreateItemTaskReq.xsl", $inputVariable.createItemRequestMessage, "FindSKUVar", $FindSKUVar)</from>
+                <to variable="InvokeCreateItemTask_InputVariable" part="request"/>
+              </copy>
+            </assign>
+            <invoke name="InvokeCreateItemTask" bpelx:invokeAsDetail="no" partnerLink="CreateItemTaskSvcPXY"
+                    portType="ns7:CreateStyleTaskREST_ptt" operation="create"
+                    inputVariable="InvokeCreateItemTask_InputVariable"
+                    outputVariable="InvokeCreateItemTask_OutputVariable"/>
+          </sequence>
+        </scope>
+      </sequence>
+      <else>
+        <exit name="Exit1"/>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="createitemprocess_client" portType="ns1:createItemPType" operation="create" variable="outputVariable"/>
+  </sequence>
+</process>

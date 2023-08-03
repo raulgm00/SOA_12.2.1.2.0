@@ -1,0 +1,37 @@
+xquery version "1.0" encoding "utf-8";
+
+(:: OracleAnnotationVersion "1.0" ::)
+
+declare namespace ns2="http://www.bcie.org/EquipoTrabajoClienteMO";
+(:: import schema at "../../../../MDS/Resources/ComponentesComunes/Utilidades/CrearEquipoTrabajoCliente/V1/Schema/CrearEquipoTrabajoClienteMO.xsd" ::)
+declare namespace ns1="http://xmlns.oracle.com/bpmn/bpmnProcess/GestionCobroProcess";
+(:: import schema at "../../../../MDS/Resources/BPM/Schema/PC07/GestionCobroProcess.xsd" ::)
+
+declare namespace ns3 = "http://www.bcie.org/EqipoTrabajo/V1";
+
+declare namespace ns4 = "http://xmlns.bcie.org/ObjetoProceso/Comun/Header/V1";
+
+declare namespace ns5 = "http://xmlns.bcie.org/ObjetoProceso/Comun/Cliente/V1";
+
+declare variable $FinGestionCobro as element() (:: schema-element(ns1:FinGestionCobro) ::) external;
+
+declare function local:func($FinGestionCobro as element() (:: schema-element(ns1:FinGestionCobro) ::)) as element() (:: schema-element(ns2:CrearEquipoTrabajoClienteRequest) ::) {
+    <ns2:CrearEquipoTrabajoClienteRequest>
+        <ns2:idCliente>{fn:data($FinGestionCobro/ns1:Header/ns4:Cliente/ns5:IdCliente)}</ns2:idCliente>
+        <ns2:listadoEquipoTrabajo>
+            {
+                for $equipoTrabajo in $FinGestionCobro/ns1:EquipoTrabajo/ns3:equipoTrabajo
+                return 
+                <ns3:equipoTrabajo>
+                    <ns3:DescripcionRol>{fn:data($equipoTrabajo/ns3:DescripcionRol)}</ns3:DescripcionRol>
+                    <ns3:IdRol>{fn:data($equipoTrabajo/ns3:IdRol)}</ns3:IdRol>
+                    <ns3:DescripcionCortaRol>{fn:data($equipoTrabajo/ns3:DescripcionCortaRol)}</ns3:DescripcionCortaRol>
+                    <ns3:idProceso>{fn:data($equipoTrabajo/ns3:idProceso)}</ns3:idProceso>
+                    <ns3:usuario>{fn:data($equipoTrabajo/ns3:usuario)}</ns3:usuario>
+                </ns3:equipoTrabajo>
+            }
+        </ns2:listadoEquipoTrabajo>
+    </ns2:CrearEquipoTrabajoClienteRequest>
+};
+
+local:func($FinGestionCobro)

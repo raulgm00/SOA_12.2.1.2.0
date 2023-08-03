@@ -1,0 +1,19 @@
+
+	--  Vistas materializadas para los reportes en BAM
+	--  20161108
+	--  VERSIÓN 1
+
+	CREATE MATERIALIZED VIEW LOG ON CLIENTES
+    WITH PRIMARY KEY
+	INCLUDING NEW VALUES;
+     
+     /
+     
+    CREATE MATERIALIZED VIEW VM_CLIENTES
+    BUILD IMMEDIATE  
+    REFRESH FAST ON COMMIT   
+    AS SELECT * FROM CLIENTES;
+    
+    /
+	
+	

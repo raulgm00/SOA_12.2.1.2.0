@@ -1,0 +1,250 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Feb 15 18:39:47 CST 2017
+  Author:  hugo-casarrubias
+  Type: BPEL 2.0 Process
+  Purpose: Empty BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="AplicarEnvioCobro"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/AplicarEnvioCobro/AplicarEnvioCobro"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/AplicarEnvioCobro/AplicarEnvioCobro"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://xmlns.oracle.com/OSB_BCIE/MDS/AplicarEnvioCobroSOR"
+         xmlns:bpelx="http://schemas.oracle.com/bpel/extension" xmlns:ns2="http://xmlns.bcie.com/OperacionService"
+         xmlns:ns3="http://www.bcie.org/ConsultarSolicitudDesembolsoSAD" xmlns:ns4="http://www.bcie.org/OperacionMO"
+         xmlns:ns5="http://www.bcie.org/DesembolsoMO" xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns18="http://www.bcie.org/TerminoBO" xmlns:ns6="http://www.bcie.org/OperacionBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns21="http://www.bcie.org/ResultBO"
+         xmlns:ns14="http://www.bcie.org/CommonBO" xmlns:ns13="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns9="http://www.bcie.org/ProductoBO" xmlns:ns15="http://www.bcie.org/CondicionBO"
+         xmlns:ns10="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns17="http://www.bcie.org/DocumentoBO"
+         xmlns:ns20="http://www.bcie.org/HerramientaCEBO" xmlns:ns19="http://www.bcie.org/ComisionBO"
+         xmlns:ns8="http://www.bcie.org/CatalogoBO" xmlns:ns11="http://www.bcie.org/DesembolsoBO"
+         xmlns:ns12="http://www.bcie.org/ContratoBO" xmlns:ns7="http://www.bcie.org/ClienteBO"
+         xmlns:ns16="http://www.bcie.org/AtributoBO" xmlns:ns22="http://www.bcie.org/ErrorBO"
+         xmlns:ns23="http://www.bcie.org/ConsultarLineaCreditoByIdOperacionSAD"
+         xmlns:ns24="http://www.bcie.org/LineaCreditoMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns25="http://www.bcie.org/ReglaBO"
+         xmlns:ns26="http://www.bcie.org/MatrizTCCBO"
+         xmlns:ns27="http://xmlns.oracle.com/OSB_BCIE/MDS/AplicarAmpliacionSOR">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.oracle.com/OSB_BCIE/MDS/AplicarAmpliacionSOR"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioLineaCredito/LineaCredito/V1/Wsdl/BPEL/AplicarAmpliacionSOR.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.oracle.com/OSB_BCIE/MDS/AplicarEnvioCobroSOR"
+          location="../WSDLs/AplicarEnvioCobroSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <partnerLink name="AplicarEnvioCobroSOAP" partnerLinkType="ns1:AplicarEnvioCobroSOAP"
+                 myRole="AplicarEnvioCobro_ptt"/>
+    <partnerLink name="ConsultarOperacionById_SB" partnerLinkType="ns2:ConsultarOperacionById_SB"
+                 partnerRole="ConsultarOperacionById12Port"/>
+    <partnerLink name="ConsultarSolicitudDesembolso_SB" partnerLinkType="ns3:ConsultarSolicitudDesembolso_SB"
+                 partnerRole="ConsultarSolicitudDesembolso_PT"/>
+    <partnerLink name="ConsultarLineaCreditoByIdOperacion_SB"
+                 partnerLinkType="ns23:ConsultarLineaCreditoByIdOperacion_SB"
+                 partnerRole="ConsultarLineaCreditoByIdOperacion_PT"/>
+    <partnerLink name="AplicarAmpliacionSOR" partnerLinkType="ns27:AplicarAmpliacionSOR"
+                 partnerRole="AplicarAmpliacion_ptt"/>
+  </partnerLinks>
+  <variables>
+    <variable name="AplicarEnvioCobro_InputVariable" messageType="ns1:requestMessage"/>
+    <variable name="AplicarEnvioCobro_OutputVariable" messageType="ns1:replyMessage"/>
+    <variable name="ConsultarOperacionById_InputVariable" messageType="ns2:requestConsultarOperacionMessage"/>
+    <variable name="ConsultarOperacionById_OutputVariable" messageType="ns2:responseConsultarOperacionMessage"/>
+    <variable name="ConsultarSolicitudDesembolso_InputVariable"
+              messageType="ns3:requestConsultarSolicitudDesembolsoMessage"/>
+    <variable name="ConsultarSolicitudDesembolso_OutputVariable"
+              messageType="ns3:responseConsultarSolicitudDesembolsoMessage"/>
+    <variable name="ConsultarLineaCreditoByIdOperacion_InputVariable"
+              messageType="ns23:ConsultarLineaCreditoByIdOperacionRequest"/>
+    <variable name="ConsultarLineaCreditoByIdOperacion_OutputVariable"
+              messageType="ns23:ConsultarLineaCreditoByIdOperacionResponse"/>
+    <variable name="bpelErrorVar" messageType="bpelx:RuntimeFaultMessage"/>
+    <variable name="AplicarAmpliacion_InputVariable" messageType="ns27:requestMessage"/>
+    <variable name="AplicarAmpliacion_OutputVariable" messageType="ns27:replyMessage"/>
+    <variable name="tmpOutMessage" messageType="ns27:replyMessage"/>
+  </variables>
+  <faultHandlers>
+    <catch faultName="bpel:invalidVariables">
+      <sequence name="SeqCatchError">
+        <assign name="AssignErrorMessage">
+          <copy>
+            <from>'OK'</from>
+            <to>$AplicarEnvioCobro_OutputVariable.AplicarEnvioCobroResponseMessage/ns4:Resultado/ns21:result</to>
+          </copy>
+          <copy>
+            <from>$bpelErrorVar.detail</from>
+            <to>$AplicarEnvioCobro_OutputVariable.AplicarEnvioCobroResponseMessage/ns4:Resultado/ns21:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="AplicarEnvioCobro_OutputVariable" partnerLink="AplicarEnvioCobroSOAP"
+               portType="ns1:AplicarEnvioCobro_ptt" operation="AplicarEnvioCobro"/>
+      </sequence>
+    </catch>
+    <catchAll>
+      <sequence name="SeqCatchAll">
+        <assign name="AssignError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$AplicarEnvioCobro_OutputVariable.AplicarEnvioCobroResponseMessage/ns4:Resultado/ns21:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$AplicarEnvioCobro_OutputVariable.AplicarEnvioCobroResponseMessage/ns4:Resultado/ns21:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyErrorAll" variable="AplicarEnvioCobro_OutputVariable" partnerLink="AplicarEnvioCobroSOAP"
+               portType="ns1:AplicarEnvioCobro_ptt" operation="AplicarEnvioCobro"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <sequence name="main">
+    <receive name="Receive" partnerLink="AplicarEnvioCobroSOAP" portType="ns1:AplicarEnvioCobro_ptt"
+             operation="AplicarEnvioCobro" variable="AplicarEnvioCobro_InputVariable" createInstance="yes"/>
+    <sequence name="SeqLineasOpercion">
+      <assign name="AssignIdOperacion">
+        <copy>
+          <from>$AplicarEnvioCobro_InputVariable.AplicarEnvioCobroRequestMessage/ns4:idOperacion</from>
+          <to>$ConsultarOperacionById_InputVariable.request/ns4:idOperacion</to>
+        </copy>
+        <copy>
+          <from>$AplicarEnvioCobro_InputVariable.AplicarEnvioCobroRequestMessage/ns4:idOperacion</from>
+          <to>$ConsultarLineaCreditoByIdOperacion_InputVariable.ConsultarLineaCreditoByIdOperacionRequest/ns24:IdOperacion</to>
+        </copy>
+      </assign>
+      <invoke name="InvokeConsultarOperacionById" partnerLink="ConsultarOperacionById_SB"
+              portType="ns2:ConsultarOperacionById12Port" operation="ConsultarOperacionById"
+              inputVariable="ConsultarOperacionById_InputVariable"
+              outputVariable="ConsultarOperacionById_OutputVariable" bpelx:invokeAsDetail="no">
+        <bpelx:skipCondition>1=1</bpelx:skipCondition>
+      </invoke>
+      <invoke name="InvokeConsultarLineaCreditoByIdOperacion" bpelx:invokeAsDetail="no"
+              partnerLink="ConsultarLineaCreditoByIdOperacion_SB" portType="ns23:ConsultarLineaCreditoByIdOperacion_PT"
+              operation="ConsultarLineaCreditoByIdOperacion"
+              inputVariable="ConsultarLineaCreditoByIdOperacion_InputVariable"
+              outputVariable="ConsultarLineaCreditoByIdOperacion_OutputVariable"/>
+      <sequence name="SeqErrorLineasOperacion">
+        <bpelx:skipCondition>$ConsultarLineaCreditoByIdOperacion_OutputVariable.ConsultarLineaCreditoByIdOperacionResponse/ns24:Resultado/ns21:result ="OK"</bpelx:skipCondition>
+        <assign name="AssignError">
+          <copy>
+            <from>$ConsultarOperacionById_OutputVariable.response/ns4:Resultado/ns21:result</from>
+            <to>$bpelErrorVar.code</to>
+          </copy>
+          <copy>
+            <from>'ConsultarLineasByIdOperacion'</from>
+            <to>$bpelErrorVar.summary</to>
+          </copy>
+          <copy>
+            <from>concat('error al obtener las lineas de la operacion: ',$AplicarEnvioCobro_InputVariable.AplicarEnvioCobroRequestMessage/ns4:idOperacion)</from>
+            <to>$bpelErrorVar.detail</to>
+          </copy>
+        </assign>
+        <throw name="Throw" faultName="bpel:invalidVariables"/>
+      </sequence>
+    </sequence>
+    <sequence name="SeqSolicitudDesembolso">
+      <assign name="AssignIdSolicitud">
+        <copy>
+          <from>$AplicarEnvioCobro_InputVariable.AplicarEnvioCobroRequestMessage/ns4:idSolicitudDesembolso</from>
+          <to>$ConsultarSolicitudDesembolso_InputVariable.request/ns5:idSolicitud</to>
+        </copy>
+      </assign>
+      <invoke name="InvokeConsultarSolicitudDesembolso" bpelx:invokeAsDetail="no"
+              partnerLink="ConsultarSolicitudDesembolso_SB" portType="ns3:ConsultarSolicitudDesembolso_PT"
+              operation="consultarSolicitudDesembolso" inputVariable="ConsultarSolicitudDesembolso_InputVariable"
+              outputVariable="ConsultarSolicitudDesembolso_OutputVariable"/>
+       <sequence name="SeqErrorSolicitudDesembolso">
+        <bpelx:skipCondition>$ConsultarSolicitudDesembolso_OutputVariable.response/ns5:Resultado/ns21:result ="OK"</bpelx:skipCondition>
+        <assign name="AssignError">
+          <copy>
+            <from>'ConsultarLineasByIdOperacion'</from>
+            <to>$bpelErrorVar.summary</to>
+          </copy>
+          <copy>
+            <from>$ConsultarSolicitudDesembolso_OutputVariable.response/ns5:Resultado/ns21:result</from>
+            <to>$bpelErrorVar.code</to>
+          </copy>
+          <copy>
+            <from>concat('error al obtener la solicitud de desembolso: ',$AplicarEnvioCobro_InputVariable.AplicarEnvioCobroRequestMessage/ns4:idSolicitudDesembolso)</from>
+            <to>$bpelErrorVar.detail</to>
+          </copy>
+        </assign>
+        <throw name="Throw" faultName="bpel:invalidVariables"/>
+      </sequence>
+    </sequence>
+    <sequence name="SeqAplicarAmpliacion">
+      <assign name="TramsformAplicarAmpliacion">
+        <bpelx:annotation>
+          <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+        </bpelx:annotation>
+        <copy>
+          <from>ora:doXSLTransformForDoc("../Transformations/TransformAplicarAmpliacionInputMessage.xsl", $ConsultarSolicitudDesembolso_OutputVariable.response, "ConsultarLineaCreditoByIdOperacion_OutputVariable.ConsultarLineaCreditoByIdOperacionResponse", $ConsultarLineaCreditoByIdOperacion_OutputVariable.ConsultarLineaCreditoByIdOperacionResponse)</from>
+          <to variable="AplicarAmpliacion_InputVariable" part="AplicarAmpliacionRequestMessage"/>
+        </copy>
+      </assign>
+      <invoke name="InvokeAplicarAmpliacion" bpelx:invokeAsDetail="no" partnerLink="AplicarAmpliacionSOR"
+              portType="ns27:AplicarAmpliacion_ptt" operation="AplicarAmpliacion"
+              inputVariable="AplicarAmpliacion_InputVariable" outputVariable="AplicarAmpliacion_OutputVariable"/>
+      <if name="IfValidaOK">
+        <documentation>
+          <![CDATA[OK]]>
+        </documentation>
+        <condition>$AplicarAmpliacion_OutputVariable.AplicarAmpliacionResponseMessage/ns24:Resultado/ns21:result = 'OK'</condition>
+        <assign name="XQ_Response">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:processXQuery10('../Transformations/XQ_Response.xqy', 'AplicarAmpliacion_OutputVariable.AplicarAmpliacionResponseMessage', $AplicarAmpliacion_OutputVariable.AplicarAmpliacionResponseMessage)</from>
+            <to variable="AplicarEnvioCobro_OutputVariable" part="AplicarEnvioCobroResponseMessage"/>
+          </copy>
+        </assign>
+        <else>
+          <sequence name="Sequence1">
+            <assign name="ERROR">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$AplicarEnvioCobro_OutputVariable.AplicarEnvioCobroResponseMessage/ns4:Resultado/ns21:result</to>
+              </copy>
+              <copy>
+                <from>$AplicarAmpliacion_OutputVariable.AplicarAmpliacionResponseMessage/ns24:Resultado/ns21:message</from>
+                <to>$AplicarEnvioCobro_OutputVariable.AplicarEnvioCobroResponseMessage/ns4:Resultado/ns21:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyERROR" variable="AplicarEnvioCobro_OutputVariable" partnerLink="AplicarEnvioCobroSOAP"
+                   portType="ns1:AplicarEnvioCobro_ptt" operation="AplicarEnvioCobro"/>
+            <exit name="Exit"/>
+          </sequence>
+        </else>
+      </if>
+    </sequence>
+    <reply name="Reply" variable="AplicarEnvioCobro_OutputVariable" partnerLink="AplicarEnvioCobroSOAP"
+           portType="ns1:AplicarEnvioCobro_ptt" operation="AplicarEnvioCobro"/>
+  </sequence>
+</process>

@@ -1,0 +1,164 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon May 22 18:54:01 CST 2017
+  Author:  varelaa
+  Purpose: BPEL Process for event subscription
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="PublicarAvisoWebBpel"
+         targetNamespace="http://xmlns.oracle.com/AdquisicionesWSFenix/AdquisicionWeb/BPELProcess1"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:client="http://xmlns.oracle.com/AdquisicionesWSFenix/AdquisicionWeb/BPELProcess1"
+         xmlns:ora="http://schemas.oracle.com/xpath/extension"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:ns1="http://xmlns.oracle.com/DominioOperacion/Adquisicion/PublicarAviso"
+         xmlns:ns2="http://www.bcie.org/AdquisicionMO"
+         xmlns:bpws="http://docs.oasis-open.org/wsbpel/2.0/process/executable" xmlns:ns3="urn:bcieBinding"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ns0="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns4="http://www.bcie.org/AdquisicionBO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns5="http://xmlns.oracle.com/pcbpel/adapter/db/AdquisicionesWSFenix/AdquisicionWeb/dbFNXLI"
+         xmlns:ns6="http://xmlns.oracle.com/pcbpel/adapter/db/top/dbFNXLI"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns7="http://xmlns.oracle.com/pcbpel/adapter/db/AdquisicionesSOA/ADAPTADORES/dbFnxAvisos"
+         xmlns:ns8="http://xmlns.oracle.com/pcbpel/adapter/db/dbFnxAvisos">
+
+    <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/AdquisicionesWSFenix/AdquisicionWeb/BPELProcess1"
+            location="../WSDLs/PublicarAvisoWebBpel.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <partnerLinks>
+        <partnerLink name="wsAdquisiciones" partnerLinkType="ns3:wsAdquisiciones" partnerRole="bciePortType"/>
+        <partnerLink name="dbFnxAvisos" partnerLinkType="ns7:dbFnxAvisos_plt" partnerRole="dbFnxAvisos_role"/>
+    </partnerLinks>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        VARIABLES                                                        
+        List of messages and XML documents used within this BPEL process 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    <variables>
+        <!-- Reference to the message passed as input during initiation -->
+        <variable name="inputVariable0" element="ns2:PublicarAviso"/>
+        <variable name="InvokeWsAdquisicionesWeb_add_notice_InputVariable" messageType="ns3:add_noticeRequest"/>
+        <variable name="InvokeWsAdquisicionesWeb_add_notice_OutputVariable" messageType="ns3:add_noticeResponse"/>
+        <variable name="SelectNoObjecion_dbFnxAvisos_InputVariable" messageType="ns7:dbFnxAvisosInput_msg"/>
+        <variable name="SelectNoObjecion_dbFnxAvisos_OutputVariable" messageType="ns7:dbFnxAvisosOutputCollection_msg"/>
+    </variables>
+
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+       ORCHESTRATION LOGIC                                               
+       Set of activities coordinating the flow of messages across the    
+       services integrated within this business process                  
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    <sequence name="main">
+        <!-- Receive input from requestor. (Note: This maps to operation defined in BPELProcess1.wsdl) -->
+        <receive name="receiveInput0" bpelx:eventName="ns1:Aviso" variable="inputVariable0" createInstance="yes"/>
+        <assign name="setNoObjecion">
+            <copy>
+                <from>string($inputVariable0/ns4:idNoObjecion)</from>
+                <to>$SelectNoObjecion_dbFnxAvisos_InputVariable.dbFnxAvisosInput_msg/ns8:IdNoObjecionVar</to>
+            </copy>
+        </assign>
+        <invoke name="SelectNoObjecion" bpelx:invokeAsDetail="no" partnerLink="dbFnxAvisos"
+                portType="ns7:dbFnxAvisos_ptt" operation="dbFnxAvisos"
+                inputVariable="SelectNoObjecion_dbFnxAvisos_InputVariable"
+                outputVariable="SelectNoObjecion_dbFnxAvisos_OutputVariable"/>
+        <assign name="setNoObjecionRow">
+            <copy>
+                <from>number($SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:ID_NO_OBJECION)</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.id</to>
+            </copy>
+            <copy>
+                <from>$SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:FECHA_PUBLICACION</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.date_adjudication</to>
+            </copy>
+            <copy>
+                <from>$SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:FECHA_RECEPCION_PROPUESTA</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.reception_date</to>
+            </copy>
+            <copy>
+                <from>$SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:FECHA_FIN</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.end_date_sale</to>
+            </copy>
+            <copy>
+                <from>$SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:FECHA_INICIO</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.start_date_sale</to>
+            </copy>
+            <copy>
+                <from>$SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:DIR_PRESENTACION_PROPUESTA</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.address</to>
+            </copy>
+            <copy>
+                <from>$SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:LUGAR_OBTENER_DOCTO_BASE</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.documentation_place</to>
+            </copy>
+            <copy>
+                <from>string($SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:LINEA_CREDITO)</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.current_credit_line</to>
+            </copy>
+            <copy>
+                <from>string($SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:LINEA_CREDITO)</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.parent_credit_line</to>
+            </copy>
+            <copy>
+                <from>$SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:DESCRIPCION_OPERACION</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.name</to>
+            </copy>
+            <copy>
+                <from>$SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:OBJETIVO_ADQUISICION</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.object</to>
+            </copy>
+            <copy>
+                <from>$SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:CORREO_INFORMACION_ADICIONAL</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.website</to>
+            </copy>
+            <copy>
+                <from>$SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:TITULO_PROCESO</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.title_project</to>
+            </copy>
+            <copy>
+                <from>$SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:NUMERO_PROCESO</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.process_number</to>
+            </copy>
+            <copy>
+                <from>$SelectNoObjecion_dbFnxAvisos_OutputVariable.dbFnxAvisosOutputCollection/ns8:dbFnxAvisosOutput/ns8:DESCRIPCION_MODALIDAD</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.modality_description</to>
+            </copy>
+            <copy>
+                <from>$inputVariable0/ns2:nombreOrganismoEjecutor</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.executor</to>
+            </copy>
+            <copy>
+                <from>dvm:lookupValue("ListaPaises.dvm","PaisISO",$inputVariable0/ns4:nombrePais,"PaisCodigo","")</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.country</to>
+            </copy>
+            <copy>
+                <from>1390</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.category</to>
+            </copy>
+            <copy>
+                <from>1</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.priority</to>
+            </copy>
+            <copy>
+                <from>'4OsbYCpP'</from>
+                <to>$InvokeWsAdquisicionesWeb_add_notice_InputVariable.token</to>
+            </copy>
+        </assign>
+        <invoke name="InvokeWsAdquisicionesWeb" bpelx:invokeAsDetail="no" partnerLink="wsAdquisiciones"
+                portType="ns3:bciePortType" operation="add_notice"
+                inputVariable="InvokeWsAdquisicionesWeb_add_notice_InputVariable"
+                outputVariable="InvokeWsAdquisicionesWeb_add_notice_OutputVariable"/>
+    </sequence></process>

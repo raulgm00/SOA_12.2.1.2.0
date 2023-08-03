@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:con1="http://www.bea.com/wli/sb/stages/config" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con3="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con4="http://www.bea.com/wli/sb/stages/publish/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType">
+            <con:wsdl ref="DownloadOrderAPP/DownloadOrderService/Resources/ftpDownloarOrder-concrete"/>
+            <con:binding>
+                <con:name>Prcoess_ptt-binding</con:name>
+                <con:namespace>http://xmlns.oracle.com/pcbpel/adapter/ftp/DownloadOrder/DownloadOrderService/ftpDownloarOrder</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:pipeline type="request" name="request-afffa0d.N2cfe9a41.0.174932784d7.N7f5f">
+            <con:stage id="_StageId-afffa67.e71011.0.174d70ecd49.N7f16" name="StageUUID">
+                <con:context/>
+                <con:disabled>true</con:disabled>
+                <con:actions>
+                    <con3:assign varName="UUID" xmlns:con1="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con2="http://www.bea.com/wli/sb/stages/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+                        <con2:id>_ActionId-afffa67.e71011.0.174d70ecd49.N7e74</con2:id>
+                        <con3:expr>
+                            <con2:xqueryText>fn-bea:uuid()</con2:xqueryText>
+                        </con3:expr>
+                    </con3:assign>
+                </con:actions>
+            </con:stage>
+            <con:stage id="_StageId-afffa0d.N2cfe9a41.0.174932784d7.N7f5d" name="StageFile_EBM">
+                <con:context>
+                    <con1:userNsDecl prefix="ftp1" namespace="http://TargetNamespace.com/ftpDownloarOrder"/>
+                </con:context>
+                <con:actions>
+                    <con2:assign varName="fileName">
+                        <con1:id>_ActionId-afffac1.N68b41c36.0.176b0c5aab1.N7ffd</con1:id>
+                        <con2:expr>
+                            <con1:xqueryText>data($inbound/ctx:transport/ctx:request/tp:headers/jca:jca.ftp.FileName)</con1:xqueryText>
+                        </con2:expr>
+                    </con2:assign>
+                    <con2:replace varName="body" contents-only="true">
+                        <con1:id>_ActionId-afffa01.7513a9f2.0.174a17e7739.N7fac</con1:id>
+                        <con2:location>
+                            <con1:xpathText>.</con1:xpathText>
+                        </con2:location>
+                        <con2:expr>
+                            <con1:xsltTransform>
+                                <con1:resource ref="DownloadOrderAPP/DownloadOrderService/Resources/xsltRMS_EBM"/>
+                                <con1:input>$body/ftp1:bodyFile</con1:input>
+                            </con1:xsltTransform>
+                        </con2:expr>
+                    </con2:replace>
+                    <con4:route>
+                        <con1:id>_ActionId-afffa58.N8ce077d.0.176ce6b1cc5.N7ffe</con1:id>
+                        <con4:service ref="DownloadOrderAPP/DownloadOrderService/BusinessService/DownloadOrder_IN" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con4:operation>Produce_Message</con4:operation>
+                        <con4:outboundTransform/>
+                    </con4:route>
+                    <con2:wsCallout>
+                        <con1:id>_ActionId-afffa58.N8ce077d.0.176ce6b1cc5.N7fc8</con1:id>
+                        <con2:service ref="DownloadOrderAPP/ArchEdiRMS" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                        <con2:operation>SynchRead</con2:operation>
+                        <con2:request>
+                            <con2:body wrapped="true">body</con2:body>
+                        </con2:request>
+                        <con2:response>
+                            <con2:body wrapped="true">body</con2:body>
+                        </con2:response>
+                        <con2:requestTransform>
+                            <con3:transport-headers xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config">
+                                <con1:id>_ActionId-afffa58.N8ce077d.0.176ce6b1cc5.N7f64</con1:id>
+                                <con3:header-set>outbound-request</con3:header-set>
+                                <con3:header value="expression" name="jca.ftp.FileName">
+                                    <con1:xqueryText>$fileName</con1:xqueryText>
+                                </con3:header>
+                            </con3:transport-headers>
+                        </con2:requestTransform>
+                        <con2:responseTransform>
+                            <con5:log xmlns:con2="http://www.bea.com/wli/sb/stages/logging/config" xmlns:con3="http://www.bea.com/wli/sb/stages/transform/config" xmlns:con5="http://www.bea.com/wli/sb/stages/logging/config">
+                                <con1:id>_ActionId-afffa58.N8ce077d.0.176ce6b1cc5.N7f30</con1:id>
+                                <con2:logLevel>warning</con2:logLevel>
+                                <con2:expr>
+                                    <con1:xqueryText>$body</con1:xqueryText>
+                                </con2:expr>
+                                <con2:message>[[[[[[[[[[[[[[[[[[[[
+
+Archivo leido
+
+]]]]]]]]]]]]]]]]]]</con2:message>
+                            </con5:log>
+                            <con4:route>
+                                <con1:id>_ActionId-afffa58.N6573d81e.0.177163cd59d.N7fcc</con1:id>
+                                <con4:service ref="DownloadOrderAPP/ftpWriteArchEdidlord" xsi:type="ref:BusinessServiceRef" xmlns:ref="http://www.bea.com/wli/sb/reference"/>
+                                <con4:operation>Create</con4:operation>
+                                <con4:outboundTransform/>
+                            </con4:route>
+                        </con2:responseTransform>
+                    </con2:wsCallout>
+                </con:actions>
+            </con:stage>
+        </con:pipeline>
+        <con:pipeline type="response" name="response-afffa0d.N2cfe9a41.0.174932784d7.N7f5e">
+            <con:stage id="_StageId-afffa0d.N2cfe9a41.0.174932784d7.N7f5c" name="Stage1">
+                <con:context/>
+                <con:actions/>
+            </con:stage>
+        </con:pipeline>
+        <con:flow>
+            <con:pipeline-node name="Pipeline Pair Node1">
+                <con:request>request-afffa0d.N2cfe9a41.0.174932784d7.N7f5f</con:request>
+                <con:response>response-afffa0d.N2cfe9a41.0.174932784d7.N7f5e</con:response>
+            </con:pipeline-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

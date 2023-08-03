@@ -1,0 +1,425 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Mon Sep 19 17:42:00 CDT 2016
+  Author:  ismael-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionGestionCobro"
+               targetNamespace="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionGestionCobro/ConfiguracionGestionCobro"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionGestionCobro/ConfiguracionGestionCobro"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns2="http://www.bcie.org/ConfiguracionProcesosMO"
+         xmlns:ns3="http://www.bcie.org/ConfiguracionProcesosBO" xmlns:ns11="http://www.bcie.org/ResultBO"
+         xmlns:ns9="http://xmlns.bcie.org/ObjetoProceso/Comun/Parameter/V1"
+         xmlns:ns5="http://xmlns.bcie.org/ObjetoProceso/Comun/Operacion/V1"
+         xmlns:ns8="http://xmlns.bcie.org/ObjetoProceso/Comun/Proceso/V1"
+         xmlns:ns4="http://xmlns.bcie.org/ObjetoProceso/Comun/Header/V1" xmlns:ns10="http://www.bcie.org/CatalogoBO"
+         xmlns:ns6="http://xmlns.bcie.org/ObjetoProceso/Comun/Cliente/V1"
+         xmlns:ns7="http://xmlns.bcie.org/ObjetoProceso/Comun/Tarea/V1" xmlns:ns12="http://www.bcie.org/ErrorBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns13="http://xmlns.bcie.com/ClienteService"
+         xmlns:ns14="http://www.bcie.com/ConsultarRolesPorProceso" xmlns:ns15="http://xmlns.bcie.org/ClienteService"
+         xmlns:ns16="http://xmlns.bcie.com/DocumentoService" xmlns:ns17="http://www.bcie.org/ClienteMO"
+         xmlns:ns18="http://www.bcie.org/ClienteBO" xmlns:ns19="http://www.bcie.org/ConsultarRolesPorProcesoMO"
+         xmlns:ns20="http://www.bcie.org/ConsultarRolesPorProcesoBO" xmlns:ns21="http://www.bcie.org/DocumentoMO"
+         xmlns:ns22="http://www.bcie.org/DocumentoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/DocumentoService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Wsdl/ADAPTER/ActualizarDocumentoSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/DocumentoService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Wsdl/ADAPTER/ConsultarDocumentosFenixSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.org/ClienteService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/Cliente/V1/Wsdl/ADAPTER/ConsultarContactosSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.com/ConsultarRolesPorProceso"
+          location="oramds:/apps/Resources/ComponentesComunes/Utilidades/ConsultarRolesPorProceso/V1/Wsdl/ConsultarRolesPorProceso.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ClienteService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/Cliente/V1/Wsdl/ADAPTER/ConsultarClienteByIdSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionGestionCobroSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configuraciongestioncobro_ep" partnerLinkType="ns1:ConfiguracionGestionCobro" myRole="ConfiguracionGestionCobroPT"/>
+    <partnerLink name="ConsultarClienteById" partnerLinkType="ns13:ConsultarClienteById" partnerRole="ClientePT"/>
+    <partnerLink name="ConsultarRolesPorProceso" partnerLinkType="ns14:ConsultarRolesPorProceso"
+                 partnerRole="ConsultarRolesPorProceso_ptt"/>
+    <partnerLink name="ConsultarContactos" partnerLinkType="ns15:ConsultarContactos"
+                 partnerRole="ConsultarContactosPT"/>
+    <partnerLink name="ConsultarDocumentosFenix" partnerLinkType="ns16:ConsultarDocumentosFenix"
+                 partnerRole="ConsultarDocumentosFenixPT"/>
+    <partnerLink name="ActualizarDocumento" partnerLinkType="ns16:ActualizarDocumento"
+                 partnerRole="ActualizarDocumentoPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ConfiguracionGestionCobroRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ConfiguracionGestionCobroResponseMessage"/>
+    <variable name="setTittleVar" type="xsd:string"/>
+    <variable name="outConsultarClienteById" messageType="ns13:responseConsultarClienteMessageByIdCliente"/>
+    <variable name="outConsultarRolesProceso" messageType="ns14:replyMessage"/>
+    <variable name="outConsultarContactos" messageType="ns15:ConsultarContactosResponseMessage"/>
+    <variable name="outConsultarDocumentosFenix" messageType="ns16:ConsultarDocumentosFenixResponseMessage"/>
+    <variable name="outActualizarDocumento" messageType="ns16:responseActualizarDocumentoMessage"/>
+  </variables>
+  <faultHandlers>
+    <catch bpelx:name="remoteFault" faultName="bpelx:remoteFault" faultVariable="faultVar"
+           faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="SequenceRemoteFault">
+        <assign name="assignRemoteFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+          </copy>
+          <copy>
+            <from>$faultVar.code</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:error/ns12:errorCode</to>
+          </copy>
+          <copy>
+            <from>$faultVar.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+          </copy>
+          <copy>
+            <from>$faultVar.detail</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:error/ns12:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyRemoteFault" variable="outputVariable" partnerLink="configuraciongestioncobro_ep"
+               portType="ns1:ConfiguracionGestionCobroPT" operation="ConfiguracionGestionCobro"/>
+      </sequence>
+    </catch>
+    <catch bpelx:name="BindingFault" faultName="bpelx:bindingFault" faultVariable="faultVar"
+           faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="SequenceBindingFault">
+        <assign name="assignBindingFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+          </copy>
+          <copy>
+            <from>$faultVar.summary</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+          </copy>
+          <copy>
+            <from>$faultVar.code</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:error/ns12:errorCode</to>
+          </copy>
+          <copy>
+            <from>$faultVar.detail</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:error/ns12:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyBindingFault" variable="outputVariable" partnerLink="configuraciongestioncobro_ep"
+               portType="ns1:ConfiguracionGestionCobroPT" operation="ConfiguracionGestionCobro"/>
+      </sequence>
+    </catch>
+    <catchAll>
+      <sequence name="SequenceCatchAll">
+        <assign name="assignCatchAll">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+          </copy>
+          <copy>
+            <from>concat("Error en ConfiguracionGestionCobro: ",ora:getFaultAsString())</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyCatchAll" variable="outputVariable" partnerLink="configuraciongestioncobro_ep"
+               portType="ns1:ConfiguracionGestionCobroPT" operation="ConfiguracionGestionCobro"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionGestionCobro.wsdl) -->
+    <receive name="receiveInput" partnerLink="configuraciongestioncobro_ep" portType="ns1:ConfiguracionGestionCobroPT" operation="ConfiguracionGestionCobro" variable="inputVariable" createInstance="yes"/>
+    <validate name="ValidateInput" variables="inputVariable"/>
+    <assign name="assignSetTittle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idCliente = ",$inputVariable.request/ns2:idCliente))</from>
+        <to>$setTittleVar</to>
+      </copy>
+    </assign>
+    <if name="IfNullCero">
+      <documentation>
+        <![CDATA[idClienteIsNull]]>
+      </documentation>
+      <condition>$inputVariable.request/ns2:idCliente = 0 or string-length($inputVariable.request/ns2:idCliente) = 0</condition>
+      <sequence name="SequenceIfError">
+        <assign name="assignNull">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+          </copy>
+          <copy>
+            <from>'EL idCliente no puede ser null o 0'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyIsNull" variable="outputVariable" partnerLink="configuraciongestioncobro_ep"
+               portType="ns1:ConfiguracionGestionCobroPT" operation="ConfiguracionGestionCobro"/>
+        <exit name="ExitNull"/>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[valorCorrecto]]>
+        </documentation>
+        <empty name="valorCorrecto"/>
+      </else>
+    </if>
+    <scope name="ScopeConsultarClienteById">
+      <variables>
+        <variable name="inConsultarClienteById" messageType="ns13:requestConsultarClienteMessageByIdCliente"/>
+      </variables>
+      <sequence name="SequenceConsultarClienteById">
+        <assign name="assignIdCliente">
+          <copy>
+            <from>$inputVariable.request/ns2:idCliente</from>
+            <to>$inConsultarClienteById.request/ns17:idCliente</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarCliente" bpelx:invokeAsDetail="no" partnerLink="ConsultarClienteById"
+                portType="ns13:ClientePT" operation="consultarByIdCliente" inputVariable="inConsultarClienteById"
+                outputVariable="outConsultarClienteById"/>
+        <if name="IfError">
+          <documentation>
+            <![CDATA[Error]]>
+          </documentation>
+          <condition>$outConsultarClienteById.response/ns17:Resultado/ns11:result = 'ERROR'</condition>
+          <sequence name="SequenceIfError">
+            <assign name="assignError">
+              <copy>
+                <from>$outConsultarClienteById.response/ns17:Resultado/ns11:result</from>
+                <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+              </copy>
+              <copy>
+                <from>$outConsultarClienteById.response/ns17:Resultado/ns11:message</from>
+                <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="configuraciongestioncobro_ep"
+                   portType="ns1:ConfiguracionGestionCobroPT" operation="ConfiguracionGestionCobro"/>
+            <exit name="ExitError"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[consultaCorrecta]]>
+            </documentation>
+            <empty name="consultaCorrecta"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarRolesProceso">
+      <variables>
+        <variable name="inConsultarRolesProceso" messageType="ns14:requestMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarRolesProceso">
+        <assign name="assignIdProceso">
+          <copy>
+            <from>18</from>
+            <to>$inConsultarRolesProceso.request/ns19:Proceso/ns20:idProceso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarRolesProceso" bpelx:invokeAsDetail="no" partnerLink="ConsultarRolesPorProceso"
+                portType="ns14:ConsultarRolesPorProceso_ptt" operation="ConsultarRolesPorProceso"
+                inputVariable="inConsultarRolesProceso" outputVariable="outConsultarRolesProceso"/>
+        <if name="IfError">
+          <documentation>
+            <![CDATA[error]]>
+          </documentation>
+          <condition>$outConsultarRolesProceso.response/ns19:Result/ns11:error/ns12:errorCode = 'ERROR'</condition>
+          <sequence name="SequenceIfError">
+            <assign name="assignError">
+              <copy>
+                <from>$outConsultarRolesProceso.response/ns19:Result/ns11:result</from>
+                <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+              </copy>
+              <copy>
+                <from>$outConsultarRolesProceso.response/ns19:Result/ns11:message</from>
+                <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="configuraciongestioncobro_ep"
+                   portType="ns1:ConfiguracionGestionCobroPT" operation="ConfiguracionGestionCobro"/>
+            <exit name="ExitError"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[consultaCorrecta]]>
+            </documentation>
+            <empty name="consultaCorrecta"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarContactos">
+      <variables>
+        <variable name="inConsultarContactos" messageType="ns15:ConsultarContactosRequestMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarContactos">
+        <assign name="assignIdCliente">
+          <copy>
+            <from>$inputVariable.request/ns2:idCliente</from>
+            <to>$inConsultarContactos.request/ns17:idCliente</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarContactos" bpelx:invokeAsDetail="no" partnerLink="ConsultarContactos"
+                portType="ns15:ConsultarContactosPT" operation="ConsultarContactos"
+                inputVariable="inConsultarContactos" outputVariable="outConsultarContactos"/>
+        <if name="IfError">
+          <documentation>
+            <![CDATA[error]]>
+          </documentation>
+          <condition>$outConsultarContactos.response/ns17:Resultado/ns11:result = 'ERROR'</condition>
+          <sequence name="SequenceIfError">
+            <assign name="assignError">
+              <copy>
+                <from>$outConsultarContactos.response/ns17:Resultado/ns11:result</from>
+                <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+              </copy>
+              <copy>
+                <from>$outConsultarContactos.response/ns17:Resultado/ns11:message</from>
+                <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="configuraciongestioncobro_ep"
+                   portType="ns1:ConfiguracionGestionCobroPT" operation="ConfiguracionGestionCobro"/>
+            <exit name="ExitError"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[consultaCorrecta]]>
+            </documentation>
+            <sequence name="SequenceXQ_Response">
+              <assign name="XQ_Response">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:processXQuery10('../Transformations/XQ_Response.xqy', 'outConsultarClienteById.response', $outConsultarClienteById.response, 'outConsultarRolesProceso.response', $outConsultarRolesProceso.response, 'outConsultarContactos.response', $outConsultarContactos.response)</from>
+                  <to variable="outputVariable" part="response"/>
+                </copy>
+              </assign>
+              <assign name="assignIdFlujo">
+                <copy bpelx:insertMissingToData="yes">
+                  <from>$inputVariable.request/ns2:InstanciaProceso</from>
+                  <to>$outputVariable.response/ns2:configuracionSeguimientoCobro/ns3:Header/ns4:Proceso/ns8:IdFlujo</to>
+                </copy>
+              </assign>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarDocumentosFenix">
+      <variables>
+        <variable name="inConsultarDocumentosFenix" messageType="ns16:ConsultarDocumentosFenixRequestMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarDocumentoFenix">
+        <assign name="assignIdCliente">
+          <copy>
+            <from>$inputVariable.request/ns2:idCliente</from>
+            <to>$inConsultarDocumentosFenix.request/ns21:idCliente</to>
+          </copy>
+          <copy>
+            <from>'false'</from>
+            <to>$inConsultarDocumentosFenix.request/ns21:Content</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarDocumentosFenix" bpelx:invokeAsDetail="no" partnerLink="ConsultarDocumentosFenix"
+                portType="ns16:ConsultarDocumentosFenixPT" operation="ConsultarDocumentosFenix"
+                inputVariable="inConsultarDocumentosFenix" outputVariable="outConsultarDocumentosFenix"/>
+        <if name="IfOkConsulta">
+          <documentation>
+            <![CDATA[consultaCorrecta]]>
+          </documentation>
+          <condition>xp20:lower-case($outConsultarDocumentosFenix.response/ns21:Resultado/ns11:message) != 'consulta sin resultados'</condition>
+          <forEach parallel="no" counterName="Counter" name="ForEachDocumento">
+            <startCounterValue>1</startCounterValue>
+            <finalCounterValue>count($outConsultarDocumentosFenix.response/ns21:Documento[(ns22:idTipoDocumento = 1122 or ns22:idTipoDocumento = 1123) and string-length(ns22:idFlujoNegocio/text()) =0])</finalCounterValue>
+            <scope name="ScopeForEachDocumento">
+              <variables>
+                <variable name="inActualizarDocumento" messageType="ns16:requestActualizarDocumentoMessage"/>
+              </variables>
+              <sequence name="ActualizaDocumento">
+                <assign name="assignIdDocumento">
+                  <copy>
+                    <from>$outConsultarDocumentosFenix.response/ns21:Documento[(ns22:idTipoDocumento = 1122 or ns22:idTipoDocumento = 1123) and string-length(ns22:idFlujoNegocio/text()) =0][$Counter]/ns22:idDocumento</from>
+                    <to>$inActualizarDocumento.request/ns21:Documento/ns22:idDocumento</to>
+                  </copy>
+                  <copy>
+                    <from>$inputVariable.request/ns2:InstanciaProceso</from>
+                    <to>$inActualizarDocumento.request/ns21:Documento/ns22:idFlujoNegocio</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeActualizarDocumento" bpelx:invokeAsDetail="no" partnerLink="ActualizarDocumento"
+                        portType="ns16:ActualizarDocumentoPT" operation="actualizarDocumento"
+                        inputVariable="inActualizarDocumento" outputVariable="outActualizarDocumento"/>
+              </sequence>
+            </scope>
+          </forEach>
+          <else>
+            <documentation>
+              <![CDATA[consultaSinResultados]]>
+            </documentation>
+            <empty name="sinDocumentos"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configuraciongestioncobro_ep" portType="ns1:ConfiguracionGestionCobroPT" operation="ConfiguracionGestionCobro" variable="outputVariable"/>
+  </sequence>
+</process>

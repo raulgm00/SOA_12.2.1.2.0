@@ -1,0 +1,463 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Aug 19 15:31:03 CDT 2016
+  Author:  perla-osorio
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConsultarFuentes"
+               targetNamespace="http://xmlns.oracle.com/DominioLineaCredito/ConsultarFuentes/ConsultarFuentes"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioLineaCredito/ConsultarFuentes/ConsultarFuentes"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ConsultarFuentesSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns6="http://www.bcie.org/CondicionBO"
+         xmlns:ns9="http://www.bcie.org/TerminoBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns11="http://www.bcie.org/ResultBO" xmlns:ns4="http://www.bcie.org/CommonBO"
+         xmlns:ns8="http://www.bcie.org/DocumentoBO" xmlns:ns10="http://www.bcie.org/ComisionBO"
+         xmlns:ns3="http://www.bcie.org/LineaCreditoBO" xmlns:ns5="http://www.bcie.org/CatalogoBO"
+         xmlns:ns7="http://www.bcie.org/AtributoBO" xmlns:ns12="http://www.bcie.org/ErrorBO"
+         xmlns:ns2="http://www.bcie.org/LineaCreditoMO" xmlns:ns13="http://www.bcie.org/ConsultarAsignacionARE"
+         xmlns:ns14="http://www.bice.org/ActualizarLineaCreditoService"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns15="http://www.bcie.org/CrearActualizarFuentesSAD" xmlns:ns16="http://www.bcie.org/DesembolsoBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns17="http://www.bcie.org/ObtenerDisponibilidadARE"
+         xmlns:ns18="http://www.bcie.org/ConsultarLineasPasivas" xmlns:ns19="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns21="http://www.bcie.org/ReglaBO" xmlns:ns20="http://www.bcie.org/OperacionBO"
+         xmlns:ns23="http://www.bcie.org/MatrizTCCBO" xmlns:ns22="http://www.bcie.org/ProductoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ConsultarFuentesSOR" location="../WSDLs/ConsultarFuentesSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="consultarfuentes_client" partnerLinkType="ns1:ConsultarFuentes" myRole="ConsultarFuentes_PT"/>
+    <partnerLink name="ConsultarAsignacionARE_SB" partnerLinkType="ns13:ConsultarAsignacionARE_SB"
+                 partnerRole="ConsultarAsignacionARE_PT"/>
+    <partnerLink name="ConsultarLineaCreditoFuente_SB" partnerLinkType="ns14:ConsultarLineaCreditoFuente_SB"
+                 partnerRole="ConsultarFuenteLCPT"/>
+    <partnerLink name="CrearActualizarFuentes_SB" partnerLinkType="ns15:CrearActualizarFuentes_SB"
+                 partnerRole="CrearActualizarFuentes_PT"/>
+    <partnerLink name="ObtenerDisponibilidadARE_SB" partnerLinkType="ns17:ObtenerDisponibilidadARE_SB"
+                 partnerRole="ObtenerDisponibilidad_PT"/>
+    <partnerLink name="ConsultarLineasPasivas_SB" partnerLinkType="ns18:ConsultarLineasPasivas_SB"
+                 partnerRole="ConsultarLineasPasivas_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConsultarFuentesMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConsultarFuentesMessage"/>
+    <variable name="outConsultarAsignacionARE" messageType="ns13:responseConsultarAsignacionAREMessage"/>
+    <variable name="inConsultarLineaCreditoFuente" messageType="ns14:ConsultarFuenteLineaCreditoRequestMessage"/>
+    <variable name="outConsultarLineaCreditoFuente" messageType="ns14:ConsultarFuenteLineaCreditoResponseMessage"/>
+    <variable name="inCrearActualizarFuentes" messageType="ns15:requestCrearActualizarFuentesMessage"/>
+    <variable name="outCrearActualizarFuentes" messageType="ns15:responseCrearActualizarFuentesMessage"/>
+    <variable name="accion" type="xsd:string"/>
+    <variable name="contador" type="xsd:int"/>
+    <variable name="contadorFinalARE" type="xsd:int"/>
+    <variable name="setInstanceTitleVar" type="xsd:string"/>
+    <variable name="outObtenerDisponibilidadARE" messageType="ns17:responseObtenerDisponibilidadAREMessage"/>
+    <variable name="contador2" type="xsd:int"/>
+    <variable name="Variable1" type="xsd:string"/>
+    <variable name="Variable_2" type="xsd:string"/>
+    <variable name="flagUpdate" type="xsd:boolean"/>
+    <variable name="inConsultarLineasPasivas" messageType="ns18:requestConsultarLineasPasivasMessage"/>
+    <variable name="outConsultarLineasPasivas" messageType="ns18:responsetConsultarLineasPasivasMessage"/>
+    <variable name="consultarFuenteLineaCredito_OutputVariable"
+              messageType="ns14:ConsultarFuenteLineaCreditoResponseMessage"/>
+    <variable name="inActualizarFuentes" messageType="ns15:requestCrearActualizarFuentesMessage"/>
+    <variable name="outActualizarFuentes" messageType="ns15:responseCrearActualizarFuentesMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence5">
+        <assign name="allFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyAllFault" variable="outputVariable" partnerLink="consultarfuentes_client"
+               portType="ns1:ConsultarFuentes_PT" operation="ConsultarFuentes"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConsultarFuentes.wsdl) -->
+    <receive name="receiveInput" partnerLink="consultarfuentes_client" portType="ns1:ConsultarFuentes_PT" operation="ConsultarFuentes" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idLineaCredito: ",string($inputVariable.request/ns2:LineaCredito/ns3:idLineaCredito)))</from>
+        <to>$setInstanceTitleVar</to>
+      </copy>
+    </assign>
+    <if name="IfValidaIdLinea">
+      <documentation>
+        <![CDATA[NULL]]>
+      </documentation>
+      <condition>string($inputVariable.request/ns2:LineaCredito/ns3:idLineaCredito) = ''  or $inputVariable.request/ns2:LineaCredito/ns3:idLineaCredito = 0</condition>
+      <sequence name="Sequence4">
+        <assign name="errorIdLineaCreditoNULL">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+          </copy>
+          <copy>
+            <from>"El idLineaCredito es requerido"</from>
+            <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="consultarfuentes_client"
+               portType="ns1:ConsultarFuentes_PT" operation="ConsultarFuentes"/>
+        <exit name="Exit"/>
+      </sequence>
+      <else>
+        <empty name="Empty"/>
+      </else>
+    </if>
+    <scope name="ConsultarLineaCreditoFuente_SB">
+      <sequence name="ConsultarLineaCreditoFuente_Sequence">
+        <assign name="requestConsultarLineaCreditoFuente_SB">
+          <copy>
+            <from>$inputVariable.request/ns2:LineaCredito/ns3:idLineaCredito</from>
+            <to>$inConsultarLineaCreditoFuente.request/ns2:idLineaCredito</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.request/ns2:LineaCredito/ns3:NumeroLineaCredito</from>
+            <to>$inConsultarLineaCreditoFuente.request/ns2:numero_linea</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarLineaCreditoFuente_SB" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarLineaCreditoFuente_SB" portType="ns14:ConsultarFuenteLCPT"
+                operation="consultarFuenteLineaCredito" inputVariable="inConsultarLineaCreditoFuente"
+                outputVariable="outConsultarLineaCreditoFuente"/>
+        <if name="IfValidaError">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$outConsultarLineaCreditoFuente.response/ns2:Resultado/ns11:result = 'ERROR'</condition>
+          <sequence name="Sequence2">
+            <assign name="responseError">
+              <copy>
+                <from>'ERROR'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+              </copy>
+              <copy>
+                <from>concat("Error al Consultar las Fuentes ",$outConsultarLineaCreditoFuente.response/ns2:Resultado/ns11:message)</from>
+                <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="consultarfuentes_client"
+                   portType="ns1:ConsultarFuentes_PT" operation="ConsultarFuentes"/>
+            <exit name="Exit"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <empty name="Empty"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ConsultarAsignacionARE">
+      <variables>
+        <variable name="inConsultarAsignacionARE" messageType="ns13:requestConsultarAsignacionAREMessage"/>
+      </variables>
+      <sequence name="ConsultarAsignacionSequence">
+        <if name="IfCodigoAsignacion">
+          <documentation>
+            <![CDATA[CodigoAsignacion]]>
+          </documentation>
+          <condition>string($outConsultarLineaCreditoFuente.response/ns2:lineaCredito/ns3:CodigoAsignacion) != ''</condition>
+          <sequence name="SequenceConCodigoAsignacion">
+            <assign name="requestConsultarAsignacionARE">
+              <copy>
+                <from>$outConsultarLineaCreditoFuente.response/ns2:lineaCredito/ns3:CodigoAsignacion</from>
+                <to>$inConsultarAsignacionARE.request/ns2:codigoAsignacion</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarAsignacionARE_SB" bpelx:invokeAsDetail="no"
+                    partnerLink="ConsultarAsignacionARE_SB" portType="ns13:ConsultarAsignacionARE_PT"
+                    operation="ConsultarAsignacionARE" inputVariable="inConsultarAsignacionARE"
+                    outputVariable="outConsultarAsignacionARE"/>
+            <if name="IfValidaError">
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <condition>$outConsultarAsignacionARE.response/ns2:Resultado/ns11:result = 'ERROR'</condition>
+              <sequence name="ValidaError_Sequence">
+                <assign name="responseError">
+                  <copy>
+                    <from>'ERROR'</from>
+                    <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+                  </copy>
+                  <copy>
+                    <from>concat("Error al Consultar Asignacion ARE ", $outConsultarAsignacionARE.response/ns2:Resultado/ns11:message)</from>
+                    <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyError" variable="outputVariable" partnerLink="consultarfuentes_client"
+                       portType="ns1:ConsultarFuentes_PT" operation="ConsultarFuentes"/>
+                <exit name="Exit"/>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[OK]]>
+                </documentation>
+                <empty name="Empty"/>
+              </else>
+            </if>
+            <assign name="XQ_CrearActualizarFuentes_Request">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/XQ_CrearActualizarFuentes_Request.xqy', 'outConsultarAsignacionARE.response', $outConsultarAsignacionARE.response, 'outConsultarLineaCreditoFuente.response', $outConsultarLineaCreditoFuente.response)</from>
+                <to variable="inCrearActualizarFuentes" part="request"/>
+              </copy>
+            </assign>
+            <scope name="CrearActualizarFuentes_SB">
+              <sequence name="CrearActualizarFuentes_Sequence">
+                <invoke name="InvokeCrearActualizarFuentes_SB" bpelx:invokeAsDetail="no"
+                        partnerLink="CrearActualizarFuentes_SB" portType="ns15:CrearActualizarFuentes_PT"
+                        operation="CrearActualizarFuentes" inputVariable="inCrearActualizarFuentes"
+                        outputVariable="outCrearActualizarFuentes"/>
+                <if name="IfValidaError">
+                  <documentation>
+                    <![CDATA[ERROR]]>
+                  </documentation>
+                  <condition>$outCrearActualizarFuentes.response/ns2:Resultado/ns11:result = 'ERROR'</condition>
+                  <sequence name="Sequence3">
+                    <assign name="responseError">
+                      <copy>
+                        <from>'ERROR'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+                      </copy>
+                      <copy>
+                        <from>concat("Error al Crear o Actualizar Fuentes ", $outCrearActualizarFuentes.response/ns2:Resultado/ns11:message)</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+                      </copy>
+                    </assign>
+                    <reply name="ReplyErrorCrearActualizarFuentes" variable="outputVariable"
+                           partnerLink="consultarfuentes_client" portType="ns1:ConsultarFuentes_PT"
+                           operation="ConsultarFuentes"/>
+                    <exit name="Exit"/>
+                  </sequence>
+                  <else>
+                    <documentation>
+                      <![CDATA[OK]]>
+                    </documentation>
+                    <empty name="Empty"/>
+                  </else>
+                </if>
+                <invoke name="InvokeConsultarFuentes" partnerLink="ConsultarLineaCreditoFuente_SB"
+                        portType="ns14:ConsultarFuenteLCPT" operation="consultarFuenteLineaCredito"
+                        inputVariable="inConsultarLineaCreditoFuente"
+                        outputVariable="consultarFuenteLineaCredito_OutputVariable" bpelx:invokeAsDetail="no"/>
+                <forEach parallel="no" counterName="countFuentesFenix" name="ForEachFuentesFenix">
+                  <startCounterValue>1</startCounterValue>
+                  <finalCounterValue>count($consultarFuenteLineaCredito_OutputVariable.response/ns2:lineaCredito/ns3:Fuente)</finalCounterValue>
+                  <scope name="ForEachFuentes">
+                    <variables>
+                      <variable name="inObtenerDisponibilidadARE"
+                                messageType="ns17:requestObtenerDisponibilidadAREMessage"/>
+                    </variables>
+                    <sequence name="ForEachFuentesSequence">
+                      <assign name="requestObtenerDisponibilidadARE">
+                        <copy>
+                          <from>$consultarFuenteLineaCredito_OutputVariable.response/ns2:lineaCredito/ns3:Fuente[$countFuentesFenix]</from>
+                          <to>$inObtenerDisponibilidadARE.request/ns2:Fuente</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeObtenerDisponibilidadARE_SB" bpelx:invokeAsDetail="no"
+                              partnerLink="ObtenerDisponibilidadARE_SB" portType="ns17:ObtenerDisponibilidad_PT"
+                              operation="ObtenerDisponibilidad" inputVariable="inObtenerDisponibilidadARE"
+                              outputVariable="outObtenerDisponibilidadARE"/>
+                      <if name="IfValidaMontoDisponible">
+                        <documentation>
+                          <![CDATA[TieneMontoDisponible]]>
+                        </documentation>
+                        <condition>count($outObtenerDisponibilidadARE.response/ns2:Fuente/ns3:Monto)&gt;0</condition>
+                        <assign name="AssignMontoDisponible">
+                          <copy>
+                            <from>count($outConsultarLineaCreditoFuente.response/ns2:lineaCredito/ns3:Fuente[$countFuentesFenix]/ns3:Monto) + 1</from>
+                            <to>$contador</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$outObtenerDisponibilidadARE.response/ns2:Fuente/ns3:Monto/ns4:tipo</from>
+                            <to>$consultarFuenteLineaCredito_OutputVariable.response/ns2:lineaCredito/ns3:Fuente[$countFuentesFenix]/ns3:Monto[$contador]/ns4:tipo</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$outObtenerDisponibilidadARE.response/ns2:Fuente/ns3:Monto/ns4:importe</from>
+                            <to>$consultarFuenteLineaCredito_OutputVariable.response/ns2:lineaCredito/ns3:Fuente[$countFuentesFenix]/ns3:Monto[$contador]/ns4:importe</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$outObtenerDisponibilidadARE.response/ns2:Fuente/ns3:Monto/ns4:moneda</from>
+                            <to>$consultarFuenteLineaCredito_OutputVariable.response/ns2:lineaCredito/ns3:Fuente[$countFuentesFenix]/ns3:Monto[$contador]/ns4:moneda</to>
+                          </copy>
+                        </assign>
+                        <else>
+                          <empty name="Empty"/>
+                        </else>
+                      </if>
+                      <scope name="ConsultarLineasPasivas">
+                        <sequence name="Sequence6">
+                          <assign name="requestConsultarLineasPasivas">
+                            <copy>
+                              <from>$consultarFuenteLineaCredito_OutputVariable.response/ns2:lineaCredito/ns3:Fuente[$countFuentesFenix]/ns3:idLineaPasiva</from>
+                              <to>$inConsultarLineasPasivas.request/ns2:idLineaPasiva</to>
+                            </copy>
+                          </assign>
+                          <invoke name="InvokeConsultarLineasPasivas_SB" bpelx:invokeAsDetail="no"
+                                  partnerLink="ConsultarLineasPasivas_SB" portType="ns18:ConsultarLineasPasivas_PT"
+                                  operation="consultarLineasPasivas" inputVariable="inConsultarLineasPasivas"
+                                  outputVariable="outConsultarLineasPasivas"/>
+                          <if name="IfValidaOK">
+                            <documentation>
+                              <![CDATA[OK]]>
+                            </documentation>
+                            <condition>$outConsultarLineasPasivas.response/ns2:Resultado/ns11:result = 'OK' and count($outConsultarLineasPasivas.response/ns2:Fuente)&gt;0</condition>
+                            <sequence name="Sequence7">
+                              <assign name="AssignFondo">
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$outConsultarLineasPasivas.response/ns2:Fuente/ns3:idFacturadorLineaPasiva</from>
+                                  <to>$consultarFuenteLineaCredito_OutputVariable.response/ns2:lineaCredito/ns3:Fuente[$countFuentesFenix]/ns3:idFacturadorLineaPasiva</to>
+                                </copy>
+                                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                                  <from>$outConsultarLineasPasivas.response/ns2:Fuente/ns3:idFondo</from>
+                                  <to>$consultarFuenteLineaCredito_OutputVariable.response/ns2:lineaCredito/ns3:Fuente[$countFuentesFenix]/ns3:idFondo</to>
+                                </copy>
+                                <copy>
+                                  <from>$outConsultarLineasPasivas.response/ns2:Fuente/ns3:Descripcion</from>
+                                  <to>$consultarFuenteLineaCredito_OutputVariable.response/ns2:lineaCredito/ns3:Fuente[$countFuentesFenix]/ns3:Descripcion</to>
+                                </copy>
+                                <copy>
+                                  <from>$outConsultarLineasPasivas.response/ns2:Fuente/ns3:esExterna</from>
+                                  <to>$consultarFuenteLineaCredito_OutputVariable.response/ns2:lineaCredito/ns3:Fuente[$countFuentesFenix]/ns3:esExterna</to>
+                                </copy>
+                              </assign>
+                              <if name="IfValidaDescripcion">
+                                <documentation>
+                                  <![CDATA[SinDescripcion]]>
+                                </documentation>
+                                <condition>string($consultarFuenteLineaCredito_OutputVariable.response/ns2:lineaCredito/ns3:Fuente/ns3:Descripcion)=''</condition>
+                                <sequence>
+                                  <assign name="AssingDescripcion">
+                                    <copy>
+                                      <from>$consultarFuenteLineaCredito_OutputVariable.response/ns2:lineaCredito/ns3:Fuente[$countFuentesFenix]/ns3:idFuente</from>
+                                      <to>$inActualizarFuentes.request/ns2:Fuentes/ns3:idFuente</to>
+                                    </copy>
+                                    <copy>
+                                      <from>$outConsultarLineasPasivas.response/ns2:Fuente[1]/ns3:Descripcion</from>
+                                      <to>$inActualizarFuentes.request/ns2:Fuentes/ns3:Descripcion</to>
+                                    </copy>
+                                    <copy>
+                                      <from>'true'</from>
+                                      <to>$inActualizarFuentes.request/ns2:Fuentes/ns3:Estado</to>
+                                    </copy>
+                                  </assign>
+                                  <invoke name="InvokeActualizarFuentes_SB" bpelx:invokeAsDetail="no"
+                                          partnerLink="CrearActualizarFuentes_SB"
+                                          portType="ns15:CrearActualizarFuentes_PT" operation="CrearActualizarFuentes"
+                                          inputVariable="inActualizarFuentes" outputVariable="outActualizarFuentes"/>
+                                </sequence>
+                                <else>
+                                  <documentation>
+                                    <![CDATA[ConDescripcion]]>
+                                  </documentation>
+                                  <empty name="Empty"/>
+                                </else>
+                              </if>
+                            </sequence>
+                            <else>
+                              <documentation>
+                                <![CDATA[ERROR]]>
+                              </documentation>
+                              <empty name="Empty"/>
+                            </else>
+                          </if>
+                        </sequence>
+                      </scope>
+                    </sequence>
+                  </scope>
+                </forEach>
+              </sequence>
+            </scope>
+            <assign name="XQ_ResponseConsultarFuentes">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/XQ_ResponseConsultarFuentes.xqy', 'consultarFuenteLineaCredito_OutputVariable.response', $consultarFuenteLineaCredito_OutputVariable.response, 'inputVariable.request', $inputVariable.request)</from>
+                <to variable="outputVariable" part="response"/>
+              </copy>
+            </assign>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[SinCodigo]]>
+            </documentation>
+            <assign name="SinCodigoAsignacion">
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns11:result</to>
+              </copy>
+              <copy>
+                <from>'Consulta sin resultados.'</from>
+                <to>$outputVariable.response/ns2:Resultado/ns11:message</to>
+              </copy>
+            </assign>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="consultarfuentes_client" portType="ns1:ConsultarFuentes_PT" operation="ConsultarFuentes" variable="outputVariable"/>
+  </sequence>
+</process>

@@ -1,0 +1,590 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.1" xmlns:f="http://java.sun.com/jsf/core" xmlns:af="http://xmlns.oracle.com/adf/faces/rich"
+          xmlns:c="http://java.sun.com/jsp/jstl/core" xmlns:trh="http://myfaces.apache.org/trinidad/html"
+          xmlns:wf="http://xmlns.oracle.com/bpel/workflow/workflow-taglib.tld"
+          xmlns:wlc="http://xmlns.oracle.com/bpel/workflow/worklist">
+    <c:set var="pc05formalizaciongenerichumantaskBundle"
+           value="#{adfBundle['pc05formalizaciongenerichumantask.PC05FormalizacionGenericHumanTaskBundle']}"/>
+    <jsp:directive.page contentType="text/html;charset=UTF-8"/>
+    <f:view>
+        <af:document title="GHTPC05FormalizacionForm.jspx" id="d1">
+            
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:resource type="javascript" source="/jsLibs/taskDetailsWithTemplate.js"/>
+            <af:resource type="javascript" source="/jsLibs/commonBPM.js"/>
+            <af:form id="f1" usesUpload="true">
+                <af:pageTemplate viewId="/templates/bcieTaskTemplate.jspx" id="pageTemplateID">
+                    <f:facet name="action">
+                        <af:toolbar visible="#{actionAvailable.toolbarAvailable}" id="actionTlb">
+                            <af:switcher id="customActionButtons" facetName="#{actionAvailable.isCustomActionButtons}">
+                                <f:facet name="true">
+                                    <af:panelGroupLayout layout="horizontal" id="pgl8">
+                                        <af:button text="#{pc05formalizaciongenerichumantaskBundle.FINALIZAR_TAREA_BTN}" id="b4"
+                                                   actionListener="#{FormalizacionActionsManagedBean.finalizarTareaFormalizacion}"
+                                                   partialSubmit="true" styleClass="headerLink"/>
+                                        <af:button actionListener="#{invokeActionBean.setOperation}"
+                                                   text="#{pc05formalizaciongenerichumantaskBundle.MAS_INFORMACION_BTN}"
+                                                   disabled="#{!bindings.MASINFORMACION.enabled}"
+                                                   action="#{invokeActionBean.invokeOperation}" partialSubmit="false"
+                                                   visible="#{wf:isCustomActionAvailable('MASINFORMACION', 'bindings.customActions')}"
+                                                   rendered="false"
+                                                   id="b2" styleClass="headerLink">
+                                            <f:attribute name="DC_OPERATION_BINDING" value="bindings.MASINFORMACION"/>
+                                        </af:button>
+                                    </af:panelGroupLayout>
+                                </f:facet>
+                            </af:switcher>
+                            <!-- Atiende incidencia FNXII-5586
+                            <af:button actionListener="#{invokeActionBean.setOperation}" text="#{resources.CLAIM}"
+                                       id="Claim" action="#{invokeActionBean.invokeOperation}" partialSubmit="false"
+                                       visible="#{actionAvailable.claimAvailable}" styleClass="headerLink">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Claim"/>
+                            </af:button>
+                            -->
+                            <af:button id="acknowledge" actionListener="#{invokeActionBean.setOperation}"
+                                       text="#{resources.ACKNOWLEDGE}" action="#{invokeActionBean.invokeOperation}"
+                                       partialSubmit="false" visible="#{actionAvailable.isFyiTask}"
+                                       styleClass="headerLink">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Acknowledge"/>
+                            </af:button>
+                            <af:button id="resume" actionListener="#{invokeActionBean.setOperation}"
+                                       text="#{resources.RESUME}" action="#{invokeActionBean.invokeOperation}"
+                                       partialSubmit="false" visible="#{actionAvailable.resumeAvailable}"
+                                       styleClass="headerLink">
+                                <f:attribute name="DC_OPERATION_BINDING" value="bindings.Resume"/>
+                            </af:button>
+                            <af:panelGroupLayout layout="horizontal" id="pgl2">
+                                <af:group rendered="#{!((empty actionAvailable.customActions) and (empty actionAvailable.redirectActions) and (empty actionAvailable.otherActions)) || bindings.update.enabled}"
+                                          id="g2">
+                                    <af:menuBar id="mb1" styleClass="actionMenuBar" rendered="false">
+                                        <af:menu id="acts" text="#{resources.TASK_ACTIONS}" styleClass="actionMenu"
+                                                 visible="#{actionAvailable.actionsAvailable || bindings.update.enabled}">
+                                            <af:group id="g5">
+                                                <af:forEach var="childNode1" items="#{actionAvailable.customActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{childNode1.displayName}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi2">
+                                                        <f:attribute name="ACTION_MENU_ITEM"
+                                                                     value="#{childNode1.action}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g4">
+                                                <af:forEach var="childNode2" items="#{actionAvailable.redirectActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode2]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="true" id="cmi1">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode2}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g1">
+                                                <af:forEach var="childNode3" items="#{actionAvailable.otherActions}">
+                                                    <af:commandMenuItem textAndAccessKey="#{resources[childNode3]}"
+                                                                        actionListener="#{invokeActionBean.setAction}"
+                                                                        action="#{invokeActionBean.action}"
+                                                                        partialSubmit="false" id="cmi4">
+                                                        <f:attribute name="ACTION_MENU_ITEM" value="#{childNode3}"/>
+                                                    </af:commandMenuItem>
+                                                </af:forEach>
+                                            </af:group>
+                                            <af:group id="g3">
+                                                <af:commandMenuItem id="save" textAndAccessKey="#{resources.SAVE}"
+                                                                    actionListener="#{invokeActionBean.setAction}"
+                                                                    action="#{invokeActionBean.action}"
+                                                                    partialSubmit="false"
+                                                                    rendered="#{actionAvailable.updateAvailable}">
+                                                    <f:attribute name="ACTION_MENU_ITEM" value="bindings.update"/>
+                                                </af:commandMenuItem>
+                                            </af:group>
+                                        </af:menu>
+                                    </af:menuBar>
+                                </af:group>
+                            </af:panelGroupLayout>
+                            <af:spacer width="10" id="s6"/>
+                            <af:link shortDesc="#{resources.PREVIOUS_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/nexttraversalarrow_ena.png'  : '/hw_images/previoustraversalarrow_ena.png'}"
+                                     action="fetchPreviousTask"
+                                     visible="#{pageFlowScope.enableNavigationButton != null}" id="l1"/>
+                            <af:spacer width="10" id="s3"/>
+                            <af:link shortDesc="#{resources.NEXT_TASK}"
+                                     icon="#{ adfFacesContext.rightToLeft ? '/hw_images/previoustraversalarrow_ena.png' : '/hw_images/nexttraversalarrow_ena.png'}"
+                                     action="fetchNextTask" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l3"/>
+                            <af:spacer width="10" id="s4"/>
+                            <af:link shortDesc="#{resources.SHORT_DESC_CLOSE}" icon="/hw_images/close_ena.png"
+                                     action="closeTaskFlow" visible="#{pageFlowScope.enableNavigationButton != null}"
+                                     id="l2"/>
+                            <af:popup id="reassignPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog id="reAsDg" dialogListener="#{invokeActionBean.reassignAction}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           title="#{resources.REASSIGNPAGE}">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="reAsIdB" mode="REASSIGN" showActionButtons="false"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="requestInfoPopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.INFOREQUESTEDPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.requestInfoAction}" id="reqIfD">
+                                    <wlc:requestInfoDialog workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                           id="rqIDgC"
+                                                           selectedTaskId="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds[0]}"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="routePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{resources.ROUTEPAGE}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.routeTaskAction}" id="rteDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.taskFlowReassignBean.workflowContext}"
+                                                         id="rteIdB" mode="ROUTE"
+                                                         selectedTaskIds="#{pageFlowScope.taskFlowReassignBean.selectedTaskIds}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="decomposePopup" contentDelivery="lazyUncached" childCreation="deferred">
+                                <af:dialog title="#{pageFlowScope.ADFHumanTaskBean.decomposeDialogTitle}"
+                                           cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}"
+                                           dialogListener="#{invokeActionBean.decomposeTaskAction}" id="dcmpDg">
+                                    <wlc:identityBrowser identityBrowserView="#{pageFlowScope.identityBrowserView}"
+                                                         workflowContext="#{pageFlowScope.ADFHumanTaskBean.workflowContext}"
+                                                         id="dcmpIdB" mode="DECOMPOSE"
+                                                         selectedTaskObject="#{pageFlowScope.ADFHumanTaskBean.task}"
+                                                         showActionButtons="false"/>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="popupEnterPasswordDialog" contentDelivery="lazyUncached"
+                                      childCreation="deferred">
+                                <af:dialog title="#{resources.ENTER_PASSWORD}"
+                                           dialogListener="#{invokeActionBean.validatePassword}" type="okCancel"
+                                           modal="true" cancelTextAndAccessKey="#{resources.CANCEL_AK}"
+                                           affirmativeTextAndAccessKey="#{resources.OK_AK}" closeIconVisible="false"
+                                           id="pwdDlg">
+                                    <af:panelGroupLayout id="pgl6">
+                                        <af:panelFormLayout id="pfl1">
+                                            <af:inputText id="pwdBox" rows="1" columns="50"
+                                                          value="#{invokeActionBean.password}"
+                                                          label="#{resources.PASSWORD}" secret="true" required="true"/>
+                                        </af:panelFormLayout>
+                                    </af:panelGroupLayout>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup id="helpPopup" childCreation="deferred">
+                                <af:switcher facetName="#{pageFlowScope.taskDocumentationBean.isTaskDoc}" id="s2">
+                                    <f:facet name="true">
+                                        <af:panelGroupLayout layout="vertical" id="pgl3">
+                                            <af:link text="#{resources.OPEN_IN_WINDOW}"
+                                                     destination="#{pageFlowScope.taskDocumentationBean.docURL}"
+                                                     targetFrame="help" id="help"
+                                                     rendered="#{!empty bindings.activityId.inputValue}"/>
+                                            <af:outputFormatted value="#{pageFlowScope.taskDocumentationBean.taskDoc}"
+                                                                id="of1"/>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                    <f:facet name="false">
+                                        <af:outputText value="#{resources.TASK_DOC_NOT_AVAILABLE}" id="ot2"/>
+                                    </f:facet>
+                                </af:switcher>
+                            </af:popup>
+                        </af:toolbar>
+                    </f:facet>
+                    <f:facet name="attachment"/>
+                    <f:facet name="header">
+                        <af:region value="#{bindings.encabezadoBTF1.regionModel}" id="r1"/>
+                    </f:facet>
+                    <f:facet name="body">
+                        <af:panelGroupLayout layout="vertical" id="pglBody">
+                            <af:panelAccordion discloseMany="true" id="pa1" discloseNone="true">
+                                <af:showDetailItem id="pane1"
+                                                   text="#{pc05formalizaciongenerichumantaskBundle.DETALLE_OPERACION}"
+                                                   immediate="true"
+                                                   disclosureListener="#{pageFlowScope.FormalizacionManagedBean.panelDetalleOperacionDisclosureListener}">
+                                    <af:region value="#{bindings.detalleOperacionBTF1.regionModel}" id="r2"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem id="paneCA"
+                                                   text="#{pc05formalizaciongenerichumantaskBundle.LBL_CLASIFICACION_AMBIENTAL}"
+                                                   immediate="true">
+                                    <af:region value="#{bindings.editarClasificacionAmbientalBTF1.regionModel}"
+                                               id="r6"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem text="#{pc05formalizaciongenerichumantaskBundle.DOCUMENTOS}"
+                                                   id="sdi1" immediate="true"
+                                                   disclosureListener="#{pageFlowScope.FormalizacionManagedBean.panelDocumentosDisclosureListener}">
+                                    <af:region value="#{bindings.gestorDocumentosBTF1.regionModel}" id="r3"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem text="#{pc05formalizaciongenerichumantaskBundle.TERMINOS_CONDICIONES_COMISIONES}"
+                                                   id="sdi4" immediate="true">
+                                    <af:region value="#{bindings.matriztccBTF1.regionModel}" id="r7"/>
+                                </af:showDetailItem>
+                                <af:showDetailItem text="#{pc05formalizaciongenerichumantaskBundle.DATOS_DE_LA_TAREA}"
+                                                   id="sdi2" disclosed="true" immediate="true">
+                                    <af:panelGroupLayout id="pgl1" layout="vertical">
+                                        <af:spacer width="10" height="10" id="s7"/>
+                                        <af:region value="#{bindings.ResolucionBTF1.regionModel}" id="r5"/>
+                                        <af:spacer width="10" height="10" id="s28"/>
+                                        <af:panelHeader text="#{pc05formalizaciongenerichumantaskBundle.TITLE_LINEAS_CREDITO}"
+                                                        id="ph1" inlineStyle="font-weight:bold;"/>
+                                        <af:spacer width="10" height="10" id="s8"/>
+                                        <!-- Lineas de credito table -->
+                                        <af:table value="#{bindings.LineaCreditoVO.collectionModel}" var="row"
+                                                  rows="#{bindings.LineaCreditoVO.rangeSize}"
+                                                  emptyText="#{bindings.LineaCreditoVO.viewable ? 'No hay datos que mostrar.' : 'Acceso Denegado.'}"
+                                                  rowBandingInterval="1"
+                                                  selectedRowKeys="#{bindings.LineaCreditoVO.collectionModel.selectedRow}"
+                                                  selectionListener="#{bindings.LineaCreditoVO.collectionModel.makeCurrent}"
+                                                  rowSelection="single" fetchSize="#{bindings.LineaCreditoVO.rangeSize}"
+                                                  id="tbLinea"
+                                                  inlineStyle="height:150.0px; background-color:White; text-align:center;"
+                                                  summary="Lineas de credito table" columnStretching="last">
+                                            <af:column headerText="#{bindings.LineaCreditoVO.hints.NumeroLineaCredito.label}"
+                                                       id="c1" rowHeader="unstyled" width="150" align="center"
+                                                       inlineStyle="text-align:center;">
+                                                <af:outputText value="#{row.NumeroLineaCredito}"
+                                                               shortDesc="#{bindings.LineaCreditoVO.hints.NumeroLineaCredito.tooltip}"
+                                                               id="ot1"/>
+                                            </af:column>
+                                            <af:column headerText="#{pc05formalizaciongenerichumantaskBundle.FONDO}"
+                                                       id="c2" width="250" align="center"
+                                                       inlineStyle="text-align:center;">
+                                                <af:outputText value="#{row.DescripcionFondo}"
+                                                               shortDesc="#{bindings.LineaCreditoVO.hints.DescripcionFondo.tooltip}"
+                                                               id="ot3"/>
+                                            </af:column>
+                                            <af:column headerText="#{bindings.LineaCreditoVO.hints.MontoLinea.label}"
+                                                       id="c3" width="200" align="center"
+                                                       inlineStyle="text-align:center;">
+                                                <af:outputText value="#{row.MontoLinea}"
+                                                               shortDesc="#{bindings.LineaCreditoVO.hints.MontoLinea.tooltip}"
+                                                               id="ot4">
+                                                    <f:convertNumber currencySymbol="USD" locale="EN" type="currency"/>
+                                                </af:outputText>
+                                            </af:column>
+                                            <af:column headerText="#{pc05formalizaciongenerichumantaskBundle.DESCRIPCION_LINEA}"
+                                                       id="c9" width="200" align="center"
+                                                       inlineStyle="text-align:center;">
+                                                <af:outputText value="#{row.DescripcionLinea}" id="ot16"
+                                                               shortDesc="#{bindings.LineaCreditoVO.hints.DescripcionLinea.tooltip}"/>
+                                            </af:column>
+                                            <af:column headerText="#{pc05formalizaciongenerichumantaskBundle.DESCRIPCION_ASIGNACION}"
+                                                       id="c4" width="150" align="center"
+                                                       inlineStyle="text-align:center;">
+                                                <af:outputText value="#{row.DescripcionAsignacion}"
+                                                               shortDesc="#{bindings.LineaCreditoVO.hints.DescripcionAsignacion.tooltip}"
+                                                               id="ot8"/>
+                                            </af:column>
+                                        </af:table>
+                                        <af:spacer width="10" height="10" id="s11"/>
+                                        <af:panelHeader text="#{pc05formalizaciongenerichumantaskBundle.ASIGNACION_PARA_LINEA} #{bindings.NumeroLineaCredito.inputValue}" id="ph2"
+                                                        partialTriggers="tbLinea" size="1">
+                                            <af:spacer width="10" height="10" id="s18"/>
+                                            <af:panelFormLayout id="pfl2" labelAlignment="top">
+                                                <af:inputText value="#{bindings.DescripcionAsignacion.inputValue}"
+                                                              label="#{pc05formalizaciongenerichumantaskBundle.DESCRIPCION}#{':'}"
+                                                              required="#{bindings.DescripcionAsignacion.hints.mandatory}"
+                                                              id="it1" rows="3" columns="75" autoSubmit="true"
+                                                              maximumLength="#{bindings.DescripcionAsignacion.hints.precision}"
+                                                              shortDesc="#{bindings.DescripcionAsignacion.hints.tooltip}"
+                                                              contentStyle="border-width: 1px;"
+                                                              valueChangeListener="#{FormalizacionActionsManagedBean.descripcionValueChangeListener}">
+                                                    <f:validator binding="#{bindings.DescripcionAsignacion.validator}"/>
+                                                </af:inputText>
+                                            </af:panelFormLayout>
+                                            <af:spacer width="10" height="10" id="s19"/>
+                                            <af:panelLabelAndMessage label="#{pc05formalizaciongenerichumantaskBundle.ASIGNACIONES}" id="plam1"
+                                                                     labelStyle="font-weight:bold;"/>
+                                            <af:spacer width="10" height="10" id="s20"/>
+                                            <af:panelGroupLayout id="pgl9" layout="horizontal">
+                                                <af:spacer width="5" height="1" id="s15"/>
+                                                <af:button text="#{pc05formalizaciongenerichumantaskBundle.AGREGAR_FUENTE}" id="b5"
+                                                           actionListener="#{FormalizacionActionsManagedBean.agregarFuentePorLineaCreditoActionListener}"
+                                                           disabled="#{(bindings.LineaCreditoVO.estimatedRowCount lt 1)}">
+                                                    <af:setActionListener from="agregar" to="#{viewScope.opAgregarModificar}"/>
+                                                </af:button>
+                                                <af:spacer width="5" height="1" id="s16"/>
+                                                <af:button text="#{pc05formalizaciongenerichumantaskBundle.ELIMINAR_FUENTE}" id="b6"
+                                                           disabled="#{(bindings.FuentesAsignadasVO.estimatedRowCount lt 1)}"
+                                                           partialTriggers="b1 b3">
+                                                    <af:showPopupBehavior popupId="popupEliminarFuente"/>
+                                                </af:button>
+                                                <af:spacer width="5" height="1" id="s17"/>
+                                                <af:button text="#{pc05formalizaciongenerichumantaskBundle.MODIFICAR_FUENTE}" id="b11"
+                                                           actionListener="#{FormalizacionActionsManagedBean.modificarFuentePorLineaCreditoActionListener}"
+                                                           disabled="#{(bindings.FuentesAsignadasVO.estimatedRowCount lt 1)}"
+                                                           partialTriggers="b1 b3">
+                                                    <af:setActionListener from="modificar" to="#{viewScope.opAgregarModificar}"/>
+                                                </af:button>
+                                            </af:panelGroupLayout>
+                                            <af:spacer width="1" height="5" id="s21"/>
+                                            <!-- Fuentes table -->
+                                            <af:table value="#{bindings.FuentesAsignadasVO.collectionModel}" var="row"
+                                                      rows="#{bindings.FuentesAsignadasVO.rangeSize}"
+                                                      emptyText="#{bindings.FuentesAsignadasVO.viewable ? 'No hay datos que mostrar.' : 'Acceso Denegado.'}"
+                                                      rowBandingInterval="1"
+                                                      selectedRowKeys="#{bindings.FuentesAsignadasVO.collectionModel.selectedRow}"
+                                                      selectionListener="#{bindings.FuentesAsignadasVO.collectionModel.makeCurrent}"
+                                                      rowSelection="single"
+                                                      fetchSize="#{bindings.FuentesAsignadasVO.rangeSize}" id="t1"
+                                                      inlineStyle="height:150.0px; background-color:White; text-align:center;"
+                                                      summary="Fuentes table" columnStretching="last">
+                                                <af:column headerText="#{bindings.FuentesAsignadasVO.hints.IdLineaPasiva.label}"
+                                                           id="c5" rowHeader="unstyled"
+                                                           width="150" align="center"
+                                                           inlineStyle="text-align:center;">
+                                                    <af:outputText value="#{row.IdLineaPasiva}"
+                                                                   shortDesc="#{bindings.FuentesAsignadasVO.hints.IdLineaPasiva.tooltip}"
+                                                                   id="ot9"/>
+                                                </af:column>
+                                                <af:column headerText="#{bindings.FuentesAsignadasVO.hints.Descripcion.label}"
+                                                           id="c6" width="200" align="center"
+                                                           inlineStyle="text-align:center;">
+                                                    <af:outputText value="#{row.Descripcion}"
+                                                                   shortDesc="#{bindings.FuentesAsignadasVO.hints.Descripcion.tooltip}"
+                                                                   id="ot12"/>
+                                                </af:column>
+                                                <af:column headerText="#{bindings.FuentesAsignadasVO.hints.FechaObtenido.label}"
+                                                           id="c7" width="150" align="center"
+                                                           inlineStyle="text-align:center;">
+                                                    <af:outputText value="#{row.FechaObtenido}"
+                                                                   shortDesc="#{bindings.FuentesAsignadasVO.hints.FechaObtenido.tooltip}"
+                                                                   id="ot13">
+                                                        <af:convertDateTime pattern="#{bindings.FuentesAsignadasVO.hints.FechaObtenido.format}"/>
+                                                    </af:outputText>
+                                                    <f:facet name="footer">
+                                                        <af:panelGroupLayout id="pgl15" layout="horizontal">
+                                                            <af:spacer width="20" height="10" id="s25"/>
+                                                            <af:outputText value="#{pc05formalizaciongenerichumantaskBundle.TOTAL}"
+                                                                           id="ot15" inlineStyle="font-weight:bold;"/>
+                                                        </af:panelGroupLayout>
+                                                    </f:facet>
+                                                </af:column>
+                                                <af:column headerText="#{bindings.FuentesAsignadasVO.hints.MontoAsignado.label}"
+                                                           id="c8" width="150" align="center"
+                                                           inlineStyle="text-align:center;">
+                                                    <af:outputText value="#{row.MontoAsignado}"
+                                                                   shortDesc="#{bindings.FuentesAsignadasVO.hints.MontoAsignado.tooltip}"
+                                                                   id="ot14" inlineStyle="white-space:pre;">
+                                                        <f:convertNumber currencySymbol="USD " locale="EN" type="currency"/>
+                                                    </af:outputText>
+                                                    <f:facet name="footer">
+                                                        <af:panelGroupLayout id="pgl14" layout="horizontal">
+                                                            <af:spacer width="20" height="10" id="s26"/>
+                                                            <af:outputText value="#{bindings.MontoTotal.inputValue}"
+                                                                           id="ot17" inlineStyle="font-weight:bold;">
+                                                                <f:convertNumber currencySymbol="USD " locale="EN"
+                                                                                 type="currency"/>
+                                                            </af:outputText>
+                                                        </af:panelGroupLayout>
+                                                    </f:facet>
+                                                </af:column>
+                                            </af:table>
+                                            <af:spacer width="10" height="10" id="s23"/>
+                                        </af:panelHeader>
+                                    </af:panelGroupLayout>
+                                </af:showDetailItem>
+                                <af:showDetailItem text="#{pc05formalizaciongenerichumantaskBundle.COMENTARIOS}"
+                                                   id="sdi3" immediate="true"
+                                                   disclosureListener="#{pageFlowScope.FormalizacionManagedBean.panelComentariosDisclosureListener}">
+                                    <af:region value="#{bindings.comentariosBTF1.regionModel}" id="r4"/>
+                                </af:showDetailItem>
+                            </af:panelAccordion>
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="p1"
+                                      contentDelivery="lazyUncached"
+                                      binding="#{FormalizacionActionsManagedBean.popupAgregarModificarFuente}">
+                                <af:dialog id="d2" type="none" contentWidth="100"
+                                           title="#{(viewScope.opAgregarModificar eq 'agregar') ? pc05formalizaciongenerichumantaskBundle.AGREGAR_FUENTE : pc05formalizaciongenerichumantaskBundle.MODIFICAR_FUENTE}">
+                                    <af:panelFormLayout id="pfl12">
+                                        
+                                    </af:panelFormLayout>
+                                    <af:panelFormLayout id="pfl10" maxColumns="2" rows="1">
+                                        <af:panelFormLayout id="pfl8" labelAlignment="top">
+                                            <af:inputText value="#{bindings.Nombre.inputValue}"
+                                                          label="#{bindings.Nombre.hints.label}"
+                                                          autoSubmit="true" columns="23" required="true"
+                                                          maximumLength="#{bindings.Nombre.hints.precision}"
+                                                          shortDesc="#{bindings.Nombre.hints.tooltip}"
+                                                          id="itLineaPasiva">
+                                                <f:validator binding="#{bindings.Nombre.validator}"/>
+                                                <af:autoSuggestBehavior suggestedItems="#{FormalizacionActionsManagedBean.obtenerRecursosPorNombre}"/>
+                                            </af:inputText>
+                                        </af:panelFormLayout>
+                                        <af:panelFormLayout id="pfl3" labelAlignment="top">
+                                            <af:inputText value="#{bindings.Disponibilidad.inputValue}"
+                                                          label="#{bindings.Disponibilidad.hints.label}"
+                                                          required="#{bindings.Disponibilidad.hints.mandatory}"
+                                                          columns="#{bindings.Disponibilidad.hints.displayWidth}"
+                                                          maximumLength="#{bindings.Disponibilidad.hints.precision}"
+                                                          shortDesc="#{bindings.Disponibilidad.hints.tooltip}" id="it4"
+                                                          readOnly="true" partialTriggers="itLineaPasiva">
+                                                <f:validator binding="#{bindings.Disponibilidad.validator}"/>
+                                                <f:convertNumber currencySymbol="USD" locale="EN" type="currency"/>
+                                            </af:inputText>
+                                        </af:panelFormLayout>
+                                    </af:panelFormLayout>
+                                    <af:panelFormLayout id="pfl7">
+                                        <af:panelGroupLayout id="pgl7" layout="horizontal">
+                                            <af:panelFormLayout id="pfl5" labelAlignment="top">
+                                                <af:inputText value="#{bindings.Monto.inputValue}"
+                                                              label="#{bindings.Monto.hints.label}" required="true"
+                                                              columns="#{bindings.Monto.hints.displayWidth}"
+                                                              maximumLength="#{bindings.Monto.hints.precision}"
+                                                              shortDesc="#{bindings.Monto.hints.tooltip}" id="it2">
+                                                    <f:validator binding="#{bindings.Monto.validator}"/>
+                                                    <af:convertNumber groupingUsed="false"
+                                                                      pattern="#{bindings.Monto.format}"/>
+                                                </af:inputText>
+                                            </af:panelFormLayout>
+                                            <af:spacer width="5" height="1" id="s27"/>
+                                            <af:panelFormLayout id="pfl9" labelAlignment="top" maxColumns="2" rows="1">
+                                                <af:selectBooleanCheckbox id="sbcObtenidoEnFecha" autoSubmit="true"
+                                                                          label="#{pc05formalizaciongenerichumantaskBundle.OBTENIDO_EN_FECHA}"
+                                                                          value="#{pageFlowScope.FormalizacionManagedBean.esObtenidoEnFecha}"
+                                                                          valueChangeListener="#{FormalizacionActionsManagedBean.obtenidoFechaChangeListener}"/>
+                                            </af:panelFormLayout>
+                                            <af:inputDate id="id1" value="#{bindings.FechaObtenido.inputValue}"
+                                                          required="#{pageFlowScope.FormalizacionManagedBean.esObtenidoEnFecha}"
+                                                          columns="15"
+                                                          shortDesc="#{bindings.FechaObtenido.hints.tooltip}"
+                                                          visible="#{pageFlowScope.FormalizacionManagedBean.esObtenidoEnFecha}"
+                                                          partialTriggers="sbcObtenidoEnFecha">
+                                                <f:validator binding="#{bindings.FechaObtenido.validator}"/>
+                                                <af:convertDateTime pattern="#{bindings.FechaObtenido.format}"/>
+                                            </af:inputDate>
+                                        </af:panelGroupLayout>
+                                    </af:panelFormLayout>
+                                    <af:panelFormLayout id="pfl11">
+                                        <af:panelFormLayout id="pfl4" labelAlignment="top">
+                                            <af:inputText value="#{bindings.Comentario.inputValue}"
+                                                          label="#{bindings.Comentario.hints.label}" required="true"
+                                                          rows="3" columns="75"
+                                                          maximumLength="#{bindings.Comentario.hints.precision}"
+                                                          shortDesc="#{bindings.Comentario.hints.tooltip}" id="it3">
+                                                <f:validator binding="#{bindings.Comentario.validator}"/>
+                                            </af:inputText>
+                                        </af:panelFormLayout>
+                                    </af:panelFormLayout>
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl4" halign="right">
+                                            <af:button text="#{pc05formalizaciongenerichumantaskBundle.ACEPTAR}" id="b1"
+                                                       actionListener="#{FormalizacionActionsManagedBean.aceptarAgregarModificarFuenteActionListener}"
+                                                       />
+                                            <af:spacer width="10" height="10" id="s10"/>
+                                            <af:button text="#{pc05formalizaciongenerichumantaskBundle.CANCELAR}" id="b3"
+                                                       immediate="true"
+                                                       actionListener="#{FormalizacionActionsManagedBean.cancelarAgregarModificarFuenteActionListener}">
+                                                <af:resetActionListener/>
+                                            </af:button>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="popupEliminarFuente"
+                                      contentDelivery="lazyUncached"
+                                      binding="#{FormalizacionActionsManagedBean.popupEliminarFuente}">
+                                <af:dialog id="d3" type="none" modal="false"
+                                           title="#{pc05formalizaciongenerichumantaskBundle.CONFIRMAR_ELIMINAR_FUENTE}">
+                                    <af:panelGroupLayout id="pgl11">
+                                        <af:image source="/images/warning.png" shortDesc="warning" id="i2"
+                                                  inlineStyle="vertical-align:middle; width:60px; height:60px;"/>
+                                        <af:outputText value="#{pc05formalizaciongenerichumantaskBundle.ESTA_SEGURO_DE_ELIMINAR_LA_FUENTE} #{bindings.Descripcion.inputValue}#{'?'}"
+                                                       id="ot5"/>
+                                    </af:panelGroupLayout>
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl10" halign="right">
+                                            <af:button id="b7" text="#{pc05formalizaciongenerichumantaskBundle.ELIMINAR}"
+                                                       actionListener="#{FormalizacionActionsManagedBean.confirmEliminarFuentePorLineaCreditoActionListener}"
+                                                       styleClass="orangeBtn" partialSubmit="false"/>
+                                            <af:spacer width="10" height="10" id="s12"/>
+                                            <af:button id="b8" text="#{pc05formalizaciongenerichumantaskBundle.CANCELAR}"
+                                                       actionListener="#{FormalizacionActionsManagedBean.cancelEliminarFuenteActionListener}"
+                                                       styleClass="orangeBtn" immediate="true">
+                                                <af:resetActionListener/>
+                                            </af:button>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                </af:dialog>
+                            </af:popup>
+                            <af:popup childCreation="deferred" autoCancel="disabled" id="p3"
+                                      contentDelivery="lazyUncached"
+                                      binding="#{FormalizacionActionsManagedBean.popupConfirmarFinalizarTarea}">
+                                <af:dialog id="d4" type="none"
+                                           title="#{pc05formalizaciongenerichumantaskBundle.CONFIRMAR_ACCION}">
+                                    <af:panelGroupLayout id="pgl13" inlineStyle="width: 600px; height: 100px;">
+                                        <af:outputText value="#{pc05formalizaciongenerichumantaskBundle.CONFIRMAR_FINALIZAR_TAREA}"
+                                                       id="ot7"/>
+                                    </af:panelGroupLayout>
+                                    <f:facet name="buttonBar">
+                                        <af:panelGroupLayout id="pgl12" halign="right">
+                                            <af:button text="#{pc05formalizaciongenerichumantaskBundle.ACEPTAR}"
+                                                       id="b9"
+                                                       action="#{FormalizacionActionsManagedBean.aceptarFinalizarTareaAsignacionRecursosAction}"
+                                                       actionListener="#{invokeActionBean.setOperation}">
+                                                <f:attribute name="DC_OPERATION_BINDING"
+                                                             value="bindings.FINALIZARTAREA"/>
+                                            </af:button>
+                                            <af:spacer width="10" height="10" id="s13"/>
+                                            <af:button text="#{pc05formalizaciongenerichumantaskBundle.CANCELAR}"
+                                                       id="b10" immediate="true"
+                                                       actionListener="#{FormalizacionActionsManagedBean.cancelarFinalizarTareaActionListener}">
+                                                <af:resetActionListener/>
+                                            </af:button>
+                                        </af:panelGroupLayout>
+                                    </f:facet>
+                                </af:dialog>
+                            </af:popup>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:facet name="comment"/>
+                    <f:facet name="history">
+                        <af:panelGroupLayout layout="vertical" id="pglHistory" rendered="false">
+                            <af:switcher facetName="#{actionAvailable.showHistory}" id="s5">
+                                <f:facet name="true">
+                                    <af:showDetailHeader size="2" id="histHd" text="#{resources.HISTORY}"
+                                                         disclosureListener="#{pageFlowScope.aleComponentBean.toggle}"
+                                                         disclosed="false">
+                                        <f:facet name="info"/>
+                                        <f:facet name="legend"/>
+                                        <f:facet name="menuBar"/>
+                                        <f:facet name="toolbar"/>
+                                        <f:facet name="context"/>
+                                        <af:panelGroupLayout layout="vertical"
+                                                             binding="#{pageFlowScope.aleComponentBean.historyPanel}"
+                                                             id="historyPanel">
+                                            <wlc:taskHistory initParam="#{pageFlowScope.aleComponentBean.comp}"
+                                                             showTabularView="true" showGraphicalView="true"
+                                                             id="taskHst"/>
+                                        </af:panelGroupLayout>
+                                    </af:showDetailHeader>
+                                </f:facet>
+                            </af:switcher>
+                            <af:switcher facetName="#{pageFlowScope.ADFHumanTaskBean.hasSubTasks}"
+                                         binding="#{invokeActionBean.subTaskPanel}" id="s1">
+                                <f:facet name="true">
+                                    <af:showDetailHeader size="2" id="decompHd" text="#{resources.SUB_TASKS}"
+                                                         disclosed="false">
+                                        <af:panelGroupLayout layout="vertical" id="pgl5">
+                                            <wlc:taskDecompose initParam="#{pageFlowScope.ADFHumanTaskBean.subTaskComp}"
+                                                               id="th1"/>
+                                        </af:panelGroupLayout>
+                                    </af:showDetailHeader>
+                                </f:facet>
+                            </af:switcher>
+                        </af:panelGroupLayout>
+                    </f:facet>
+                    <f:attribute name="title"
+                                 value="#{(!empty bindings.NombreTarea.inputValue) ? bindings.NombreTarea.inputValue : pc05formalizaciongenerichumantaskBundle.ASIGNACION_RECURSOS}"/>
+                    <f:facet name="lowerbody"/>
+                    <f:facet name="upperbody"/>
+                </af:pageTemplate>
+            </af:form>
+        </af:document>
+    </f:view>
+</jsp:root>

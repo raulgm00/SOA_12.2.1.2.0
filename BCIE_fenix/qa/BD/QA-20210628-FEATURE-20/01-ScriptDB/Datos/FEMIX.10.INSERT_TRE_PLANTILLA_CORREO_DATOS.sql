@@ -1,0 +1,45 @@
+DECLARE
+id_PLANTILLA    INT;
+id_ROL_RIESGOS  INT;
+id_ROL_COPRES   INT;
+id_TPCU         INT;
+id_TPCRB        INT;
+BEGIN
+id_PLANTILLA:=0;
+id_ROL_RIESGOS:=0;
+id_ROL_COPRES:=0;
+id_TPCU:=0;
+id_TPCRB:=0;
+    
+    SELECT ID INTO id_PLANTILLA FROM FENIX.TCA_PLANTILLA_CORREO WHERE DESCRIPCION = 'PLANTILLA_FORMULARIO_IMPLICITO';
+    
+    SELECT MAX(ID) INTO id_TPCRB FROM FENIX.TRE_PLANTILLA_CORREO_ROL_BPM;
+    id_TPCRB := id_TPCRB + 1;
+    
+    SELECT ID  INTO id_ROL_RIESGOS FROM FENIX.TCA_ROL_BPM WHERE DESCRIPCION_CORTA = 'FENIX_RIESGOS';
+    SELECT ID  INTO id_ROL_COPRES FROM FENIX.TCA_ROL_BPM WHERE DESCRIPCION_CORTA = 'FENIX_ANALISTA_COPRES';
+    
+    INSERT INTO FENIX.TRE_PLANTILLA_CORREO_ROL_BPM ( id,id_tca_plantilla_correo, id_tca_rol_bpm, ban_estatus) VALUES (
+        id_TPCRB, id_PLANTILLA, id_ROL_RIESGOS, 1);
+    
+    id_TPCRB := id_TPCRB + 1;
+    INSERT INTO FENIX.TRE_PLANTILLA_CORREO_ROL_BPM ( id,id_tca_plantilla_correo, id_tca_rol_bpm, ban_estatus) VALUES (
+        id_TPCRB, id_PLANTILLA, id_ROL_COPRES, 1);
+
+    SELECT FENIX.TRE_PLANTILLA_CORREO_USER_SEQ.NEXTVAL INTO id_TPCU FROM DUAL; 
+    
+    INSERT INTO FENIX.TRE_PLANTILLA_CORREO_USER ( id,id_tca_plantilla_correo,login_usuario,ban_estatus,tipo_usuario) VALUES (
+        id_TPCU, id_PLANTILLA, 'LRIVAS', 1, 'CC');
+    
+    SELECT FENIX.TRE_PLANTILLA_CORREO_USER_SEQ.NEXTVAL INTO id_TPCU FROM DUAL; 
+    INSERT INTO tre_plantilla_correo_user ( id,id_tca_plantilla_correo,login_usuario,ban_estatus,tipo_usuario) VALUES (
+        id_TPCU, id_PLANTILLA, 'RODRIGUEZM', 1, 'CC');
+        
+    COMMIT;
+EXCEPTION
+   WHEN OTHERS THEN
+     DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.format_error_backtrace); 
+     DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.format_call_stack); 
+     DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.format_error_stack); 
+   ROLLBACK;
+END;

@@ -1,0 +1,420 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Jun 21 13:15:04 CDT 2016
+  Author:  Perla Osorio
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionSeguimientoCrediticio"
+               targetNamespace="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionSeguimientoCrediticio/ConfiguracionSeguimientoCrediticio"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionSeguimientoCrediticio/ConfiguracionSeguimientoCrediticio"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/ClienteService"
+         xmlns:ns3="http://www.bcie.com/ConsultarRolesPorProceso"
+         xmlns:ns4="http://www.bcie.org/ConfiguracionProcesosMO" xmlns:ns5="http://www.bcie.org/ClienteMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns8="http://www.bcie.org/CatalogoBO"
+         xmlns:ns7="http://www.bcie.org/ConsultarRolesPorProcesoBO"
+         xmlns:ns6="http://www.bcie.org/ConsultarRolesPorProcesoMO" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns9="http://www.bcie.org/ConfiguracionProcesosBO" xmlns:ns16="http://www.bcie.org/ResultBO"
+         xmlns:ns15="http://xmlns.bcie.org/ObjetoProceso/Comun/Parameter/V1"
+         xmlns:ns11="http://xmlns.bcie.org/ObjetoProceso/Comun/Operacion/V1"
+         xmlns:ns14="http://xmlns.bcie.org/ObjetoProceso/Comun/Proceso/V1"
+         xmlns:ns10="http://xmlns.bcie.org/ObjetoProceso/Comun/Header/V1"
+         xmlns:ns13="http://xmlns.bcie.org/ObjetoProceso/Comun/Tarea/V1"
+         xmlns:ns12="http://xmlns.bcie.org/ObjetoProceso/Comun/Cliente/V1" xmlns:ns17="http://www.bcie.org/ErrorBO"
+         xmlns:ns18="http://www.bcie.org/ClienteBO"
+         xmlns:ns19="http://www.bcie.org/ConsultarSeguimientoCrediticioByIdCliente">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionSeguimientoCrediticioSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configuracionseguimientocrediticio_client" partnerLinkType="ns1:ConfiguracionSeguimientoCrediticio" myRole="ConfiguracionSeguimientoCrediticio_PT"/>
+    <partnerLink name="ConsultarClienteById_SB" partnerLinkType="ns2:ConsultarOperacionByIdCliente_SB"
+                 partnerRole="ClientePT"/>
+    <partnerLink name="ConsultarRolesPorProceso_SB" partnerLinkType="ns3:ConsultarRolesPorProceso"
+                 partnerRole="ConsultarRolesPorProceso_ptt"/>
+    <partnerLink name="ConsultarSeguimientoCrediticio" partnerLinkType="ns19:ConsultarSeguimientoCrediticio"
+                 partnerRole="ConsultarSeguimientoCrediticioByIdCliente_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConfiguracionSeguimientoCrediticioMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConfiguracionSeguimientoCrediticioMessage"/>
+    <variable name="outConsultarClienteById" messageType="ns2:responseConsultarClienteMessageByIdCliente"/>
+    <variable name="outConsultarRolesPorProcesos" messageType="ns3:replyMessage"/>
+    <variable name="scrReferencia" type="xsd:string"/>
+    <variable name="setTitleInstance" type="xsd:string"/>
+    <variable name="ConsultaSeguimientoCrediticioIn"
+              messageType="ns19:requestConsultarSeguimientoCrediticioByIdClienteMessage"/>
+    <variable name="ConsultaSeguimientoCrediticioOut"
+              messageType="ns19:responseConsultarSeguimientoCrediticioByIdClienteMessage"/>
+    <variable name="SetTipoInicio" type="xsd:normalizedString"/>
+    <variable name="Id_SCR" type="xsd:long"/>
+    <variable name="Id_Perspectiva" type="xsd:long"/>
+    <variable name="setInstanciaProceso" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catch bpelx:name="BindingFault" faultName="bpelx:bindingFault" faultVariable="FaultVar"
+           faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="bindingFault">
+        <assign name="bindingFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns16:result</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.summary</from>
+            <to>$outputVariable.response/ns4:Resultado/ns16:message</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.code</from>
+            <to>$outputVariable.response/ns4:Resultado/ns16:error/ns17:errorCode</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.detail</from>
+            <to>$outputVariable.response/ns4:Resultado/ns16:error/ns17:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyBindingFault" variable="outputVariable"
+               partnerLink="configuracionseguimientocrediticio_client"
+               portType="ns1:ConfiguracionSeguimientoCrediticio_PT" operation="configuracionSeguimientoCrediticio"/>
+      </sequence>
+    </catch>
+    <catch bpelx:name="RemoteFault" faultName="bpelx:remoteFault" faultVariable="FaultVar"
+           faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="remoteFault">
+        <assign name="remoteFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns16:result</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.summary</from>
+            <to>$outputVariable.response/ns4:Resultado/ns16:message</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.code</from>
+            <to>$outputVariable.response/ns4:Resultado/ns16:error/ns17:errorCode</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.detail</from>
+            <to>$outputVariable.response/ns4:Resultado/ns16:error/ns17:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyRemoteFault" variable="outputVariable"
+               partnerLink="configuracionseguimientocrediticio_client"
+               portType="ns1:ConfiguracionSeguimientoCrediticio_PT" operation="configuracionSeguimientoCrediticio"/>
+      </sequence>
+    </catch>
+    <catchAll>
+      <sequence name="catchAll">
+        <assign name="catchAll">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns16:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns4:Resultado/ns16:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyCatchAll" variable="outputVariable" partnerLink="configuracionseguimientocrediticio_client"
+               portType="ns1:ConfiguracionSeguimientoCrediticio_PT" operation="configuracionSeguimientoCrediticio"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionSeguimientoCrediticio.wsdl) -->
+    <receive name="receiveInput" partnerLink="configuracionseguimientocrediticio_client" portType="ns1:ConfiguracionSeguimientoCrediticio_PT" operation="configuracionSeguimientoCrediticio" variable="inputVariable" createInstance="yes"/>
+    <validate name="ValidateInput" variables="inputVariable"
+              xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("IdCliente: ",string($inputVariable.request/ns4:idCliente)))</from>
+        <to>$setTitleInstance</to>
+      </copy>
+      <copy>
+        <from>xp20:upper-case($inputVariable.request/ns4:TIPO_INICIO)</from>
+        <to>$SetTipoInicio</to>
+      </copy>
+      <copy>
+        <from>$inputVariable.request/ns4:InstanciaProceso</from>
+        <to>$outputVariable.response/ns4:configuracionSeguimientoCrediticio/ns9:Header/ns10:Proceso/ns14:IdFlujo</to>
+      </copy>
+    </assign><if name="IfValidaIdCliente">
+      <documentation>
+        <![CDATA[IdClienteIsNull]]>
+      </documentation>
+      <condition>string-length(string($inputVariable.request/ns4:idCliente)) = 0 or $inputVariable.request/ns4:idCliente = 0</condition>
+      <sequence name="Sequence1">
+        <assign name="isNull">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns16:result</to>
+          </copy>
+          <copy>
+            <from>'El IdCliente es requerido'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns16:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="configuracionseguimientocrediticio_client"
+               portType="ns1:ConfiguracionSeguimientoCrediticio_PT" operation="configuracionSeguimientoCrediticio"/>
+        <exit name="ExitError"/>
+      </sequence>
+      <else>
+        <empty name="Empty"/>
+      </else>
+    </if>
+    <scope name="ConsultarClienteById_SB">
+      <variables>
+        <variable name="inConsultarClienteById" messageType="ns2:requestConsultarClienteMessageByIdCliente"/>
+      </variables>
+      <sequence name="ConsultarClienteByIdSequence">
+        <assign name="requestConsultarClienteById">
+          <copy>
+            <from>$inputVariable.request/ns4:idCliente</from>
+            <to>$inConsultarClienteById.request/ns5:idCliente</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarClienteById_SB" partnerLink="ConsultarClienteById_SB"
+                portType="ns2:ClientePT" operation="consultarByIdCliente" inputVariable="inConsultarClienteById"
+                outputVariable="outConsultarClienteById" bpelx:invokeAsDetail="no"/>
+        <assign name="ConsultaSeguimientoCrediticio">
+          <copy>
+            <from>$inputVariable.request/ns4:idCliente</from>
+            <to>$ConsultaSeguimientoCrediticioIn.request/ns5:idCliente</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultaSeguimientoCrediticio" partnerLink="ConsultarSeguimientoCrediticio"
+                portType="ns19:ConsultarSeguimientoCrediticioByIdCliente_PT"
+                operation="ConsultarSeguimientoCrediticioByIdCliente" inputVariable="ConsultaSeguimientoCrediticioIn"
+                outputVariable="ConsultaSeguimientoCrediticioOut" xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                bpelx:invokeAsDetail="no"/>
+        <if name="IfValidaError">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$outConsultarClienteById.response/ns5:Resultado/ns16:result = 'ERROR'</condition>
+          <sequence name="ifValidaError">
+            <assign name="errorConsultarClienteById">
+              <copy>
+                <from>$outConsultarClienteById.response/ns5:Resultado/ns16:result</from>
+                <to>$outputVariable.response/ns4:Resultado/ns16:result</to>
+              </copy>
+              <copy>
+                <from>$outConsultarClienteById.response/ns5:Resultado/ns16:message</from>
+                <to>$outputVariable.response/ns4:Resultado/ns16:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="configuracionseguimientocrediticio_client"
+                   portType="ns1:ConfiguracionSeguimientoCrediticio_PT" operation="configuracionSeguimientoCrediticio"/>
+            <exit name="ExitError"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <sequence name="SequenceTipoInicio">
+              <assign name="AssingByCliente">
+                <copy ignoreMissingFromData="yes">
+                  <from>$outConsultarClienteById.response/ns5:Cliente/ns18:SCR/ns8:Id</from>
+                  <to>$Id_SCR</to>
+                </copy>
+                <copy ignoreMissingFromData="yes">
+                  <from>$outConsultarClienteById.response/ns5:Cliente/ns18:perspectiva/ns8:Id</from>
+                  <to>$Id_Perspectiva</to>
+                </copy>
+              </assign>
+              <if name="IfValidaInstanciaProceso">
+                <documentation>
+                  <![CDATA[OK]]>
+                </documentation>
+                <condition>$SetTipoInicio = 'NORMAL'</condition>
+                <empty name="Empty"/>
+                <else>
+                  <documentation>
+                    <![CDATA[DIFERENTE]]>
+                  </documentation>
+                  <assign name="AssignInstancia">
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>$ConsultaSeguimientoCrediticioOut.response/ns5:SeguimientoCrediticio/ns18:instanciaProceso</from>
+                      <to>$outputVariable.response/ns4:configuracionSeguimientoCrediticio/ns9:Header/ns10:Proceso/ns14:IdFlujo</to>
+                    </copy>
+                  </assign>
+                </else>
+              </if>
+              <assign name="scrReferencia">
+                <copy>
+                  <from>dvm:lookupValue("oramds:/apps/Resources/ComponentesComunes/Utilidades/ConfiguracionProcesos/V1/DVM/ConfiguracionProcesos.dvm","ParameterName","SCR","ParameterValue","NotFound")</from>
+                  <to>$scrReferencia</to>
+                </copy>
+              </assign>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ConsultarRolesPorProcesos">
+      <variables>
+        <variable name="inConsultarRolesPorProcesos" messageType="ns3:requestMessage"/>
+      </variables>
+      <sequence name="ConsultarRolesPorProcesoSequence">
+        <assign name="requestConsultarRolesPorProceso">
+          <copy>
+            <from>20</from>
+            <to>$inConsultarRolesPorProcesos.request/ns6:Proceso/ns7:idProceso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarRolesPorProcesos_SB" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarRolesPorProceso_SB" portType="ns3:ConsultarRolesPorProceso_ptt"
+                operation="ConsultarRolesPorProceso" inputVariable="inConsultarRolesPorProcesos"
+                outputVariable="outConsultarRolesPorProcesos"/>
+        <if name="IfValidaErrorConsultarRolesPorProceso">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$outConsultarRolesPorProcesos.response/ns6:Result/ns16:result = 'ERROR'</condition>
+          <sequence name="IfValidaErrorConsultarRolesPorProceso">
+            <assign name="errorConsultarRolesPorProceso">
+              <copy>
+                <from>$outConsultarRolesPorProcesos.response/ns6:Result/ns16:result</from>
+                <to>$outputVariable.response/ns4:Resultado/ns16:result</to>
+              </copy>
+              <copy>
+                <from>$outConsultarRolesPorProcesos.response/ns6:Result/ns16:message</from>
+                <to>$outputVariable.response/ns4:Resultado/ns16:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyERROR" variable="outputVariable" partnerLink="configuracionseguimientocrediticio_client"
+                   portType="ns1:ConfiguracionSeguimientoCrediticio_PT" operation="configuracionSeguimientoCrediticio"/>
+            <exit name="ExitError"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <sequence>
+              <empty name="Empty"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <assign name="Response">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../Transformations/XForm_Response.xsl", $outConsultarClienteById.response, "ConsultaSeguimientoCrediticioOut.response", $ConsultaSeguimientoCrediticioOut.response, "outConsultarRolesPorProcesos.response", $outConsultarRolesPorProcesos.response, "outputVariable.response", $outputVariable.response)</from>
+        <to variable="outputVariable" part="response"/>
+      </copy>
+    </assign>
+    <assign name="addSCRParametrizado">
+      <copy bpelx:insertMissingToData="yes">
+        <from>'SCR_REFERENCIA'</from>
+        <to>$outputVariable.response/ns4:configuracionSeguimientoCrediticio/ns9:Header/ns15:ParameterType/ns15:parameterName</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$scrReferencia</from>
+        <to>$outputVariable.response/ns4:configuracionSeguimientoCrediticio/ns9:Header/ns15:ParameterType/ns15:parameterValue</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>'ID_SCR'</from>
+        <to>$outputVariable.response/ns4:configuracionSeguimientoCrediticio/ns9:Header/ns15:ParameterType[2]/ns15:parameterName</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$Id_SCR</from>
+        <to>$outputVariable.response/ns4:configuracionSeguimientoCrediticio/ns9:Header/ns15:ParameterType[2]/ns15:parameterValue</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>'ID_PERSPECTIVA'</from>
+        <to>$outputVariable.response/ns4:configuracionSeguimientoCrediticio/ns9:Header/ns15:ParameterType[3]/ns15:parameterName</to>
+      </copy>
+      <copy bpelx:insertMissingToData="yes">
+        <from>$Id_Perspectiva</from>
+        <to>$outputVariable.response/ns4:configuracionSeguimientoCrediticio/ns9:Header/ns15:ParameterType[3]/ns15:parameterValue</to>
+      </copy>
+    </assign>
+    <if name="IfValidaTipoInicio" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+        <![CDATA[RETORNO]]>
+      </documentation>
+      <condition>$SetTipoInicio='RETORNO'</condition>
+      <sequence>
+        <assign name="AssignConsultaSeguimientoCrediticio">
+          <copy bpelx:insertMissingToData="yes">
+            <from>'ID_SCR_PROPUESTO'</from>
+            <to>$outputVariable.response/ns4:configuracionSeguimientoCrediticio/ns9:Header/ns15:ParameterType[5]/ns15:parameterName</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>$ConsultaSeguimientoCrediticioOut.response/ns5:SeguimientoCrediticio/ns18:scr/ns8:Id</from>
+            <to>$outputVariable.response/ns4:configuracionSeguimientoCrediticio/ns9:Header/ns15:ParameterType[5]/ns15:parameterValue</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>'ID_PERSPECTIVA_PROPUESTO'</from>
+            <to>$outputVariable.response/ns4:configuracionSeguimientoCrediticio/ns9:Header/ns15:ParameterType[6]/ns15:parameterName</to>
+          </copy>
+          <copy bpelx:insertMissingToData="yes">
+            <from>$ConsultaSeguimientoCrediticioOut.response/ns5:SeguimientoCrediticio/ns18:perspectiva/ns8:Id</from>
+            <to>$outputVariable.response/ns4:configuracionSeguimientoCrediticio/ns9:Header/ns15:ParameterType[6]/ns15:parameterValue</to>
+          </copy>
+        </assign>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[Invalido]]>
+        </documentation>
+        <sequence>
+          <empty name="Empty"/>
+        </sequence>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configuracionseguimientocrediticio_client" portType="ns1:ConfiguracionSeguimientoCrediticio_PT" operation="configuracionSeguimientoCrediticio" variable="outputVariable"/>
+  </sequence>
+</process>

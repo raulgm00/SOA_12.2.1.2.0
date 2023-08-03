@@ -1,0 +1,560 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Sep 29 11:17:53 CDT 2016
+  Author:  ismael-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="GenerarAvisoCobroDemanda"
+               targetNamespace="http://xmlns.oracle.com/DominioCliente/Recuperacion/GenerarAvisoCobroDemanda"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioCliente/Recuperacion/GenerarAvisoCobroDemanda"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/GestionCobroMO"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns7="http://www.bcie.org/OperacionBO"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns6="http://www.bcie.org/CommonBO"
+         xmlns:ns2="http://www.bcie.org/GestionCobroBO" xmlns:ns4="http://www.bcie.org/CatalogoBO"
+         xmlns:ns5="http://www.bcie.org/LineaCreditoBO" xmlns:ns3="http://www.bcie.org/ClienteBO"
+         xmlns:ns8="http://www.bcie.org/ResultBO" xmlns:ns9="http://www.bcie.org/ErrorBO"
+         xmlns:ns10="http://xmlns.bcie.com/ClienteService" xmlns:ns11="http://www.bcie.org/ClienteMO"
+         xmlns:ns12="http://www.bcie.org/ConsultarListaLineasCredito" xmlns:ns13="http://www.bcie.org/LineaCreditoMO"
+         xmlns:ns18="http://www.bcie.org/TerminoBO" xmlns:ns24="http://www.bcie.org/AprobacionBO"
+         xmlns:ns17="http://www.bcie.org/CondicionBO" xmlns:ns14="http://www.bcie.org/ProductoBO"
+         xmlns:ns15="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns23="http://www.bcie.org/DocumentoBO"
+         xmlns:ns21="http://www.bcie.org/HerramientaCEBO" xmlns:ns19="http://www.bcie.org/ComisionBO"
+         xmlns:ns20="http://www.bcie.org/DesembolsoBO" xmlns:ns16="http://www.bcie.org/ContratoBO"
+         xmlns:ns25="http://xmlns.bcie.com/ClienteService" xmlns:ns26="http://www.bcie.org/PublicarJMS"
+         xmlns:ns22="http://www.bcie.org/AtributoBO" xmlns:ns27="http://xmlns.bcie.com/DocumentoService"
+         xmlns:ns28="http://www.bcie.org/DocumentoMO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/DocumentoService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDocumento/Documento/V1/Wsdl/ADAPTER/CargarDocumentoFenixSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/GestionCobroMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/GestionCobro/V1/Schema/GestionCobroMO.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://www.bcie.org/ConsultarListaLineasCredito"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioLineaCredito/LineaCredito/V1/Wsdl/ADAPTER/ConsultarListaLineasCreditoSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+          <import namespace="http://xmlns.bcie.com/ClienteService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/Cliente/V1/Wsdl/ADAPTER/ConsultarListaClientesSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/GestionCobroMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/GestionCobro/V1/Wsdl/BPEL/GenerarArchivosFenixSOR.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/GestionCobroMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/GestionCobro/V1/Wsdl/ADAPTER/ObtenerAvisoCobroSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ClienteService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/Cliente/V1/Wsdl/ADAPTER/ConsultarClienteByIdSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/GestionCobroMO"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioCliente/GestionCobro/V1/Wsdl/ADAPTER/CrearAvisoCobroDemandaSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/GestionCobroMO" location="../WSDLs/GenerarAvisoCobroDemandaSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="generaravisocobrodemanda_client_ep" partnerLinkType="ns1:GenerarAvisoCobroDemanda" myRole="GenerarAvisoCobroDemandaPT"/>
+    <partnerLink name="CrearAvisoCobroDemanda" partnerLinkType="ns1:CrearAvisoCobroDemanda"
+                 partnerRole="CrearAvisoCobroDemandaPT"/>
+    <partnerLink name="ObtenerAvisoCobro" partnerLinkType="ns1:ObtenerAvisoCobro" partnerRole="ObtenerAvisoCobroPT"/>
+    <partnerLink name="GenerarArchivosFenix.generararchivosfenix_client" partnerLinkType="ns1:GenerarArchivosFenix"
+                 partnerRole="GenerarArchivosFenixPT"/>
+    <partnerLink name="ConsultarListaLineas" partnerLinkType="ns12:ConsultarListaLineas"
+                 partnerRole="ConsultarListaLineasCreditoPT"/>
+    <partnerLink name="ConsultarListaClientes" partnerLinkType="ns25:ConsultarListaClientes"
+                 partnerRole="ConsultarListaClientesPT"/>
+    <partnerLink name="InsertarGestionCobro" partnerLinkType="ns1:InsertarGestionCobro"
+                 partnerRole="UpSertGestionCobroPT"/>
+    <partnerLink name="ConsultarGestionCobro" partnerLinkType="ns1:ConsultarGestionCobro"
+                 partnerRole="ConsultarGestionCobroPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:GenerarAvisoCobroDemandaRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:GenerarAvisoCobroDemandaResponseMessage"/>
+    <variable name="setTittleVar" type="xsd:string"/>
+    <variable name="outInvokeConsultarListaClientes" messageType="ns25:ConsultarListaClientesResponseMessage"/>
+    <variable name="outInvokeCrearAvisoCobro" messageType="ns1:CrearAvisoCobroDemandaResponseMessage"/>
+    <variable name="outInvokeObtenerAvisoCobro" messageType="ns1:ObtenerAvisoCobroResponseMessage"/>
+    <variable name="outInvokeGenerarArchivosFenix" messageType="ns1:GenerarArchivosFenixResponseMessage"/>
+    <variable name="outInvokeConsultarListaLineas"
+              messageType="ns12:ConsultarListaLineasCreditoResponseMessage"/>
+    <variable name="AvisoCobro" element="ns1:ObtenerAvisoCobroResponse"/>
+    <variable name="outInvokeConsultarClienteById" messageType="ns10:responseConsultarClienteMessageByIdCliente"/>
+    <variable name="inConsultarGestionCobro" messageType="ns1:ConsultarGestionCobroRequestMessage"/>
+    <variable name="outConsultarGestionCobro" messageType="ns1:ConsultarGestionCobroResponseMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll bpelx:name="CatchAll">
+      <sequence name="SequenceCatchAll">
+        <assign name="assignCatchAll">
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:message</to>
+          </copy>
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:result</to>
+          </copy>
+        </assign>
+        <reply name="ReplyCatchAll" variable="outputVariable" partnerLink="generaravisocobrodemanda_client_ep"
+               portType="ns1:GenerarAvisoCobroDemandaPT" operation="generarAvisoCobroDemanda"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in GenerarAvisoCobroDemanda.wsdl) -->
+    <receive name="receiveInput" partnerLink="generaravisocobrodemanda_client_ep" portType="ns1:GenerarAvisoCobroDemandaPT" operation="generarAvisoCobroDemanda" variable="inputVariable" createInstance="yes"/>
+    <assign name="assignTittle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat('GenerarAvisoCobroDemanda ','idCliente = ',$inputVariable.GenerarAvisoCobroDemandaRequest/ns1:parametrosAvisoCobro/ns2:cliente/ns3:idCliente))</from>
+        <to>$setTittleVar</to>
+      </copy>
+    </assign>
+    <if name="IfIdCliente">
+      <documentation>
+        <![CDATA[idCliente]]>
+      </documentation>
+      <condition>$inputVariable.GenerarAvisoCobroDemandaRequest/ns1:parametrosAvisoCobro/ns2:cliente/ns3:idCliente != '' and $inputVariable.GenerarAvisoCobroDemandaRequest/ns1:parametrosAvisoCobro/ns2:cliente/ns3:idCliente != 0</condition>
+      <scope name="ScopeConsultarListaClientes">
+        <variables>
+          <variable name="inInvokeConsultarListaClientes" messageType="ns10:ConsultarListaClientesRequestMessage"/>
+        </variables>
+        <sequence name="SequenceConsultarListaClientes">
+          <assign name="assignIdCliente">
+            <copy>
+              <from>$inputVariable.GenerarAvisoCobroDemandaRequest/ns1:parametrosAvisoCobro/ns2:cliente/ns3:idCliente</from>
+              <to>$inInvokeConsultarListaClientes.ConsultarListaClientesRequest/ns11:IdCliente</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeConsultarListaClientes" bpelx:invokeAsDetail="no" partnerLink="ConsultarListaClientes"
+                  portType="ns10:ConsultarListaClientesPT" operation="consultarListaClientes"
+                  inputVariable="inInvokeConsultarListaClientes" outputVariable="outInvokeConsultarListaClientes"/>
+          <if name="IfOKConsultarListaClientes">
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>$outInvokeConsultarListaClientes.ConsultarListaClientesResponse/ns11:Resultado/ns8:result = 'OK'</condition>
+            <assign name="assignIdFacturador">
+              <copy bpelx:insertMissingToData="yes">
+                <from>$outInvokeConsultarListaClientes.ConsultarListaClientesResponse/ns11:Cliente/ns3:idFacturador</from>
+                <to>$inputVariable.GenerarAvisoCobroDemandaRequest/ns1:parametrosAvisoCobro/ns2:cliente/ns3:idFacturador</to>
+              </copy>
+              <copy bpelx:insertMissingToData="yes">
+                <from>$outInvokeConsultarListaClientes.ConsultarListaClientesResponse/ns11:Cliente/ns3:sector/ns4:Descripcion</from>
+                <to>$inputVariable.GenerarAvisoCobroDemandaRequest/ns1:parametrosAvisoCobro/ns2:cliente/ns3:sector/ns4:Descripcion</to>
+              </copy>
+              <copy bpelx:insertMissingToData="yes">
+                <from>$outInvokeConsultarListaClientes.ConsultarListaClientesResponse/ns11:Cliente/ns3:pais/ns4:codigoExterno</from>
+                <to>$inputVariable.GenerarAvisoCobroDemandaRequest/ns1:parametrosAvisoCobro/ns2:cliente/ns3:pais/ns4:codigoExterno</to>
+              </copy>
+            </assign>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <assign name="assignError">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:result</to>
+                </copy>
+                <copy>
+                  <from>'Error al consultarListaClientes'</from>
+                  <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:message</to>
+                </copy>
+              </assign>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+      <else>
+        <documentation>
+          <![CDATA[sinIdCliente]]>
+        </documentation>
+        <sequence name="SequenceIdClienteNull">
+          <assign name="assignErrorIdCliente">
+            <copy>
+              <from>'ERROR'</from>
+              <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:result</to>
+            </copy>
+            <copy>
+              <from>'El idCliente no puede ser nulo o cero'</from>
+              <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:message</to>
+            </copy>
+          </assign>
+          <reply name="ReplyIdCliente" variable="outputVariable" partnerLink="generaravisocobrodemanda_client_ep"
+                 portType="ns1:GenerarAvisoCobroDemandaPT" operation="generarAvisoCobroDemanda"/>
+          <exit name="ExitIdCliente"/>
+        </sequence>
+      </else>
+    </if>
+    <scope name="ScopeCrearAvisoCobroDemanda">
+      <variables>
+      <variable name="inInvokeCrearAvisoCobroDemanda" messageType="ns1:CrearAvisoCobroDemandaRequestMessage"/>
+      </variables>
+      <sequence name="SequenceCrearAvisoCobroDemanda">
+        <assign name="XQ_ParametrosAviso">
+          <bpelx:annotation>
+            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+          </bpelx:annotation>
+          <copy>
+            <from>ora:processXQuery10('../Transformations/CrearAvisoCobroDemanda_TO_CrearAvisoCobro_Request.xqy', 'inputVariable.GenerarAvisoCobroDemandaRequest', $inputVariable.GenerarAvisoCobroDemandaRequest)</from>
+            <to variable="inInvokeCrearAvisoCobroDemanda" part="request"/>
+          </copy>
+        </assign>
+        <invoke name="InvokeCrearAvisoCobro" bpelx:invokeAsDetail="no" partnerLink="CrearAvisoCobroDemanda"
+                portType="ns1:CrearAvisoCobroDemandaPT" operation="CrearAvisoCobroDemanda"
+                inputVariable="inInvokeCrearAvisoCobroDemanda" outputVariable="outInvokeCrearAvisoCobro"/>
+        <if name="IfCrearAviso">
+          <documentation>
+            <![CDATA[avisoCreado]]>
+          </documentation>
+          <condition>$outInvokeCrearAvisoCobro.response/ns1:Resultado/ns8:result = 'OK'</condition>
+          <scope name="ScopeObtenerAvisoCobro">
+            <variables>
+              <variable name="inInvokeObtenerAvisoCobro" messageType="ns1:ObtenerAvisoCobroRequestMessage"/>
+            </variables>
+            <sequence name="SequenceObtenerAvisoCobro">
+              <assign name="assignIdAviso">
+                <copy>
+                  <from>$outInvokeCrearAvisoCobro.response/ns1:idAviso</from>
+                  <to>$inInvokeObtenerAvisoCobro.ObtenerAvisoCobroRequest/ns1:idContrato</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeObtenerAvisoCobro" bpelx:invokeAsDetail="no" partnerLink="ObtenerAvisoCobro"
+                      portType="ns1:ObtenerAvisoCobroPT" operation="obtenerAvisoCobro"
+                      inputVariable="inInvokeObtenerAvisoCobro" outputVariable="outInvokeObtenerAvisoCobro"/>
+              <if name="IfOKObtenerAviso">
+                <documentation>
+                  <![CDATA[avisoObtenido]]>
+                </documentation>
+                <condition>count($outInvokeObtenerAvisoCobro.ObtenerAvisoCobroResponse/ns1:AvisoCobro/ns2:aviso) &gt; 0</condition>
+                <sequence>
+                  <scope name="ScopeConsultarGestionCobro">
+                    <sequence name="SequenceConsultarGestionCobro">
+                      <assign name="AssignConsultarGestionCobro">
+                        <copy>
+                          <from>$outInvokeCrearAvisoCobro.response/ns1:idAviso</from>
+                          <to>$inConsultarGestionCobro.request/ns1:idEjecucion</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeConsultarGestionCobro" partnerLink="ConsultarGestionCobro"
+                              portType="ns1:ConsultarGestionCobroPT" operation="ConsultarGestionCobro"
+                              inputVariable="inConsultarGestionCobro" bpelx:invokeAsDetail="no"
+                              outputVariable="outConsultarGestionCobro"/>
+                      <if name="IfDatos">
+                        <documentation>
+                          <![CDATA[ConDatos]]>
+                        </documentation>
+                        <condition>count($outConsultarGestionCobro.response/ns1:DetalleLote) &gt; 0</condition>
+                        <empty name="Empty"/>
+                        <else>
+                          <documentation>
+                            <![CDATA[SinDatos]]>
+                          </documentation>
+                          <sequence name="SequenceSinDatos">
+                            <assign name="AssignSinDatos">
+                              <copy>
+                                <from>'OK'</from>
+                                <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:result</to>
+                              </copy>
+                              <copy>
+                                <from>'No hay avisos para procesar'</from>
+                                <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:message</to>
+                              </copy>
+                            </assign>
+                            <reply name="ReplySinDatos" variable="outputVariable"
+                                   partnerLink="generaravisocobrodemanda_client_ep"
+                                   portType="ns1:GenerarAvisoCobroDemandaPT" operation="generarAvisoCobroDemanda"/>
+                            <exit name="Exit"/>
+                          </sequence>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                  <scope name="ScopeActualizarGestionCobro">
+                    <variables>
+                      <variable name="inActualizarGestionCobro" messageType="ns1:UpSertGestionCobroRequestMessage"/>
+                      <variable name="outActualizarGestionCobro" messageType="ns1:UpSertGestionCobroResponseMessage"/>
+                    </variables>
+                    <sequence name="SequenceActualizarGestionCobro">
+                      <assign name="AssignActualizarGestionCobro">
+                        <copy>
+                          <from>$outConsultarGestionCobro.response/ns1:DetalleLote[1]/ns2:id</from>
+                          <to>$inActualizarGestionCobro.request/ns1:DetalleLote/ns2:id</to>
+                        </copy>
+                        <copy>
+                          <from>$outConsultarGestionCobro.response/ns1:DetalleLote[1]/ns2:idLote</from>
+                          <to>$inActualizarGestionCobro.request/ns1:DetalleLote/ns2:idLote</to>
+                        </copy>
+                        <copy>
+                          <from>'OK'</from>
+                          <to>$inActualizarGestionCobro.request/ns1:DetalleLote/ns2:Estado</to>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeActualizarGestionCobro" partnerLink="InsertarGestionCobro"
+                              portType="ns1:UpSertGestionCobroPT" operation="UpSertGestionCobro"
+                              inputVariable="inActualizarGestionCobro" bpelx:invokeAsDetail="no"
+                              outputVariable="outActualizarGestionCobro"/>
+                    </sequence>
+                  </scope>
+                  <scope name="ScopeConsultarListaLineasCredito">
+                    <variables>
+                      <variable name="inInvokeCosultarListaLineasCredito"
+                                messageType="ns12:ConsultarListaLineasCreditoRequestMessage"/>
+                      <variable name="Counter" type="xsd:int"/>
+                    </variables>
+                    <sequence name="SequenceConsultarListaClientes-LineasCredito">
+                      <assign name="XQConsultarListaLineas">
+                        <bpelx:annotation>
+                          <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                        </bpelx:annotation>
+                        <copy>
+                          <from>ora:processXQuery10('../Transformations/ObtenerAvisoCobro_Response_TO_ConsultarListaLineasCredito_Request.xqy', 'outInvokeObtenerAvisoCobro.ObtenerAvisoCobroResponse', $outInvokeObtenerAvisoCobro.ObtenerAvisoCobroResponse)</from>
+                          <to variable="inInvokeCosultarListaLineasCredito" part="request"/>
+                        </copy>
+                      </assign>
+                      <invoke name="InvokeConsultarListaLineasCredito" bpelx:invokeAsDetail="no"
+                              partnerLink="ConsultarListaLineas" portType="ns12:ConsultarListaLineasCreditoPT"
+                              operation="ConsultarListaLineasCredito" inputVariable="inInvokeCosultarListaLineasCredito"
+                              outputVariable="outInvokeConsultarListaLineas"/>
+                      <if name="IfOKConsultarListaLineas">
+                        <documentation>
+                          <![CDATA[consultaCorrecta]]>
+                        </documentation>
+                        <condition>$outInvokeConsultarListaLineas.response/ns13:Resultado/ns8:result = 'OK'</condition>
+                        <sequence name="SequenceAgregarResponsable-Operacion">
+                          <assign name="XQAgregarResponsable">
+                            <bpelx:annotation>
+                              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                            </bpelx:annotation>
+                            <copy>
+                              <from>ora:processXQuery10('../Transformations/ConsultarListaClientes_Response_TO_AvisoCobro.xqy', 'outInvokeObtenerAvisoCobro.ObtenerAvisoCobroResponse', $outInvokeObtenerAvisoCobro.ObtenerAvisoCobroResponse, 'outInvokeConsultarListaClientes.ConsultarListaClientesResponse', $outInvokeConsultarListaClientes.ConsultarListaClientesResponse)</from>
+                              <to variable="AvisoCobro"/>
+                            </copy>
+                          </assign>
+                          <assign name="XQAgregarOperacion">
+                            <bpelx:annotation>
+                              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                            </bpelx:annotation>
+                            <copy>
+                              <from>ora:processXQuery10('../Transformations/ConsultarListaLineas_Response_TO_AvisoCobro.xqy', 'AvisoCobro', $AvisoCobro, 'outInvokeConsultarListaLineas.response', $outInvokeConsultarListaLineas.response)</from>
+                              <to variable="AvisoCobro"/>
+                            </copy>
+                          </assign>
+                          <assign name="XQFiltrarOperacionLineas">
+                            <bpelx:annotation>
+                              <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                            </bpelx:annotation>
+                            <copy>
+                              <from>ora:processXQuery10('../Transformations/FiltrarLineaOperacion_TO_AvisoCobro.xqy', 'inputVariable.GenerarAvisoCobroDemandaRequest', $inputVariable.GenerarAvisoCobroDemandaRequest, 'AvisoCobro', $AvisoCobro)</from>
+                              <to variable="AvisoCobro"/>
+                            </copy>
+                          </assign>
+                          <if name="IfSegregarOperacion">
+                            <documentation>
+                              <![CDATA[segregarOperacion]]>
+                            </documentation>
+                            <condition>$inputVariable.GenerarAvisoCobroDemandaRequest/ns1:parametrosAvisoCobro/ns2:segregarOperacion = 'true'</condition>
+                            <assign name="XQ_SegregarOperacion">
+                              <bpelx:annotation>
+                                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                              </bpelx:annotation>
+                              <copy>
+                                <from>ora:processXQuery10('../Transformations/AvisoCobro_TO_SegregarOperacion_AvisoCobro.xqy', 'AvisoCobro', $AvisoCobro)</from>
+                                <to variable="AvisoCobro"/>
+                              </copy>
+                            </assign>
+                            <else>
+                              <documentation>
+                                <![CDATA[noSegregarOperacion]]>
+                              </documentation>
+                              <empty name="SinSegregarOperacion"/>
+                            </else>
+                          </if>
+                          <if name="SinAvisos">
+                            <condition>count($AvisoCobro/ns1:AvisoCobro/ns2:aviso) = 0</condition>
+                            <assign name="SetNoAvisos">
+                              <copy>
+                                <from>'OK'</from>
+                                <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:result</to>
+                              </copy>
+                              <copy>
+                                <from>'No es posible generar un aviso con los parámetros capturados'</from>
+                                <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:message</to>
+                              </copy>
+                            </assign>
+                            <else>
+                              <forEach parallel="no" counterName="Counter" name="ForEachAviso">
+                                <startCounterValue>1</startCounterValue>
+                                <finalCounterValue>count($AvisoCobro/ns1:AvisoCobro/ns2:aviso)</finalCounterValue>
+                                <scope name="ScopeForEachAviso">
+                                  <scope name="ScopeGenerarArchivosFenix">
+                                    <variables>
+                                      <variable name="inInvokeGenerarArchivosFenix"
+                                                messageType="ns1:GenerarArchivosFenixRequestMessage"/>
+                                    </variables>
+                                    <sequence name="SequenceGenerarArchivosFenix">
+                                      <assign name="assignAviso">
+                                        <copy>
+                                          <from>$AvisoCobro/ns1:AvisoCobro/ns2:aviso[$Counter]</from>
+                                          <to>$inInvokeGenerarArchivosFenix.GenerarArchivosFenixRequest/ns1:AvisoCobro/ns2:aviso</to>
+                                        </copy>
+                                        <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                                          <from>$inputVariable.GenerarAvisoCobroDemandaRequest/ns1:idFlujoNegocio</from>
+                                          <to>$inInvokeGenerarArchivosFenix.GenerarArchivosFenixRequest/ns1:idFlujoNegocio</to>
+                                        </copy>
+                                      </assign>
+                                      <invoke name="InvokeGenerarArchivosFenix" bpelx:invokeAsDetail="no"
+                                              partnerLink="GenerarArchivosFenix.generararchivosfenix_client"
+                                              portType="ns1:GenerarArchivosFenixPT" operation="generarArchivosFenix"
+                                              inputVariable="inInvokeGenerarArchivosFenix"
+                                              outputVariable="outInvokeGenerarArchivosFenix"/>
+                                      <if name="IfOKGenerarArchivosFenix">
+                                        <documentation>
+                                          <![CDATA[OK]]>
+                                        </documentation>
+                                        <condition>$outInvokeGenerarArchivosFenix.GenerarArchivosFenixResponse/ns1:Resultado/ns8:result = 'OK'</condition>
+                                        <sequence name="SequenceAssignOK">
+                                          <assign name="assignOK">
+                                            <copy>
+                                              <from>'OK'</from>
+                                              <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:result</to>
+                                            </copy>
+                                            <copy>
+                                              <from>$outInvokeGenerarArchivosFenix.GenerarArchivosFenixResponse/ns1:Resultado/ns8:message</from>
+                                              <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:message</to>
+                                            </copy>
+                                          </assign>
+                                        </sequence>
+                                        <else>
+                                          <documentation>
+                                            <![CDATA[ERROR]]>
+                                          </documentation>
+                                          <assign name="assignError">
+                                            <copy>
+                                              <from>$outInvokeGenerarArchivosFenix.GenerarArchivosFenixResponse/ns1:Resultado/ns8:result</from>
+                                              <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:result</to>
+                                            </copy>
+                                            <copy>
+                                              <from>$outInvokeGenerarArchivosFenix.GenerarArchivosFenixResponse/ns1:Resultado/ns8:message</from>
+                                              <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:message</to>
+                                            </copy>
+                                          </assign>
+                                        </else>
+                                      </if>
+                                    </sequence>
+                                  </scope>
+                                </scope>
+                              </forEach>
+                            </else>
+                          </if>
+                        </sequence>
+                        <else>
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <assign name="assignError">
+                            <copy>
+                              <from>'ERROR'</from>
+                              <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:result</to>
+                            </copy>
+                            <copy>
+                              <from>'Error al consultarListaLineasCredito'</from>
+                              <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:message</to>
+                            </copy>
+                          </assign>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[avisoNoObtenido]]>
+                  </documentation>
+                  <assign name="assignResult">
+                    <copy>
+                      <from>'No fue posible crear el aviso con los parámetros solicitados'</from>
+                      <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:message</to>
+                    </copy>
+                    <copy>
+                      <from>'ERROR'</from>
+                      <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:result</to>
+                    </copy>
+                  </assign>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceERRORCrearAviso">
+              <assign name="assignError">
+                <copy>
+                  <from>$outInvokeCrearAvisoCobro.response/ns1:Resultado/ns8:result</from>
+                  <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:result</to>
+                </copy>
+                <copy>
+                  <from>$outInvokeCrearAvisoCobro.response/ns1:Resultado/ns8:message</from>
+                  <to>$outputVariable.GenerarAvisoCobroDemandaResponse/ns1:Resultado/ns8:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyError" variable="outputVariable" partnerLink="generaravisocobrodemanda_client_ep"
+                     portType="ns1:GenerarAvisoCobroDemandaPT" operation="generarAvisoCobroDemanda"/>
+              <exit name="ExitError"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="generaravisocobrodemanda_client_ep" portType="ns1:GenerarAvisoCobroDemandaPT" operation="generarAvisoCobroDemanda" variable="outputVariable"/>
+  </sequence>
+</process>

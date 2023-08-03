@@ -1,0 +1,399 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Oct 07 10:22:59 CDT 2015
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConsultarAtributosUsuario"
+               targetNamespace="http://xmlns.oracle.com/Utilidades/ConsultarAtributosUsuario/ConsultarAtributosUsuario"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/Utilidades/ConsultarAtributosUsuario/ConsultarAtributosUsuario"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/UsuarioService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath" xmlns:ns2="http://www.bcie.org/UsuarioMO"
+         xmlns:ns3="http://www.bcie.org/UsuarioBO"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns4="http://www.bcie.org/ResultBO"
+         xmlns:ns5="http://www.bcie.org/ErrorBO" xmlns:ns6="http://xmlns.oracle.com/bpel/services/IdentityService"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/UsuarioService"
+          location="oramds:/apps/Resources/ComponentesComunes/Utilidades/Usuario/V1/WSDL/Usuario.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.oracle.com/bpel/services/IdentityService" location="../Schemas/IdentityService.xsd"
+          importType="http://www.w3.org/2001/XMLSchema"/>
+  <import namespace="http://xmlns.bcie.com/UsuarioService" location="../WSDLs/UsuarioWrapper1.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="consultarAtributosUsuario" partnerLinkType="ns1:ConsultarAtributosUsuario" myRole="UsuarioPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConsultarAtributosUsuarioMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConsultarAtributosUsuarioMessage"/>
+    <variable name="countLista" type="xsd:int"/>
+    <variable name="CountUsuarios" type="xsd:int"/>
+    <variable name="UsuarioGrupo" messageType="ns1:responseConsultarAtributosUsuarioMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="Sequence1">
+        <reply name="ReplyError" variable="outputVariable" partnerLink="consultarAtributosUsuario"
+               portType="ns1:UsuarioPT" operation="consultarAtributosUsuario"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConsultarAtributosUsuario.wsdl) -->
+    <receive name="receiveInput" partnerLink="consultarAtributosUsuario" portType="ns1:UsuarioPT" operation="consultarAtributosUsuario" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignCount">
+      <copy>
+        <from>0</from>
+        <to>$CountUsuarios</to>
+      </copy>
+    </assign>
+    <forEach parallel="no" counterName="countLista" name="ForEachUsuarios">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($inputVariable.request/ns2:listaNombres/ns3:nombreUsuario)</finalCounterValue>
+      <scope name="ScopeForEachUsuarios">
+        <sequence>
+          <scope name="ScopeValidarInfoGrupo">
+            <variables>
+              <variable name="usuarios" type="ns6:UserListType"/>
+            </variables>
+            <faultHandlers>
+              <catchAll>
+                <assign name="Assign_ErrorConsultarAtributos">
+                  <copy>
+                    <from>'ERROR'</from>
+                    <to>$outputVariable.response/ns2:Resultado/ns4:result</to>
+                  </copy>
+                  <copy>
+                    <from>'Error al Consultar Usuarios del Grupo'</from>
+                    <to>$outputVariable.response/ns2:Resultado/ns4:message</to>
+                  </copy>
+                  <copy>
+                    <from>'-1'</from>
+                    <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorCode</to>
+                  </copy>
+                  <copy>
+                    <from>ora:getFaultAsString()</from>
+                    <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorDescription</to>
+                  </copy>
+                </assign>
+              </catchAll>
+            </faultHandlers>
+            <sequence name="Sequence4">
+              <if name="IfGrupoExiste">
+                <documentation>
+                  <![CDATA[GrupoExisteEnRealm]]>
+                </documentation>
+                <condition>string-length(ids:lookupGroup($inputVariable.request/ns2:listaNombres/ns3:nombreUsuario[$countLista])/*[1]/text())&gt;1</condition>
+                <sequence name="Sequence5">
+                  <assign name="Assign_ObtenerUsuarios">
+                    <extensionAssignOperation>
+                      <bpelx:copyList>
+                        <bpelx:from>ids:getUsersInGroup($inputVariable.request/ns2:listaNombres/ns3:nombreUsuario[$countLista],false())</bpelx:from>
+                        <bpelx:to>$usuarios/ns6:user</bpelx:to>
+                      </bpelx:copyList>
+                    </extensionAssignOperation>
+                  </assign>
+                  <forEach parallel="no" counterName="UsuarioGrupoCounter" name="ForEachUsuarioGrupo">
+                    <bpelx:skipCondition>count($usuarios/ns6:user)=0</bpelx:skipCondition>
+                    <startCounterValue>1</startCounterValue>
+                    <finalCounterValue>count($usuarios/ns6:user)</finalCounterValue>
+                    <scope name="ScopeUsuarioGrupo">
+                      <sequence name="Sequence6">
+                        <assign name="Assign_UsuarioGrupoAInput">
+                          <copy>
+                            <from>$CountUsuarios+1</from>
+                            <to>$CountUsuarios</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$usuarios/ns6:user[$UsuarioGrupoCounter]</from>
+                            <to>$UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$CountUsuarios]/ns3:nombreUsuario</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>substring-before(substring-after(ids:getGroupProperty($inputVariable.request/ns2:listaNombres/ns3:nombreUsuario[$countLista],'owner'),'='),',')</from>
+                            <to>$UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$CountUsuarios]/ns3:nombreCompleto</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>'true'</from>
+                            <to>$UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$CountUsuarios]/ns3:propietario</to>
+                          </copy>
+                        </assign>
+                      </sequence>
+                    </scope>
+                  </forEach>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[NoEsGrupoONoExiste]]>
+                  </documentation>
+                  <sequence name="Sequence7">
+                    <assign name="Assign_FalseGrupo">
+                      <copy>
+                        <from>$CountUsuarios+1</from>
+                        <to>$CountUsuarios</to>
+                      </copy>
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>$inputVariable.request/ns2:listaNombres/ns3:nombreUsuario[$countLista]</from>
+                        <to>$UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$CountUsuarios]/ns3:nombreUsuario</to>
+                      </copy>
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>'false'</from>
+                        <to>$UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$CountUsuarios]/ns3:propietario</to>
+                      </copy>
+                    </assign>
+                    <empty name="NoEsGrupo"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+        </sequence>
+      </scope>
+    </forEach>
+    <forEach parallel="yes" counterName="usuarioCounter" name="ForEachUsuario">
+      <bpelx:skipCondition>count($inputVariable.request/ns2:listaNombres/ns3:nombreUsuario)=0</bpelx:skipCondition>
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario)</finalCounterValue>
+      <scope name="ScopeForEachUsuario">
+        <sequence name="Sequence2">
+          <if name="IfExisteUsuario">
+            <documentation>
+              <![CDATA[Existe]]>
+            </documentation>
+            <condition>ids:getUserProperty($UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreUsuario,'sn')!=''</condition>
+            <scope name="ScopeAtributos">
+              <faultHandlers>
+                <catchAll>
+                  <sequence name="Sequence8">
+                    <assign name="Assign_ErrorConsultarAtributos">
+                      <copy>
+                        <from>'ERROR'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns4:result</to>
+                      </copy>
+                      <copy>
+                        <from>concat('Error al consultar usuario: ', $inputVariable.request/ns2:listaNombres/ns3:nombreUsuario[$usuarioCounter])</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns4:message</to>
+                      </copy>
+                      <copy>
+                        <from>'-1'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorCode</to>
+                      </copy>
+                      <copy>
+                        <from>ora:getFaultAsString()</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorDescription</to>
+                      </copy>
+                      <extensionAssignOperation>
+                        <bpelx:remove>
+                          <bpelx:target>$outputVariable.response/ns2:listaUsuarios</bpelx:target>
+                        </bpelx:remove>
+                      </extensionAssignOperation>
+                    </assign>
+                    <rethrow name="Rethrow"/>
+                  </sequence>
+                </catchAll>
+              </faultHandlers>
+              <sequence>
+                <assign name="AssignAtributosUsuario">
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>$UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreUsuario</from>
+                    <to>$outputVariable.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreUsuario</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>ids:getUserProperty($UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreUsuario,'employeenumber')</from>
+                    <to>$outputVariable.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:employeeNumber</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>concat(ids:getUserProperty($UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreUsuario,'givenname'),' ',ids:getUserProperty($UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreUsuario,'sn'))</from>
+                    <to>$outputVariable.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreCompleto</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>ids:getUserProperty($UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreUsuario,'mail')</from>
+                    <to>$outputVariable.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:mail</to>
+                  </copy>
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>ids:getUserProperty($UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreUsuario,'departmentnumber')</from>
+                    <to>$outputVariable.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:dependencia</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>ids:getManager($UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreUsuario)</from>
+                    <to>$outputVariable.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:manager</to>
+                  </copy>
+                </assign>
+                <if name="IfUsuarioOwner">
+                  <documentation>
+                    <![CDATA[Propietario]]>
+                  </documentation>
+                  <condition>$UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreUsuario= $UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreCompleto</condition>
+                  <assign name="AssignOwner">
+                    <copy bpelx:insertMissingToData="yes">
+                      <from>'true'</from>
+                      <to>$outputVariable.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:propietario</to>
+                    </copy>
+                  </assign>
+                  <else>
+                    <documentation>
+                      <![CDATA[NoPropietario]]>
+                    </documentation>
+                    <assign name="AssignNoOwner">
+                      <copy bpelx:insertMissingToData="yes">
+                        <from>'false'</from>
+                        <to>$outputVariable.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:propietario</to>
+                      </copy>
+                    </assign>
+                  </else>
+                </if>
+                <if name="IfGrupoTrue">
+                  <documentation>
+                    <![CDATA[GrupoEntrada]]>
+                  </documentation>
+                  <condition>$UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:propietario= 'true'</condition>
+                  <empty name="GrupoEntrada"/>
+                  <else>
+                    <documentation>
+                      <![CDATA[UsuarioEntrada]]>
+                    </documentation>
+                    <scope name="ScopeGrupos">
+                      <variables>
+                        <variable name="grupos" type="ns6:GroupListType"/>
+                      </variables>
+                      <faultHandlers>
+                        <catchAll>
+                          <assign name="Assign_ErrorConsultarAtributos">
+                            <copy>
+                              <from>'ERROR'</from>
+                              <to>$outputVariable.response/ns2:Resultado/ns4:result</to>
+                            </copy>
+                            <copy>
+                              <from>concat('Error al Consultar Grupos del usuario', $inputVariable.request/ns2:listaNombres/ns3:nombreUsuario[$usuarioCounter])</from>
+                              <to>$outputVariable.response/ns2:Resultado/ns4:message</to>
+                            </copy>
+                            <copy>
+                              <from>'-1'</from>
+                              <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorCode</to>
+                            </copy>
+                            <copy>
+                              <from>ora:getFaultAsString()</from>
+                              <to>$outputVariable.response/ns2:Resultado/ns4:error/ns5:errorDescription</to>
+                            </copy>
+                          </assign>
+                        </catchAll>
+                      </faultHandlers>
+                      <sequence name="Sequence3">
+                        <assign name="Assign_GruposUsuario">
+                          <extensionAssignOperation>
+                            <bpelx:append>
+                              <bpelx:from>ids:getUserRoles($UsuarioGrupo.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:nombreUsuario,'enterprise' , true() )</bpelx:from>
+                              <bpelx:to>$grupos</bpelx:to>
+                            </bpelx:append>
+                          </extensionAssignOperation>
+                        </assign>
+                        <forEach parallel="no" counterName="grupoCount" name="ForEachGrupo">
+                          <bpelx:skipCondition>count($grupos/ns6:group)=0</bpelx:skipCondition>
+                          <startCounterValue>1</startCounterValue>
+                          <finalCounterValue>count($grupos/ns6:group)</finalCounterValue>
+                          <scope name="ScopeForEachGrupo">
+                            <assign name="Assign_Grupo_TO_Output">
+                              <copy bpelx:insertMissingToData="yes">
+                                <from>$grupos/ns6:group[$grupoCount]</from>
+                                <to>$outputVariable.response/ns2:listaUsuarios/ns3:usuario[$usuarioCounter]/ns3:listaGrupos/ns3:grupo[$grupoCount]</to>
+                              </copy>
+                            </assign>
+                          </scope>
+                        </forEach>
+                      </sequence>
+                    </scope>
+                  </else>
+                </if>
+              </sequence>
+            </scope>
+            <else>
+              <documentation>
+                <![CDATA[NoExiste]]>
+              </documentation>
+              <empty name="EmptyNoExiste"/>
+            </else>
+          </if>
+        </sequence>
+      </scope>
+    </forEach>
+    <scope name="ScopeAsignarRespuesta">
+      <faultHandlers>
+        <catchAll>
+          <assign name="Assign_Error">
+            <copy>
+              <from>'ERROR'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns4:result</to>
+            </copy>
+            <copy>
+              <from>'Problema al asignar respuesta final'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns4:message</to>
+            </copy>
+          </assign>
+        </catchAll>
+      </faultHandlers>
+      <assign name="Assign_OutputVariable">
+        <copy bpelx:insertMissingToData="yes">
+          <from>'OK'</from>
+          <to>$outputVariable.response/ns2:Resultado/ns4:result</to>
+        </copy>
+        <extensionAssignOperation>
+          <bpelx:remove>
+            <bpelx:target>$outputVariable.response/ns2:Resultado/ns4:error</bpelx:target>
+          </bpelx:remove>
+        </extensionAssignOperation>
+        <copy bpelx:insertMissingToData="yes">
+          <from>'Consulta Exitosa'</from>
+          <to>$outputVariable.response/ns2:Resultado/ns4:message</to>
+        </copy>
+      </assign>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="consultarAtributosUsuario" portType="ns1:UsuarioPT" operation="consultarAtributosUsuario" variable="outputVariable"/>
+  </sequence>
+</process>

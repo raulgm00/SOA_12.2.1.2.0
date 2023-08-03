@@ -1,0 +1,239 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Nov 25 11:03:12 CST 2016
+  Author:  david-fernandez
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConsultarComisionesNoPagadas"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/ConsultarComisionesNoPagadas/ConsultarComisionesNoPagadas"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/ConsultarComisionesNoPagadas/ConsultarComisionesNoPagadas"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/ConsultarComisionesNoPagadasSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://www.bcie.org/ConsultarComisionesNoPagadasSAD"
+         xmlns:ns3="http://xmlns.bcie.com/ComisionService" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns4="http://www.bcie.org/DesembolsoMO"
+         xmlns:ns5="http://www.bcie.org/ComisionMO" xmlns:ns9="http://www.bcie.org/ResultBO"
+         xmlns:ns6="http://www.bcie.org/ComisionBO" xmlns:ns7="http://www.bcie.org/CatalogoBO"
+         xmlns:ns8="http://www.bcie.org/AtributoBO" xmlns:ns10="http://www.bcie.org/ErrorBO"
+         xmlns:ns20="http://www.bcie.org/TerminoBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns11="http://www.bcie.org/OperacionBO" xmlns:ns17="http://www.bcie.org/CommonBO"
+         xmlns:ns16="http://www.bcie.org/LineaCreditoBO" xmlns:ns18="http://www.bcie.org/CondicionBO"
+         xmlns:ns13="http://www.bcie.org/ProductoBO" xmlns:ns14="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns19="http://www.bcie.org/DocumentoBO" xmlns:ns22="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns21="http://www.bcie.org/DesembolsoBO" xmlns:ns15="http://www.bcie.org/ContratoBO"
+         xmlns:ns12="http://www.bcie.org/ClienteBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ConsultarComisionesNoPagadasSOR"
+          location="../WSDLs/ConsultarComisionesNoPagadasSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="consultarcomisionesnopagadas_client" partnerLinkType="ns1:ConsultarComisionesNoPagadas" myRole="ConsultarComisionesNoPagadas_PT"/>
+    <partnerLink name="ConsultarComisionByIdComision" partnerLinkType="ns3:ConsultarComisionByIdComision"
+                 partnerRole="ConsultarComisionPT"/>
+    <partnerLink name="ConsultarComisionesFlex" partnerLinkType="ns3:ConsultarComisionesFlex" partnerRole="ComisionPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConsultarComisionesNoPagadasBPELMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConsultarComisionesNoPagadasBPELMessage"/>
+    <variable name="inConsultarComision" messageType="ns3:requestConsultarComisionMessage"/>
+    <variable name="outConsultarComision" messageType="ns3:responseConsultarComisionMessage"/>
+    <variable name="setTitleVar" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceFaultAll">
+        <assign name="AssignFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns9:result</to>
+          </copy>
+          <copy>
+            <from>concat('Error en ConsultarComisionesNoCobradas:  ',ora:getFaultAsString())</from>
+            <to>$outputVariable.response/ns4:Resultado/ns9:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyFault" variable="outputVariable" partnerLink="consultarcomisionesnopagadas_client"
+               portType="ns1:ConsultarComisionesNoPagadas_PT" operation="ConsultarComisionesNoPagadas"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConsultarComisionesNoPagadas.wsdl) -->
+    <receive name="receiveInput" partnerLink="consultarcomisionesnopagadas_client" portType="ns1:ConsultarComisionesNoPagadas_PT" operation="ConsultarComisionesNoPagadas" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTitleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion: ",$inputVariable.request/ns4:idOperacion))</from>
+        <to>$setTitleVar</to>
+      </copy>
+    </assign>
+    <assign name="AssignRequestConsultarComision">
+      <copy>
+        <from>$inputVariable.request/ns4:idOperacion</from>
+        <to>$inConsultarComision.request/ns5:idOperacion</to>
+      </copy>
+    </assign>
+    <invoke name="InvokeConsultarComision" partnerLink="ConsultarComisionByIdComision"
+            portType="ns3:ConsultarComisionPT" operation="ConsultarComision" inputVariable="inConsultarComision"
+            bpelx:invokeAsDetail="no" outputVariable="outConsultarComision"/>
+    <if name="IfValidaOK">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>$outConsultarComision.response/ns5:Resultado/ns9:result = 'OK'</condition>
+      <if name="IfConteoRegistros">
+        <documentation>
+          <![CDATA[ConRegistros]]>
+        </documentation>
+        <condition>count($outConsultarComision.response/ns5:Comision) &gt; 0</condition>
+        <empty name="Empty"/>
+        <else>
+          <documentation>
+            <![CDATA[SinRegistros]]>
+          </documentation>
+          <sequence name="SequenceResponseSinRegistros">
+            <assign name="AssignResponseSinRegistros">
+              <copy>
+                <from>'OK'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns9:result</to>
+              </copy>
+              <copy>
+                <from>'La operacion no tiene comisiones asignadas'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns9:message</to>
+              </copy>
+            </assign>
+            <reply name="ReplyResponseSinRegistros" variable="outputVariable" partnerLink="consultarcomisionesnopagadas_client"
+                   portType="ns1:ConsultarComisionesNoPagadas_PT" operation="ConsultarComisionesNoPagadas"/>
+            <exit name="Exit"/>
+          </sequence>
+        </else>
+      </if>
+      <else>
+        <documentation>
+          <![CDATA[ERROR]]>
+        </documentation>
+        <sequence name="SequenceErrorConsultarComisionByIdComision">
+          <assign name="AssignErrorConsultarComisionByIdComision">
+            <copy>
+              <from>'OK'</from>
+              <to>$outputVariable.response/ns4:Resultado/ns9:result</to>
+            </copy>
+            <copy>
+              <from>concat('ConsultarComisionByIdComision:  ',$outConsultarComision.response/ns5:Resultado/ns9:message)</from>
+              <to>$outputVariable.response/ns4:Resultado/ns9:message</to>
+            </copy>
+          </assign>
+          <reply name="ReplyeErrorConsultarComisionByIdComision" variable="outputVariable"
+                 partnerLink="consultarcomisionesnopagadas_client" portType="ns1:ConsultarComisionesNoPagadas_PT"
+                 operation="ConsultarComisionesNoPagadas"/>
+          <exit name="Exit"/>
+        </sequence>
+      </else>
+    </if>
+    <assign name="XQ_FiltarComisionesNoPagadas">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:processXQuery10('../Transformations/XQ_FiltarComisionesNoPagadas.xqy', 'outConsultarComision.response', $outConsultarComision.response)</from>
+        <to variable="outConsultarComision" part="response"/>
+      </copy>
+    </assign>
+    <forEach parallel="yes" counterName="ForEachCounter" name="ForEachComision">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($outConsultarComision.response/ns5:Comision)</finalCounterValue>
+      <scope name="ScopeForEachComision">
+        <variables>
+          <variable name="inConsultarComisionesFlex" messageType="ns3:requestConsultarComisionMessage"/>
+          <variable name="outConsultarComisionesFlex" messageType="ns3:responseConsultarComisionMessage"/>
+        </variables>
+        <sequence name="SequenceForEachComision">
+          <assign name="AssignRequestConsultarComisionesFlex">
+            <copy>
+              <from>$outConsultarComision.response/ns5:Comision[$ForEachCounter]/ns6:idComision</from>
+              <to>$inConsultarComisionesFlex.request/ns5:idComision</to>
+            </copy>
+            <copy>
+              <from>$outConsultarComision.response/ns5:Comision[$ForEachCounter]/ns6:idOperacion</from>
+              <to>$inConsultarComisionesFlex.request/ns5:idOperacion</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeConsultarComisionesFlex" partnerLink="ConsultarComisionesFlex" portType="ns3:ComisionPT"
+                  operation="ConsultarComision" inputVariable="inConsultarComisionesFlex" bpelx:invokeAsDetail="no"
+                  outputVariable="outConsultarComisionesFlex"/>
+          <assign name="AssignResponseComisionesFlex">
+            <copy bpelx:insertMissingToData="yes">
+              <from>$outConsultarComisionesFlex.response/ns5:Comision</from>
+              <to>$outConsultarComision.response/ns5:Comision[$ForEachCounter]</to>
+            </copy>
+          </assign>
+        </sequence>
+      </scope>
+    </forEach>
+    <assign name="XQ_FiltarComisionesNoPagadas">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:processXQuery10('../Transformations/XQ_FiltarComisionesNoPagadas.xqy', 'outConsultarComision.response', $outConsultarComision.response)</from>
+        <to variable="outConsultarComision" part="response"/>
+      </copy>
+    </assign>
+    <assign name="XQ_ConsultarComisionesResponse">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:processXQuery10('../Transformations/XQ_ConsultarComisionesResponse.xqy', 'outConsultarComision.response', $outConsultarComision.response)</from>
+        <to variable="outputVariable" part="response"/>
+      </copy>
+    </assign>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="consultarcomisionesnopagadas_client" portType="ns1:ConsultarComisionesNoPagadas_PT" operation="ConsultarComisionesNoPagadas" variable="outputVariable"/>
+  </sequence>
+</process>

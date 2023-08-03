@@ -1,0 +1,482 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Feb 04 13:40:03 CST 2016
+  Author:  carlos-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ValidarEstadoTCC_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioMatrizTCC/ValidarEstadoTCC/ValidarEstadoTCC_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioMatrizTCC/ValidarEstadoTCC/ValidarEstadoTCC_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/MatrizTCCService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:ns2="http://xmlns.oracle.com/validacionEstado/validacionEstado_DecisionService_1"
+         xmlns:ns3="http://www.bcie.org/CondicionService"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ns5="http://www.bcie.org/MatrizTCCBO" xmlns:ns4="http://www.bcie.org/MatrizTCCMO"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns6="http://www.bcie.org/TerminoService"
+         xmlns:ns7="http://xmlns.bcie.com/ComisionService" xmlns:ns8="http://www.bcie.org/ComisionMO"
+         xmlns:ns9="http://www.bcie.org/CondicionMO" xmlns:ns10="http://www.bcie.org/TerminoMO"
+         xmlns:ns11="http://xmlns.oracle.com/ValidarEstadoTCCRule/ValidarEstadoTCCRule_DecisionService_1"
+         xmlns:ns12="http://xmlns.oracle.com/bpel" xmlns:ns16="http://www.bcie.org/OperacionBO"
+         xmlns:ns20="http://www.bcie.org/ResultBO" xmlns:ns18="http://www.bcie.org/ProductoBO"
+         xmlns:ns19="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns13="http://www.bcie.org/ComisionBO"
+         xmlns:ns14="http://www.bcie.org/CatalogoBO" xmlns:ns17="http://www.bcie.org/ClienteBO"
+         xmlns:ns15="http://www.bcie.org/AtributoBO" xmlns:ns21="http://www.bcie.org/ErrorBO"
+         xmlns:ns22="http://www.bcie.org/CondicionBO" xmlns:ns23="http://www.bcie.org/DocumentoBO"
+         xmlns:ns24="http://www.bcie.org/TerminoBO"
+         xmlns:ns25="http://xmlns.oracle.com/ValidarEstadoTCCBR/ValidarEstadoTCCBR_DecisionService_1"
+         xmlns:ns26="http://xmlns.oracle.com/ValidarEstadoTCC_BR/ValidarEstadoTCC_BR_DecisionService_1"
+         xmlns:ns27="http://xmlns.oracle.com/bpel/rules">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/MatrizTCCService" location="../WSDLs/ValidarEstadoTCCSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <partnerLink name="ValidarEstadoTCC_Direct" partnerLinkType="ns1:ValidarEstadoTCC_Direct"
+                 myRole="ValidarEstadoTCCPT"/>
+    <partnerLink name="ConsultarCondicion" partnerLinkType="ns3:ConsultarCondicion"
+                 partnerRole="ConsultarCondicionbyIdOperacionPT"/>
+    <partnerLink name="ConsultarTermino" partnerLinkType="ns6:ConsultarTermino" partnerRole="ConsultarTerminoPT"/>
+    <partnerLink name="ValidarEstadoTCC_BR.ValidarEstadoTCC_BR_DecisionService_1"
+                 partnerLinkType="ns26:ValidarEstadoTCC_BR.ValidarEstadoTCC_BR_DecisionService_1"
+                 partnerRole="IDecisionService"/>
+    <partnerLink name="ConsultarComision" partnerLinkType="ns7:ConsultarComision" partnerRole="ConsultarComisionPT"/>
+  </partnerLinks>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:ValidarEstadoTCCRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:ValidarEstadoTCCResponseMessage"/>
+    <variable name="validarEstadoTCCBR_InputVariable" messageType="ns26:callFunctionStatelessMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence>
+        <assign name="Assign_Error_OutputVar">
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>true()</from>
+            <to>$outputVariable.response/ns4:validacionEstados</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="ValidarEstadoTCC_Direct"
+               portType="ns1:ValidarEstadoTCCPT" operation="validarEstadoTCC"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ValidarEstadoTCC_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="ValidarEstadoTCC_Direct" portType="ns1:ValidarEstadoTCCPT" operation="validarEstadoTCC" variable="inputVariable" createInstance="yes"/>
+    <scope name="ScopeListaVacía">
+      <bpelx:skipCondition>count($inputVariable.request/ns4:tcc)&gt;0</bpelx:skipCondition>
+      <sequence name="Sequence6">
+        <assign name="AssignListaVacia">
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>'OK'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>'Sin información que validar'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyOutput" variable="outputVariable" partnerLink="ValidarEstadoTCC_Direct"
+               portType="ns1:ValidarEstadoTCCPT" operation="validarEstadoTCC"/>
+        <exit name="ExitListaVacia"/>
+      </sequence>
+    </scope>
+    <if name="IfTCC">
+      <documentation>
+        <![CDATA[COMISION]]>
+      </documentation>
+      <condition>$inputVariable.request/ns4:tcc/ns5:tipo='COMISION'</condition>
+      <scope name="ScopeConsultarComision">
+        <bpelx:skipCondition>$inputVariable.request/ns4:tcc/ns5:id = 0 or string-length($inputVariable.request/ns4:tcc/ns5:id)=0</bpelx:skipCondition>
+        <variables>
+          <variable name="consultarComision_InputVariable" messageType="ns7:requestConsultarComisionMessage"/>
+          <variable name="InvokeConsultarComision_ConsultarComision_OutputVariable"
+                    messageType="ns7:responseConsultarComisionMessage"/>
+        </variables>
+        <faultHandlers>
+          <catchAll>
+            <sequence name="Sequence6">
+              <assign name="AssignErrorConsultarComision">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+                </copy>
+                <copy>
+                  <from>'Error general al consultar la comisión'</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+                </copy>
+                <copy>
+                  <from>ora:getFaultAsString()</from>
+                  <to>$outputVariable.response/ns4:Resultado/ns20:error/ns21:errorDescription</to>
+                </copy>
+              </assign>
+              <reply name="ReplyComision" variable="outputVariable" partnerLink="ValidarEstadoTCC_Direct"
+                     portType="ns1:ValidarEstadoTCCPT" operation="validarEstadoTCC"/>
+              <exit name="ExitComision"/>
+            </sequence>
+          </catchAll>
+        </faultHandlers>
+        <sequence name="Sequence1">
+          <assign name="Assign_ConsultarComisionInput">
+            <copy>
+              <from>$inputVariable.request/ns4:tcc/ns5:id</from>
+              <to>$consultarComision_InputVariable.request/ns8:idComision</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeConsultarComision" partnerLink="ConsultarComision"
+                  portType="ns7:ConsultarComisionPT" operation="ConsultarComision"
+                  inputVariable="consultarComision_InputVariable"
+                  outputVariable="InvokeConsultarComision_ConsultarComision_OutputVariable"
+                  bpelx:invokeAsDetail="no"/>
+                     <assign name="AssignValidarEstadoInput">
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>$InvokeConsultarComision_ConsultarComision_OutputVariable.response/ns8:Comision/ns13:estadoTCC/ns15:id</from>
+              <to>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:estado</to>
+            </copy>
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>$InvokeConsultarComision_ConsultarComision_OutputVariable.response/ns8:Comision/ns13:subEstadoTCC/ns15:id</from>
+              <to>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:subEstado</to>
+            </copy>
+          </assign>
+        </sequence>
+      </scope>
+      <elseif>
+        <documentation>
+          <![CDATA[CONDICION]]>
+        </documentation>
+        <condition>$inputVariable.request/ns4:tcc/ns5:tipo='CONDICION'</condition>
+        <sequence name="Sequence4">
+          <scope name="ScopeConsultarCondicion">
+            <bpelx:skipCondition>$inputVariable.request/ns4:tcc/ns5:id = 0 or string-length($inputVariable.request/ns4:tcc/ns5:id)=0</bpelx:skipCondition>
+            <variables>
+              <variable name="consultarCondicion_InputVariable"
+                        messageType="ns3:ConsultarCondicionbyIdOperacionRequestMessage"/>
+              <variable name="consultarCondicion_OutputVariable"
+                        messageType="ns3:ConsultarCondicionbyIdOperacionResponseMessage"/>
+            </variables>
+            <faultHandlers>
+              <catchAll>
+                <sequence name="Sequence7">
+                  <assign name="AssignErrorConsultarCondicion"
+                          xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+      
+   <copy>
+         <from>'ERROR'</from>
+         <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+      </copy><copy>
+         <from>'Error general al consultar la condición'</from>
+         <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+      </copy><copy>
+         <from>ora:getFaultAsString()</from>
+         <to>$outputVariable.response/ns4:Resultado/ns20:error/ns21:errorDescription</to>
+      </copy></assign>
+                  <reply name="ReplyCondicion" variable="outputVariable" partnerLink="ValidarEstadoTCC_Direct"
+                         portType="ns1:ValidarEstadoTCCPT" operation="validarEstadoTCC"/>
+                  <exit name="ExitCondicion"/>
+                </sequence>
+              </catchAll>
+            </faultHandlers>
+            <sequence name="Sequence2">
+              <assign name="Assign_ConsultarCondicionInput">
+                <copy>
+                  <from>$inputVariable.request/ns4:tcc/ns5:id</from>
+                  <to>$consultarCondicion_InputVariable.request/ns9:idCondicion</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeConsultarCondicion" partnerLink="ConsultarCondicion"
+                      portType="ns3:ConsultarCondicionbyIdOperacionPT" operation="consultarCondicionbyIdOperacion"
+                      inputVariable="consultarCondicion_InputVariable"
+                      outputVariable="consultarCondicion_OutputVariable" bpelx:invokeAsDetail="no"/>
+                         <assign name="AssignValidarEstadoInput">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$consultarCondicion_OutputVariable.response/ns9:ListaCondiciones/ns22:Condicion/ns22:estadoTCC/ns15:id</from>
+                  <to>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:estado</to>
+                </copy>
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>$consultarCondicion_OutputVariable.response/ns9:ListaCondiciones/ns22:Condicion/ns22:subEstadoTCC/ns15:id</from>
+                  <to>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:subEstado</to>
+                </copy>
+              </assign>
+            </sequence>
+          </scope>
+        </sequence>
+      </elseif>
+      <elseif>
+        <documentation>
+          <![CDATA[TERMINO]]>
+        </documentation>
+        <condition>$inputVariable.request/ns4:tcc/ns5:tipo='TERMINO'</condition>
+        <scope name="ScopeConsultarTermino">
+          <bpelx:skipCondition>$inputVariable.request/ns4:tcc/ns5:id = 0 or string-length($inputVariable.request/ns4:tcc/ns5:id)=0</bpelx:skipCondition>
+          <variables>
+            <variable name="consultarTermino_InputVariable" messageType="ns6:ConsultarTerminoRequestMessage"/>
+            <variable name="consultarTermino_OutputVariable" messageType="ns6:ConsultarTerminoResponseMessage"/>
+          </variables>
+          <faultHandlers>
+            <catchAll>
+              <sequence name="Sequence8">
+                <assign name="AssignErrorConsultarTermino"
+                        xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      
+      
+      
+   <copy>
+         <from>'ERROR'</from>
+         <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+      </copy><copy>
+         <from>'Error general al consultar el termino'</from>
+         <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+      </copy><copy>
+         <from>ora:getFaultAsString()</from>
+         <to>$outputVariable.response/ns4:Resultado/ns20:error/ns21:errorDescription</to>
+      </copy></assign>
+                <reply name="ReplyTermino" variable="outputVariable" partnerLink="ValidarEstadoTCC_Direct"
+                       portType="ns1:ValidarEstadoTCCPT" operation="validarEstadoTCC"/>
+                <exit name="ExitTermino"/>
+              </sequence>
+            </catchAll>
+          </faultHandlers>
+          <sequence name="Sequence3">
+            <assign name="Assign_ConsultarTerminoInput">
+              <copy>
+                <from>$inputVariable.request/ns4:tcc/ns5:id</from>
+                <to>$consultarTermino_InputVariable.request/ns10:idTermino</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarTermino" partnerLink="ConsultarTermino"
+                    portType="ns6:ConsultarTerminoPT" operation="consultarTermino" inputVariable="consultarTermino_InputVariable"
+                    outputVariable="consultarTermino_OutputVariable" bpelx:invokeAsDetail="no"/>
+            <assign name="AssignValidarEstadoInput">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$consultarTermino_OutputVariable.response/ns10:Termino/ns24:estadoTCC/ns15:id</from>
+                <to>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:estado</to>
+              </copy>
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>$consultarTermino_OutputVariable.response/ns10:Termino/ns24:subEstadoTCC/ns15:id</from>
+                <to>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:subEstado</to>
+              </copy>
+            </assign>
+          </sequence>
+        </scope>
+      </elseif>
+      <else>
+        <documentation>
+          <![CDATA[Inexistente]]>
+        </documentation>
+        <sequence>
+          <assign name="Assign_TipoDesconocido">
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>'ERROR'</from>
+              <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+            </copy>
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>'Tipo Entrada Desconocido'</from>
+              <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+            </copy>
+          </assign>
+          <reply name="ReplyOutputTipo" variable="outputVariable" partnerLink="ValidarEstadoTCC_Direct"
+                 portType="ns1:ValidarEstadoTCCPT" operation="validarEstadoTCC"/>
+        </sequence>
+      </else>
+    </if>
+    <scope name="ScopeValidarEstadoTCCBR">
+      <variables>
+        <variable name="ValidarEstadoTCCOutputVariable" messageType="ns26:callFunctionStatelessDecisionMessage"/>
+      </variables>
+      <faultHandlers>
+        <catchAll>
+          <assign name="Assign_ErrorValidar">
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>true()</from>
+              <to>$outputVariable.response/ns4:validacionEstados</to>
+            </copy>
+          </assign>
+        </catchAll>
+      </faultHandlers>
+      <sequence name="Sequence5">
+        <assign name="AssignValidarEstadoInput">
+          <copy>
+            <from>'ValidarEstadoTCC_BR_DecisionService_1'</from>
+            <to>$validarEstadoTCCBR_InputVariable.payload/@name</to>
+          </copy>
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>$inputVariable.request/ns4:tcc</from>
+            <to>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccEntrada</to>
+          </copy>
+        </assign>
+        <scope name="ScopeEstados0">
+          <sequence>
+            <assign name="AssignSubEstado01">
+              <bpelx:skipCondition>string-length($validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccEntrada/ns5:subEstado)!=0</bpelx:skipCondition>
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>0</from>
+                <to>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccEntrada/ns5:subEstado</to>
+              </copy>
+            </assign>
+            <assign name="AssignSubEstado02">
+              <bpelx:skipCondition>string-length($validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:subEstado)!=0</bpelx:skipCondition>
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>0</from>
+                <to>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:subEstado</to>
+              </copy>
+            </assign>
+             <assign name="AssignEstado01">
+              <bpelx:skipCondition>string-length($validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccEntrada/ns5:estado)!=0</bpelx:skipCondition>
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>0</from>
+                <to>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccEntrada/ns5:estado</to>
+              </copy>
+            </assign>
+            <assign name="AssignEstado02">
+              <bpelx:skipCondition>string-length($validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:estado)!=0</bpelx:skipCondition>
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>0</from>
+                <to>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:estado</to>
+              </copy>
+            </assign>
+              <if name="IfMismosEstadosSubEstados">
+              <documentation>
+                <![CDATA[MismosEstados]]>
+              </documentation>
+              <condition>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccEntrada/ns5:estado = $validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:estado and $validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccEntrada/ns5:subEstado = $validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:subEstado</condition>
+              <sequence name="Sequence7">
+                <assign name="AssignMismosEstados">
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>'OK'</from>
+                    <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>true()</from>
+                    <to>$outputVariable.response/ns4:validacionEstados</to>
+                  </copy>
+                  <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                    <from>'Mismos estados y subestados'</from>
+                    <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyOutput" variable="outputVariable" partnerLink="ValidarEstadoTCC_Direct"
+                       portType="ns1:ValidarEstadoTCCPT" operation="validarEstadoTCC"/>
+                <exit name="ExitMismosEstados"/>
+              </sequence>
+              <else>
+                <documentation>
+                  <![CDATA[Distintos]]>
+                </documentation>
+                <empty name="DistintosEstados"/>
+              </else>
+            </if>
+          </sequence>
+        </scope>
+        <invoke name="Invoke_ValidarEstadoTCC" bpelx:invokeAsDetail="no"
+                partnerLink="ValidarEstadoTCC_BR.ValidarEstadoTCC_BR_DecisionService_1" portType="ns26:IDecisionService"
+                operation="callFunctionStateless" inputVariable="validarEstadoTCCBR_InputVariable"
+                outputVariable="ValidarEstadoTCCOutputVariable"/>
+        <if name="IfOutputBR">
+          <documentation>
+            <![CDATA[valido]]>
+          </documentation>
+          <condition>$ValidarEstadoTCCOutputVariable.payload/ns26:resultList/ns27:int = 1</condition>
+          <assign name="Assign_validoTrue">
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>true()</from>
+              <to>$outputVariable.response/ns4:validacionEstados</to>
+            </copy>
+          </assign>
+          <else>
+            <documentation>
+              <![CDATA[otro]]>
+            </documentation>
+            <sequence>
+              <assign name="Assign_Invalido">
+                <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                  <from>true()</from>
+                  <to>$outputVariable.response/ns4:validacionEstados</to>
+                </copy>
+              </assign>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeOutputVar">
+    <sequence>
+      <if name="IfEstadoConsulta0">
+        <documentation>
+            <![CDATA[ConsultaEstado0]]>
+          </documentation>
+        <condition>$validarEstadoTCCBR_InputVariable.payload/ns26:parameterList/ns4:ValidarEstadoTCCBRRequest/ns4:tccConsulta/ns5:estado = 0</condition>
+        <assign name="Assign_MessageOutputVariable">
+            <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+              <from>'No se encontró el id del Request pero se validó como estado inicial'</from>
+              <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+            </copy>
+          </assign>
+        <else>
+          <documentation>
+            <![CDATA[ConsultaExitosa]]>
+          </documentation>
+          <assign name="Assign_MessageOutputVariable">
+              <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                <from>'Consulta y Validación Exitosa'</from>
+                <to>$outputVariable.response/ns4:Resultado/ns20:message</to>
+              </copy>
+            </assign>
+        </else>
+      </if>
+      <assign name="AssignOutputVariable">
+          <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+            <from>'OK'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns20:result</to>
+          </copy>
+        </assign>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="ValidarEstadoTCC_Direct" portType="ns1:ValidarEstadoTCCPT" operation="validarEstadoTCC" variable="outputVariable"/>
+  </sequence>
+</process>

@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:pipelineEntry xmlns:con="http://www.bea.com/wli/sb/pipeline/config">
+    <con:coreEntry>
+        <con:binding type="SOAP" isSoap12="false" xsi:type="con:SoapBindingType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <con:wsdl ref="Capabilities/Core/Items/ItemEntitySvc/Resources/WSDL/ItemEntitySvc"/>
+            <con:binding>
+                <con:name>ItemEntityBinding</con:name>
+                <con:namespace>http://mx.agarcia.ea/Capabilities/Core/Items/ItemEntitySvc/ItemEntitySvc</con:namespace>
+            </con:binding>
+        </con:binding>
+        <con:xqConfiguration>
+            <con:snippetVersion>1.0</con:snippetVersion>
+        </con:xqConfiguration>
+    </con:coreEntry>
+    <con:router>
+        <con:flow>
+            <con:branch-node type="operation" name="BranchNode1">
+                <con:branch-table>
+                    <con:branch name="findById">
+                        <con:operator>equals</con:operator>
+                        <con:value>findById</con:value>
+                        <con:flow>
+                            <con:route-node name="RouteToItemDataSvc">
+                                <con:comment/>
+                                <con:context>
+                                    <con1:userNsDecl prefix="v1" namespace="http://mx.agarcia.ea/Canonical/Commons/Items/v1" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                                    <con1:varNsDecl prefix="item" namespace="http://mx.agarcia.ea/Capabilities/Foundation/Party/ItemEntitySvc" xmlns:con1="http://www.bea.com/wli/sb/stages/config"/>
+                                </con:context>
+                                <con:actions>
+                                    <con1:route xmlns:con1="http://www.bea.com/wli/sb/stages/routing/config">
+                                        <con2:id xmlns:con2="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.14.16c0b451d91.N7ff7</con2:id>
+                                        <con1:service ref="Applications/RetailMerchandising/RMS/RMSItemDataSvc/PS/ItemDataSvcPXY" xsi:type="ref:ProxyRef" xmlns:ref="http://www.bea.com/wli/sb/reference" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
+                                        <con1:operation>selectByPrimaryKey</con1:operation>
+                                        <con1:outboundTransform>
+                                            <con2:replace varName="body" contents-only="true" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.d.16bfc1b7415.N7fee</con3:id>
+                                                <con2:location>
+                                                    <con:xpathText xmlns:con="http://www.bea.com/wli/sb/stages/config">.</con:xpathText>
+                                                </con2:location>
+                                                <con2:expr>
+                                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config">&lt;item:ItemMasterPrimaryKey xmlns:item="http://xmlns.oracle.com/pcbpel/adapter/db/top/ItemDataSvcBS">
+    &lt;item:item>{data($body/item:findItemByIdRequest/item:items/v1:item/v1:id)}&lt;/item:item>
+&lt;/item:ItemMasterPrimaryKey></con:xqueryText>
+                                                </con2:expr>
+                                            </con2:replace>
+                                        </con1:outboundTransform>
+                                        <con1:responseTransform>
+                                            <con2:replace varName="body" contents-only="true" xmlns:con2="http://www.bea.com/wli/sb/stages/transform/config">
+                                                <con3:id xmlns:con3="http://www.bea.com/wli/sb/stages/config">_ActionId-N53efece6.3abdfbb8.e.16bfc1d7c3e.N7fc1</con3:id>
+                                                <con2:location>
+                                                    <con:xpathText xmlns:con="http://www.bea.com/wli/sb/stages/config">.</con:xpathText>
+                                                </con2:location>
+                                                <con2:expr>
+                                                    <con:xqueryText xmlns:con="http://www.bea.com/wli/sb/stages/config"><![CDATA[<item:findItemByIdResponse xmlns:ags="http://mx.agarcia.ea/Commons/Schemas/AGStandardHeader" 
+  xmlns:item="http://mx.agarcia.ea/Capabilities/Foundation/Party/ItemEntitySvc" xmlns:v1="http://mx.agarcia.ea/Canonical/Commons/Items/v1" xmlns:v11="http://mx.agarcia.ea/Canonical/Commons/Suppliers/v1">
+  
+
+
+{
+   let $dataSetResult :=  $body/*:ItemMasterCollection/*:ItemMaster
+       return 
+           <item:items>
+{
+          for $dataSetEntry in ( $dataSetResult ) return
+               <v1:item>
+                   <v1:id Type="Style">{data($dataSetEntry/*:item)}</v1:id>
+
+                   <v1:name>{data($dataSetEntry/*:descUp)}</v1:name>
+                   <v1:description>{data($dataSetEntry/*:itemDesc)}</v1:description>
+                   <v1:shortDescription>{data($dataSetEntry/*:shortDesc)}</v1:shortDescription>
+                   <v1:internalType>{data($dataSetEntry/*:internalType)}</v1:internalType>
+
+
+                   <v1:status Type="General" AppCode="RMS"><v1:code>{data($dataSetEntry/*:status)}</v1:code></v1:status>
+                   <v1:internalType>{data($dataSetEntry/*:itemNumberType)}</v1:internalType>
+
+               <v1:itemHierarchyInfo>
+                  <v1:hierarchy Type="Department" AppCode="RMS">
+                     <v1:id>{data($dataSetEntry/*:dept)}</v1:id>
+                  </v1:hierarchy>
+                  <v1:hierarchy Type="Class" AppCode="RMS">
+                     <v1:id>{data($dataSetEntry/*:class)}</v1:id>
+                  </v1:hierarchy>
+                  <v1:hierarchy Type="SubClass" AppCode="RMS">
+                     <v1:id>{data($dataSetEntry/*:subclass)}</v1:id>
+                  </v1:hierarchy>
+
+               </v1:itemHierarchyInfo>
+
+
+            <v1:itemDetailInfo>
+             
+                  <v1:attributes>
+                     <v1:attribute Type="Sellable" AppCode="RMS">
+                         <v1:id>{data($dataSetEntry/*:sellableInd)}</v1:id>
+                     </v1:attribute>
+                     <v1:attribute Type="Orderable" AppCode="RMS">
+                         <v1:id>{data($dataSetEntry/*:orderableInd)}</v1:id>
+                     </v1:attribute>
+                  </v1:attributes>
+
+                  <v1:colorGroup AppCode="RMS">
+                     <v1:id>{data($dataSetEntry/*:diff1)}</v1:id>
+                  </v1:colorGroup>
+
+                  <v1:sizeGroup AppCode="RMS">
+                     <v1:id>{data($dataSetEntry/*:diff2)}</v1:id>
+                  </v1:sizeGroup>
+
+                 <v1:supplier StatusCode="A">
+                     <v11:supplierID  type="PrimarySupplier">{data($dataSetEntry/*:suppliers/*:ItemSupplier[0]/*:supplier/*:supplier)}</v11:supplierID>
+                     <v11:name>{data($dataSetEntry/*:suppliers/*:ItemSupplier[0]/*:supplier/*:supName)}</v11:name>
+                  </v1:supplier>             
+
+           
+            </v1:itemDetailInfo>
+
+
+                <v1:catalogs>
+				
+		     <v1:catalog Type="Consumer" AppCode="OracleRMS">
+                        <v1:id>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=1]/*:udaValue)}</v1:id>
+                        <v1:name>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=1]/*:udaValueDesc)}</v1:name>
+                    </v1:catalog>
+                    <v1:catalog Type="Furnishing" AppCode="OracleRMS">
+                        <v1:id>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=2]/*:udaValue)}</v1:id>
+                        <v1:name>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=2]/*:udaValueDesc)}</v1:name>
+                    </v1:catalog>
+                    <v1:catalog Type="Expiration" AppCode="OracleRMS">
+                        <v1:id>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=3]/*:udaValue)}</v1:id>
+                        <v1:name>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=3]/*:udaValueDesc)}</v1:name>
+                    </v1:catalog>
+                    <v1:catalog Type="WeekFloorSale" AppCode="OracleRMS">
+                        <v1:id>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=4]/*:udaValue)}</v1:id>
+                        <v1:name>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=4]/*:udaValueDesc)}</v1:name>
+                    </v1:catalog>
+                    <v1:catalog Type="Classification" AppCode="OracleRMS">
+                        <v1:id>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=5]/*:udaValue)}</v1:id>
+                        <v1:name>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=5]/*:udaValueDesc)}</v1:name>
+                    </v1:catalog>
+                    <v1:catalog Type="Family" AppCode="OracleRMS">
+                        <v1:id>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=6]/*:udaValue)}</v1:id>
+                        <v1:name>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=7]/*:udaValueDesc)}</v1:name>
+                    </v1:catalog>
+                        <v1:catalog Type="Priority" AppCode="OracleRMS">
+                        <v1:id>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=7]/*:udaValue)}</v1:id>
+                        <v1:name>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=7]/*:udaValueDesc)}</v1:name>
+                        </v1:catalog>
+                    <v1:catalog Type="Sticker" AppCode="OracleRMS">
+                        <v1:id>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=8]/*:udaValue)}</v1:id>
+                        <v1:name>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=8]/*:udaValueDesc)}</v1:name>
+                    </v1:catalog>
+
+                        <v1:catalog Type="Concept" AppCode="OracleRMS">
+                        <v1:id>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=9]/*:udaValue)}</v1:id>
+                        <v1:name>{data($dataSetEntry//*:udas/*:UdaItemLov/*:uda[./*:udaId=9]/*:udaValueDesc)}</v1:name>
+                        </v1:catalog>
+                    
+
+                </v1:catalogs>
+                
+            
+            <v1:parent>
+                <v1:id>{data($dataSetEntry/*:parent)}</v1:id>
+            </v1:parent>
+                   
+            <v1:children>
+
+{
+   let $childrenData :=  $dataSetEntry/*:children/*:ItemMaster
+       return 
+           <v1:item>
+                   <v1:id Type="SKU">{data($childrenData/*:item)}</v1:id>
+
+
+            <v1:itemDetailInfo>
+             
+                 
+
+               <v1:colors>
+                  <v1:color AppCode="RMS">
+                     <v1:id>{data($childrenData/*:diff1)}</v1:id>
+                  </v1:color>
+               </v1:colors>
+
+               <v1:sizes>
+                  <v1:size AppCode="RMS">
+                     <v1:id>{data($childrenData/*:diff2)}</v1:id>
+                  </v1:size>
+               </v1:sizes>
+
+           
+            </v1:itemDetailInfo>
+           </v1:item>
+
+}
+            </v1:children>
+
+
+               </v1:item>
+
+
+}
+               </item:items>
+
+}
+
+
+</item:findItemByIdResponse>]]></con:xqueryText>
+                                                </con2:expr>
+                                            </con2:replace>
+                                        </con1:responseTransform>
+                                    </con1:route>
+                                </con:actions>
+                            </con:route-node>
+                        </con:flow>
+                    </con:branch>
+                    <con:branch name="findByFilter">
+                        <con:operator>equals</con:operator>
+                        <con:value>findByFilter</con:value>
+                        <con:flow/>
+                    </con:branch>
+                    <con:branch name="findItemImage">
+                        <con:operator>equals</con:operator>
+                        <con:value>findItemImage</con:value>
+                        <con:flow/>
+                    </con:branch>
+                    <con:default-branch/>
+                </con:branch-table>
+            </con:branch-node>
+        </con:flow>
+    </con:router>
+</con:pipelineEntry>

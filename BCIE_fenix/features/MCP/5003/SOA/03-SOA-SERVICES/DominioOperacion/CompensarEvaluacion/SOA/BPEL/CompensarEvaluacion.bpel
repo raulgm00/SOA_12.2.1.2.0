@@ -1,0 +1,284 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Nov 25 11:29:35 CST 2016
+  Author:  ismael-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CompensarEvaluacion"
+               targetNamespace="http://xmlns.oracle.com/DominioOperacion/CompensarEvaluacion/CompensarEvaluacion"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioOperacion/CompensarEvaluacion/CompensarEvaluacion"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/EvaluacionService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns3="http://www.bcie.org/ResultBO"
+         xmlns:ns2="http://www.bcie.org/EvaluacionMO" xmlns:ns4="http://www.bcie.org/ErrorBO"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns6="http://www.bcie.org/OperacionBO"
+         xmlns:ns7="http://www.bcie.org/CatalogoBO" xmlns:ns5="http://www.bcie.org/EvaluacionBO"
+         xmlns:ns8="http://xmlns.bcie.org/EvaluacionService">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://xmlns.bcie.com/EvaluacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Evaluacion/V1/Wsdl/BPEL/CrearEvaluacionSOR.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/EvaluacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Evaluacion/V1/Wsdl/ADAPTER/EliminarCuestionarioSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.org/EvaluacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Evaluacion/V1/Wsdl/ADAPTER/ConsultarEvaluacionFenixSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/EvaluacionService" location="../WSDLs/CompensarEvaluacionSORWrapper.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/" ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="compensarevaluacion_client" partnerLinkType="ns1:CompensarEvaluacion" myRole="CompensarEvaluacionPT"/>
+    <partnerLink name="EliminarCuestionario_PS" partnerLinkType="ns1:EliminarCuestionario_PS"
+                 partnerRole="EliminarCuestionarioPT"/>
+    <partnerLink name="ConsultarEvaluacionFenix_PS" partnerLinkType="ns8:ConsultarEvaluacionFenix_PS"
+                 partnerRole="ConsultarEvaluacionFenixPT"/>
+    <partnerLink name="MergeEvaluacion" partnerLinkType="ns1:MergeEvaluacion" partnerRole="EvaluacionPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:CompensarEvaluacionRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:CompensarEvaluacionResponseMessage"/>
+    <variable name="setTittleVar" type="xsd:string"/>
+    <variable name="outInvokeConsultarEvaluacionFenix" messageType="ns8:ConsultarEvaluacionFenixResponseMessage"/>
+    <variable name="outEliminarCuestionario" messageType="ns1:responseEliminarCuestionarioMessage"/>
+    <variable name="outInvokeMergeEvaluacionFenix" messageType="ns1:responseCrearEvaluacionMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceCatchAll">
+        <assign name="assignCatchAll">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyCatchAll" partnerLink="compensarevaluacion_client" portType="ns1:CompensarEvaluacionPT"
+               operation="CompensarEvaluacion" variable="outputVariable"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CompensarEvaluacion.wsdl) -->
+    <receive name="receiveInput" partnerLink="compensarevaluacion_client" portType="ns1:CompensarEvaluacionPT" operation="CompensarEvaluacion" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTittle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion: ",$inputVariable.request/ns2:Evaluacion/ns5:Operacion/ns6:idOperacion))</from>
+        <to>$setTittleVar</to>
+      </copy>
+    </assign>
+    <if name="IfNull_Cero">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>$inputVariable.request/ns2:Evaluacion/ns5:Operacion/ns6:idOperacion != 0 and $inputVariable.request/ns2:Evaluacion/ns5:Operacion/ns6:idOperacion != ''</condition>
+      <empty name="OK"/>
+      <else>
+        <documentation>
+          <![CDATA[ERROR]]>
+        </documentation>
+        <sequence name="SequenceError">
+          <assign name="assignError">
+            <copy>
+              <from>'ERROR'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+            </copy>
+            <copy>
+              <from>concat('El idOperacion no puede ser 0 o null: ',$inputVariable.request/ns2:Evaluacion/ns5:Operacion/ns6:idOperacion)</from>
+              <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+            </copy>
+          </assign>
+          <reply name="ReplyError" partnerLink="compensarevaluacion_client" portType="ns1:CompensarEvaluacionPT"
+                 operation="CompensarEvaluacion" variable="outputVariable"/>
+          <exit name="Exit"/>
+        </sequence>
+      </else>
+    </if>
+    <scope name="ScopeConsultarEvaluacionFenix">
+      <variables>
+        <variable name="inInvokeConsultarEvaluacionFenix" messageType="ns8:ConsultarEvaluacionFenixRequestMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarEvaluacionFenix">
+        <assign name="assignIdOperacion">
+          <copy>
+            <from>$inputVariable.request/ns2:Evaluacion/ns5:Operacion/ns6:idOperacion</from>
+            <to>$inInvokeConsultarEvaluacionFenix.request/ns2:idOperacion</to>
+          </copy>
+          <copy>
+            <from>$inputVariable.request/ns2:Evaluacion/ns5:TipoEvaluacion/ns7:Id</from>
+            <to>$inInvokeConsultarEvaluacionFenix.request/ns2:idTipoEvaluacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarEvaluacionFenix" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarEvaluacionFenix_PS" portType="ns8:ConsultarEvaluacionFenixPT"
+                operation="ConsultarEvaluacionFenix" inputVariable="inInvokeConsultarEvaluacionFenix"
+                outputVariable="outInvokeConsultarEvaluacionFenix"/>
+        <if name="IfOKConsulta">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outInvokeConsultarEvaluacionFenix.response/ns2:Resultado/ns3:result = 'OK' and count($outInvokeConsultarEvaluacionFenix.response/ns2:Evaluaciones/ns5:evaluacion) &gt; 0</condition>
+          <empty name="ForEach"/>
+          <else>
+            <documentation>
+              <![CDATA[sinResultados]]>
+            </documentation>
+            <sequence name="SequenceError">
+              <assign name="assignResult">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+                </copy>
+                <copy>
+                  <from>concat('Fallo al ConsultarEvaluacion: ',$outInvokeConsultarEvaluacionFenix.response/ns2:Resultado/ns3:message)</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyError" variable="outputVariable" partnerLink="compensarevaluacion_client"
+                     portType="ns1:CompensarEvaluacionPT" operation="CompensarEvaluacion"/>
+              <exit name="Exit"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <forEach parallel="no" counterName="Counter" name="ForEachCuestionario">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($outInvokeConsultarEvaluacionFenix.response/ns2:Evaluaciones/ns5:evaluacion[ns5:idEvaluacionOrigen != '']/ns5:cuestionarios/ns5:cuestionario)</finalCounterValue>
+      <scope name="ScopeEliminarEcuestionario">
+        <variables>
+          <variable name="inInvokeEliminarCuestionario" messageType="ns1:requestEliminarCuestionarioMessage"/>
+          <variable name="inInvokeMergeEvaluacion" messageType="ns1:requestCrearEvaluacionMessage"/>
+        </variables>
+        <sequence name="SequenceEliminarCuestionario">
+          <assign name="assignIdEval">
+            <copy>
+              <from>$outInvokeConsultarEvaluacionFenix.response/ns2:Evaluaciones/ns5:evaluacion[ns5:instanciaProceso = $inputVariable.request/ns2:Evaluacion/ns5:IdFlujo and ns5:idEvaluacionOrigen != ''][$Counter]/ns5:idEvaluacion</from>
+              <to>$inInvokeEliminarCuestionario.request/ns2:idEvaluacion</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.request/ns2:Evaluacion/ns5:Operacion/ns6:idOperacion</from>
+              <to>$inInvokeEliminarCuestionario.request/ns2:Operacion</to>
+            </copy>
+            <copy>
+              <from>$outInvokeConsultarEvaluacionFenix.response/ns2:Evaluaciones/ns5:evaluacion[ns5:instanciaProceso = $inputVariable.request/ns2:Evaluacion/ns5:IdFlujo and ns5:idEvaluacionOrigen != ''][$Counter]/ns5:cuestionarios/ns5:cuestionario/ns5:codigoExterno</from>
+              <to>$inInvokeEliminarCuestionario.request/ns2:Cuestionario/ns7:codigoExterno</to>
+            </copy>
+            <copy>
+              <from>$inputVariable.request/ns2:Evaluacion/ns5:LoginUsuario</from>
+              <to>$inInvokeEliminarCuestionario.request/ns2:nombreUsuario</to>
+            </copy>
+          </assign>
+          <invoke name="InvokeEliminarCuestionario" bpelx:invokeAsDetail="no" partnerLink="EliminarCuestionario_PS"
+                  portType="ns1:EliminarCuestionarioPT" operation="EliminarCuestionario"
+                  inputVariable="inInvokeEliminarCuestionario" outputVariable="outEliminarCuestionario"/>
+          <if name="IfOKEliminarCuestionario">
+            <documentation>
+              <![CDATA[OK]]>
+            </documentation>
+            <condition>$outEliminarCuestionario.response/ns2:Resultado/ns3:result != 'ERROR'</condition>
+            <scope name="ScopeMergeEvaluacionFenix">
+              <sequence name="SequenceMergeEvaluacionFenix">
+                <assign name="assignEval">
+                  <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                    <from>$outInvokeConsultarEvaluacionFenix.response/ns2:Evaluaciones/ns5:evaluacion[ns5:instanciaProceso = $inputVariable.request/ns2:Evaluacion/ns5:IdFlujo and ns5:idEvaluacionOrigen != ''][$Counter]/ns5:id</from>
+                    <to>$inInvokeMergeEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:id</to>
+                  </copy>
+                  <extensionAssignOperation>
+                    <bpelx:copyList ignoreMissingFromData="yes">
+                      <bpelx:from>$outInvokeConsultarEvaluacionFenix.response/ns2:Evaluaciones/ns5:evaluacion[ns5:instanciaProceso = $inputVariable.request/ns2:Evaluacion/ns5:IdFlujo and ns5:idEvaluacionOrigen != ''][$Counter]/ns5:cuestionarios/ns5:cuestionario</bpelx:from>
+                      <bpelx:to>$inInvokeMergeEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:cuestionarios/ns5:cuestionario</bpelx:to>
+                    </bpelx:copyList>
+                  </extensionAssignOperation>
+                  <copy bpelx:insertMissingToData="yes">
+                    <from>'0'</from>
+                    <to>$inInvokeMergeEvaluacion.request/ns2:Evaluaciones/ns5:evaluacion/ns5:banEstatus</to>
+                  </copy>
+                </assign>
+                <invoke name="InvokeMergeEvaluacionFenix" bpelx:invokeAsDetail="no" partnerLink="MergeEvaluacion"
+                        portType="ns1:EvaluacionPT" operation="crearEvaluacion"
+                        inputVariable="inInvokeMergeEvaluacion" outputVariable="outInvokeMergeEvaluacionFenix"/>
+              </sequence>
+            </scope>
+            <else>
+              <documentation>
+                <![CDATA[ERROR]]>
+              </documentation>
+              <sequence name="SequenceErrorEliminarCuestionario">
+                <assign name="assignError">
+                  <copy>
+                    <from>$outEliminarCuestionario.response/ns2:Resultado</from>
+                    <to>$outputVariable.response/ns2:Resultado</to>
+                  </copy>
+                </assign>
+                <reply name="ReplyError" variable="outputVariable" partnerLink="compensarevaluacion_client"
+                       portType="ns1:CompensarEvaluacionPT" operation="CompensarEvaluacion"/>
+                <exit name="Exit"/>
+              </sequence>
+            </else>
+          </if>
+          <assign name="assignResult">
+            <copy>
+              <from>'OK'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns3:result</to>
+            </copy>
+            <copy>
+              <from>'Operacion exitosa'</from>
+              <to>$outputVariable.response/ns2:Resultado/ns3:message</to>
+            </copy>
+          </assign>
+        </sequence>
+      </scope>
+    </forEach>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="compensarevaluacion_client" portType="ns1:CompensarEvaluacionPT" operation="CompensarEvaluacion" variable="outputVariable"/>
+  </sequence>
+</process>

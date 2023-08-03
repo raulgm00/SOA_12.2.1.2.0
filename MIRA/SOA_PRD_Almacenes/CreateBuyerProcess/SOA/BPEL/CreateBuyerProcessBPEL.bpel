@@ -1,0 +1,101 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Thu Aug 15 16:55:36 CDT 2019
+  Author:  Sol4IT México
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CreateBuyerProcessBPEL"
+               targetNamespace="http://xmlns.oracle.com/CreateBuyerProcess/CreateBuyerProcess/CreateBuyerProcessBPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/CreateBuyerProcess/CreateBuyerProcess/CreateBuyerProcessBPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://mx.agarcia.ea/Applications/JDA/Buyer/CreateBuyer/v1.0"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns2="http://mx.agarcia.ea/Capabilities/Core/Buyer/JDACreateBuyerProcess"
+         xmlns:ns3="http://mx.agarcia.ea/Capabilities/Core/Buyer/CreateBuyerProcess/v1.0">
+  <import namespace="http://mx.agarcia.ea/Capabilities/Core/Buyer/CreateBuyerProcess/v1.0"
+          location="../WSDLs/CreateBuyerProcess.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/CreateBuyerProcess/CreateBuyerProcess/CreateBuyerProcessBPEL" 
+    location="../WSDLs/CreateBuyerProcessBPEL.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="createbuyerprocessbpel_client" partnerLinkType="client:CreateBuyerProcessBPEL" myRole="CreateBuyerProcessBPELProvider"/>
+    <partnerLink name="JDACreateBuyerProcessPXY" partnerLinkType="ns2:JDACreateBuyerProcessPXY"
+                 partnerRole="CreateBuyerPType"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:CreateBuyerProcessBPELRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:CreateBuyerProcessBPELResponseMessage"/>
+    <variable name="SecBuyer" type="xsd:string"/>
+    <variable name="Inv_JDACreateBuyerProcess_InVar" messageType="ns2:createBuyerRequest"/>
+    <variable name="Inv_JDACreateBuyerProcess_OutVar" messageType="ns2:createBuyerResponse"/>
+    <variable name="header" messageType="ns3:standardMessageHeader"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CreateBuyerProcessBPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="createbuyerprocessbpel_client" portType="client:CreateBuyerProcessBPEL" operation="process" variable="inputVariable" createInstance="yes"
+             bpelx:headerVariable="header"/>
+    <assign name="Transformation1">
+      <bpelx:annotation>
+        <bpelx:pattern patternName="bpelx:transformation"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+        <from>ora:doXSLTransformForDoc("../TransformJDACreateBuyer.xsl", $inputVariable.payload)</from>
+        <to variable="Inv_JDACreateBuyerProcess_InVar" part="part1"/>
+      </copy>
+    </assign>
+    <invoke name="Inv_JDACreateBuyerProcess" partnerLink="JDACreateBuyerProcessPXY"
+            portType="ns2:CreateBuyerPType" operation="createBuyer"
+            inputVariable="Inv_JDACreateBuyerProcess_InVar" outputVariable="Inv_JDACreateBuyerProcess_OutVar"
+            bpelx:invokeAsDetail="no" bpelx:inputHeaderVariable="header"/>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="createbuyerprocessbpel_client" portType="client:CreateBuyerProcessBPEL" operation="process" variable="outputVariable"/>
+  </sequence>
+</process>

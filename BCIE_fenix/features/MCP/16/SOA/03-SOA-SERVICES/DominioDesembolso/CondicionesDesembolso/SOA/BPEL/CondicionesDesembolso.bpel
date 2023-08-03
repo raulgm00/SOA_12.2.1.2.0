@@ -1,0 +1,837 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Wed Nov 16 10:49:57 CST 2016
+  Author:  ismael-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="CondicionesDesembolso"
+               targetNamespace="http://xmlns.oracle.com/DominioDesembolso/CondicionesDesembolso/CondicionesDesembolso"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioDesembolso/CondicionesDesembolso/CondicionesDesembolso"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://www.bcie.org/CondicionesDesmbolsoSOR"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap" xmlns:ns10="http://www.bcie.org/ReglaBO"
+         xmlns:ns7="http://www.bcie.org/OperacionBO" xmlns:ns16="http://www.bcie.org/ResultBO"
+         xmlns:ns9="http://www.bcie.org/CommonBO" xmlns:ns14="http://www.bcie.org/MatrizTCCBO"
+         xmlns:ns13="http://www.bcie.org/LineaCreditoBO" xmlns:ns2="http://www.bcie.org/DesembolsoMO"
+         xmlns:ns11="http://www.bcie.org/ProductoBO" xmlns:ns3="http://www.bcie.org/CondicionBO"
+         xmlns:ns6="http://www.bcie.org/DocumentoBO" xmlns:ns12="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns15="http://www.bcie.org/ComisionBO" xmlns:ns4="http://www.bcie.org/CatalogoBO"
+         xmlns:ns8="http://www.bcie.org/DesembolsoBO" xmlns:ns5="http://www.bcie.org/AtributoBO"
+         xmlns:ns17="http://www.bcie.org/ErrorBO" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:ns18="http://www.bcie.org/CondicionesPeriodicasPorCumplirSAD"
+         xmlns:ns19="http://xmlns.bcie.com/OperacionService" xmlns:ns20="http://www.bcie.org/OperacionMO"
+         xmlns:ns24="http://www.bcie.org/TerminoBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns22="http://www.bcie.org/DeclaracionJuradaBO" xmlns:ns23="http://www.bcie.org/ContratoBO"
+         xmlns:ns21="http://www.bcie.org/ClienteBO" xmlns:ns25="http://www.bcie.org/CondicionService"
+         xmlns:ns26="http://www.bcie.org/CondicionMO" xmlns:ns27="http://www.bcie.org/ConsultarInformacionReglaById"
+         xmlns:ns28="http://www.bcie.org/ConsultarCumplimientoCondicionesSAD"
+         xmlns:ns29="http://www.bcie.org/ConsultarSolicitudDesembolsoSAD"
+         xmlns:ns30="http://www.bcie.org/CrearActualizarDesembolsoSAD"
+         xmlns:ns31="http://www.bcie.org/CrearActualizarSolicitudDesembolso">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.org/ConsultarSolicitudDesembolsoSAD"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/Wsdl/ADAPTER/ConsultarSolicitudDesembolsoSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/ConsultarCumplimientoCondicionesSAD"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/Wsdl/ADAPTER/ConsultarCumplimientoCondicionesSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/CondicionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioContrato/Condicion/V1/Wsdl/ADAPTER/ConsultarCondicionByIdOperacionSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/ConsultarInformacionReglaById"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioDesembolso/Desembolso/V1/Wsdl/ADAPTER/ConsultarInformacionReglaByIdSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/CondicionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioContrato/Condicion/V1/Wsdl/ADAPTER/ConsultarCondicionByIdEventoSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/OperacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Operacion/V1/Wsdl/Operacion.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/CondicionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioContrato/Condicion/V1/Wsdl/ADAPTER/CondicionesDemandaSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/OperacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Operacion/V1/Wsdl/ADAPTER/ConsultarOperacionByIdSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/CondicionesPeriodicasPorCumplirSAD"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioContrato/Condicion/V1/Wsdl/ADAPTER/CondicionesPeriodicasPorCumplirSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://www.bcie.org/CondicionesDesmbolsoSOR"
+          location="../WSDLs/CondicionesDesmbolsoSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="condicionesdesembolso_client_ep" partnerLinkType="ns1:CondicionesDesembolso" myRole="CondicionesDesembolsoPT"/>
+    <partnerLink name="CondicionesPeriodicasPorCumplir_PS" partnerLinkType="ns18:CondicionesPeriodicasPorCumplir_PS"
+                 partnerRole="CondicionesPeriodicasPorCumplirPT"/>
+    <partnerLink name="CondicionesDemanda_PS" partnerLinkType="ns25:CondicionesDemanda_PS"
+                 partnerRole="CondicionesDemandaPT"/>
+    <partnerLink name="ConsultarCondicionByEvento_PS" partnerLinkType="ns25:ConsultarCondicionByEvento_PS"
+                 partnerRole="ConsultarCondicionByIdEventoPT"/>
+    <partnerLink name="ConsultarInformacionReglaById_PS" partnerLinkType="ns27:ConsultarInformacionReglaById_PS"
+                 partnerRole="ConsultarInformacionReglaById_PT"/>
+    <partnerLink name="ConsultarCumplimientoCondiciones_PS" partnerLinkType="ns28:ConsultarCumplimientoCondiciones_PS"
+                 partnerRole="ConsultarCumplimientoCondicionesPT"/>
+    <partnerLink name="ConsultarSolicitudDesembolso_PS" partnerLinkType="ns29:ConsultarSolicitudDesembolso_PS"
+                 partnerRole="ConsultarSolicitudDesembolso_PT"/>
+    <partnerLink name="CrearActualizarDesembolsos_PS" partnerLinkType="ns30:CrearActualizarDesembolsos_PS"
+                 partnerRole="CrearActualizarDesembolso_PT"/>
+    <partnerLink name="CrearActualizarSolicitudDesembolso_PS"
+                 partnerLinkType="ns31:CrearActualizarSolicitudDesembolso_PS"
+                 partnerRole="CrearActualizarSolicitudDesembolso_PT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:CondicionesDesembolsoRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:CondicionesDesembolsoReponseMessage"/>
+    <variable name="setTittleVar" type="xsd:string"/>
+    <variable name="outInvokeConsultarInformacionRegla"
+              messageType="ns27:responseConsultarInformacionReglaByIdMessage"/>
+    <variable name="inInvokeConsultarCumplimientoCondiciones"
+              messageType="ns28:ConsultarCumplimientoCondicionesRequestMessage"/>
+    <variable name="outInvokeConsultarCumplimientoCondiciones"
+              messageType="ns28:ConsultarCumplimientoCondicionesResponseMessage"/>          
+    <variable name="inInvokeCondicionesDemanda" messageType="ns25:CondicionesDemandaRequestMessage"/>
+    <variable name="outInvokeCondicionesDemanda" messageType="ns25:CondicionesDemandaReponseMessage"/>
+    <variable name="outConsultarSolicitudDesembolso" messageType="ns29:responseConsultarSolicitudDesembolsoMessage"/>
+    <variable name="inCondicionDemandaAux" messageType="ns25:CondicionesDemandaRequestMessage"/>
+    <variable name="sinCumplimientoCondiciones" type="xsd:boolean"/>
+    <variable name="primerDesembolso" type="xsd:boolean"/>
+    <variable name="inInvokeCrearActualizarDesembolsos" messageType="ns30:requestCrearActualizarDesembolsoMessage"/>
+    <variable name="outInvokeCrearActualizarDesembolsos" messageType="ns30:responseCrearActualizarDesembolsoMessage"/>
+    <variable name="outInvokeConsultarCondicionByEventoCualquier"
+              messageType="ns25:ConsultarCondicionByIdEventoResponseMessage"/>
+    <variable name="outConsultarCondicionesSolicitud1erD"
+              messageType="ns25:ConsultarCondicionByIdEventoResponseMessage"/>
+    <variable name="outConsultarCumplimientoCondiciones"
+              messageType="ns28:ConsultarCumplimientoCondicionesResponseMessage"/>
+    <variable name="noDesembolsos" type="xsd:int"/>
+    <variable name="outInvokeConsultarCondicionByEvento"
+              messageType="ns25:ConsultarCondicionByIdEventoResponseMessage"/>
+    <variable name="inInvokeConsultarCondicionByEvento" messageType="ns25:ConsultarCondicionByIdEventoRequestMessage"/>
+    <variable name="inCrearActualizarSolicitudDesembolso"
+              messageType="ns31:requestCrearActualizarSolicitudDesembolsoMessage"/>
+    <variable name="outCrearActualizarSolicitudDesembolso"
+              messageType="ns31:responseCrearActualizarSolicitudDesembolsoMessage"/>
+  </variables>
+  <faultHandlers>
+    <catchAll>
+      <sequence name="SequenceCatchAll">
+        <assign name="assignError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns2:Resultado/ns16:result</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns2:Resultado/ns16:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyCatchAll" variable="outputVariable" partnerLink="condicionesdesembolso_client_ep"
+               portType="ns1:CondicionesDesembolsoPT" operation="CondicionesDesembolso"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in CondicionesDesembolso.wsdl) -->
+    <receive name="receiveInput" partnerLink="condicionesdesembolso_client_ep" portType="ns1:CondicionesDesembolsoPT" operation="CondicionesDesembolso" variable="inputVariable" createInstance="yes"/>
+    <assign name="setTittleInstance">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idDesembolso= ",$inputVariable.request/ns2:idSolicitudDesembolso))</from>
+        <to>$setTittleVar</to>
+      </copy>
+    </assign>
+    <scope name="ScopeConsultarSolicitudDesembolso">
+      <variables>
+        <variable name="inConsultarSolicitudDesembolso" messageType="ns29:requestConsultarSolicitudDesembolsoMessage"/>
+      </variables>
+      <sequence name="SequenceConsultarSolicitudDesembolso">
+        <assign name="assignIdSolicitud">
+          <copy>
+            <from>$inputVariable.request/ns2:idSolicitudDesembolso</from>
+            <to>$inConsultarSolicitudDesembolso.request/ns2:idSolicitud</to>
+          </copy>
+        </assign>
+        <invoke name="ConsultarSolicitudDesembolso" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarSolicitudDesembolso_PS" portType="ns29:ConsultarSolicitudDesembolso_PT"
+                operation="consultarSolicitudDesembolso" inputVariable="inConsultarSolicitudDesembolso"
+                outputVariable="outConsultarSolicitudDesembolso"/>
+        <if name="IfOKConsultarSolicitudDesembolso">
+          <documentation>
+            <![CDATA[OK]]>
+          </documentation>
+          <condition>$outConsultarSolicitudDesembolso.response/ns2:Resultado/ns16:result = 'OK' and count($outConsultarSolicitudDesembolso.response/ns2:SolicitudDesembolso) &gt; 0</condition>
+          <scope name="ScopeConsultarInformacionRegla">
+            <variables>
+              <variable name="inInvokeConsultarInformacionRegla"
+                        messageType="ns27:requestConsultarInformacionReglaByIdMessage"/>
+            </variables>
+            <sequence name="SequenceConsultarInformacionRegla">
+              <assign name="assignIdDesembolso">
+                <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                  <from>$outConsultarSolicitudDesembolso.response/ns2:SolicitudDesembolso/ns8:ContratoDesembolso[1]/ns8:idDesembolso</from>
+                  <to>$inInvokeConsultarInformacionRegla.request/ns2:idDesembolso</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeConsultarInformacionRegla" bpelx:invokeAsDetail="no"
+                      partnerLink="ConsultarInformacionReglaById_PS" portType="ns27:ConsultarInformacionReglaById_PT"
+                      operation="consultarInformacionReglaById" inputVariable="inInvokeConsultarInformacionRegla"
+                      outputVariable="outInvokeConsultarInformacionRegla"/>
+              <if name="IfOKConsultarInfoRegla">
+                <documentation>
+                  <![CDATA[OK]]>
+                </documentation>
+                <condition>$outInvokeConsultarInformacionRegla.response/ns2:Resultado/ns16:result = 'OK' and string-length($outInvokeConsultarInformacionRegla.response/ns2:Operacion/ns7:idOperacion) &gt; 0</condition>
+                <empty name="consultaExitosa"/>
+                <else>
+                  <documentation>
+                    <![CDATA[ERROR]]>
+                  </documentation>
+                  <sequence name="SequenceError">
+                    <assign name="assignError">
+                      <copy>
+                        <from>'ERROR'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns16:result</to>
+                      </copy>
+                      <copy>
+                        <from>concat('Ocurrio un error al ConsultarInfoRegla: ',$outInvokeConsultarInformacionRegla.response/ns2:Resultado/ns16:message)</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns16:message</to>
+                      </copy>
+                    </assign>
+                    <reply name="ReplyError" variable="outputVariable" partnerLink="condicionesdesembolso_client_ep"
+                           portType="ns1:CondicionesDesembolsoPT" operation="CondicionesDesembolso"/>
+                    <exit name="Exit"/>
+                  </sequence>
+                </else>
+              </if>
+            </sequence>
+          </scope>
+          <else>
+            <documentation>
+              <![CDATA[ERROR]]>
+            </documentation>
+            <sequence name="SequenceError">
+              <assign name="assignError">
+                <copy>
+                  <from>'ERROR'</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns16:result</to>
+                </copy>
+                <copy>
+                  <from>concat('Ocurrio el siguiente problema al consultarSolicitudDesembolso: ',$outConsultarSolicitudDesembolso.response/ns2:Resultado/ns16:message)</from>
+                  <to>$outputVariable.response/ns2:Resultado/ns16:message</to>
+                </copy>
+              </assign>
+              <reply name="ReplyError" variable="outputVariable" partnerLink="condicionesdesembolso_client_ep"
+                     portType="ns1:CondicionesDesembolsoPT" operation="CondicionesDesembolso"/>
+              <exit name="Exit"/>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeCondicionesPeriodicasPorCumplir">
+      <variables>
+        <variable name="inInvokeCondicionesPeriodicasPorCumplir"
+                  messageType="ns18:CondicionesPeriodicasPorCumplirRequestMessage"/>
+        <variable name="outInvokeCondicionesPeriodicasPorCumplir"
+                  messageType="ns18:CondicionesPeriodicasPorCumplirResponseMessage"/>
+      </variables>
+      <sequence name="SequenceCondicionesPeriodicasPorCumplir">
+        <assign name="assignIdOperacion">
+          <copy>
+            <from>$outInvokeConsultarInformacionRegla.response/ns2:Operacion/ns7:idOperacion</from>
+            <to>$inInvokeCondicionesPeriodicasPorCumplir.request/ns26:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeCondicionesPeriodicasPorCumplir" bpelx:invokeAsDetail="no"
+                partnerLink="CondicionesPeriodicasPorCumplir_PS" portType="ns18:CondicionesPeriodicasPorCumplirPT"
+                operation="CondicionesPeriodicasPorCumplir" inputVariable="inInvokeCondicionesPeriodicasPorCumplir"
+                outputVariable="outInvokeCondicionesPeriodicasPorCumplir"/>
+        <scope name="ScopeCondicionesDemanda">
+          <bpelx:skipCondition>count($outInvokeCondicionesPeriodicasPorCumplir.response/ns26:Condicion) = 0</bpelx:skipCondition>
+          <variables>
+            <variable name="inCondicionesDemandaPeriodicas" messageType="ns25:CondicionesDemandaRequestMessage"/>
+            <variable name="outCondicionesDemandaPeriodicas" messageType="ns25:CondicionesDemandaReponseMessage"/>
+          </variables>
+          <sequence name="SequenceCondicionesDemanda">
+            <assign name="XQ_inCondicionesDemanda">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/outCondicionesPeriodicasPorCumplir_TO_inCondicionesDemanda.xqy', 'outInvokeConsultarInformacionRegla.response', $outInvokeConsultarInformacionRegla.response, 'outInvokeCondicionesPeriodicasPorCumplir.response', $outInvokeCondicionesPeriodicasPorCumplir.response)</from>
+                <to variable="inCondicionesDemandaPeriodicas" part="request"/>
+              </copy>
+            </assign>
+            <invoke name="InvokeCondicionesDemanda" partnerLink="CondicionesDemanda_PS"
+                    portType="ns25:CondicionesDemandaPT" operation="CondicionesDemanda"
+                    inputVariable="inCondicionesDemandaPeriodicas" outputVariable="outCondicionesDemandaPeriodicas"
+                    bpelx:invokeAsDetail="no"/>
+            <assign name="assignError">
+              <bpelx:skipCondition>$outCondicionesDemandaPeriodicas.response/ns26:Resultado/ns16:result = 'OK' and $outCondicionesDemandaPeriodicas.response/ns26:Agrupador != ''</bpelx:skipCondition>
+              <copy>
+                <from>$outInvokeCondicionesDemanda.response/ns26:Resultado</from>
+                <to>$outputVariable.response/ns2:Resultado</to>
+              </copy>
+            </assign>
+          </sequence>
+        </scope>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarCondicionesSolicitud">
+      <variables>
+        <variable name="inConsultarCondicionesSolicitud1erD"
+                  messageType="ns25:ConsultarCondicionByIdEventoRequestMessage"/>
+      </variables>
+      <sequence name="SequenceCondicionesSolicitud1erD">
+        <assign name="AssignidEvento">
+          <copy>
+            <from>$outInvokeConsultarInformacionRegla.response/ns2:Operacion/ns7:idOperacion</from>
+            <to>$inConsultarCondicionesSolicitud1erD.request/ns26:idOperacion</to>
+          </copy>
+          <copy>
+            <from>2</from>
+            <to>$inConsultarCondicionesSolicitud1erD.request/ns26:idEventoCondicion</to>
+          </copy>
+          <copy>
+            <from>1</from>
+            <to>$inConsultarCondicionesSolicitud1erD.request/ns26:idTipoDesembolso</to>
+          </copy>
+        </assign>
+        <invoke name="InvokeConsultarCondicionesSolicitud1er" bpelx:invokeAsDetail="no"
+                partnerLink="ConsultarCondicionByEvento_PS" portType="ns25:ConsultarCondicionByIdEventoPT"
+                operation="ConsultarCondicionByIdEvento" inputVariable="inConsultarCondicionesSolicitud1erD"
+                outputVariable="outConsultarCondicionesSolicitud1erD"/>
+        <scope name="ScopeCumplimientoCondicionesSolicitud">
+          <bpelx:skipCondition>count($outConsultarCondicionesSolicitud1erD.response/ns26:Condicion)=0  or $outConsultarCondicionesSolicitud1erD.response/ns26:Resultado/ns16:result = 'ERROR'</bpelx:skipCondition>
+          <variables>
+            <variable name="inConsultarCumplimientoCondicionesSolicitud"
+                      messageType="ns28:ConsultarCumplimientoCondicionesRequestMessage"/>
+          </variables>
+          <sequence name="SequenceConsultarCumplimientoCondiciones">
+            <assign name="XQCondiciones1erD">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/ConsultarCondicionSolicitudPrimerDesembolso_TO_ConsultarCumplimientoCondiciones_Request.xqy', 'outConsultarCondicionesSolicitud1erD.response', $outConsultarCondicionesSolicitud1erD.response)</from>
+                <to variable="inConsultarCumplimientoCondicionesSolicitud" part="request"/>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarCumplimientoCondiciones"
+                    partnerLink="ConsultarCumplimientoCondiciones_PS" portType="ns28:ConsultarCumplimientoCondicionesPT"
+                    operation="ConsultarCumplimientoCondiciones"
+                    inputVariable="inConsultarCumplimientoCondicionesSolicitud"
+                    outputVariable="outConsultarCumplimientoCondiciones" bpelx:invokeAsDetail="no"/>
+          </sequence>
+        </scope>
+        <scope name="ScopeConsultarCondicionesSolicitudCD">
+          <variables>
+            <variable name="inConsultarCondicionesSolicitudCD"
+                      messageType="ns25:ConsultarCondicionByIdEventoRequestMessage"/>
+            <variable name="outConsultarCondicionesSolicitudCD"
+                      messageType="ns25:ConsultarCondicionByIdEventoResponseMessage"/>
+          </variables>
+          <sequence name="SequenceConsultarCondionesSolicitudCD">
+            <assign name="AssignidEvento">
+              <copy>
+                <from>$outInvokeConsultarInformacionRegla.response/ns2:Operacion/ns7:idOperacion</from>
+                <to>$inConsultarCondicionesSolicitudCD.request/ns26:idOperacion</to>
+              </copy>
+              <copy>
+                <from>1</from>
+                <to>$inConsultarCondicionesSolicitudCD.request/ns26:idTipoDesembolso</to>
+              </copy>
+              <copy>
+                <from>3</from>
+                <to>$inConsultarCondicionesSolicitudCD.request/ns26:idEventoCondicion</to>
+              </copy>
+            </assign>
+            <invoke name="InvokeConsultarCondicionesSolicitudCD" bpelx:invokeAsDetail="no"
+                    partnerLink="ConsultarCondicionByEvento_PS" portType="ns25:ConsultarCondicionByIdEventoPT"
+                    operation="ConsultarCondicionByIdEvento" inputVariable="inConsultarCondicionesSolicitudCD"
+                    outputVariable="outConsultarCondicionesSolicitudCD"/>
+            <assign name="XQCondicionesSolicitud">
+              <bpelx:annotation>
+                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+              </bpelx:annotation>
+              <copy>
+                <from>ora:processXQuery10('../Transformations/ConsultarCondicionesSolicitud_TO_ConsultarCondicionesSolicitud1erD.xqy', 'outConsultarCondicionesSolicitud1erD.response', $outConsultarCondicionesSolicitud1erD.response, 'outConsultarCumplimientoCondiciones.response', $outConsultarCumplimientoCondiciones.response, 'outConsultarCondicionesSolicitudCD.response', $outConsultarCondicionesSolicitudCD.response)</from>
+                <to variable="outConsultarCondicionesSolicitud1erD" part="response"/>
+              </copy>
+            </assign>
+            <assign name="AssignNoDesembolsos">
+              <copy>
+                <from>count($outConsultarSolicitudDesembolso.response/ns2:SolicitudDesembolso/ns8:ContratoDesembolso)</from>
+                <to>$noDesembolsos</to>
+              </copy>
+            </assign>
+          </sequence>
+        </scope>
+      </sequence>
+    </scope>
+    <forEach parallel="no" counterName="Counter" name="ForEachSolicitudDesembolso">
+      <startCounterValue>1</startCounterValue>
+      <finalCounterValue>count($outConsultarSolicitudDesembolso.response/ns2:SolicitudDesembolso/ns8:ContratoDesembolso)</finalCounterValue>
+      <scope name="ScopeForEachSolicitudDesembolso">
+        <sequence name="forContratosDesembolso">
+          <scope name="ScopeCondiciones1erDesembolso">
+            <bpelx:skipCondition>$Counter != 1</bpelx:skipCondition>
+            <variables>
+              <variable name="inInvokeConsultarCondicionByEvento"
+                        messageType="ns25:ConsultarCondicionByIdEventoRequestMessage"/>
+            </variables>
+            <sequence name="SequenceCondiciones1erDesembolso">
+              <assign name="assignIdEvento">
+                <copy>
+                  <from>$outInvokeConsultarInformacionRegla.response/ns2:Operacion/ns7:idOperacion</from>
+                  <to>$inInvokeConsultarCondicionByEvento.request/ns26:idOperacion</to>
+                </copy>
+                <copy>
+                  <from>2</from>
+                  <to>$inInvokeConsultarCondicionByEvento.request/ns26:idTipoDesembolso</to>
+                </copy>
+                <copy>
+                  <from>'2'</from>
+                  <to>$inInvokeConsultarCondicionByEvento.request/ns26:idEventoCondicion</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeConsultarCondicionByEvento" partnerLink="ConsultarCondicionByEvento_PS"
+                      portType="ns25:ConsultarCondicionByIdEventoPT" operation="ConsultarCondicionByIdEvento"
+                      inputVariable="inInvokeConsultarCondicionByEvento"
+                      outputVariable="outInvokeConsultarCondicionByEvento" bpelx:invokeAsDetail="no"/>
+              <scope name="ScopeConsultarCumplimientoPrimerDesembolso">
+                <bpelx:skipCondition>$outInvokeConsultarCondicionByEvento.response/ns26:Resultado/ns16:result = 'ERROR' or count($outInvokeConsultarCondicionByEvento.response/ns26:Condicion) = 0</bpelx:skipCondition>
+                <sequence name="SequenceConsultarCumplimientoPrimerDesembolso">
+                  <assign name="inConsultarCumplimientos">
+                    <bpelx:annotation>
+                      <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                    </bpelx:annotation>
+                    <copy>
+                      <from>ora:processXQuery10('../Transformations/ConsultarCondicionesByEventoPrimerDesembolso_TO_ConsultarCumplimientosCondiciones_Request.xqy', 'outInvokeConsultarCondicionByEvento.response', $outInvokeConsultarCondicionByEvento.response)</from>
+                      <to variable="inInvokeConsultarCumplimientoCondiciones" part="request"/>
+                    </copy>
+                  </assign>
+                  <invoke name="InvokeConsultarCumplimientoCondiciones" bpelx:invokeAsDetail="no"
+                          partnerLink="ConsultarCumplimientoCondiciones_PS"
+                          portType="ns28:ConsultarCumplimientoCondicionesPT"
+                          operation="ConsultarCumplimientoCondiciones"
+                          inputVariable="inInvokeConsultarCumplimientoCondiciones"
+                          outputVariable="outInvokeConsultarCumplimientoCondiciones"/>
+                  <assign name="XQCondiciones1erDSinCumplir">
+                    <bpelx:skipCondition>$outInvokeConsultarCumplimientoCondiciones.response/ns2:Resultado/ns16:message != 'Consulta exitosa' or count($outInvokeConsultarCumplimientoCondiciones.response/ns2:Condicion/ns3:Cumplimientos) = 0</bpelx:skipCondition>
+                    <bpelx:annotation>
+                      <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                    </bpelx:annotation>
+                    <copy>
+                      <from>ora:processXQuery10('../Transformations/ConsultarCumplimientoCondiciones_TO_ConsultarCondicionesByEvento.xqy', 'outInvokeConsultarCondicionByEvento.response', $outInvokeConsultarCondicionByEvento.response, 'outInvokeConsultarCumplimientoCondiciones.response', $outInvokeConsultarCumplimientoCondiciones.response)</from>
+                      <to variable="outInvokeConsultarCondicionByEvento" part="response"/>
+                    </copy>
+                  </assign>
+                  <assign name="primerDesembolso">
+                    <copy>
+                      <from>true()</from>
+                      <to>$primerDesembolso</to>
+                    </copy>
+                  </assign>
+                </sequence>
+              </scope>
+            </sequence>
+          </scope>
+          <scope name="ScopeConsultarCondicionesByEvento">
+            <sequence name="SequenceConsultarCondicionesCualquierDesembolso">
+              <assign name="assignEvento">
+                <copy>
+                  <from>$outInvokeConsultarInformacionRegla.response/ns2:Operacion/ns7:idOperacion</from>
+                  <to>$inInvokeConsultarCondicionByEvento.request/ns26:idOperacion</to>
+                </copy>
+                <copy>
+                  <from>2</from>
+                  <to>$inInvokeConsultarCondicionByEvento.request/ns26:idTipoDesembolso</to>
+                </copy>
+                <copy>
+                  <from>'3'</from>
+                  <to>$inInvokeConsultarCondicionByEvento.request/ns26:idEventoCondicion</to>
+                </copy>
+              </assign>
+              <invoke name="InvokeConsultarCondicionesByEvento" partnerLink="ConsultarCondicionByEvento_PS"
+                      portType="ns25:ConsultarCondicionByIdEventoPT" operation="ConsultarCondicionByIdEvento"
+                      inputVariable="inInvokeConsultarCondicionByEvento"
+                      outputVariable="outInvokeConsultarCondicionByEventoCualquier" bpelx:invokeAsDetail="no"/>
+              <if name="IfOKConsultarCondicionByEvento">
+                <documentation>
+                  <![CDATA[OK]]>
+                </documentation>
+                <condition>($outInvokeConsultarCondicionByEvento.response/ns26:Resultado/ns16:result= 'OK' and count($outInvokeConsultarCondicionByEvento.response/ns26:Condicion) &gt; 0) or $primerDesembolso = 'true' or ($outInvokeConsultarCondicionByEventoCualquier.response/ns26:Resultado/ns16:result = 'OK' and count($outInvokeConsultarCondicionByEventoCualquier.response/ns26:Condicion )&gt;0)</condition>
+                <sequence name="SequenceOK">
+                  <if name="IfNoDesembolsos">
+                    <documentation>
+                      <![CDATA[Uno]]>
+                    </documentation>
+                    <condition>$noDesembolsos = 1</condition>
+                    <sequence name="SequenceUno">
+                      <assign name="XQCondicionesSolicitud1Desembolso">
+                        <bpelx:annotation>
+                          <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                        </bpelx:annotation>
+                        <copy>
+                          <from>ora:processXQuery10('../Transformations/CondicionesSolicitud1Desembolso_TO_CondicionesDemanda_Request.xqy', 'outConsultarCondicionesSolicitud1erD.response', $outConsultarCondicionesSolicitud1erD.response, 'outInvokeConsultarCondicionByEvento.response', $outInvokeConsultarCondicionByEvento.response, 'outInvokeConsultarCondicionByEventoCualquier.response', $outInvokeConsultarCondicionByEventoCualquier.response, 'outInvokeConsultarInformacionRegla.response', $outInvokeConsultarInformacionRegla.response, 'outConsultarSolicitudDesembolso.response', $outConsultarSolicitudDesembolso.response)</from>
+                          <to variable="inInvokeCondicionesDemanda" part="request"/>
+                        </copy>
+                      </assign>
+                      <assign name="assignDesembolso" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+                        <copy bpelx:insertMissingToData="yes" xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                          <from>$outConsultarSolicitudDesembolso.response/ns2:SolicitudDesembolso/ns8:ContratoDesembolso[$Counter]/ns8:idDesembolso</from>
+                          <to>$inInvokeCondicionesDemanda.request/ns26:CondicionesDemanda/ns3:ContratoDesembolso/ns8:idDesembolso</to>
+                        </copy>
+                      </assign>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[Varios]]>
+                      </documentation>
+                      <sequence name="SequenceVarios">
+                        <if name="IfValidaPrimerDesembolso">
+                          <documentation>
+                            <![CDATA[PrimerDesembolso]]>
+                          </documentation>
+                          <condition>$Counter = 1</condition>
+                          <sequence name="SequencePrimerDesembolso">
+                            <scope name="ScopeCondicionesDemandaSolicitud-VariosD">
+                              <sequence name="SequenceCondicionesDemandaSolicitud-VariosD">
+                                <assign name="XQCondicionesSolicitud-VariosD">
+                                  <bpelx:annotation>
+                                    <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                                  </bpelx:annotation>
+                                  <copy>
+                                    <from>ora:processXQuery10('../Transformations/ConsultarCondicionesSolicitud_TO_CondicionesDemanda_Request.xqy', 'outConsultarCondicionesSolicitud1erD.response', $outConsultarCondicionesSolicitud1erD.response, 'outInvokeConsultarInformacionRegla.response', $outInvokeConsultarInformacionRegla.response, 'outConsultarSolicitudDesembolso.response', $outConsultarSolicitudDesembolso.response)</from>
+                                    <to variable="inInvokeCondicionesDemanda" part="request"/>
+                                  </copy>
+                                </assign>
+                                <invoke name="InvokeCondicionesDemanda" bpelx:invokeAsDetail="no"
+                                        partnerLink="CondicionesDemanda_PS" portType="ns25:CondicionesDemandaPT"
+                                        operation="CondicionesDemanda" inputVariable="inInvokeCondicionesDemanda"
+                                        outputVariable="outInvokeCondicionesDemanda"/>
+                                <assign name="XQ_Condiciones1erD">
+                                  <bpelx:annotation>
+                                    <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                                  </bpelx:annotation>
+                                  <copy>
+                                    <from>ora:processXQuery10('../Transformations/XQ_CumplimientoCondiciones_CondicionDemanda_Request.xqy', 'outInvokeConsultarCondicionByEvento.response', $outInvokeConsultarCondicionByEvento.response, 'outInvokeConsultarCondicionByEventoCualquier.response', $outInvokeConsultarCondicionByEventoCualquier.response)</from>
+                                    <to variable="inInvokeCondicionesDemanda" part="request"/>
+                                  </copy>
+                                </assign>
+                              </sequence>
+                            </scope>
+                          </sequence>
+                          <else>
+                            <documentation>
+                              <![CDATA[Otros]]>
+                            </documentation>
+                            <assign name="XQ_CondicionesCualquierD">
+                              <bpelx:annotation>
+                                <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                              </bpelx:annotation>
+                              <copy>
+                                <from>ora:processXQuery10('../Transformations/XQ_CondicionesByEvento_TO_CondicionesDemanda_Request.xqy', 'outInvokeConsultarCondicionByEventoCualquier.response', $outInvokeConsultarCondicionByEventoCualquier.response)</from>
+                                <to variable="inInvokeCondicionesDemanda" part="request"/>
+                              </copy>
+                            </assign>
+                          </else>
+                        </if>
+                        <assign name="assignOperacion">
+                          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                            <from>$outInvokeConsultarInformacionRegla.response/ns2:Operacion/ns7:idOperacion</from>
+                            <to>$inInvokeCondicionesDemanda.request/ns26:CondicionesDemanda/ns3:Operacion/ns7:idOperacion</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                            <from>$outInvokeConsultarInformacionRegla.response/ns2:Operacion/ns7:responsable</from>
+                            <to>$inInvokeCondicionesDemanda.request/ns26:CondicionesDemanda/ns3:Operacion/ns7:responsable</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes" ignoreMissingFromData="yes">
+                            <from>$outInvokeConsultarInformacionRegla.response/ns2:Operacion/ns7:nombre</from>
+                            <to>$inInvokeCondicionesDemanda.request/ns26:CondicionesDemanda/ns3:Operacion/ns7:nombre</to>
+                          </copy>
+                          <copy bpelx:insertMissingToData="yes">
+                            <from>$outConsultarSolicitudDesembolso.response/ns2:SolicitudDesembolso/ns8:ContratoDesembolso[$Counter]/ns8:idDesembolso</from>
+                            <to>$inInvokeCondicionesDemanda.request/ns26:CondicionesDemanda/ns3:ContratoDesembolso/ns8:idDesembolso</to>
+                          </copy>
+                        </assign>
+                      </sequence>
+                    </else>
+                  </if>
+                  <scope name="ScopeCondicionesDemanda">
+                    <sequence name="SequenceCondicionesDemanda">
+                      <invoke name="InvokeCondicionesDemanda" partnerLink="CondicionesDemanda_PS"
+                              portType="ns25:CondicionesDemandaPT" operation="CondicionesDemanda"
+                              inputVariable="inInvokeCondicionesDemanda" outputVariable="outInvokeCondicionesDemanda"
+                              bpelx:invokeAsDetail="no"/>
+                      <if name="IfOKCondicionesDemanda">
+                        <documentation>
+                          <![CDATA[OK]]>
+                        </documentation>
+                        <condition>$outInvokeCondicionesDemanda.response/ns26:Resultado/ns16:result = 'OK'</condition>
+                        <assign name="AssignOK">
+                          <copy>
+                            <from>'OK'</from>
+                            <to>$outputVariable.response/ns2:Resultado/ns16:result</to>
+                          </copy>
+                          <copy>
+                            <from>'Operacion exitosa'</from>
+                            <to>$outputVariable.response/ns2:Resultado/ns16:message</to>
+                          </copy>
+                        </assign>
+                        <else>
+                          <documentation>
+                            <![CDATA[ERROR]]>
+                          </documentation>
+                          <sequence>
+                            <assign name="assignResult">
+                              <copy>
+                                <from>$outInvokeCondicionesDemanda.response/ns26:Resultado</from>
+                                <to>$outputVariable.response/ns2:Resultado</to>
+                              </copy>
+                            </assign>
+                          </sequence>
+                        </else>
+                      </if>
+                    </sequence>
+                  </scope>
+                  <assign name="assigCumplimientoCondiciones">
+                    <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                      <from>12</from>
+                      <to>$inInvokeCrearActualizarDesembolsos.request/ns2:ContratoDesembolso/ns8:estado/ns4:Id</to>
+                    </copy>
+                    <copy>
+                      <from>$outConsultarSolicitudDesembolso.response/ns2:SolicitudDesembolso/ns8:ContratoDesembolso[$Counter]/ns8:idDesembolso</from>
+                      <to>$inInvokeCrearActualizarDesembolsos.request/ns2:ContratoDesembolso/ns8:idDesembolso</to>
+                    </copy>
+                  </assign>
+                  <if name="IfSolicitudCondicion">
+                    <documentation>
+                      <![CDATA[conCondiciones]]>
+                    </documentation>
+                    <condition>count($outConsultarCondicionesSolicitud1erD.response/ns26:Condicion)&gt;0 and $Counter=1</condition>
+                    <sequence><assign name="XQY_CondicionesDesembolso_TO_CrearActualizarSolicitudDesembolsoCC"
+                                      xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <bpelx:annotation xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+         <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+      </bpelx:annotation>
+      <copy>
+         <from>ora:processXQuery10('../Transformations/XQY_CondicionesDesembolso_TO_CrearActualizarSolicitudDesembolsoCC.xqy', 'inputVariable.request', $inputVariable.request)</from>
+         <to variable="inCrearActualizarSolicitudDesembolso" part="request"/>
+      </copy>
+   </assign>
+                    </sequence>
+                    <else>
+                      <documentation>
+                        <![CDATA[sinCondiciones]]>
+                      </documentation>
+                      <sequence name="Sequence2">
+                        <assign name="XQY_CondicionesDesembolso_TO_CrearActualizarSolicitudDesembolsoDispuesto">
+                          <bpelx:annotation>
+                            <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                          </bpelx:annotation>
+                          <copy>
+                            <from>ora:processXQuery10('../Transformations/XQY_CondicionesDesembolso_TO_CrearActualizarSolicitudDesembolsoDispuesto.xqy', 'inputVariable.request', $inputVariable.request)</from>
+                            <to variable="inCrearActualizarSolicitudDesembolso" part="request"/>
+                          </copy>
+                        </assign>
+                      </sequence>
+                    </else>
+                  </if>
+                </sequence>
+                <else>
+                  <documentation>
+                    <![CDATA[sinCondiciones]]>
+                  </documentation>
+                  <sequence name="Sequence1"><if name="IfSolicitudCondicion"
+                                                 xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+      <documentation>
+         <![CDATA[conCondiciones]]>
+      </documentation>
+      <condition>count($outConsultarCondicionesSolicitud1erD.response/ns26:Condicion)&gt;0 and $Counter=1</condition>
+      <sequence>
+         <assign name="XQCondicionesSolicitud-VariosD" xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable">
+            <bpelx:annotation xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+               <from>ora:processXQuery10('../Transformations/ConsultarCondicionesSolicitud_TO_CondicionesDemanda_Request.xqy', 'outConsultarCondicionesSolicitud1erD.response', $outConsultarCondicionesSolicitud1erD.response, 'outInvokeConsultarInformacionRegla.response', $outInvokeConsultarInformacionRegla.response, 'outConsultarSolicitudDesembolso.response', $outConsultarSolicitudDesembolso.response)</from>
+               <to variable="inInvokeCondicionesDemanda" part="request"/>
+            </copy>
+         </assign>
+         <invoke name="InvokeCondicionesDemanda" bpelx:invokeAsDetail="no" partnerLink="CondicionesDemanda_PS"
+                 portType="ns25:CondicionesDemandaPT" operation="CondicionesDemanda"
+                 inputVariable="inInvokeCondicionesDemanda" outputVariable="outInvokeCondicionesDemanda"
+                 xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+                 xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"/>
+         <assign name="XQY_CondicionesDesembolso_TO_CrearActualizarSolicitudDesembolsoCC">
+            <bpelx:annotation xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+               <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+            </bpelx:annotation>
+            <copy>
+               <from>ora:processXQuery10('../Transformations/XQY_CondicionesDesembolso_TO_CrearActualizarSolicitudDesembolsoCC.xqy', 'inputVariable.request', $inputVariable.request)</from>
+               <to variable="inCrearActualizarSolicitudDesembolso" part="request"/>
+            </copy>
+         </assign>
+      </sequence>
+      <else>
+         <documentation>
+            <![CDATA[sinCondiciones]]>
+         </documentation>
+         <sequence name="Sequence2">
+            <empty name="vacio"/>
+            <assign name="XQY_CondicionesDesembolso_TO_CrearActualizarSolicitudDesembolsoDispuesto">
+               <bpelx:annotation xmlns:bpelx="http://schemas.oracle.com/bpel/extension">
+                  <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+               </bpelx:annotation>
+               <copy>
+                  <from>ora:processXQuery10('../Transformations/XQY_CondicionesDesembolso_TO_CrearActualizarSolicitudDesembolsoDispuesto.xqy', 'inputVariable.request', $inputVariable.request)</from>
+                  <to variable="inCrearActualizarSolicitudDesembolso" part="request"/>
+               </copy>
+            </assign>
+         </sequence>
+      </else>
+   </if><assign name="assignEstadoPreparado">
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>13</from>
+                        <to>$inInvokeCrearActualizarDesembolsos.request/ns2:ContratoDesembolso/ns8:estado/ns4:Id</to>
+                      </copy>
+                      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+                        <from>$outConsultarSolicitudDesembolso.response/ns2:SolicitudDesembolso/ns8:ContratoDesembolso[$Counter]/ns8:idDesembolso</from>
+                        <to>$inInvokeCrearActualizarDesembolsos.request/ns2:ContratoDesembolso/ns8:idDesembolso</to>
+                      </copy>
+                    </assign>
+                  </sequence>
+                </else>
+              </if>
+              <scope name="ActualizarEstadoSolicitud">
+                <bpelx:annotation>
+                  <bpelx:documentation>
+                    <![CDATA[Actualizacion del estado de la solicitud a cumplimiento de condiciones o dispuesto]]>
+                  </bpelx:documentation>
+                </bpelx:annotation>
+                <sequence name="ActualizacionEstado">
+                  <invoke name="CrearActualizarSolicitudDesembolso" bpelx:invokeAsDetail="no"
+                          partnerLink="CrearActualizarSolicitudDesembolso_PS"
+                          portType="ns31:CrearActualizarSolicitudDesembolso_PT"
+                          operation="crearActualizarSolicitudDesembolso"
+                          inputVariable="inCrearActualizarSolicitudDesembolso"
+                          outputVariable="outCrearActualizarSolicitudDesembolso"/>
+                  <if name="IfActualzarEstadoOk">
+                    <documentation>
+                      <![CDATA[OK]]>
+                    </documentation>
+                    <condition>$outCrearActualizarSolicitudDesembolso.response/ns2:Resultado/ns16:result='OK'</condition>
+                    <assign name="AssignOK">
+                      <copy>
+                        <from>'OK'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns16:result</to>
+                      </copy>
+                      <copy>
+                        <from>'Operacion Exitosa'</from>
+                        <to>$outputVariable.response/ns2:Resultado/ns16:message</to>
+                      </copy>
+                    </assign>
+                    <else>
+                      <documentation>
+                        <![CDATA[ERROR]]>
+                      </documentation>
+                      <assign name="AssignError">
+                        <copy>
+                          <from>$outCrearActualizarSolicitudDesembolso.response/ns2:Resultado</from>
+                          <to>$outputVariable.response/ns2:Resultado</to>
+                        </copy>
+                      </assign>
+                    </else>
+                  </if>
+                </sequence>
+              </scope>
+              <sequence name="CrearActualizarContratoDesembolso">
+                <bpelx:skipCondition>$outConsultarSolicitudDesembolso.response/ns2:SolicitudDesembolso/ns8:ContratoDesembolso[$Counter]/ns8:estado/ns4:Id = 19</bpelx:skipCondition>
+                <invoke name="InvokeCrearActualizarDesembolsos" partnerLink="CrearActualizarDesembolsos_PS"
+                        portType="ns30:CrearActualizarDesembolso_PT" operation="crearActualizarDesembolso"
+                        inputVariable="inInvokeCrearActualizarDesembolsos"
+                        outputVariable="outInvokeCrearActualizarDesembolsos" bpelx:invokeAsDetail="no"/>
+                <if name="IfOkActualizarEstadoDesembolso">
+                  <documentation>
+                    <![CDATA[OK]]>
+                  </documentation>
+                  <condition>$outInvokeCrearActualizarDesembolsos.response/ns2:Resultado/ns16:result = 'OK'</condition>
+                  <assign name="assingOK">
+                    <copy>
+                      <from>'OK'</from>
+                      <to>$outputVariable.response/ns2:Resultado/ns16:result</to>
+                    </copy>
+                    <copy>
+                      <from>'Operacion exitosa'</from>
+                      <to>$outputVariable.response/ns2:Resultado/ns16:message</to>
+                    </copy>
+                  </assign>
+                  <else>
+                    <documentation>
+                      <![CDATA[ERROR]]>
+                    </documentation>
+                    <assign name="assingResult">
+                      <copy>
+                        <from>$outInvokeCrearActualizarDesembolsos.response/ns2:Resultado</from>
+                        <to>$outputVariable.response/ns2:Resultado</to>
+                      </copy>
+                    </assign>
+                  </else>
+                </if>
+              </sequence>
+            </sequence>
+          </scope>
+        </sequence>
+      </scope>
+    </forEach>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="condicionesdesembolso_client_ep" portType="ns1:CondicionesDesembolsoPT" operation="CondicionesDesembolso" variable="outputVariable"/>
+  </sequence>
+</process>

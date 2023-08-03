@@ -1,0 +1,334 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Fri Jul 15 11:39:18 CDT 2016
+  Author:  ismael-flores
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConfiguracionSupervision"
+         targetNamespace="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionSupervisionAmbientalSocial/ConfiguracionSupervisionAmbientalSocial"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/ConfiguracionProcesos/ConfiguracionSupervision/ConfiguracionSupervision"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+               xmlns:ns1="http://xmlns.bcie.com/ConfiguracionProcesosService"
+               xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ui="http://xmlns.oracle.com/soa/designer" xmlns:ns2="http://xmlns.bcie.com/OperacionService"
+         xmlns:ns3="http://www.bcie.com/ConsultarRolesPorProceso" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
+         xmlns:ns4="http://www.bcie.org/ConfiguracionProcesosMO"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap"
+         xmlns:ns5="http://www.bcie.org/ConfiguracionProcesosBO" xmlns:ns13="http://www.bcie.org/ResultBO"
+         xmlns:ns11="http://xmlns.bcie.org/ObjetoProceso/Comun/Parameter/V1"
+         xmlns:ns7="http://xmlns.bcie.org/ObjetoProceso/Comun/Operacion/V1"
+         xmlns:ns10="http://xmlns.bcie.org/ObjetoProceso/Comun/Proceso/V1"
+         xmlns:ns6="http://xmlns.bcie.org/ObjetoProceso/Comun/Header/V1" xmlns:ns12="http://www.bcie.org/CatalogoBO"
+         xmlns:ns9="http://xmlns.bcie.org/ObjetoProceso/Comun/Tarea/V1"
+         xmlns:ns8="http://xmlns.bcie.org/ObjetoProceso/Comun/Cliente/V1" xmlns:ns14="http://www.bcie.org/ErrorBO"
+         xmlns:ns15="http://www.bcie.org/OperacionMO" xmlns:ns16="http://www.bcie.org/OperacionBO"
+         xmlns:ns18="http://www.bcie.org/ProductoBO" xmlns:ns19="http://www.bcie.org/DeclaracionJuradaBO"
+         xmlns:ns17="http://www.bcie.org/ClienteBO" xmlns:ns20="http://www.bcie.org/ConsultarRolesPorProcesoMO"
+         xmlns:ns21="http://www.bcie.org/ConsultarRolesPorProcesoBO" xmlns:ns29="http://www.bcie.org/TerminoBO"
+         xmlns:ns28="http://www.bcie.org/DocumentoBO" xmlns:ns31="http://www.bcie.org/HerramientaCEBO"
+         xmlns:ns22="http://www.bcie.org/DesembolsoBO" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ns25="http://www.bcie.org/CommonBO" xmlns:ns24="http://www.bcie.org/LineaCreditoBO"
+         xmlns:ns26="http://www.bcie.org/CondicionBO" xmlns:ns30="http://www.bcie.org/ComisionBO"
+         xmlns:ns23="http://www.bcie.org/ContratoBO" xmlns:ns27="http://www.bcie.org/AtributoBO">
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      PARTNERLINKS                                                      
+      List of services participating in this BPEL process               
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <import namespace="http://www.bcie.com/ConsultarRolesPorProceso"
+          location="oramds:/apps/Resources/ComponentesComunes/Utilidades/ConsultarRolesPorProceso/V1/Wsdl/ConsultarRolesPorProceso.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/OperacionService"
+          location="oramds:/apps/Resources/ComponentesComunes/DominioOperacion/Operacion/V1/Wsdl/ADAPTER/ConsultarOperacionByIdSAD.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://schemas.oracle.com/bpel/extension" location="../WSDLs/RuntimeFault.wsdl"
+          importType="http://schemas.xmlsoap.org/wsdl/"/>
+  <import namespace="http://xmlns.bcie.com/ConfiguracionProcesosService"
+          location="../WSDLs/ConfiguracionSupervisionAmbientalSocialSORWrapper.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"
+          ui:processWSDL="true"/>
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="configuracionsupervisionAmbientalSocial" partnerLinkType="ns1:ConfiguracionSupervision" myRole="ConfiguracionSupervisionPT"/>
+    <partnerLink name="ConsultarOperacionById" partnerLinkType="ns2:ConsultarOperacionById"
+                 partnerRole="ConsultarOperacionById12Port"/>
+    <partnerLink name="ConsultarRolPorProceso" partnerLinkType="ns3:ConsultarRolPorProceso"
+                 partnerRole="ConsultarRolesPorProceso_ptt"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="ns1:requestConfiguracionSupervisionMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="ns1:responseConfiguracionSupervisionMessage"/>
+    <variable name="setTittleVar" type="xsd:string"/>
+    <variable name="consultarOperacionById_ConsultarOperacionById_InputVariable"
+              messageType="ns2:requestConsultarOperacionMessage"/>
+    <variable name="consultarOperacionById_ConsultarOperacionById_OutputVariable"
+              messageType="ns2:responseConsultarOperacionMessage"/>
+    <variable name="consultarRolesPorProceso_ConsultarRolesPorProceso_InputVariable" messageType="ns3:requestMessage"/>
+    <variable name="consultarRolesPorProceso_ConsultarRolesPorProceso_OutputVariable" messageType="ns3:replyMessage"/>
+    <variable name="idFlujo" type="xsd:string"/>
+  </variables>
+  <faultHandlers>
+    <catch bpelx:name="bindingFault" faultName="bpelx:bindingFault" faultVariable="FaultVar"
+           faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="BindingFault">
+        <assign name="assignBindingFault">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:result</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.code</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:error/ns14:errorCode</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.summary</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:message</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.detail</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:error/ns14:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyBindingFault" variable="outputVariable" partnerLink="configuracionsupervisionAmbientalSocial"
+               portType="ns1:ConfiguracionSupervisionPT" operation="configuracionSupervision"/>
+      </sequence>
+    </catch>
+    <catch bpelx:name="remoteFault" faultName="bpelx:remoteFault" faultVariable="FaultVar"
+           faultMessageType="bpelx:RuntimeFaultMessage">
+      <sequence name="RemoteFault">
+        <assign name="assigRemoteFault">
+          <copy>
+            <from>$FaultVar.code</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:error/ns14:errorCode</to>
+          </copy>
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:result</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.summary</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:message</to>
+          </copy>
+          <copy>
+            <from>$FaultVar.detail</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:error/ns14:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyRemoteFault" variable="outputVariable" partnerLink="configuracionsupervisionAmbientalSocial"
+               portType="ns1:ConfiguracionSupervisionPT" operation="configuracionSupervision"/>
+      </sequence>
+    </catch>
+    <catchAll>
+      <sequence name="CatchAll">
+        <assign name="assignError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:result</to>
+          </copy>
+          <copy>
+            <from>concat("Error en ConfiguracionSupervision: ",ora:getFaultAsString())</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:message</to>
+          </copy>
+          <copy>
+            <from>ora:getFaultAsString()</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:error/ns14:errorDescription</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="configuracionsupervisionAmbientalSocial"
+               portType="ns1:ConfiguracionSupervisionPT" operation="configuracionSupervision"/>
+      </sequence>
+    </catchAll>
+  </faultHandlers>
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConfiguracionSupervision.wsdl) -->
+    <receive name="receiveInput" partnerLink="configuracionsupervisionAmbientalSocial" portType="ns1:ConfiguracionSupervisionPT" operation="configuracionSupervision" variable="inputVariable" createInstance="yes"/>
+    <validate name="ValidateIdOperacion" variables="inputVariable"/>
+    <assign name="assignSetTittle">
+      <copy>
+        <from>oraext:setFlowInstanceTitle(concat("idOperacion = ",$inputVariable.request/ns4:idOperacion))</from>
+        <to>$setTittleVar</to>
+      </copy>
+    </assign>
+    <assign name="idFlujo">
+      <copy>
+        <from>$inputVariable.request/ns4:InstanciaProceso</from>
+        <to>$idFlujo</to>
+      </copy>
+    </assign>
+    <if name="IfNullOrCero">
+      <documentation>
+        <![CDATA[Error]]>
+      </documentation>
+      <condition>string-length(string($inputVariable.request/ns4:idOperacion)) = 0  or $inputVariable.request/ns4:idOperacion = 0</condition>
+      <sequence name="IfValidError">
+        <assign name="assignError">
+          <copy>
+            <from>'ERROR'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:result</to>
+          </copy>
+          <copy>
+            <from>'El idOperacion no puede ser 0 o Null'</from>
+            <to>$outputVariable.response/ns4:Resultado/ns13:message</to>
+          </copy>
+        </assign>
+        <reply name="ReplyError" variable="outputVariable" partnerLink="configuracionsupervisionAmbientalSocial"
+               portType="ns1:ConfiguracionSupervisionPT" operation="configuracionSupervision"/>
+        <exit name="ExitError"/>
+      </sequence>
+      <else>
+        <documentation>
+          <![CDATA[valorCorrecto]]>
+        </documentation>
+        <empty name="flujoCorrecto"/>
+      </else>
+    </if>
+    <scope name="ScopeConsultarOperacionById">
+      <variables>
+        <variable name="inConsultarOperacionById" messageType="ns2:requestConsultarOperacionMessage"/>
+      </variables>
+      <sequence name="ConsultarOperacionById">
+        <assign name="assignIdOperacion">
+          <copy>
+            <from>$inputVariable.request/ns4:idOperacion</from>
+            <to>$inConsultarOperacionById.request/ns15:idOperacion</to>
+          </copy>
+        </assign>
+        <invoke name="consultarOperacionById" partnerLink="ConsultarOperacionById"
+                portType="ns2:ConsultarOperacionById12Port" operation="ConsultarOperacionById"
+                inputVariable="inConsultarOperacionById"
+                outputVariable="consultarOperacionById_ConsultarOperacionById_OutputVariable"
+                bpelx:invokeAsDetail="no"/>
+        <if name="IfError">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$consultarOperacionById_ConsultarOperacionById_OutputVariable.response/ns15:Resultado/ns13:error/ns14:errorCode='ERROR'</condition>
+          <sequence name="IfValidError">
+            <assign name="assignError">
+              <copy>
+                <from>$consultarOperacionById_ConsultarOperacionById_OutputVariable.response/ns15:Resultado</from>
+                <to>$outputVariable.response/ns4:Resultado</to>
+              </copy>
+              <copy>
+                <from>$consultarOperacionById_ConsultarOperacionById_OutputVariable.response/ns15:Resultado/ns13:error/ns14:errorCode</from>
+                <to>$outputVariable.response/ns4:Resultado/ns13:error/ns14:errorCode</to>
+              </copy>
+              <copy>
+                <from>$consultarOperacionById_ConsultarOperacionById_OutputVariable.response/ns15:Resultado/ns13:error/ns14:errorDescription</from>
+                <to>$outputVariable.response/ns4:Resultado/ns13:error/ns14:errorDescription</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" variable="outputVariable" partnerLink="configuracionsupervisionAmbientalSocial"
+                   portType="ns1:ConfiguracionSupervisionPT" operation="configuracionSupervision"/>
+            <exit name="ExitError"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[consultaExitosa]]>
+            </documentation>
+            <empty name="flujoContinuo"/>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <scope name="ScopeConsultarRolPorProceso">
+      <variables>
+        <variable name="inConsultarRolProceso" messageType="ns3:requestMessage"/>
+      </variables>
+      <sequence name="ConsultarRolPorProceso">
+        <assign name="assignIdProceso">
+          <copy>
+            <from>39</from>
+            <to>$inConsultarRolProceso.request/ns20:Proceso/ns21:idProceso</to>
+          </copy>
+        </assign>
+        <invoke name="consultarRolesPorProceso" partnerLink="ConsultarRolPorProceso"
+                portType="ns3:ConsultarRolesPorProceso_ptt" operation="ConsultarRolesPorProceso"
+                inputVariable="inConsultarRolProceso"
+                outputVariable="consultarRolesPorProceso_ConsultarRolesPorProceso_OutputVariable"
+                bpelx:invokeAsDetail="no"/>
+        <if name="IfError">
+          <documentation>
+            <![CDATA[ERROR]]>
+          </documentation>
+          <condition>$consultarRolesPorProceso_ConsultarRolesPorProceso_OutputVariable.response/ns20:Result/ns13:error/ns14:errorCode='ERROR'</condition>
+          <sequence name="IfValidError">
+            <assign name="assignError">
+              <copy>
+                <from>$consultarRolesPorProceso_ConsultarRolesPorProceso_OutputVariable.response/ns20:Result</from>
+                <to>$outputVariable.response/ns4:Resultado</to>
+              </copy>
+              <copy>
+                <from>$consultarRolesPorProceso_ConsultarRolesPorProceso_OutputVariable.response/ns20:Result/ns13:error/ns14:errorCode</from>
+                <to>$outputVariable.response/ns4:Resultado/ns13:error/ns14:errorCode</to>
+              </copy>
+              <copy>
+                <from>$consultarRolesPorProceso_ConsultarRolesPorProceso_OutputVariable.response/ns20:Result/ns13:error/ns14:errorDescription</from>
+                <to>$outputVariable.response/ns4:Resultado/ns13:error/ns14:errorDescription</to>
+              </copy>
+            </assign>
+            <reply name="ReplyError" partnerLink="configuracionsupervisionAmbientalSocial" portType="ns1:ConfiguracionSupervisionPT"
+                   operation="configuracionSupervision" variable="outputVariable"/>
+            <exit name="ExitError"/>
+          </sequence>
+          <else>
+            <documentation>
+              <![CDATA[consultaExitosa]]>
+            </documentation>
+            <sequence name="Sequence1">
+              <assign name="ConfiguracionProceso">
+                <bpelx:annotation>
+                  <bpelx:pattern patternName="bpelx:xquery"></bpelx:pattern>
+                </bpelx:annotation>
+                <copy>
+                  <from>ora:processXQuery10('../Transformations/XQ_ConsultarOperacionById_ConsultarRolesPorProceso.xqy', 'consultarOperacionById_ConsultarOperacionById_OutputVariable.response', $consultarOperacionById_ConsultarOperacionById_OutputVariable.response, 'consultarRolesPorProceso_ConsultarRolesPorProceso_OutputVariable.response', $consultarRolesPorProceso_ConsultarRolesPorProceso_OutputVariable.response, 'inputVariable.request', $inputVariable.request)</from>
+                  <to variable="outputVariable" part="response"/>
+                </copy>
+              </assign>
+            </sequence>
+          </else>
+        </if>
+      </sequence>
+    </scope>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="configuracionsupervisionAmbientalSocial" portType="ns1:ConfiguracionSupervisionPT" operation="configuracionSupervision" variable="outputVariable"/>
+  </sequence>
+</process>

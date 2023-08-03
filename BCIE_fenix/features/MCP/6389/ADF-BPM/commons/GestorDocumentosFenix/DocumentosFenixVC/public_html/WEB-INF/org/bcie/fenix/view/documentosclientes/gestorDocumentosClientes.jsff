@@ -1,0 +1,373 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.1" xmlns:af="http://xmlns.oracle.com/adf/faces/rich"
+          xmlns:c="http://java.sun.com/jsp/jstl/core" xmlns:f="http://java.sun.com/jsf/core">
+  <c:set var="documentosfenixvcBundle" value="#{adfBundle['org.bcie.fenix.view.DocumentosFenixVCBundle']}"/>
+  <af:resource type="javascript" source="/js/documentosUtil.js"/>
+  <af:panelGroupLayout id="pgl5" inlineStyle="width: 800px;">
+    <af:panelSplitter id="ps1" splitterPosition="600">
+      <f:facet name="first">
+        <af:panelGroupLayout id="pgl13" halign="right">
+          <af:panelGroupLayout id="pgl14" layout="horizontal" halign="end">
+            <af:inputText id="it8" value="#{documentosClientesActionsBean.searchCriteria}"/>
+            <af:button id="b11" icon="#{'/images/search.png'}" styleClass="headerLink"
+                       actionListener="#{documentosClientesActionsBean.doSearch}"/>
+          </af:panelGroupLayout>
+          <af:panelSplitter id="ps2" orientation="vertical" positionedFromEnd="true">
+            <f:facet name="first">
+              <!-- Arbol de documentos -->
+              <af:tree id="docTree" var="node" value="#{pageFlowScope.documentosClientesBean.treeModel}"
+                       rowSelection="single" summary="Explorador documentos"
+                       selectionListener="#{documentosClientesActionsBean.treeRowSelectionListener}"
+                       binding="#{documentosClientesActionsBean.treeArbolUIC}" partialTriggers="::t1">
+                <f:facet name="nodeStamp">
+                  <af:panelGroupLayout id="pgl3">
+                    <af:image source="#{node.tipoElemento eq 'file' ? '/images/file.gif' : '/images/folder.gif'}"
+                              inlineStyle="vertical-align:middle;" shortDesc="node" id="i1"/>
+                    <af:outputText value="#{node.tipoElemento eq 'file' and node.etapaDoc eq 'En Transito'  and not empty node.resumenDoc ? node.resumenDoc : node.nombreDoc}" id="ot1"/>
+                  </af:panelGroupLayout>
+                </f:facet>
+              </af:tree>
+            </f:facet>
+            <f:facet name="second">
+              <af:panelHeader text="#{documentosfenixvcBundle.DOCUMENTOS_ADJUNTADOS_A_LA_TAREA}" id="ph1" size="2">
+                <f:facet name="toolbar">
+                  <af:panelGroupLayout id="pgl9" partialTriggers="t1 b9EnvDoc">
+                    <!-- hasta aqui revise -->
+                    <af:button text="#{documentosfenixvcBundle.BTN_ENVIAR_DOCUMENTO}" id="btnEnviardoc"
+                               styleClass="orangeBtn"
+                               actionListener="#{documentosClientesActionsBean.enviarDocumentoClienteActionListener}"
+                               partialTriggers="t1"
+                               rendered="#{pageFlowScope.documentosClientesBean.rolesEnviarDocumento and bindings.DocumentosAdjuntadosClientesVOIterator.estimatedRowCount > 0}"
+                               disabled="#{(pageFlowScope.documentosClientesBean.esEstadoCompletado)}"/>
+                    <af:spacer width="5" height="10" id="s8"/>
+                    <af:button text="#{documentosfenixvcBundle.ACTUALIZAR}" id="btnActualizar" styleClass="orangeBtn"
+                               actionListener="#{documentosClientesActionsBean.actualizarDocumentosCliente}"
+                               partialSubmit="true" partialTriggers="t1"
+                               rendered="#{pageFlowScope.documentosClientesBean.rolesEnviarDocumento and pageFlowScope.documentosClientesBean.btnActualizarDocs and bindings.DocumentosAdjuntadosClientesVOIterator.estimatedRowCount > 0}"
+                               disabled="#{(pageFlowScope.documentosClientesBean.esEstadoCompletado)}"/>
+                    <af:spacer width="5" height="10" id="s9"/>
+                    <af:button text="#{documentosfenixvcBundle.ADJUNTAR}" id="btnAgregar" styleClass="orangeBtn"
+                               actionListener="#{documentosClientesActionsBean.adjuntarActionListener}"
+                               disabled="#{(!pageFlowScope.documentosClientesBean.esIdOperacionValido) or (empty bindings.TiposDocumentoLOV.inputValue)
+                                                or (pageFlowScope.documentosClientesBean.esEstadoCompletado)}">
+                      <af:setPropertyListener from="adjuntar"
+                                              to="#{pageFlowScope.documentosClientesBean.opAdjuntarModificar}"
+                                              type="action"/>
+                      <af:setPropertyListener from="tabla"
+                                              to="#{pageFlowScope.documentosClientesBean.accionDeTablaArbol}"
+                                              type="action"/>
+                    </af:button>
+                  </af:panelGroupLayout>
+                </f:facet>
+                <af:panelGroupLayout id="pgl2" layout="scroll">
+                  <af:selectBooleanCheckbox  id="sbc-consultar-doc" autoSubmit="true" 
+                                valueChangeListener="#{documentosClientesActionsBean.consultarDocumentosValueChangeListener}"
+                                label="#{documentosfenixvcBundle.FILTRAR_DOCUMENTOS_LBL}"
+                                            selected="#{pageFlowScope.pFiltrarPorInstancia }"/>
+                  <af:spacer width="10" height="10" id="s6"/>
+                  <!-- ADD TABLE DOCUMENTOS ADJUNTOS AL CLIENTE-->
+                  <af:table value="#{bindings.DocumentosAdjuntadosClientesVO.collectionModel}" var="row"
+                            rows="#{bindings.DocumentosAdjuntadosClientesVO.rangeSize}"
+                            emptyText="#{bindings.DocumentosAdjuntadosClientesVO.viewable ? 'No data to display.' : 'Access Denied.'}"
+                            rowBandingInterval="1"
+                            selectionListener="#{documentosClientesActionsBean.documentosAdjuntadosSelectionListener}"
+                            rowSelection="single" fetchSize="#{bindings.DocumentosAdjuntadosClientesVO.rangeSize}"
+                            id="t1" width="100%"
+                            inlineStyle="height:150.0px; background-color:White; text-align:center;"
+                            summary="Documentos adjuntados a la tarea table"
+                            binding="#{documentosClientesActionsBean.tableDocumentosUIC}" partialTriggers="::docTree">
+                    <af:column sortProperty="#{bindings.DocumentosAdjuntadosClientesVO.hints.Id.name}" sortable="true"
+                               headerText="#{bindings.DocumentosAdjuntadosClientesVO.hints.Id.label}" id="c1" width="40"
+                               rowHeader="unstyled" inlineStyle="text-align:center;">
+                      <af:outputText value="#{row.Id}"
+                                     shortDesc="#{bindings.DocumentosAdjuntadosClientesVO.hints.Id.tooltip}" id="ot3">
+                        <af:convertNumber groupingUsed="false"
+                                          pattern="#{bindings.DocumentosAdjuntadosClientesVO.hints.Id.format}"/>
+                      </af:outputText>
+                    </af:column>
+                    <af:column sortProperty="#{bindings.DocumentosAdjuntadosClientesVO.hints.Filename.name}"
+                               sortable="true"
+                               headerText="#{bindings.DocumentosAdjuntadosClientesVO.hints.Filename.label}" id="c2"
+                               width="200" inlineStyle="text-align:center;">
+                      <af:outputText value="#{row.Filename}"
+                                     shortDesc="#{bindings.DocumentosAdjuntadosClientesVO.hints.Filename.tooltip}"
+                                     id="ot4"/>
+                    </af:column>
+                    <af:column sortProperty="#{bindings.DocumentosAdjuntadosClientesVO.hints.Descripcion.name}"
+                               sortable="true"
+                               headerText="#{bindings.DocumentosAdjuntadosClientesVO.hints.Descripcion.label}" id="c3"
+                               width="150" inlineStyle="text-align:center;">
+                      <af:outputText value="#{row.Descripcion}"
+                                     shortDesc="#{bindings.DocumentosAdjuntadosClientesVO.hints.Descripcion.tooltip}"
+                                     id="ot5"/>
+                    </af:column>
+                    <af:column sortProperty="#{bindings.DocumentosAdjuntadosClientesVO.hints.Accion.name}"
+                               sortable="true" headerText="#{documentosfenixvcBundle.ACCION}" id="c4" width="70"
+                               inlineStyle="text-align:center;">
+                      <af:outputText value="#{row.Accion}"
+                                     shortDesc="#{bindings.DocumentosAdjuntadosClientesVO.hints.Accion.tooltip}"
+                                     id="ot6"/>
+                    </af:column>
+                    <af:column headerText="#{documentosfenixvcBundle.HEADER_ESTATUS}" id="c5" width="100"
+                               inlineStyle="text-align:center;">
+                      <af:outputText value="#{row.IdAdjunto eq null ? documentosfenixvcBundle.ESTADO_NO_APLICA : row.Estado}"
+                                     shortDesc="#{bindings.DocumentosAdjuntadosClientesVO.hints.Estado.tooltip}"
+                                     id="ot11" visible="#{row.IdAdjunto eq null}"/>
+                      <af:image source="#{'/images/'}#{row.Estado}#{'.png'}"
+                                shortDesc="#{row.Estado eq 'ERROR' ? row.DescError : row.Estado eq 'ADJUNTO' ? documentosfenixvcBundle.ESTADO_ADJUNTADO : row.Estado eq 'EN_PROCESO' ?  documentosfenixvcBundle.ESTADO_EN_PROCESO : row.Estado}"
+                                id="i3" rendered="#{row.IdAdjunto ne null}"/>
+                    </af:column>
+                    <af:column headerText="#{bindings.DocumentosAdjuntadosClientesVO.hints.DescError.label}" id="c6"
+                               rendered="false">
+                      <af:outputText value="#{row.DescError}"
+                                     shortDesc="#{bindings.DocumentosAdjuntadosClientesVO.hints.DescError.tooltip}"
+                                     id="ot12"/>
+                    </af:column>
+                    <af:column headerText="#{bindings.DocumentosAdjuntadosClientesVO.hints.IdAdjunto.label}" id="c7"
+                               rendered="false">
+                      <af:outputText value="#{row.IdAdjunto}"
+                                     shortDesc="#{bindings.DocumentosAdjuntadosClientesVO.hints.IdAdjunto.tooltip}"
+                                     id="ot13">
+                        <af:convertNumber groupingUsed="false"
+                                          pattern="#{bindings.DocumentosAdjuntadosClientesVO.hints.IdAdjunto.format}"/>
+                      </af:outputText>
+                    </af:column>
+                  </af:table>
+                </af:panelGroupLayout>
+              </af:panelHeader>
+            </f:facet>
+          </af:panelSplitter>
+        </af:panelGroupLayout>
+      </f:facet>
+      <f:facet name="second">
+        <af:panelGroupLayout id="pgl1" binding="#{documentosClientesActionsBean.formDocumentosUIC}">
+          <af:panelHeader text="#{pageFlowScope.documentosClientesBean.textoFichaDoc}" id="ph2" 
+                          partialTriggers="t1 docTree">
+            <af:panelFormLayout id="pfl1" labelAlignment="top" maxColumns="2" rows="4">
+              <af:inputText label="#{documentosfenixvcBundle.NOMBRE}" id="it1" readOnly="true"
+                            value="#{pageFlowScope.documentosClientesBean.nombreDoc} " partialTriggers="t1 docTree"
+                            contentStyle="white-space:pre;"/>
+              <af:inputText label="#{documentosfenixvcBundle.ETAPA}" id="it2" readOnly="true"
+                            value="#{pageFlowScope.documentosClientesBean.etapaDoc} " partialTriggers="t1 docTree"
+                            contentStyle="white-space:pre;"/>
+              <af:inputText label="#{documentosfenixvcBundle.CODIGO_DOCUMENTO}" id="it4" readOnly="true"
+                            value="#{pageFlowScope.documentosClientesBean.codigoDoc} " partialTriggers="t1 docTree"
+                            contentStyle="white-space:pre;"/>
+              <af:inputText label="#{documentosfenixvcBundle.USUARIO_AGREGO}" id="it9" readOnly="true"
+                            value="#{((empty pageFlowScope.documentosClientesBean.nombreCreadoPor) ? pageFlowScope.documentosClientesBean.creadoPor : pageFlowScope.documentosClientesBean.nombreCreadoPor) }" 
+                            partialTriggers="t1 docTree"
+                            contentStyle="white-space:pre;"/>
+              <af:inputText label="#{documentosfenixvcBundle.TIPO}" id="it11" readOnly="true"
+                            value="#{pageFlowScope.documentosClientesBean.tipoDoc} " partialTriggers="t1 docTree"
+                            contentStyle="white-space:pre;"/>
+              <af:inputText label="#{documentosfenixvcBundle.TAREA}" id="it5" readOnly="true"
+                            value="#{pageFlowScope.documentosClientesBean.tareaDoc} " partialTriggers="t1 docTree"
+                            contentStyle="white-space:pre;"/>
+              <af:inputText label="#{documentosfenixvcBundle.FECHA_DOCUMENTO}" id="it3" readOnly="true"
+                            value="#{pageFlowScope.documentosClientesBean.fechaDoc} " partialTriggers="t1 docTree"
+                            contentStyle="white-space:pre;"/>
+              <af:inputText label="#{documentosfenixvcBundle.USUARIO_ULTIMA_ACTUALIZACION}" id="it12" readOnly="true"
+                            value="#{((empty pageFlowScope.documentosClientesBean.nombreModificadoPor) ? pageFlowScope.documentosClientesBean.modificadoPor : pageFlowScope.documentosClientesBean.nombreModificadoPor) }" 
+                            partialTriggers="t1 docTree"
+                            contentStyle="white-space:pre;"/>
+            </af:panelFormLayout>
+            <af:spacer width="10" height="10" id="s1"/>
+            <af:panelFormLayout id="pfl3" labelAlignment="top">
+              <af:inputText label="#{documentosfenixvcBundle.RESUMEN}" id="it10" rows="6" columns="73"
+                            value="#{pageFlowScope.documentosClientesBean.resumenDoc}" readOnly="true"
+                            partialTriggers="t1 docTree"
+                            contentStyle="border-width: 1px;"/>
+             <f:facet name="footer">
+                <af:panelGroupLayout id="pgl4">
+                  <af:button text="#{documentosfenixvcBundle.VER_DOCUMENTO}" id="b4" styleClass="orangeBtn"
+                             visible="#{pageFlowScope.documentosClientesBean.accionDeTablaArbol eq 'tabla'}"
+                             partialTriggers="t1 docTree"
+                             disabled="#{(!pageFlowScope.documentosClientesBean.esIdOperacionValido) || (empty bindings.MimeType.inputValue)
+                                            or (pageFlowScope.documentosClientesBean.esEstadoCompletado)}">
+                    <af:fileDownloadActionListener method="#{documentosClientesActionsBean.descargarDocumento}"
+                                                   contentType="#{bindings.MimeType.inputValue}"
+                                                   filename="#{bindings.Filename.inputValue}"/>
+                  </af:button>
+                  <af:button text="#{documentosfenixvcBundle.VER_DOCUMENTO}" id="b8" styleClass="orangeBtn"
+                             visible="#{pageFlowScope.documentosClientesBean.accionDeTablaArbol ne 'tabla'}"
+                             partialTriggers="t1 docTree"
+                             disabled="#{(!pageFlowScope.documentosClientesBean.esIdOperacionValido) or (pageFlowScope.documentosClientesBean.numDocumentosTree lt 1)
+                                            or (pageFlowScope.documentosClientesBean.esEstadoCompletado)}">
+                    <af:clientListener type="click" method="descargarDocumentoOnbase"/>
+                    <af:clientAttribute name="idOnbase" value="#{pageFlowScope.documentosClientesBean.idExterno}"/>
+                    <af:clientAttribute name="rutaOnbase" value="#{pageFlowScope.documentosClientesBean.urlDocpop}"/>
+                  </af:button>
+                  <af:spacer width="5" height="10" id="s5"/>
+                  <af:button text="#{documentosfenixvcBundle.ELIMINAR_DOCUMENTO}" id="b2" styleClass="orangeBtn"
+                             partialTriggers="t1 docTree"
+                             disabled="#{((!pageFlowScope.documentosClientesBean.esIdOperacionValido) or ((pageFlowScope.documentosClientesBean.numDocumentosTree lt 1)
+                             and (bindings.DocumentosAdjuntadosClientesVO.estimatedRowCount lt 1)) or (!pageFlowScope.documentosClientesBean.esBorrable)) 
+                             or (pageFlowScope.documentosClientesBean.estadoDocumento eq documentosfenixvcBundle.DOC_ESTADO_EN_PROCESO) or (pageFlowScope.documentosClientesBean.esEstadoCompletado)}">
+                    <af:showPopupBehavior popupId="popupEliminar"/>
+                  </af:button>
+                  <af:spacer width="5" height="10" id="s3"/>
+                  <af:button text="#{(pageFlowScope.documentosClientesBean.accionDeTablaArbol eq 'tabla' ? documentosfenixvcBundle.MODIFICAR_DOCUMENTO : documentosfenixvcBundle.MODIFICAR_FICHA_DOCUMENTO)}" 
+                             id="b3" styleClass="orangeBtn"
+                             actionListener="#{documentosClientesActionsBean.modificarFichaActionListener}"
+                             partialTriggers="t1 docTree"
+                             disabled="#{((!pageFlowScope.documentosClientesBean.esIdOperacionValido) or ((pageFlowScope.documentosClientesBean.numDocumentosTree lt 1) 
+                             and (bindings.DocumentosAdjuntadosClientesVO.estimatedRowCount lt 1)) or (empty bindings.TiposDocumentoLOV.inputValue) 
+                             or (!pageFlowScope.documentosClientesBean.esModificable))  or (pageFlowScope.documentosClientesBean.estadoDocumento eq documentosfenixvcBundle.DOC_ESTADO_EN_PROCESO)
+                             or (pageFlowScope.documentosClientesBean.esEstadoCompletado)}">
+                    <af:setPropertyListener from="modificar"
+                                            to="#{pageFlowScope.documentosClientesBean.opAdjuntarModificar}"
+                                            type="action"/>
+                    <af:setPropertyListener from="#{false}"
+                                            to="#{viewScope.actualizarArchivo}"
+                                            type="action"/>
+                  </af:button>
+                </af:panelGroupLayout>
+              </f:facet>
+            </af:panelFormLayout>
+          </af:panelHeader>
+        </af:panelGroupLayout>
+      </f:facet>
+    </af:panelSplitter>
+    <af:popup childCreation="deferred" autoCancel="disabled" id="popupAgregar"
+              binding="#{documentosClientesActionsBean.popupAgregar}">
+      <af:dialog id="d1" type="none" modal="false"
+                 title="#{pageFlowScope.documentosClientesBean.opAdjuntarModificar eq 'adjuntar' ? documentosfenixvcBundle.ADJUNTAR_DOCUMENTO_A_LA_TAREA : (pageFlowScope.documentosClientesBean.accionDeTablaArbol eq 'tabla' ? documentosfenixvcBundle.MODIFICAR_DOCUMENTO : documentosfenixvcBundle.MODIFICAR_FICHA_DOCUMENTO)}">
+        <af:panelFormLayout id="pfl7" rows="1" maxColumns="2">
+          <af:panelFormLayout id="pfl4" labelAlignment="top"
+                              rendered="#{pageFlowScope.documentosClientesBean.accionDeTablaArbol eq 'tabla'}"
+                              visible="#{!pageFlowScope.documentosClientesBean.isJustificacion}"
+                              partialTriggers="sbcJustificacion">
+            <af:inputFile label="#{documentosfenixvcBundle.SELECCIONAR_DOCUMENTO}" id="ifArchivo" autoSubmit="true"
+                          value="#{pageFlowScope.documentosClientesBean.documentoAdjunto}" showRequired="true"
+                          visible="#{pageFlowScope.documentosClientesBean.opAdjuntarModificar eq 'modificar' ? viewScope.actualizarArchivo : true}"
+                          partialTriggers="btnActArchivo"/>
+            <af:panelGroupLayout id="pgl10" partialTriggers="btnActArchivo"
+                                 visible="#{(pageFlowScope.documentosClientesBean.opAdjuntarModificar eq 'modificar') and (!viewScope.actualizarArchivo)}">
+              <af:outputText value="#{pageFlowScope.documentosClientesBean.nombreArchivo}" id="ot7"/>
+              <af:button text="#{documentosfenixvcBundle.ACTUALIZAR_ARCHIVO}" id="btnActArchivo" styleClass="orangeBtn">
+                <af:setPropertyListener from="#{true}" to="#{viewScope.actualizarArchivo}" type="action"/>
+              </af:button>
+            </af:panelGroupLayout>
+          </af:panelFormLayout>
+          <af:panelFormLayout id="pfl6" rendered="#{(pageFlowScope.documentosClientesBean.accionDeTablaArbol eq 'tabla') and (!pageFlowScope.documentosClientesBean.esGestorOp)}">
+            <af:selectBooleanCheckbox text="#{documentosfenixvcBundle.JUSTIFICACION}" id="sbcJustificacion"
+                                      autoSubmit="true" value="#{pageFlowScope.documentosClientesBean.isJustificacion}"/>
+          </af:panelFormLayout>
+        </af:panelFormLayout>
+        <af:panelFormLayout id="pfl2" labelAlignment="top" rows="2" maxColumns="2">
+          <af:inputText label="#{documentosfenixvcBundle.NOMBRE}" id="it6"
+                        placeholder="#{documentosfenixvcBundle.NOMBRE}"
+                        visible="#{!pageFlowScope.documentosClientesBean.isJustificacion}"
+                        partialTriggers="sbcJustificacion ifArchivo" 
+                        value="#{pageFlowScope.documentosClientesBean.nombreArchivo}" 
+                        showRequired="true" maximumLength="500"/>
+          <af:inputDate label="#{documentosfenixvcBundle.FECHA}" id="id1"
+                        visible="#{!pageFlowScope.documentosClientesBean.isJustificacion}"
+                        partialTriggers="sbcJustificacion" 
+                        value="#{pageFlowScope.documentosClientesBean.fechaArchivo}" 
+                        showRequired="true">
+            <af:convertDateTime pattern="dd/MMM/yyyy"/>
+          </af:inputDate>
+          <af:inputText label="#{documentosfenixvcBundle.CODIGO_DE_DOCUMENTO}" id="it7"
+                        placeholder="#{documentosfenixvcBundle.NUMERO_DE_DOCUMENTO}"
+                        visible="#{!pageFlowScope.documentosClientesBean.isJustificacion}"
+                        partialTriggers="sbcJustificacion" 
+                        value="#{pageFlowScope.documentosClientesBean.codigoArchivo}"/>
+          <af:selectOneChoice value="#{bindings.TiposDocumentoLOV.inputValue}"
+                              label="#{documentosfenixvcBundle.TIPO}"
+                              required="true"
+                              shortDesc="#{bindings.TiposDocumentoLOV.hints.tooltip}" id="socTiposDocumento"
+                              valueChangeListener="#{documentosClientesActionsBean.tiposDocumentoValueChangeListener}"
+                              contentStyle="width:220px;" autoSubmit="true">
+            <f:selectItems value="#{bindings.TiposDocumentoLOV.items}" id="si4"/>
+            <f:validator binding="#{bindings.TiposDocumentoLOV.validator}"/>
+          </af:selectOneChoice>
+        </af:panelFormLayout>
+        <af:panelFormLayout id="pfl5">
+          <af:inputText label="#{documentosfenixvcBundle.RESUMEN}" id="it13" rows="3" columns="55"
+                        placeholder="#{documentosfenixvcBundle.COMENTARIO}"
+                        value="#{pageFlowScope.documentosClientesBean.resumenArchivo}" 
+                        required="true"
+                        requiredMessageDetail="#{documentosfenixvcBundle.DEBE_COMPLETAR_INFORMACION_REQUERIDA}"/>
+        </af:panelFormLayout>
+        <f:facet name="buttonBar">
+          <af:panelGroupLayout id="pgl8">
+            <af:button text="#{documentosfenixvcBundle.ACEPTAR}" id="b6"
+                       actionListener="#{documentosClientesActionsBean.aceptarAdjuntarModificarActionListener}"
+                       styleClass="orangeBtn" partialSubmit="false"/>
+            <af:spacer width="5" height="10" id="s4"/>
+            <af:button text="#{documentosfenixvcBundle.CANCELAR}" id="b7"
+                       actionListener="#{documentosClientesActionsBean.cancelarAdjuntarModificarActionListener}"
+                       styleClass="orangeBtn" immediate="true">
+              <af:resetActionListener/>
+            </af:button>
+          </af:panelGroupLayout>
+        </f:facet>
+      </af:dialog>
+    </af:popup>
+    <af:popup childCreation="deferred" autoCancel="disabled" id="popupEliminar"
+              binding="#{documentosClientesActionsBean.popupEliminar}" contentDelivery="lazyUncached">
+      <af:dialog id="d2" type="none" title="#{documentosfenixvcBundle.ELIMINAR_DOCUMENTO}" modal="false">
+        <af:panelGroupLayout id="pgl6">
+          <af:image source="/images/warning.png" shortDesc="warning" id="i2"
+                    inlineStyle="vertical-align:middle; width:60px; height:60px;"/>
+          <af:outputText value="#{documentosfenixvcBundle.ESTA_SEGURO_DE_ELIMINAR_EL_DOCUMENTO} #{pageFlowScope.documentosClientesBean.nombreDoc}#{'?'}" id="ot2"/>
+        </af:panelGroupLayout>
+        <f:facet name="buttonBar">
+          <af:panelGroupLayout id="pgl7" halign="right">
+            <af:button text="#{documentosfenixvcBundle.ELIMINAR}" id="b1"
+                       actionListener="#{documentosClientesActionsBean.confirmEliminarDocumentoActionListener}"
+                       styleClass="orangeBtn" partialSubmit="false"/>
+            <af:spacer width="5" height="10" id="s2"/>
+            <af:button text="#{documentosfenixvcBundle.CANCELAR}" id="b5"
+                       actionListener="#{documentosClientesActionsBean.cancelEliminarDocumentoActionListener}"
+                       styleClass="orangeBtn" immediate="true">
+              <af:resetActionListener/>
+            </af:button>
+          </af:panelGroupLayout>
+        </f:facet>
+      </af:dialog>
+    </af:popup>
+    <af:popup childCreation="deferred" autoCancel="disabled" id="popupReemplazar"
+              binding="#{documentosClientesActionsBean.popupReemplazar}" contentDelivery="lazyUncached">
+      <af:dialog id="d3" type="none" title="#{documentosfenixvcBundle.REEMPLAZAR_DOCUMENTO}" modal="false">
+        <af:panelGroupLayout id="pgl11">
+          <af:outputText value="#{documentosfenixvcBundle.REEMPLAZAR_DOCUMENTO_EXISTENTE}" id="ot8"/>
+        </af:panelGroupLayout>
+        <f:facet name="buttonBar">
+          <af:panelGroupLayout id="pgl12" halign="right">
+            <af:button text="#{documentosfenixvcBundle.ACEPTAR}" id="b9"
+                       actionListener="#{documentosClientesActionsBean.aceptarReemplazarDocumentoActionListener}"
+                       styleClass="orangeBtn"/>
+            <af:spacer width="5" height="10" id="s7"/>
+            <af:button text="#{documentosfenixvcBundle.CANCELAR}" id="b10"
+                       actionListener="#{documentosClientesActionsBean.cancelarReemplazarDocumentoActionListener}"
+                       styleClass="orangeBtn"/>
+          </af:panelGroupLayout>
+        </f:facet>
+      </af:dialog>
+    </af:popup>
+    <af:popup childCreation="deferred" autoCancel="disabled" id="popupEnvDoc"
+              binding="#{documentosClientesActionsBean.popupEnviarDocumento}" contentDelivery="lazyUncached">
+      <af:dialog id="d3EnvDoc" type="none" title="#{documentosfenixvcBundle.DIALOG_ENVIAR_DOCUMENTOS}" modal="false">
+        <af:panelGroupLayout id="pgl11EnvDoc">
+          <af:outputText value="#{documentosfenixvcBundle.CONFIRMAR_ENVIAR_ONBASE}" id="ot8EnvDoc"/>
+        </af:panelGroupLayout>
+        <f:facet name="buttonBar">
+          <af:panelGroupLayout id="pgl12EnvDoc" halign="right">
+            <af:button text="#{documentosfenixvcBundle.ACEPTAR}" id="b9EnvDoc"
+                       actionListener="#{documentosClientesActionsBean.enviarDocumentoClienteOnBase}"
+                       styleClass="orangeBtn"/>
+            <af:spacer width="5" height="10" id="s7EnvDoc"/>
+            <af:button text="#{documentosfenixvcBundle.CANCELAR}" id="b10EnvDoc"
+                       actionListener="#{documentosClientesActionsBean.cancelarEnviarDocumentoClienteActionListener}"
+                       styleClass="orangeBtn"/>
+          </af:panelGroupLayout>
+        </f:facet>
+      </af:dialog>
+    </af:popup>
+    <af:outputText value="Expandir tree" id="ot9" binding="#{treeBean.otExpandTree}" visible="false"/>
+    <af:outputText value="Inicializar formulario" id="ot10"  visible="false"
+                   binding="#{documentosClientesActionsBean.otInitForm}"/>
+  </af:panelGroupLayout>
+</jsp:root>

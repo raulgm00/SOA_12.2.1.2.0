@@ -1,0 +1,120 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Oracle JDeveloper BPEL Designer 
+  
+  Created: Tue Dec 22 12:04:52 CST 2015
+  Author:  luis-morales
+  Type: BPEL 2.0 Process
+  Purpose: Synchronous BPEL Process
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-->
+<process name="ConsultarTreTermino_BPEL"
+               targetNamespace="http://xmlns.oracle.com/DominioLineaCredito/ActualizarLineaCredito/ConsultarTreTermino_BPEL"
+               xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+               xmlns:client="http://xmlns.oracle.com/DominioLineaCredito/ActualizarLineaCredito/ConsultarTreTermino_BPEL"
+               xmlns:ora="http://schemas.oracle.com/xpath/extension"
+               xmlns:ui="http://xmlns.oracle.com/soa/designer"
+               xmlns:bpelx="http://schemas.oracle.com/bpel/extension"
+         xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:ns1="http://www.bcie.org/ConsultarTreTerminoService" xmlns:ns2="http://www.bcie.org/TerminoMO"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/" xmlns:ns3="http://www.bcie.org/TerminoBO"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:ns5="http://www.bcie.org/ResultBO" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions" xmlns:ess="http://xmlns.oracle.com/scheduler"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ns4="http://www.bcie.org/CatalogoBO"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:ns6="http://www.bcie.org/ErrorBO" xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap">
+
+    <import ui:processWSDL="true" namespace="http://xmlns.oracle.com/DominioLineaCredito/ActualizarLineaCredito/ConsultarTreTermino_BPEL" location="../WSDLs/ConsultarTreTermino_BPEL.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <!-- 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        PARTNERLINKS                                                      
+        List of services participating in this BPEL process               
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    --> 
+  <partnerLinks>
+    <!-- 
+      The 'client' role represents the requester of this service. It is 
+      used for callback. The location and correlation information associated
+      with the client role are automatically set using WS-Addressing.
+    -->
+    <partnerLink name="consultartretermino_bpel_client" partnerLinkType="client:ConsultarTreTermino_BPEL" myRole="ConsultarTreTermino_BPELProvider"/>
+    <partnerLink name="ConsultarTreTermino_SB" partnerLinkType="ns1:ConsultarTreTermino_SB" partnerRole="TreTerminoPT"/>
+  </partnerLinks>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      VARIABLES                                                        
+      List of messages and XML documents used within this BPEL process 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <variables>
+    <!-- Reference to the message passed as input during initiation -->
+    <variable name="inputVariable" messageType="client:ConsultarTreTermino_BPELRequestMessage"/>
+
+    <!-- Reference to the message that will be returned to the requester-->
+    <variable name="outputVariable" messageType="client:ConsultarTreTermino_BPELResponseMessage"/>
+    <variable name="inConsultarTreTermino" messageType="ns1:ConsultarTreTerminoRequestMessage"/>
+    <variable name="outConsutlarTreTermino" messageType="ns1:ConsultarTreTerminoResponseMessage"/>
+  </variables>
+
+  <!-- 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     ORCHESTRATION LOGIC                                               
+     Set of activities coordinating the flow of messages across the    
+     services integrated within this business process                  
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+  <sequence name="main">
+
+    <!-- Receive input from requestor. (Note: This maps to operation defined in ConsultarTreTermino_BPEL.wsdl) -->
+    <receive name="receiveInput" partnerLink="consultartretermino_bpel_client" portType="client:ConsultarTreTermino_BPEL" operation="process" variable="inputVariable" createInstance="yes"/>
+    <assign name="AssignIdOperacionYDescrpcion">
+      <copy>
+        <from>$inputVariable.payload/ns2:idOperacion</from>
+        <to>$inConsultarTreTermino.request/ns2:idOperacion</to>
+      </copy>
+      <copy ignoreMissingFromData="yes" bpelx:insertMissingToData="yes">
+        <from>$inputVariable.payload/ns2:idLineaCredito</from>
+        <to>$inConsultarTreTermino.request/ns2:idLineaCredito</to>
+      </copy>
+      <copy>
+        <from>$inputVariable.payload/ns2:descripcionCorta</from>
+        <to>$inConsultarTreTermino.request/ns2:descripcionCorta</to>
+      </copy>
+    </assign>
+    <invoke name="ConsultarTerminoInvoke" bpelx:invokeAsDetail="no" partnerLink="ConsultarTreTermino_SB"
+            portType="ns1:TreTerminoPT" operation="consultarTreTermino" inputVariable="inConsultarTreTermino"
+            outputVariable="outConsutlarTreTermino"/>
+    <if name="OK">
+      <documentation>
+        <![CDATA[OK]]>
+      </documentation>
+      <condition>$outConsutlarTreTermino.response/ns2:Respuesta/ns5:result != 'ERROR'</condition>
+      <assign name="ResponseOk">
+        <copy>
+          <from>$outConsutlarTreTermino.response/ns2:Respuesta/ns5:message</from>
+          <to>$outputVariable.payload/ns2:Respuesta/ns5:message</to>
+        </copy>
+      </assign>
+      <else>
+        <documentation>
+          <![CDATA[ERROR]]>
+        </documentation>
+        <assign name="ResponseError">
+          <copy>
+            <from>$outConsutlarTreTermino.response/ns2:Respuesta/ns5:message</from>
+            <to>$outputVariable.payload/ns2:Respuesta/ns5:message</to>
+          </copy>
+        </assign>
+      </else>
+    </if>
+    <!-- Generate reply to synchronous request -->
+    <reply name="replyOutput" partnerLink="consultartretermino_bpel_client" portType="client:ConsultarTreTermino_BPEL" operation="process" variable="outputVariable"/>
+  </sequence>
+</process>
